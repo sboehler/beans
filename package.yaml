@@ -1,0 +1,74 @@
+name: servant-starter-app
+version: '0.1.0.0'
+description: Starter template for servant
+category: Web
+author: Silvio Böhler
+maintainer: sboehler@noreply.users.github.com
+copyright: 2017 Silvio Böhler
+license: BSD3
+github: sboehler/servant-starter-app
+extra-source-files:
+- README.md
+ghc-options:
+  - -Wall
+  - -j
+  - -fwarn-incomplete-record-updates
+library:
+  source-dirs: src
+  default-extensions:
+  - DataKinds
+  - DeriveGeneric
+  - GeneralizedNewtypeDeriving
+  - FlexibleContexts
+  - OverloadedStrings
+  - FlexibleInstances
+  - GADTs
+  - MultiParamTypeClasses
+  - LambdaCase
+  - RankNTypes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - FunctionalDependencies
+  - StandaloneDeriving
+  - TemplateHaskell
+  - UndecidableInstances
+  - TypeFamilies
+  - TypeOperators
+  exposed-modules:
+  - App
+  - TestFreer
+  dependencies:
+  - aeson
+  - base >=4.7 && <5
+  - bytestring
+  - cereal
+  - cryptonite
+  - exceptions
+  - freer-simple
+  - lens
+  - mtl
+  - natural-transformation
+  - text
+  - postgresql-simple
+  - postgresql-simple-migration
+  - resource-pool
+  - resourcet
+  - servant-server
+  - servant-auth
+  - servant-auth-server
+  - transformers
+  - wai
+  - warp
+executables:
+  servant-starter-app-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    dependencies:
+    - base
+    - servant-starter-app

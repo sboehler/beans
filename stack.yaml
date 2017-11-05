@@ -1,0 +1,14 @@
+resolver: lts-9.12
+packages:
+  - location: .
+  - location:
+      git: git@github.com:haskell-servant/servant-auth
+      commit: eb4037e606ea1d9c84533d84fea2aa79012d93d5 
+    subdirs:
+        - servant-auth
+        - servant-auth-server
+    extra-dep: true
+extra-deps: 
+flags: {}
+extra-package-dbs: []
+ghc-build: nopie

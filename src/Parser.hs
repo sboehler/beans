@@ -1,7 +1,7 @@
 module Parser where
 
 import Data.Decimal (Decimal)
-import Data.Text (Text, cons, pack)
+import Data.Text (Text, pack)
 import Data.Time.Calendar (Day, fromGregorian)
 import qualified Model as M
 import Text.Parsec
@@ -25,10 +25,18 @@ doublequote :: Parser Char
 doublequote = char '\"'
 
 description :: Parser Text
-description = pack <$> (doublequote >> many (noneOf "\"") <* doublequote)
+description =
+  pack <$> do
+    _ <- doublequote
+    text <- many (noneOf "\"")
+    _ <- doublequote
+    return text
 
 accountSegment :: Parser Text
-accountSegment = cons <$> letter <*> (pack <$> many alphaNum)
+accountSegment = do
+  x <- letter
+  xs <- many alphaNum
+  return $ pack (x : xs)
 
 colon :: Parser Char
 colon = char ':'

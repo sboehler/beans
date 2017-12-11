@@ -6,6 +6,7 @@ import Data.Time.Calendar (Day)
 
 data Transaction = T
   { date :: Day
+  , flag :: Char
   , description :: Text
   , postings :: [Posting]
   } deriving (Show)

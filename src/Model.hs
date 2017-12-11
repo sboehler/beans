@@ -15,7 +15,7 @@ data Posting
   = Posting { accountName :: AccountName
             , amount :: Decimal
             , commodity :: Commodity }
-  | WildcardPosting { account :: Account }
+  | WildcardPosting { accountName :: AccountName }
   deriving (Show)
 
 newtype Commodity =

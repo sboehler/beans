@@ -66,7 +66,16 @@ commodity = M.Commodity . pack <$> many1 alphaNum
 posting :: Parser M.Posting
 posting = M.Posting <$> token account <*> token amount <*> token commodity
 
+wildcardPosting :: Parser M.Posting
+wildcardPosting = M.WildcardPosting <$> token account
+
 transaction :: Parser M.Transaction
 transaction =
   M.T <$> token date <*> token flag <*> token description <*>
-  many1 (try (eol >> atLeastOneSpace >> token posting))
+  many1 (try (newline >> char ' ' >> (try posting <|> wildcardPosting)))
+
+emptyLine :: Parser Char
+emptyLine = token eol
+
+parse' :: FilePath -> Text -> Either ParseError [M.Transaction]
+parse' = parse (many emptyLine >> sepEndBy transaction (many (token newline)))

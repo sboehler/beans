@@ -4,22 +4,35 @@ import Data.Decimal (Decimal)
 import Data.Text (Text, pack)
 import Data.Time.Calendar (Day, fromGregorian)
 import qualified Model as M
-import Text.Parsec
+import Text.Parsec hiding (spaces, token)
 import Text.Parsec.Number
 
 type Parser a = Parsec Text () a
 
+intN :: (Num a, Read a) => Int -> Parser a
+intN n = read <$> count n digit
+
+dash :: Parser Char
+dash = char '-'
+
 date :: Parser Day
-date = do
-  year <- read <$> count 4 digit
-  _ <- char '-'
-  month <- read <$> count 2 digit
-  _ <- char '-'
-  day <- read <$> count 2 digit
-  return $ fromGregorian year month day
+date = fromGregorian <$> (intN 4 <* dash) <*> (intN 2 <* dash) <*> intN 2
 
 flag :: Parser Char
 flag = oneOf "!*"
+
+atLeastOneSpace :: Parser String
+atLeastOneSpace = many1 $ char ' '
+
+eol :: Parser Char
+eol = many (char ' ') >> newline
+
+token :: Parser a -> Parser a
+token p = do
+  _ <- many $ char ' '
+  r <- p
+  _ <- many $ char ' '
+  return r
 
 doublequote :: Parser Char
 doublequote = char '\"'
@@ -51,4 +64,9 @@ commodity :: Parser M.Commodity
 commodity = M.Commodity . pack <$> many1 alphaNum
 
 posting :: Parser M.Posting
-posting = M.Posting <$> account <*> amount <*> commodity
+posting = M.Posting <$> token account <*> token amount <*> token commodity
+
+transaction :: Parser M.Transaction
+transaction =
+  M.T <$> token date <*> token flag <*> token description <*>
+  many1 (try (eol >> atLeastOneSpace >> token posting))

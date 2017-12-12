@@ -1,81 +1,86 @@
 module Parser where
 
 import Data.Decimal (Decimal)
-import Data.Text (Text, pack)
+import Data.Text (Text, cons, pack)
 import Data.Time.Calendar (Day, fromGregorian)
 import qualified Model as M
-import Text.Parsec hiding (spaces, token)
-import Text.Parsec.Number
+import Text.Parsec
+       (ParseError, Parsec, alphaNum, between, char, choice, count, digit,
+        letter, many, many1, newline, noneOf, oneOf, parse, sepBy,
+        sepEndBy, try)
+import Text.Parsec.Number (fractional2, sign)
 
 type Parser a = Parsec Text () a
-
-intN :: (Num a, Read a) => Int -> Parser a
-intN n = read <$> count n digit
 
 dash :: Parser Char
 dash = char '-'
 
-date :: Parser Day
-date = fromGregorian <$> (intN 4 <* dash) <*> (intN 2 <* dash) <*> intN 2
-
-flag :: Parser Char
-flag = oneOf "!*"
-
-atLeastOneSpace :: Parser String
-atLeastOneSpace = many1 $ char ' '
-
-eol :: Parser Char
-eol = many (char ' ') >> newline
-
-token :: Parser a -> Parser a
-token p = do
-  _ <- many $ char ' '
-  r <- p
-  _ <- many $ char ' '
-  return r
-
-doublequote :: Parser Char
-doublequote = char '\"'
-
-description :: Parser Text
-description =
-  pack <$> do
-    _ <- doublequote
-    text <- many (noneOf "\"")
-    _ <- doublequote
-    return text
-
-accountSegment :: Parser Text
-accountSegment = do
-  x <- letter
-  xs <- many alphaNum
-  return $ pack (x : xs)
+space :: Parser Char
+space = char ' '
 
 colon :: Parser Char
 colon = char ':'
 
-account :: Parser M.AccountName
-account = M.AccountName <$> sepBy accountSegment colon
+doublequote :: Parser Char
+doublequote = char '\"'
+
+date :: Parser Day
+date = fromGregorian <$> year <*> month <*> day
+  where
+    getInt n = read <$> count n digit
+    year = getInt 4
+    month = dash *> getInt 2
+    day = dash *> getInt 2
+
+flag :: Parser Char
+flag = oneOf "!*"
+
+spaces :: Parser String
+spaces = many space
+
+eol :: Parser Char
+eol = spaces >> newline
+
+newlines :: Parser String
+newlines = many eol
+
+text :: Parser Char -> Parser Text
+text p = pack <$> many p
+
+text1 :: Parser Char -> Parser Text
+text1 p = pack <$> many1 p
+
+surroundedBy :: Parser a -> Parser b -> Parser b
+surroundedBy p = between p p
+
+token :: Parser a -> Parser a
+token = surroundedBy spaces
+
+quotedString :: Parser Text
+quotedString = surroundedBy doublequote (text $ noneOf "\"")
+
+accountName :: Parser M.AccountName
+accountName = M.AccountName <$> sepBy segment colon
+  where
+    segment = cons <$> letter <*> text alphaNum
 
 amount :: Parser Decimal
 amount = sign <*> fractional2 True
 
 commodity :: Parser M.Commodity
-commodity = M.Commodity . pack <$> many1 alphaNum
+commodity = M.Commodity <$> text1 alphaNum
 
 posting :: Parser M.Posting
-posting = M.Posting <$> token account <*> token amount <*> token commodity
-
-wildcardPosting :: Parser M.Posting
-wildcardPosting = M.WildcardPosting <$> token account
+posting =
+  choice
+    [ try $ M.Posting <$> token accountName <*> token amount <*> token commodity
+    , try $ M.WildcardPosting <$> token accountName
+    ]
 
 transaction :: Parser M.Transaction
-transaction =
-  M.T <$> token date <*> token flag <*> token description <*>
-  many1 (try (newline >> char ' ' >> (try posting <|> wildcardPosting)))
-
-emptyLine :: Parser Char
-emptyLine = token eol
+transaction = M.T <$> date <*> token flag <*> token quotedString <*> postings
+  where
+    postings = many1 (try (eol >> space >> posting))
 
 parse' :: FilePath -> Text -> Either ParseError [M.Transaction]
-parse' = parse (many emptyLine >> sepEndBy transaction (many (token newline)))
+parse' = parse (newlines >> sepEndBy transaction newlines)

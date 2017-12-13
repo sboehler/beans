@@ -1,19 +1,23 @@
 module Parser where
 
+import Control.Monad (void)
 import Data.Decimal (Decimal)
 import Data.Text (Text, cons, pack)
 import Data.Time.Calendar (Day, fromGregorian)
 import qualified Model as M
 import Text.Parsec
-       (ParseError, Parsec, alphaNum, between, char, choice, count, digit,
-        letter, many, many1, newline, noneOf, oneOf, parse, sepBy,
-        sepEndBy, try)
+       (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
+        choice, count, digit, letter, many, many1, manyTill, newline,
+        noneOf, oneOf, parse, sepBy, sepEndBy, string, try)
 import Text.Parsec.Number (fractional2, sign)
 
 type Parser a = Parsec Text () a
 
 dash :: Parser Char
 dash = char '-'
+
+comma :: Parser Char
+comma = char ','
 
 space :: Parser Char
 space = char ' '
@@ -38,11 +42,14 @@ flag = oneOf "!*"
 spaces :: Parser String
 spaces = many space
 
-eol :: Parser Char
-eol = spaces >> newline
+eol :: Parser ()
+eol = void $ spaces >> newline
 
-newlines :: Parser String
-newlines = many eol
+comment :: Parser ()
+comment = void $ noneOf ['0' .. '9'] >> manyTill anyChar (try newline)
+
+newlines :: Parser ()
+newlines = void $ many1 (try eol <|> comment)
 
 text :: Parser Char -> Parser Text
 text p = pack <$> many p
@@ -55,6 +62,9 @@ surroundedBy p = between p p
 
 token :: Parser a -> Parser a
 token = surroundedBy spaces
+
+ident :: String -> Parser Text
+ident i = pack <$> token (string i)
 
 quotedString :: Parser Text
 quotedString = surroundedBy doublequote (text $ noneOf "\"")
@@ -82,5 +92,30 @@ transaction = M.T <$> date <*> token flag <*> token quotedString <*> postings
   where
     postings = many1 (try (eol >> space >> posting))
 
-parse' :: FilePath -> Text -> Either ParseError [M.Transaction]
-parse' = parse (newlines >> sepEndBy transaction newlines)
+accountOpen :: Parser M.AccountOpen
+accountOpen =
+  M.AccountOpen <$> date <*> (ident "open" *> token accountName) <*>
+  sepBy (token commodity) comma
+
+accountClose :: Parser M.AccountClose
+accountClose = M.AccountClose <$> date <*> (ident "close" *> token accountName)
+
+balance :: Parser M.Balance
+balance =
+  M.Balance <$> date <*> (ident "balance" *> token accountName) <*> token amount <*>
+  token commodity
+
+price :: Parser M.Price
+price =
+  M.Price <$> date <*> (ident "price" *> token commodity) <*> token amount <*>
+  token commodity
+
+directive :: Parser M.Directive
+directive =
+  M.DTransaction <$> try transaction <|> M.DAccountOpen <$> try accountOpen <|>
+  M.DAccountClose <$> try accountClose <|>
+  M.DBalance <$> try balance <|>
+  M.DPrice <$> price
+
+parse' :: FilePath -> Text -> Either ParseError [M.Directive]
+parse' = parse (newlines >> sepEndBy directive newlines)

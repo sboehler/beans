@@ -1,18 +1,23 @@
-module Parser where
+module Parser
+  ( parse'
+  ) where
 
 import Control.Monad (void)
 import Data.Decimal (Decimal)
-import Data.Text (Text, cons, pack)
+import Data.Text (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
-import qualified Model as M
+import Model
+       (AccountName(..), Amount(..), CommodityName(..), Directive(..),
+        Posting(..))
 import Text.Parsec
-       (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
-        choice, count, digit, letter, many, many1, manyTill, newline,
-        noneOf, oneOf, parse, sepBy, sepEndBy, string, try)
+       (ParseError, Parsec, (<?>), (<|>), alphaNum, anyChar, between,
+        char, count, digit, eof, letter, many, many1, manyTill, newline,
+        noneOf, oneOf, optionMaybe, parse, sepBy, string, try)
 import Text.Parsec.Number (fractional2, sign)
 
 type Parser a = Parsec Text () a
 
+-- primitives
 dash :: Parser Char
 dash = char '-'
 
@@ -39,17 +44,11 @@ date = fromGregorian <$> year <*> month <*> day
 flag :: Parser Char
 flag = oneOf "!*"
 
-spaces :: Parser String
-spaces = many space
-
-eol :: Parser ()
-eol = void $ spaces >> newline
+spaces :: Parser ()
+spaces = void (many space)
 
 comment :: Parser ()
-comment = void $ noneOf ['0' .. '9'] >> manyTill anyChar (try newline)
-
-newlines :: Parser ()
-newlines = void $ many1 (try eol <|> comment)
+comment = (oneOf ";#" >> manyTill anyChar (try newline)) *> return ()
 
 text :: Parser Char -> Parser Text
 text p = pack <$> many p
@@ -69,53 +68,73 @@ ident i = pack <$> token (string i)
 quotedString :: Parser Text
 quotedString = surroundedBy doublequote (text $ noneOf "\"")
 
-accountName :: Parser M.AccountName
-accountName = M.AccountName <$> sepBy segment colon
+-- domain objects
+accountName :: Parser AccountName
+accountName = AccountName <$> sepBy segment colon
   where
     segment = cons <$> letter <*> text alphaNum
 
-amount :: Parser Decimal
-amount = sign <*> fractional2 True
+decimal :: Parser Decimal
+decimal = sign <*> fractional2 True
 
-commodity :: Parser M.Commodity
-commodity = M.Commodity <$> text1 alphaNum
+commodityName :: Parser CommodityName
+commodityName = CommodityName <$> text1 alphaNum
 
-posting :: Parser M.Posting
-posting =
-  choice
-    [ try $ M.Posting <$> token accountName <*> token amount <*> token commodity
-    , try $ M.WildcardPosting <$> token accountName
-    ]
+posting :: Parser Posting
+posting = do
+  name <- token accountName
+  amount <- optionMaybe (Amount <$> token decimal <*> token commodityName)
+  return $ Posting name amount
 
-transaction :: Parser M.Transaction
-transaction = M.T <$> date <*> token flag <*> token quotedString <*> postings
+transaction :: Day -> Parser Directive
+transaction d = Transaction d <$> token flag <*> token quotedString <*> postings
   where
-    postings = many1 (try (eol >> space >> posting))
+    postings = many1 (try (newline >> space >> posting))
 
-accountOpen :: Parser M.AccountOpen
-accountOpen =
-  M.AccountOpen <$> date <*> (ident "open" *> token accountName) <*>
-  sepBy (token commodity) comma
+accountOpen :: Day -> Parser Directive
+accountOpen d =
+  AccountOpen d <$> (ident "open" *> token accountName) <*>
+  sepBy (token commodityName) comma
 
-accountClose :: Parser M.AccountClose
-accountClose = M.AccountClose <$> date <*> (ident "close" *> token accountName)
+accountClose :: Day -> Parser Directive
+accountClose d = AccountClose d <$> (ident "close" *> token accountName)
 
-balance :: Parser M.Balance
-balance =
-  M.Balance <$> date <*> (ident "balance" *> token accountName) <*> token amount <*>
-  token commodity
+balance :: Day -> Parser Directive
+balance d =
+  Balance d <$> (ident "balance" *> token accountName) <*> token decimal <*>
+  token commodityName
 
-price :: Parser M.Price
-price =
-  M.Price <$> date <*> (ident "price" *> token commodity) <*> token amount <*>
-  token commodity
+price :: Day -> Parser Directive
+price d =
+  Price d <$> (ident "price" *> token commodityName) <*> token decimal <*>
+  token commodityName
 
-directive :: Parser M.Directive
-directive =
-  M.DTransaction <$> try transaction <|> M.DAccountOpen <$> try accountOpen <|>
-  M.DAccountClose <$> try accountClose <|>
-  M.DBalance <$> try balance <|>
-  M.DPrice <$> price
+datedDirective :: Parser Directive
+datedDirective = do
+  d <- date
+  transaction d <|> accountOpen d <|> accountClose d <|> balance d <|> price d
 
-parse' :: FilePath -> Text -> Either ParseError [M.Directive]
-parse' = parse (newlines >> sepEndBy directive newlines)
+include :: Parser Directive
+include = Include <$> (ident "include" *> (unpack <$> token quotedString))
+
+option :: Parser Directive
+option =
+  Option <$> (ident "option" *> token quotedString) <*> token quotedString
+
+directive :: Parser Directive
+directive = datedDirective <|> include <|> option <?> "directive"
+
+block :: Parser a -> Parser a
+block p = do
+  res <- p
+  _ <- many ((spaces <|> comment) >> newline)
+  return res
+
+directives :: Parser [Directive]
+directives = do
+  ds <- many (block directive)
+  eof
+  return ds
+
+parse' :: FilePath -> Text -> Either ParseError [Directive]
+parse' = parse directives

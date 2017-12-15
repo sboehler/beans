@@ -4,62 +4,43 @@ import Data.Decimal (Decimal)
 import Data.Text (Text)
 import Data.Time.Calendar (Day)
 
-data Transaction = T
-  { date :: Day
-  , flag :: Char
-  , description :: Text
-  , postings :: [Posting]
+newtype CommodityName =
+  CommodityName Text
+  deriving (Show)
+
+data Amount = Amount
+  { _amount :: Decimal
+  , _commodity :: CommodityName
   } deriving (Show)
 
-data Posting
-  = Posting { accountName :: AccountName
-            , amount :: Decimal
-            , commodity :: Commodity }
-  | WildcardPosting { accountName :: AccountName }
-  deriving (Show)
-
-newtype Commodity =
-  Commodity Text
-  deriving (Show)
+data Posting = Posting
+  { _accountName :: AccountName
+  , _amount :: Maybe Amount
+  } deriving (Show)
 
 newtype AccountName =
   AccountName [Text]
   deriving (Show)
 
-data Account = Account
-  { accountName :: AccountName
-  , commodities :: [Commodity]
-  } deriving (Show)
-
-data AccountOpen = AccountOpen
-  { date :: Day
-  , accountName :: AccountName
-  , commodities :: [Commodity]
-  } deriving (Show)
-
-data AccountClose = AccountClose
-  { date :: Day
-  , accountName :: AccountName
-  } deriving (Show)
-
-data Balance = Balance
-  { date :: Day
-  , accountName :: AccountName
-  , amount :: Decimal
-  , commodity :: Commodity
-  } deriving (Show)
-
-data Price = Price
-  { date :: Day
-  , commodity :: Commodity
-  , price :: Decimal
-  , priceCommodity :: Commodity
-  } deriving (Show)
-
 data Directive
-  = DTransaction Transaction
-  | DAccountOpen AccountOpen
-  | DAccountClose AccountClose
-  | DPrice Price
-  | DBalance Balance
+  = Transaction { _date :: Day
+                , _flag :: Char
+                , _description :: Text
+                , _postings :: [Posting] }
+  | AccountOpen { _date :: Day
+                , _accountName :: AccountName
+                , _commodities :: [CommodityName] }
+  | AccountClose { _date :: Day
+                 , _accountName :: AccountName }
+  | Balance { _date :: Day
+            , _accountName :: AccountName
+            , _amount :: Decimal
+            , _commodity :: CommodityName }
+  | Price { _date :: Day
+          , _commodity :: CommodityName
+          , _price :: Decimal
+          , _priceCommodity :: CommodityName }
+  | Include FilePath
+  | Option Text
+           Text
   deriving (Show)

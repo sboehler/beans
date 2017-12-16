@@ -1,21 +1,66 @@
 module Parser
   ( parse'
+  , Directive(..)
+  , CommodityName(..)
+  , Amount(..)
+  , Posting(..)
+  , AccountName(..)
   ) where
 
 import Control.Monad (void)
 import Data.Decimal (Decimal)
 import Data.Text (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
-import Model
-       (AccountName(..), Amount(..), CommodityName(..), Directive(..),
-        Posting(..))
 import Text.Parsec
        (ParseError, Parsec, (<?>), (<|>), alphaNum, anyChar, between,
         char, count, digit, eof, letter, many, many1, manyTill, newline,
         noneOf, oneOf, optionMaybe, parse, sepBy, string, try)
 import Text.Parsec.Number (fractional2, sign)
 
+-- The parser monad without state
 type Parser a = Parsec Text () a
+
+-- Type to wrap the AST of a file
+newtype CommodityName =
+  CommodityName Text
+  deriving (Show)
+
+data Amount = Amount
+  { _amount :: Decimal
+  , _commodity :: CommodityName
+  } deriving (Show)
+
+data Posting = Posting
+  { _accountName :: AccountName
+  , _amount :: Maybe Amount
+  } deriving (Show)
+
+newtype AccountName =
+  AccountName [Text]
+  deriving (Show)
+
+data Directive
+  = Transaction { _date :: Day
+                , _flag :: Char
+                , _description :: Text
+                , _postings :: [Posting] }
+  | AccountOpen { _date :: Day
+                , _accountName :: AccountName
+                , _commodities :: [CommodityName] }
+  | AccountClose { _date :: Day
+                 , _accountName :: AccountName }
+  | Balance { _date :: Day
+            , _accountName :: AccountName
+            , _amount :: Decimal
+            , _commodity :: CommodityName }
+  | Price { _date :: Day
+          , _commodity :: CommodityName
+          , _price :: Decimal
+          , _priceCommodity :: CommodityName }
+  | Include FilePath
+  | Option Text
+           Text
+  deriving (Show)
 
 -- primitives
 dash :: Parser Char

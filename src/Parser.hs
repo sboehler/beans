@@ -157,7 +157,8 @@ price d =
 datedDirective :: Parser Directive
 datedDirective = do
   d <- date
-  transaction d <|> accountOpen d <|> accountClose d <|> balance d <|> price d
+  transaction d <|> accountOpen d <|> accountClose d <|> balance d <|>
+    price d <?> "dated directive"
 
 include :: Parser Directive
 include = Include <$> (ident "include" *> (unpack <$> token quotedString))

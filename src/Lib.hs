@@ -3,7 +3,6 @@ module Lib
   ) where
 
 import Data.Text.Lazy.IO (readFile)
-import Debug.Trace (trace, traceShowM)
 import Parser (Directive(Include), parse')
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
@@ -29,7 +28,8 @@ doParse :: IO ()
 doParse = do
   (file:_) <- getArgs
   result <- runExceptT $ parseFile file
-  traceShowM result
   case result of
     Left err -> print err
-    Right directives -> print directives
+    Right directives -> do
+      print directives
+      print $ length directives

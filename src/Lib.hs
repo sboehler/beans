@@ -3,6 +3,7 @@ module Lib
   ) where
 
 import Data.Text.Lazy.IO (readFile)
+import Debug.Trace (trace, traceShowM)
 import Parser (Directive(Include), parse')
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
@@ -21,13 +22,14 @@ getIncludeFiles _ [] = []
 parseFile :: FilePath -> ExceptT ParseError IO [Directive]
 parseFile f = do
   directives <- ExceptT $ parse' f <$> readFile f
-  let fs = getIncludeFiles f directives
-  mconcat . (:) directives <$> mapM parseFile fs
+  others <- mapM parseFile (getIncludeFiles f directives)
+  return $ mconcat (directives : others)
 
 doParse :: IO ()
 doParse = do
   (file:_) <- getArgs
   result <- runExceptT $ parseFile file
+  traceShowM result
   case result of
     Left err -> print err
-    Right directives -> print $ getIncludeFiles file directives
+    Right directives -> print directives

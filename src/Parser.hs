@@ -92,8 +92,11 @@ flag = oneOf "!*"
 spaces :: Parser ()
 spaces = void (many space)
 
+emptyline :: Parser ()
+emptyline = void (spaces >> newline)
+
 comment :: Parser ()
-comment = (oneOf ";#" >> manyTill anyChar (try newline)) *> return ()
+comment = void (oneOf ";#" >> manyTill anyChar (try newline))
 
 text :: Parser Char -> Parser Text
 text p = pack <$> many p
@@ -105,7 +108,10 @@ surroundedBy :: Parser a -> Parser b -> Parser b
 surroundedBy p = between p p
 
 token :: Parser a -> Parser a
-token = surroundedBy spaces
+token p = do
+  result <- p
+  _ <- spaces
+  return result
 
 ident :: String -> Parser Text
 ident i = pack <$> token (string i)
@@ -134,19 +140,19 @@ posting = do
 transaction :: Day -> Parser Directive
 transaction d = Transaction d <$> token flag <*> token quotedString <*> postings
   where
-    postings = many1 (try (newline >> space >> posting))
+    postings = many1 (try (newline >> token space >> posting))
 
 accountOpen :: Day -> Parser Directive
 accountOpen d =
-  AccountOpen d <$> (ident "open" *> token accountName) <*>
+  AccountOpen d <$> try (ident "open" *> token accountName) <*>
   sepBy (token commodityName) comma
 
 accountClose :: Day -> Parser Directive
-accountClose d = AccountClose d <$> (ident "close" *> token accountName)
+accountClose d = AccountClose d <$> try (ident "close" *> token accountName)
 
 balance :: Day -> Parser Directive
 balance d =
-  Balance d <$> (ident "balance" *> token accountName) <*> token decimal <*>
+  Balance d <$> try (ident "balance" *> token accountName) <*> token decimal <*>
   token commodityName
 
 price :: Day -> Parser Directive
@@ -156,7 +162,7 @@ price d =
 
 datedDirective :: Parser Directive
 datedDirective = do
-  d <- date
+  d <- token date
   transaction d <|> accountOpen d <|> accountClose d <|> balance d <|>
     price d <?> "dated directive"
 
@@ -172,8 +178,9 @@ directive = datedDirective <|> include <|> option <?> "directive"
 
 block :: Parser a -> Parser a
 block p = do
+  _ <- many (comment <|> emptyline)
   res <- p
-  _ <- many ((spaces <|> comment) >> newline)
+  _ <- many (comment <|> emptyline)
   return res
 
 directives :: Parser [Directive]

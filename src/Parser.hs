@@ -9,7 +9,7 @@ module Parser
 
 import Control.Monad (void)
 import Data.Decimal (Decimal)
-import Data.Text (Text, cons, pack, unpack)
+import Data.Text.Lazy (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
 import Text.Parsec
        (ParseError, Parsec, (<?>), (<|>), alphaNum, anyChar, between,

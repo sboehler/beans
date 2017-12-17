@@ -3,7 +3,7 @@ module Lib
   ) where
 
 import Data.Text.Lazy.IO (readFile)
-import Parser (Directive(Include), parse')
+import Parser (ConfigDirective(..), Directive(Config), parse')
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)
@@ -14,7 +14,7 @@ import Control.Monad.Except (ExceptT(..), runExceptT)
 getIncludeFiles :: FilePath -> [Directive] -> [FilePath]
 getIncludeFiles f (d:ds) =
   case d of
-    Include p -> (takeDirectory f </> p) : getIncludeFiles f ds
+    Config (Include p) -> (takeDirectory f </> p) : getIncludeFiles f ds
     _ -> getIncludeFiles f ds
 getIncludeFiles _ [] = []
 

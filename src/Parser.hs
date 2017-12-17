@@ -3,6 +3,7 @@ module Parser
   , AccountName(..)
   , CommodityName(..)
   , Directive(..)
+  , ConfigDirective(..)
   , Posting(..)
   , PostingPrice(..)
   ) where
@@ -21,71 +22,76 @@ import Text.Parsec.Number (fractional2, sign)
 type Parser a = Parsec Text () a
 
 -- Type to wrap the AST of a file
-data Directive
-  = Transaction { _date :: Day
-                , _flag :: Flag
+data DatedDirective
+  = Transaction { _flag :: Flag
                 , _description :: Text
                 , _tags :: [Tag]
                 , _postings :: [Posting] }
-  | AccountOpen { _date :: Day
-                , _accountName :: AccountName
+  | AccountOpen { _accountName :: AccountName
                 , _commodities :: [CommodityName] }
-  | AccountClose { _date :: Day
-                 , _accountName :: AccountName }
-  | Balance { _date :: Day
-            , _accountName :: AccountName
+  | AccountClose { _accountName :: AccountName }
+  | Balance { _accountName :: AccountName
             , _amount :: Decimal
             , _commodity :: CommodityName }
-  | Price { _date :: Day
-          , _commodity :: CommodityName
+  | Price { _commodity :: CommodityName
           , _price :: Decimal
           , _priceCommodity :: CommodityName }
-  | Include FilePath
+  deriving (Show, Eq)
+
+data ConfigDirective
+  = Include FilePath
   | Option Text
            Text
-  deriving (Show)
+  deriving (Show, Eq)
+
+-- Type to wrap the AST of a file
+data Directive
+  = Config ConfigDirective
+  | Dated { _date :: Day
+          , _directive :: DatedDirective }
+  deriving (Show, Eq)
 
 data Flag
   = Complete
   | Incomplete
-  deriving (Show)
+  deriving (Show, Eq)
 
 newtype Tag =
   Tag Text
-  deriving (Show)
+  deriving (Show, Eq)
 
 data Posting = Posting
   { _accountName :: AccountName
   , _amount :: Maybe PostingAmount
-  } deriving (Show)
+  } deriving (Show, Eq)
 
 newtype AccountName =
   AccountName [Text]
-  deriving (Show)
+  deriving (Show, Eq)
 
 data PostingAmount = PostingAmount
   { _amount :: Decimal
   , _commodity :: CommodityName
   , _cost :: Maybe Cost
   , _price :: Maybe PostingPrice
-  } deriving (Show)
+  } deriving (Show, Eq)
 
 newtype CommodityName =
   CommodityName Text
-  deriving (Show)
+  deriving (Show, Eq)
 
 data Cost = Cost
   { _amount :: Decimal
   , _commodity :: CommodityName
   , _label :: Maybe Day
-  } deriving (Show)
+  } deriving (Show, Eq)
 
 data PostingPrice
   = UnitPrice { _amount :: Decimal
               , _commodity :: CommodityName }
   | TotalPrice { _amount :: Decimal
                , _commodity :: CommodityName }
-  deriving (Show)
+  deriving (Show, Eq)
 
 -- wraps a parser p, consuming all spaces after p
 token :: Parser a -> Parser a
@@ -162,8 +168,8 @@ postingAmount =
 posting :: Parser Posting
 posting = symbol " " >> Posting <$> accountName <*> optionMaybe postingAmount
 
-transaction :: Day -> Parser Directive
-transaction d = Transaction d <$> flag <*> quotedString <*> tags <*> postings
+transaction :: Parser DatedDirective
+transaction = Transaction <$> flag <*> quotedString <*> tags <*> postings
   where
     postings = many1 (try (newline >> posting))
     tags = many $ Tag <$> (cons <$> hash <*> text alphaNum)
@@ -173,37 +179,36 @@ transaction d = Transaction d <$> flag <*> quotedString <*> tags <*> postings
         incomplete = char '!' >> pure Incomplete
         complete = char '*' >> pure Complete
 
-open :: Day -> Parser Directive
-open d =
+open :: Parser DatedDirective
+open =
   symbol "open" >>
-  (AccountOpen d <$> accountName <*> sepBy commodityName (symbol ","))
+  (AccountOpen <$> accountName <*> sepBy commodityName (symbol ","))
 
-close :: Day -> Parser Directive
-close d = symbol "close" >> (AccountClose d <$> accountName)
+close :: Parser DatedDirective
+close = symbol "close" >> (AccountClose <$> accountName)
 
-balance :: Day -> Parser Directive
-balance d =
-  symbol "balance" >> (Balance d <$> accountName <*> decimal <*> commodityName)
+balance :: Parser DatedDirective
+balance =
+  symbol "balance" >> (Balance <$> accountName <*> decimal <*> commodityName)
 
-price :: Day -> Parser Directive
-price d =
-  symbol "price" >> (Price d <$> commodityName <*> decimal <*> commodityName)
+price :: Parser DatedDirective
+price =
+  symbol "price" >> (Price <$> commodityName <*> decimal <*> commodityName)
 
-datedDirective :: Parser Directive
-datedDirective = do
-  d <- date
-  transaction d <|> open d <|> close d <|> balance d <|> price d
-
-include :: Parser Directive
+include :: Parser ConfigDirective
 include = symbol "include" >> (Include <$> filePath)
   where
     filePath = unpack <$> quotedString
 
-option :: Parser Directive
+option :: Parser ConfigDirective
 option = symbol "option" >> (Option <$> quotedString <*> quotedString)
 
 directive :: Parser Directive
-directive = datedDirective <|> include <|> option
+directive = datedDirective <|> configDirective
+  where
+    datedDirective =
+      Dated <$> date <*> (transaction <|> open <|> close <|> balance <|> price)
+    configDirective = Config <$> (include <|> option)
 
 block :: Parser a -> Parser a
 block = surroundedBy skipLines

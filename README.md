@@ -1,6 +1,6 @@
 # haricot
 
-Haricot is (so far) a Haskell implementation of a parser and a pretty-printer for the [beancount](https://furius.ca/beancouont) plain text accounting format.
+Haricot is (so far) a Haskell implementation of a parser and a pretty-printer for the [beancount](https://furius.ca/beancouont) plain text accounting format. It doesn't do anything useful yet, but I have some ideas.
 
 ## Text-based accounting?
 

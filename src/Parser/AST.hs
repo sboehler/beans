@@ -1,4 +1,4 @@
-module Model
+module Parser.AST
   ( AccountName(..)
   , CommodityName(..)
   , PostingAmount(..)
@@ -53,7 +53,6 @@ data ConfigDirective
            Text
   deriving (Show, Eq)
 
--- Type to wrap the AST of a file
 data Directive
   = Config ConfigDirective
   | Dated { _date :: Day

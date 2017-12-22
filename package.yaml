@@ -27,32 +27,32 @@ dependencies:
 - parsec
 - parsec3-numbers
 - mtl
+- prettyprinter
 - text
 - time
 
+default-extensions:
+- DataKinds
+- DeriveGeneric
+- GeneralizedNewtypeDeriving
+- DuplicateRecordFields
+- NamedFieldPuns
+- LambdaCase
+- FlexibleContexts
+- OverloadedStrings
+- FlexibleInstances
+- RankNTypes
+- RecordWildCards
+- ScopedTypeVariables
+- ScopedTypeVariables
+- StandaloneDeriving
+- TemplateHaskell
+- UndecidableInstances
+- TypeFamilies
+- TypeOperators
+
 library:
   source-dirs: src
-  default-extensions:
-  - DataKinds
-  - DeriveGeneric
-  - GeneralizedNewtypeDeriving
-  - DuplicateRecordFields
-  - NamedFieldPuns
-  - LambdaCase
-  - FlexibleContexts
-  - OverloadedStrings
-  - FlexibleInstances
-  - RankNTypes
-  - RecordWildCards
-  - ScopedTypeVariables
-  - ScopedTypeVariables
-  - StandaloneDeriving
-  - TemplateHaskell
-  - UndecidableInstances
-  - TypeFamilies
-  - TypeOperators
-
-
 
 executables:
   haricot-exe:
@@ -64,6 +64,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - haricot
+
 
 tests:
   haricot-test:

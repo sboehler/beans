@@ -13,7 +13,7 @@ import Control.Monad (void)
 import Data.Decimal (Decimal)
 import Data.Text.Lazy (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
-import Model
+import Parser.AST
 import Text.Parsec
        (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
         count, digit, eof, letter, many, many1, manyTill, newline, noneOf,

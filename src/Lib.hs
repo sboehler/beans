@@ -4,7 +4,8 @@ module Lib
 
 import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
-import Data.Time.Calendar (Day, fromGregorian)
+import Data.Text.Prettyprint.Doc
+import Data.Time.Calendar (Day)
 import Parser
        (ConfigDirective(..), DatedDirective(..), Directive(Config, Dated),
         parse')
@@ -36,8 +37,19 @@ doParse = do
     Left err -> print err
     Right directives -> do
       let d = getDatedTransactions directives
-      print $ M.lookupLT (fromGregorian 2017 12 1) d
+      --print $ M.lookupLT (fromGregorian 2017 12 1) d
+      print $ pretty $ DatedMap d
       print $ length directives
+
+newtype DatedMap =
+  DatedMap (M.Map Day [DatedDirective])
+  deriving (Show)
+
+instance Pretty DatedMap where
+  pretty (DatedMap m) = M.foldlWithKey f emptyDoc m
+    where
+      f doc d dds = doc <> cat (map (ppDir d) dds) <> hardline
+      ppDir day dir = pretty (show day) <+> pretty dir <> hardline
 
 getDatedTransactions :: [Directive] -> M.Map Day [DatedDirective]
 getDatedTransactions arg = M.fromListWith (++) $ foldl fil [] arg

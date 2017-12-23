@@ -2,7 +2,6 @@ module Parser
   ( parse'
   , AccountName(..)
   , CommodityName(..)
-  , Directive(..)
   , DatedDirective(..)
   , ConfigDirective(..)
   , Posting(..)
@@ -17,18 +16,15 @@ import Parser.AST
 import Text.Parsec
        (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
         count, digit, eof, letter, many, many1, manyTill, newline, noneOf,
-        oneOf, optionMaybe, parse, sepBy, string, try)
+        oneOf, optionMaybe, parse, sepBy, sepBy1, string, try)
 import Text.Parsec.Number (fractional2, sign)
 
 -- The parser monad without state
-type Parser a = Parsec Text () a
+type Parser = Parsec Text ()
 
 -- wraps a parser p, consuming all spaces after p
 token :: Parser a -> Parser a
-token p = do
-  result <- p
-  _ <- many $ char ' '
-  return result
+token p = p <* many (char ' ')
 
 -- primitives
 date :: Parser Day
@@ -78,22 +74,32 @@ decimal = token $ sign <*> fractional2 True
 accountName :: Parser AccountName
 accountName = AccountName <$> name
   where
-    name = token $ sepBy segment colon
+    name = token $ segment `sepBy` char ':'
     segment = cons <$> letter <*> text alphaNum
-    colon = char ':'
 
 commodityName :: Parser CommodityName
 commodityName = CommodityName <$> text1 alphaNum
 
+amount :: Parser Amount
+amount = Amount <$> decimal <*> commodityName
+
+postingPrice :: Parser PostingPrice
+postingPrice = unitPrice <|> totalPrice
+  where
+    unitPrice = try $ symbol "@" >> UnitPrice <$> amount
+    totalPrice = try $ symbol "@@" >> TotalPrice <$> amount
+
+postingCost :: Parser [PostingCost]
+postingCost = cost <|> pure []
+  where
+    cost = braces $ costElem `sepBy1` symbol ","
+    costElem =
+      PostingCostAmount <$> try amount <|> PostingCostDate <$> try date <|>
+      PostingCostLabel <$> quotedString
+
 postingAmount :: Parser PostingAmount
 postingAmount =
-  PostingAmount <$> decimal <*> commodityName <*> optionMaybe cost <*>
-  optionMaybe (unitPrice <|> totalPrice)
-  where
-    cost = braces (Cost <$> decimal <*> commodityName <*> optionMaybe label)
-    label = symbol "," >> date
-    unitPrice = try $ symbol "@" >> UnitPrice <$> decimal <*> commodityName
-    totalPrice = try $ symbol "@@" >> TotalPrice <$> decimal <*> commodityName
+  PostingAmount <$> amount <*> postingCost <*> optionMaybe postingPrice
 
 posting :: Parser Posting
 posting = symbol " " >> Posting <$> accountName <*> optionMaybe postingAmount
@@ -102,8 +108,7 @@ transaction :: Parser DatedDirective
 transaction = Transaction <$> flag <*> quotedString <*> tags <*> postings
   where
     postings = many1 (try (newline >> posting))
-    tags = many $ Tag <$> (cons <$> hash <*> text alphaNum)
-    hash = char '#'
+    tags = many $ Tag <$> (cons <$> char '#' <*> text alphaNum)
     flag = token (complete <|> incomplete)
       where
         incomplete = char '!' >> pure Incomplete
@@ -112,33 +117,36 @@ transaction = Transaction <$> flag <*> quotedString <*> tags <*> postings
 open :: Parser DatedDirective
 open =
   symbol "open" >>
-  (AccountOpen <$> accountName <*> sepBy commodityName (symbol ","))
+  (AccountOpen <$> accountName <*> commodityName `sepBy` symbol ",")
 
 close :: Parser DatedDirective
-close = symbol "close" >> (AccountClose <$> accountName)
+close = symbol "close" >> AccountClose <$> accountName
 
 balance :: Parser DatedDirective
-balance =
-  symbol "balance" >> (Balance <$> accountName <*> decimal <*> commodityName)
+balance = symbol "balance" >> Balance <$> accountName <*> amount
 
 price :: Parser DatedDirective
-price =
-  symbol "price" >> (Price <$> commodityName <*> decimal <*> commodityName)
+price = symbol "price" >> Price <$> commodityName <*> amount
 
 include :: Parser ConfigDirective
-include = symbol "include" >> (Include <$> filePath)
+include = symbol "include" >> Include <$> filePath
   where
     filePath = unpack <$> quotedString
 
 option :: Parser ConfigDirective
 option = symbol "option" >> (Option <$> quotedString <*> quotedString)
 
+datedDirective :: Parser DatedDirective
+datedDirective = transaction <|> open <|> close <|> balance <|> price
+
+configDirective :: Parser ConfigDirective
+configDirective = include <|> option
+
 directive :: Parser Directive
-directive = datedDirective <|> configDirective
+directive = dated <|> config
   where
-    datedDirective =
-      Dated <$> date <*> (transaction <|> open <|> close <|> balance <|> price)
-    configDirective = Config <$> (include <|> option)
+    dated = Dated <$> date <*> datedDirective
+    config = Config <$> configDirective
 
 block :: Parser a -> Parser a
 block = surroundedBy skipLines
@@ -146,10 +154,7 @@ block = surroundedBy skipLines
     skipLines = many (comment <|> eol)
 
 directives :: Parser [Directive]
-directives = do
-  ds <- many (block directive)
-  eof
-  return ds
+directives = many (block directive) <* eof
 
 parse' :: FilePath -> Text -> Either ParseError [Directive]
 parse' = parse directives

@@ -2,156 +2,176 @@ module Parser
   ( parse'
   , AccountName(..)
   , CommodityName(..)
-  , DatedDirective(..)
   , ConfigDirective(..)
+  , DatedDirective(..)
+  , Flag(..)
   , Posting(..)
+  , PostingAmount(..)
+  , PostingCost(..)
   , PostingPrice(..)
+  , Tag(..)
   ) where
 
 import Control.Monad (void)
 import Data.Decimal (Decimal)
 import Data.Text.Lazy (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
-import Parser.AST
 import Text.Parsec
        (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
         count, digit, eof, letter, many, many1, manyTill, newline, noneOf,
-        oneOf, optionMaybe, parse, sepBy, sepBy1, string, try)
+        oneOf, option, optionMaybe, parse, sepBy, sepBy1, string, try)
 import Text.Parsec.Number (fractional2, sign)
 
--- The parser monad without state
+import Parser.AST
+
 type Parser = Parsec Text ()
 
--- wraps a parser p, consuming all spaces after p
+space :: Parser Char
+space = char ' '
+
+dash :: Parser Char
+dash = char '-'
+
+colon :: Parser Char
+colon = char ':'
+
+hash :: Parser Char
+hash = char '#'
+
+doubleQuote :: Parser Char
+doubleQuote = char '\"'
+
 token :: Parser a -> Parser a
-token p = p <* many (char ' ')
+token p = p <* many space
 
--- primitives
+readInt :: (Read a) => Int -> Parser a
+readInt n = read <$> count n digit
+
 date :: Parser Day
-date = token (fromGregorian <$> year <*> month <*> day)
-  where
-    getInt n = read <$> count n digit
-    year = getInt 4
-    month = dash *> getInt 2
-    day = dash *> getInt 2
-    dash = char '-'
-
-eol :: Parser ()
-eol = void $ token newline
-
-comment :: Parser ()
-comment = void (oneOf ";#" >> manyTill anyChar (try eol))
+date =
+  token $
+  fromGregorian <$> readInt 4 <* dash <*> readInt 2 <* dash <*> readInt 2
 
 text :: Parser Char -> Parser Text
 text p = pack <$> many p
 
-text1 :: Parser Char -> Parser Text
-text1 p = token $ pack <$> many1 p
-
-surroundedBy :: Parser a -> Parser b -> Parser b
-surroundedBy p = between p p
+surroundedBy :: Parser a -> Parser b -> Parser a
+surroundedBy p s = between s s p
 
 symbol :: String -> Parser Text
 symbol i = token $ pack <$> string i
 
 quotedString :: Parser Text
-quotedString = token $ quoted textWithoutQuotes
-  where
-    quoted = surroundedBy $ char quote
-    textWithoutQuotes = text $ noneOf [quote]
-    quote = '\"'
+quotedString = token $ text (noneOf "\"") `surroundedBy` doubleQuote
 
 braces :: Parser a -> Parser a
-braces = between brOpen brClose
-  where
-    brOpen = symbol "{"
-    brClose = symbol "}"
+braces = between (symbol "{") (symbol "}")
 
 decimal :: Parser Decimal
 decimal = token $ sign <*> fractional2 True
 
--- domain objects
+accountNameSegment :: Parser Text
+accountNameSegment = cons <$> letter <*> text alphaNum
+
 accountName :: Parser AccountName
-accountName = AccountName <$> name
-  where
-    name = token $ segment `sepBy` char ':'
-    segment = cons <$> letter <*> text alphaNum
+accountName = token $ AccountName <$> accountNameSegment `sepBy` colon
 
 commodityName :: Parser CommodityName
-commodityName = CommodityName <$> text1 alphaNum
+commodityName = token $ CommodityName . pack <$> many alphaNum
 
 amount :: Parser Amount
 amount = Amount <$> decimal <*> commodityName
 
+postingPriceUnit :: Parser PostingPrice
+postingPriceUnit = symbol "@" >> UnitPrice <$> amount
+
+postingPriceTotal :: Parser PostingPrice
+postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
+
 postingPrice :: Parser PostingPrice
-postingPrice = unitPrice <|> totalPrice
-  where
-    unitPrice = try $ symbol "@" >> UnitPrice <$> amount
-    totalPrice = try $ symbol "@@" >> TotalPrice <$> amount
+postingPrice = try postingPriceUnit <|> try postingPriceTotal
+
+postingCostDate :: Parser PostingCost
+postingCostDate = PostingCostDate <$> date
+
+postingCostAmount :: Parser PostingCost
+postingCostAmount = PostingCostAmount <$> amount
+
+postingCostLabel :: Parser PostingCost
+postingCostLabel = PostingCostLabel <$> quotedString
+
+postingCostElement :: Parser PostingCost
+postingCostElement =
+  try postingCostLabel <|> try postingCostDate <|> try postingCostAmount
 
 postingCost :: Parser [PostingCost]
-postingCost = cost <|> pure []
-  where
-    cost = braces $ costElem `sepBy1` symbol ","
-    costElem =
-      PostingCostAmount <$> try amount <|> PostingCostDate <$> try date <|>
-      PostingCostLabel <$> quotedString
+postingCost = braces (postingCostElement `sepBy1` symbol ",")
 
 postingAmount :: Parser PostingAmount
 postingAmount =
-  PostingAmount <$> amount <*> postingCost <*> optionMaybe postingPrice
+  PostingAmount <$> amount <*> option [] postingCost <*>
+  optionMaybe postingPrice
 
 posting :: Parser Posting
-posting = symbol " " >> Posting <$> accountName <*> optionMaybe postingAmount
+posting =
+  newline >> symbol " " >> Posting <$> accountName <*> optionMaybe postingAmount
 
-transaction :: Parser DatedDirective
-transaction = Transaction <$> flag <*> quotedString <*> tags <*> postings
-  where
-    postings = many1 (try (newline >> posting))
-    tags = many $ Tag <$> (cons <$> char '#' <*> text alphaNum)
-    flag = token (complete <|> incomplete)
-      where
-        incomplete = char '!' >> pure Incomplete
-        complete = char '*' >> pure Complete
+flagIncomplete :: Parser Flag
+flagIncomplete = Incomplete <$ symbol "!"
 
-open :: Parser DatedDirective
-open =
+flagComplete :: Parser Flag
+flagComplete = Complete <$ symbol "*"
+
+flag :: Parser Flag
+flag = flagComplete <|> flagIncomplete
+
+tag :: Parser Tag
+tag = Tag <$> (cons <$> hash <*> text alphaNum)
+
+transactionDirective :: Parser DatedDirective
+transactionDirective =
+  Transaction <$> flag <*> quotedString <*> many tag <*> many1 (try posting)
+
+openDirective :: Parser DatedDirective
+openDirective =
   symbol "open" >>
-  (AccountOpen <$> accountName <*> commodityName `sepBy` symbol ",")
+  AccountOpen <$> accountName <*> commodityName `sepBy` symbol ","
 
-close :: Parser DatedDirective
-close = symbol "close" >> AccountClose <$> accountName
+closeDirective :: Parser DatedDirective
+closeDirective = symbol "close" >> AccountClose <$> accountName
 
-balance :: Parser DatedDirective
-balance = symbol "balance" >> Balance <$> accountName <*> amount
+balanceDirective :: Parser DatedDirective
+balanceDirective = symbol "balance" >> Balance <$> accountName <*> amount
 
-price :: Parser DatedDirective
-price = symbol "price" >> Price <$> commodityName <*> amount
-
-include :: Parser ConfigDirective
-include = symbol "include" >> Include <$> filePath
-  where
-    filePath = unpack <$> quotedString
-
-option :: Parser ConfigDirective
-option = symbol "option" >> (Option <$> quotedString <*> quotedString)
+priceDirective :: Parser DatedDirective
+priceDirective = symbol "price" >> Price <$> commodityName <*> amount
 
 datedDirective :: Parser DatedDirective
-datedDirective = transaction <|> open <|> close <|> balance <|> price
+datedDirective =
+  transactionDirective <|> openDirective <|> closeDirective <|> balanceDirective <|>
+  priceDirective
+
+configDirectiveInclude :: Parser ConfigDirective
+configDirectiveInclude = symbol "include" >> Include . unpack <$> quotedString
+
+configDirectiveOption :: Parser ConfigDirective
+configDirectiveOption =
+  symbol "option" >> Option <$> quotedString <*> quotedString
 
 configDirective :: Parser ConfigDirective
-configDirective = include <|> option
+configDirective = configDirectiveInclude <|> configDirectiveOption
 
 directive :: Parser Directive
-directive = dated <|> config
-  where
-    dated = Dated <$> date <*> datedDirective
-    config = Config <$> configDirective
+directive = Dated <$> date <*> datedDirective <|> Config <$> configDirective
+
+eol :: Parser ()
+eol = void $ token newline
+
+comment :: Parser ()
+comment = void (oneOf ";#" >> anyChar `manyTill` try eol)
 
 block :: Parser a -> Parser a
-block = surroundedBy skipLines
-  where
-    skipLines = many (comment <|> eol)
+block p = p `surroundedBy` many (comment <|> eol)
 
 directives :: Parser [Directive]
 directives = many (block directive) <* eof

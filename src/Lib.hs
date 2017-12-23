@@ -6,9 +6,10 @@ import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
 import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
-import Parser
-       (ConfigDirective(..), DatedDirective(..), Directive(Config, Dated),
-        parse')
+import Parser (parse')
+import Parser.AST
+       (ConfigDirective(..), DatedDirective(..), Directive(..),
+        Directive(Config, Dated))
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)

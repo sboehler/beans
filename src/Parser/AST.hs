@@ -84,7 +84,7 @@ instance Pretty Amount where
 
 data Posting = Posting
   { _accountName :: AccountName
-  , _amount :: Maybe PostingAmount
+  , _postingAmount :: Maybe PostingAmount
   } deriving (Show, Eq)
 
 instance Pretty Posting where
@@ -109,7 +109,7 @@ instance Pretty PostingAmount where
 
 newtype CommodityName =
   CommodityName Text
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 instance Pretty CommodityName where
   pretty (CommodityName n) = pretty n

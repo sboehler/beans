@@ -2,47 +2,61 @@ module Parser.Interpreter where
 
 import Data.Decimal (Decimal)
 import Data.List ((\\))
-import Data.Map.Lazy (Map, foldlWithKey)
 import qualified Data.Map.Lazy as M
-import Data.Maybe (isJust, mapMaybe)
+import Data.Maybe (mapMaybe)
 import Parser.AST
 
 type Weight = (CommodityName, Decimal)
 
 type Weights = [Weight]
 
-completeTransaction :: DatedDirective -> DatedDirective
-completeTransaction t@(Transaction _ _ _ postings) = t {_postings = postings}
-completeTransaction x = x
+completeTransaction :: Directive -> Either String Directive
+completeTransaction dated@(Dated _ transaction@(Transaction _ _ _ postings)) =
+  case completePostings postings of
+    Left s -> Left $ s ++ " " ++ show dated
+    Right p -> Right $ dated {_directive = transaction {_postings = p}}
+completeTransaction x = Right x
 
 completePostings :: [Posting] -> Either String [Posting]
-completePostings p = do
-  let w = M.filter (/= 0) $ weights p
-      e = filter (isJust . _postingAmount) p
-  case (length e, null w) of
-    (0, True) -> Right p
-    (0, False) -> Left "No posting without amount"
-    (1, True) -> Right $ p \\ e
-    (1, False) ->
-      Right $
-      foldlWithKey (balance (_accountName (head e :: Posting))) (p \\ e) w
-    _ -> Left "Too many empty postings"
-
-balance :: AccountName -> ([Posting] -> CommodityName -> Decimal -> [Posting])
-balance account l c a =
-  Posting account (Just (PostingAmount (Amount (-a) c) [] Nothing)) : l
-
-weights :: [Posting] -> Map CommodityName Decimal
-weights p = M.fromListWith (+) (mapMaybe weight p)
+completePostings p =
+  case imbalances of
+    [] -> Right $ p \\ wildcards
+    _ ->
+      case wildcards of
+        [WildcardPosting accountName] ->
+          let balances = createBalanceBooking accountName <$> imbalances
+          in Right $ balances ++ (p \\ wildcards)
+        [] -> Left "Error: No wildcard posting"
+        _ -> Left "Error: Too many wildcard postings"
   where
-    weight (Posting _ (Just a)) = Just $ calculateWeight a
-    weight (Posting _ Nothing) = Nothing
+    imbalances = calculateImbalances p
+    wildcards = [w | w@WildcardPosting {..} <- p]
 
-calculateWeight :: PostingAmount -> (CommodityName, Decimal)
-calculateWeight (PostingAmount amount' costs' price') = w amount' costs' price'
-  where
-    w (Amount a c) [] Nothing = (c, a)
-    w (Amount a _) (PostingCostAmount (Amount a' c'):_) _ = (c', a' * a)
-    w amount (_:costs) price = w amount costs price
-    w (Amount a _) [] (Just (UnitPrice (Amount a' c'))) = (c', a' * a)
-    w _ [] (Just (TotalPrice (Amount a c))) = (c, a)
+createBalanceBooking :: AccountName -> (CommodityName, Decimal) -> Posting
+createBalanceBooking account (c, a) = CompletePosting account (-a) c [] Nothing
+
+calculateImbalances :: [Posting] -> [(CommodityName, Decimal)]
+calculateImbalances =
+  M.toList . M.filter notZero . M.fromListWith (+) . mapMaybe calculateWeight
+
+notZero :: Decimal -> Bool
+notZero n = abs n > 0.005
+
+calculateWeight :: Posting -> Maybe (CommodityName, Decimal)
+calculateWeight WildcardPosting {..} = Nothing
+calculateWeight CompletePosting {..} =
+  case findCost _postingCost of
+    Just (c, a) -> Just (c, _amount * a)
+    Nothing ->
+      case _postingPrice of
+        Just UnitPrice {..} ->
+          Just (_unitPriceCommodity, _amount * _unitPriceAmount)
+        Just TotalPrice {..} ->
+          Just (_totalPriceCommodity, signum _amount * _totalPriceAmount)
+        Nothing -> Just (_postingCommodityName, _amount)
+
+findCost :: [PostingCost] -> Maybe (CommodityName, Decimal)
+findCost (PostingCostAmount {..}:_) =
+  Just (_postingCostCommmodity, _postingCostAmount)
+findCost (_:costs) = findCost costs
+findCost [] = Nothing

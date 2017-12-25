@@ -6,7 +6,6 @@ module Parser
   , DatedDirective(..)
   , Flag(..)
   , Posting(..)
-  , PostingAmount(..)
   , PostingCost(..)
   , PostingPrice(..)
   , Tag(..)
@@ -79,14 +78,11 @@ accountName = token $ AccountName <$> accountNameSegment `sepBy` colon
 commodityName :: Parser CommodityName
 commodityName = token $ CommodityName . pack <$> many alphaNum
 
-amount :: Parser Amount
-amount = Amount <$> decimal <*> commodityName
-
 postingPriceUnit :: Parser PostingPrice
-postingPriceUnit = symbol "@" >> UnitPrice <$> amount
+postingPriceUnit = symbol "@" >> UnitPrice <$> decimal <*> commodityName
 
 postingPriceTotal :: Parser PostingPrice
-postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
+postingPriceTotal = symbol "@@" >> TotalPrice <$> decimal <*> commodityName
 
 postingPrice :: Parser PostingPrice
 postingPrice = try postingPriceUnit <|> try postingPriceTotal
@@ -95,7 +91,7 @@ postingCostDate :: Parser PostingCost
 postingCostDate = PostingCostDate <$> date
 
 postingCostAmount :: Parser PostingCost
-postingCostAmount = PostingCostAmount <$> amount
+postingCostAmount = PostingCostAmount <$> decimal <*> commodityName
 
 postingCostLabel :: Parser PostingCost
 postingCostLabel = PostingCostLabel <$> quotedString
@@ -107,14 +103,17 @@ postingCostElement =
 postingCost :: Parser [PostingCost]
 postingCost = braces (postingCostElement `sepBy1` symbol ",")
 
-postingAmount :: Parser PostingAmount
-postingAmount =
-  PostingAmount <$> amount <*> option [] postingCost <*>
+wildcardPosting :: Parser Posting
+wildcardPosting = WildcardPosting <$> accountName
+
+completePosting :: Parser Posting
+completePosting =
+  CompletePosting <$> accountName <*> decimal <*> commodityName <*>
+  option [] postingCost <*>
   optionMaybe postingPrice
 
 posting :: Parser Posting
-posting =
-  newline >> symbol " " >> Posting <$> accountName <*> optionMaybe postingAmount
+posting = newline >> symbol " " >> (try completePosting <|> try wildcardPosting)
 
 flagIncomplete :: Parser Flag
 flagIncomplete = Incomplete <$ symbol "!"
@@ -141,10 +140,12 @@ closeDirective :: Parser DatedDirective
 closeDirective = symbol "close" >> AccountClose <$> accountName
 
 balanceDirective :: Parser DatedDirective
-balanceDirective = symbol "balance" >> Balance <$> accountName <*> amount
+balanceDirective =
+  symbol "balance" >> Balance <$> accountName <*> decimal <*> commodityName
 
 priceDirective :: Parser DatedDirective
-priceDirective = symbol "price" >> Price <$> commodityName <*> amount
+priceDirective =
+  symbol "price" >> Price <$> commodityName <*> decimal <*> commodityName
 
 datedDirective :: Parser DatedDirective
 datedDirective =

@@ -2,6 +2,7 @@ module Lib
   ( doParse
   ) where
 
+import Data.Either (lefts, rights)
 import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
 import Data.Text.Prettyprint.Doc
@@ -10,6 +11,7 @@ import Parser (parse')
 import Parser.AST
        (ConfigDirective(..), DatedDirective(..), Directive(..),
         Directive(Config, Dated))
+import Parser.Interpreter (completeTransaction)
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)
@@ -37,9 +39,9 @@ doParse = do
   case result of
     Left err -> print err
     Right directives -> do
-      let d = getDatedTransactions directives
-      --print $ M.lookupLT (fromGregorian 2017 12 1) d
-      print $ pretty $ DatedMap d
+      let dated = [d | d@(Dated _ _) <- directives]
+      let complete = completeTransaction <$> dated
+      print $ vsep (((<+> hardline) . pretty) <$> lefts complete)
       print $ length directives
 
 newtype DatedMap =
@@ -51,9 +53,3 @@ instance Pretty DatedMap where
     where
       f doc d dds = doc <> cat (map (ppDir d) dds) <> hardline
       ppDir day dir = pretty (show day) <+> pretty dir <> hardline
-
-getDatedTransactions :: [Directive] -> M.Map Day [DatedDirective]
-getDatedTransactions arg = M.fromListWith (++) $ foldl fil [] arg
-  where
-    fil l (Dated d dd) = (d, [dd]) : l
-    fil l _ = l

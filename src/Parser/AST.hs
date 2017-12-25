@@ -1,8 +1,6 @@
 module Parser.AST
   ( AccountName(..)
-  , Amount(..)
   , CommodityName(..)
-  , PostingAmount(..)
   , ConfigDirective(..)
   , Posting(..)
   , Directive(..)
@@ -24,23 +22,25 @@ data DatedDirective
                 , _commodities :: [CommodityName] }
   | AccountClose { _accountName :: AccountName }
   | Balance { _accountName :: AccountName
-            , _amount :: Amount }
+            , _amount :: Decimal
+            , _commodityName :: CommodityName }
   | Transaction { _flag :: Flag
                 , _description :: Text
                 , _tags :: [Tag]
                 , _postings :: [Posting] }
   | Price { _commodity :: CommodityName
-          , _amount :: Amount }
+          , _amount :: Decimal
+          , _priceCommodity :: CommodityName }
   deriving (Eq, Show)
 
 instance Pretty DatedDirective where
   pretty (AccountOpen account commodities) =
     "open" <+> pretty account <+> sep (map pretty commodities)
   pretty (AccountClose account) = "close" <+> pretty account
-  pretty (Balance account amount) =
-    "balance" <+> pretty account <+> pretty amount
-  pretty (Price commodity amount) =
-    "price" <+> pretty commodity <+> pretty amount
+  pretty (Balance account amount commodity) =
+    "balance" <+> pretty account <+> prettyDec amount <+> pretty commodity
+  pretty (Price commodity amount priceCommodity) =
+    "price" <+> pretty commodity <+> prettyDec amount <+> pretty priceCommodity
   pretty (Transaction flag description tags postings) =
     pretty flag <+>
     dquotes (pretty description) <+>
@@ -52,11 +52,19 @@ data ConfigDirective
            Text
   deriving (Show, Eq)
 
+instance Pretty ConfigDirective where
+  pretty (Include filePath) = "include" <+> pretty filePath
+  pretty (Option d t) = "option" <+> pretty d <+> pretty t
+
 data Directive
   = Config ConfigDirective
   | Dated { _date :: Day
           , _directive :: DatedDirective }
   deriving (Show, Eq)
+
+instance Pretty Directive where
+  pretty (Dated date directive) = pretty (show date) <+> pretty directive
+  pretty (Config directive) = pretty directive
 
 data Flag
   = Complete
@@ -74,38 +82,36 @@ newtype Tag =
 instance Pretty Tag where
   pretty (Tag t) = pretty t
 
-data Amount =
-  Amount Decimal
-         CommodityName
-  deriving (Eq, Show)
+prettyDec :: Decimal -> Doc a
+prettyDec = pretty . show
 
-instance Pretty Amount where
-  pretty (Amount a c) = pretty (show a) <+> pretty c
-
-data Posting = Posting
-  { _accountName :: AccountName
-  , _postingAmount :: Maybe PostingAmount
-  } deriving (Show, Eq)
+data Posting
+  = WildcardPosting { _postingAccountName :: AccountName }
+  | CompletePosting { _postingAccountName :: AccountName
+                    , _amount :: Decimal
+                    , _postingCommodityName :: CommodityName
+                    , _postingCost :: [PostingCost]
+                    , _postingPrice :: Maybe PostingPrice }
+  deriving (Show, Eq)
 
 instance Pretty Posting where
-  pretty (Posting n a) = pretty n <+> pretty a
+  pretty CompletePosting {..} =
+    pretty _postingAccountName <+>
+    prettyDec _amount <+>
+    pretty _postingCommodityName <+>
+    prettyCost _postingCost <+> pretty _postingPrice
+  pretty (WildcardPosting n) = pretty n
+
+prettyCost :: [PostingCost] -> Doc a
+prettyCost [] = mempty
+prettyCost c = encloseSep "{" "}" "," (map pretty c)
 
 newtype AccountName =
   AccountName [Text]
   deriving (Show, Eq)
 
 instance Pretty AccountName where
-  pretty (AccountName n) = pretty $ intercalate ":" n
-
-data PostingAmount = PostingAmount
-  { _amount :: Amount
-  , _cost :: [PostingCost]
-  , _price :: Maybe PostingPrice
-  } deriving (Show, Eq)
-
-instance Pretty PostingAmount where
-  pretty (PostingAmount amount cost price) =
-    pretty amount <+> pretty cost <+> pretty price
+  pretty (AccountName n) = pretty $ ":" `intercalate` n
 
 newtype CommodityName =
   CommodityName Text
@@ -115,21 +121,24 @@ instance Pretty CommodityName where
   pretty (CommodityName n) = pretty n
 
 data PostingCost
-  = PostingCostAmount Amount
+  = PostingCostAmount { _postingCostAmount :: Decimal
+                      , _postingCostCommmodity :: CommodityName }
   | PostingCostDate Day
   | PostingCostLabel Text
   deriving (Show, Eq)
 
 instance Pretty PostingCost where
-  pretty (PostingCostAmount a) = pretty a
+  pretty (PostingCostAmount a c) = prettyDec a <+> pretty c
   pretty (PostingCostDate date) = pretty $ show date
   pretty (PostingCostLabel label) = pretty label
 
 data PostingPrice
-  = UnitPrice { _amount :: Amount }
-  | TotalPrice { _amount :: Amount }
+  = UnitPrice { _unitPriceAmount :: Decimal
+              , _unitPriceCommodity :: CommodityName }
+  | TotalPrice { _totalPriceAmount :: Decimal
+               , _totalPriceCommodity :: CommodityName }
   deriving (Show, Eq)
 
 instance Pretty PostingPrice where
-  pretty (UnitPrice a) = "@" <+> pretty a
-  pretty (TotalPrice a) = "@@" <+> pretty a
+  pretty (UnitPrice a c) = "@" <+> prettyDec a <+> pretty c
+  pretty (TotalPrice a c) = "@@" <+> prettyDec a <+> pretty c

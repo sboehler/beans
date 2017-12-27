@@ -1,14 +1,5 @@
 module Parser
   ( parse'
-  , AccountName(..)
-  , CommodityName(..)
-  , ConfigDirective(..)
-  , DatedDirective(..)
-  , Flag(..)
-  , Posting(..)
-  , PostingCost(..)
-  , PostingPrice(..)
-  , Tag(..)
   ) where
 
 import Control.Monad (void)
@@ -127,43 +118,42 @@ flag = flagComplete <|> flagIncomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> hash <*> text alphaNum)
 
-transactionDirective :: Parser DatedDirective
-transactionDirective =
-  Transaction <$> flag <*> quotedString <*> many tag <*> many1 (try posting)
+transaction :: Parser Transaction
+transaction =
+  Transaction <$> date <*> flag <*> quotedString <*> many tag <*>
+  many1 (try posting)
 
-openDirective :: Parser DatedDirective
-openDirective =
-  symbol "open" >>
-  AccountOpen <$> accountName <*> commodityName `sepBy` symbol ","
+open :: Parser Open
+open =
+  Open <$> date <* symbol "open" <*> accountName <*>
+  commodityName `sepBy` symbol ","
 
-closeDirective :: Parser DatedDirective
-closeDirective = symbol "close" >> AccountClose <$> accountName
+close :: Parser Close
+close = Close <$> date <* symbol "close" <*> accountName
 
-balanceDirective :: Parser DatedDirective
-balanceDirective =
-  symbol "balance" >> Balance <$> accountName <*> decimal <*> commodityName
+balance :: Parser Balance
+balance =
+  Balance <$> date <* symbol "balance" <*> accountName <*> decimal <*>
+  commodityName
 
-priceDirective :: Parser DatedDirective
-priceDirective =
-  symbol "price" >> Price <$> commodityName <*> decimal <*> commodityName
+price :: Parser Price
+price =
+  Price <$> date <* symbol "price" <*> commodityName <*> decimal <*>
+  commodityName
 
-datedDirective :: Parser DatedDirective
-datedDirective =
-  transactionDirective <|> openDirective <|> closeDirective <|> balanceDirective <|>
-  priceDirective
+include :: Parser Include
+include = symbol "include" >> Include . unpack <$> quotedString
 
-configDirectiveInclude :: Parser ConfigDirective
-configDirectiveInclude = symbol "include" >> Include . unpack <$> quotedString
-
-configDirectiveOption :: Parser ConfigDirective
-configDirectiveOption =
-  symbol "option" >> Option <$> quotedString <*> quotedString
-
-configDirective :: Parser ConfigDirective
-configDirective = configDirectiveInclude <|> configDirectiveOption
+config :: Parser Option
+config = symbol "option" >> Option <$> quotedString <*> quotedString
 
 directive :: Parser Directive
-directive = Dated <$> date <*> datedDirective <|> Config <$> configDirective
+directive =
+  Opn <$> try open <|> Cls <$> try close <|> Trn <$> try transaction <|>
+  Prc <$> try price <|>
+  Bal <$> try balance <|>
+  Inc <$> include <|>
+  Opt <$> config
 
 eol :: Parser ()
 eol = void $ token newline

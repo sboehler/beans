@@ -2,15 +2,13 @@ module Lib
   ( doParse
   ) where
 
-import Data.Either (lefts, rights)
+import Data.Either (rights)
 import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
 import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
 import Parser (parse')
-import Parser.AST
-       (ConfigDirective(..), DatedDirective(..), Directive(..),
-        Directive(Config, Dated))
+import Parser.AST (Directive(..), Include(..))
 import Parser.Interpreter (completeTransaction)
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
@@ -20,10 +18,11 @@ import Text.Parsec (ParseError)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 
 getIncludeFiles :: FilePath -> [Directive] -> [FilePath]
-getIncludeFiles f (d:ds) =
+getIncludeFiles currentPath (d:ds) =
   case d of
-    Config (Include p) -> (takeDirectory f </> p) : getIncludeFiles f ds
-    _ -> getIncludeFiles f ds
+    Inc (Include filePath) ->
+      (takeDirectory currentPath </> filePath) : getIncludeFiles currentPath ds
+    _ -> getIncludeFiles currentPath ds
 getIncludeFiles _ [] = []
 
 parseFile :: FilePath -> ExceptT ParseError IO [Directive]
@@ -39,13 +38,12 @@ doParse = do
   case result of
     Left err -> print err
     Right directives -> do
-      let dated = [d | d@(Dated _ _) <- directives]
-      let complete = completeTransaction <$> dated
-      print $ vsep (((<+> hardline) . pretty) <$> lefts complete)
+      let complete = completeTransaction <$> directives
+      print $ vsep (((<+> hardline) . pretty) <$> rights complete)
       print $ length directives
 
 newtype DatedMap =
-  DatedMap (M.Map Day [DatedDirective])
+  DatedMap (M.Map Day [Directive])
   deriving (Show)
 
 instance Pretty DatedMap where

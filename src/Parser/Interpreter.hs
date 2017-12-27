@@ -11,10 +11,10 @@ type Weight = (CommodityName, Decimal)
 type Weights = [Weight]
 
 completeTransaction :: Directive -> Either String Directive
-completeTransaction dated@(Dated _ transaction@(Transaction _ _ _ postings)) =
-  case completePostings postings of
-    Left s -> Left $ s ++ " " ++ show dated
-    Right p -> Right $ dated {_directive = transaction {_postings = p}}
+completeTransaction d@(Trn t@Transaction {..}) =
+  case completePostings _postings of
+    Left s -> Left $ s ++ " " ++ show d
+    Right p -> Right $ Trn t {_postings = p}
 completeTransaction x = Right x
 
 completePostings :: [Posting] -> Either String [Posting]

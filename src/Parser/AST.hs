@@ -1,14 +1,19 @@
 module Parser.AST
   ( AccountName(..)
+  , Balance(..)
+  , Close(..)
   , CommodityName(..)
-  , ConfigDirective(..)
-  , Posting(..)
   , Directive(..)
-  , DatedDirective(..)
+  , Flag(..)
+  , Include(..)
+  , Open(..)
+  , Option(..)
+  , Posting(..)
   , PostingCost(..)
   , PostingPrice(..)
+  , Price(..)
   , Tag(..)
-  , Flag(..)
+  , Transaction(..)
   ) where
 
 import Data.Decimal (Decimal)
@@ -17,54 +22,101 @@ import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
 
 -- Type to wrap the AST of a file
-data DatedDirective
-  = AccountOpen { _accountName :: AccountName
-                , _commodities :: [CommodityName] }
-  | AccountClose { _accountName :: AccountName }
-  | Balance { _accountName :: AccountName
-            , _amount :: Decimal
-            , _commodityName :: CommodityName }
-  | Transaction { _flag :: Flag
-                , _description :: Text
-                , _tags :: [Tag]
-                , _postings :: [Posting] }
-  | Price { _commodity :: CommodityName
-          , _amount :: Decimal
-          , _priceCommodity :: CommodityName }
+data Directive
+  = Opn Open
+  | Cls Close
+  | Bal Balance
+  | Trn Transaction
+  | Prc Price
+  | Opt Option
+  | Inc Include
   deriving (Eq, Show)
 
-instance Pretty DatedDirective where
-  pretty (AccountOpen account commodities) =
-    "open" <+> pretty account <+> sep (map pretty commodities)
-  pretty (AccountClose account) = "close" <+> pretty account
-  pretty (Balance account amount commodity) =
-    "balance" <+> pretty account <+> prettyDec amount <+> pretty commodity
-  pretty (Price commodity amount priceCommodity) =
-    "price" <+> pretty commodity <+> prettyDec amount <+> pretty priceCommodity
-  pretty (Transaction flag description tags postings) =
-    pretty flag <+>
-    dquotes (pretty description) <+>
-    cat (map pretty tags) <> line <> (indent 2 . vcat) (map pretty postings)
-
-data ConfigDirective
-  = Include FilePath
-  | Option Text
-           Text
-  deriving (Show, Eq)
-
-instance Pretty ConfigDirective where
-  pretty (Include filePath) = "include" <+> pretty filePath
-  pretty (Option d t) = "option" <+> pretty d <+> pretty t
-
-data Directive
-  = Config ConfigDirective
-  | Dated { _date :: Day
-          , _directive :: DatedDirective }
-  deriving (Show, Eq)
-
 instance Pretty Directive where
-  pretty (Dated date directive) = pretty (show date) <+> pretty directive
-  pretty (Config directive) = pretty directive
+  pretty (Opn x) = pretty x
+  pretty (Cls x) = pretty x
+  pretty (Bal x) = pretty x
+  pretty (Trn x) = pretty x
+  pretty (Prc x) = pretty x
+  pretty (Opt x) = pretty x
+  pretty (Inc x) = pretty x
+
+prettyDay :: Day -> Doc a
+prettyDay d = pretty $ show d
+
+data Transaction = Transaction
+  { _date :: Day
+  , _flag :: Flag
+  , _description :: Text
+  , _tags :: [Tag]
+  , _postings :: [Posting]
+  } deriving (Eq, Show)
+
+instance Pretty Transaction where
+  pretty Transaction {..} =
+    prettyDay _date <+>
+    pretty _flag <+>
+    dquotes (pretty _description) <+>
+    cat (map pretty _tags) <> line <> (indent 2 . vcat) (map pretty _postings)
+
+data Balance = Balance
+  { _date :: Day
+  , _account :: AccountName
+  , _amount :: Decimal
+  , _commodity :: CommodityName
+  } deriving (Eq, Show)
+
+instance Pretty Balance where
+  pretty Balance {..} =
+    prettyDay _date <+>
+    "balance" <+> pretty _account <+> prettyDec _amount <+> pretty _commodity
+
+data Open = Open
+  { _date :: Day
+  , _account :: AccountName
+  , _commodities :: [CommodityName]
+  } deriving (Show, Eq)
+
+instance Pretty Open where
+  pretty Open {..} =
+    prettyDay _date <+>
+    "open" <+> pretty _account <+> sep (map pretty _commodities)
+
+data Close = Close
+  { _date :: Day
+  , _account :: AccountName
+  } deriving (Show, Eq)
+
+instance Pretty Close where
+  pretty Close {..} = prettyDay _date <+> "close" <+> pretty _account
+
+data Price = Price
+  { _date :: Day
+  , _originCommodity :: CommodityName
+  , _amount :: Decimal
+  , _commodity :: CommodityName
+  } deriving (Show, Eq)
+
+instance Pretty Price where
+  pretty Price {..} =
+    prettyDay _date <+>
+    "price" <+>
+    pretty _originCommodity <+> prettyDec _amount <+> pretty _commodity
+
+newtype Include = Include
+  { _filePath :: FilePath
+  } deriving (Show, Eq)
+
+instance Pretty Include where
+  pretty (Include filePath) = "include" <+> pretty filePath
+
+data Option =
+  Option Text
+         Text
+  deriving (Show, Eq)
+
+instance Pretty Option where
+  pretty (Option d t) = "option" <+> pretty d <+> pretty t
 
 data Flag
   = Complete

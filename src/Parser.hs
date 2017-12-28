@@ -148,13 +148,14 @@ include = symbol "include" >> Include . unpack <$> quotedString
 config :: Parser Option
 config = symbol "option" >> Option <$> quotedString <*> quotedString
 
-directive :: Parser Directive
+directive :: Parser (Directive P.SourcePos)
 directive =
-  Opn <$> try open <|> Cls <$> try close <|> Trn <$> try transaction <|>
-  Prc <$> try price <|>
-  Bal <$> try balance <|>
-  Inc <$> include <|>
-  Opt <$> config
+  (Opn <$> try open <|> Cls <$> try close <|> Trn <$> try transaction <|>
+   Prc <$> try price <|>
+   Bal <$> try balance <|>
+   Inc <$> include <|>
+   Opt <$> config) <*>
+  P.getPosition
 
 eol :: Parser ()
 eol = void $ token newline
@@ -165,8 +166,8 @@ comment = void (oneOf ";#" >> anyChar `manyTill` try eol)
 block :: Parser a -> Parser a
 block p = p `surroundedBy` many (comment <|> eol)
 
-directives :: Parser [Directive]
+directives :: Parser [Directive P.SourcePos]
 directives = many (block directive) <* eof
 
-parse :: FilePath -> Text -> Either ParseError [Directive]
+parse :: FilePath -> Text -> Either ParseError [Directive P.SourcePos]
 parse = P.parse directives

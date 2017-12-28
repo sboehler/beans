@@ -1,8 +1,8 @@
 module Lib
-  ( doParse
+  ( fn
   ) where
 
-import Data.Either (rights)
+import Control.Monad.Trans (liftIO)
 import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
 import Data.Text.Prettyprint.Doc
@@ -13,40 +13,46 @@ import Parser.Interpreter (completeTransaction)
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)
-import Text.Parsec (ParseError)
+import qualified Text.Parsec as P
 
-import Control.Monad.Except (ExceptT(..), runExceptT)
+import Control.Monad.Except
+       (ExceptT(..), catchError, runExceptT, throwError, void)
 
-getIncludeFiles :: FilePath -> [Directive] -> [FilePath]
+getIncludeFiles :: FilePath -> [Directive a] -> [FilePath]
 getIncludeFiles currentPath (d:ds) =
   case d of
-    Inc (Include filePath) ->
+    Inc (Include filePath) _ ->
       (takeDirectory currentPath </> filePath) : getIncludeFiles currentPath ds
     _ -> getIncludeFiles currentPath ds
 getIncludeFiles _ [] = []
 
-parseFile :: FilePath -> ExceptT ParseError IO [Directive]
-parseFile f = do
+recursiveParse :: FilePath -> ExceptT P.ParseError IO [Directive P.SourcePos]
+recursiveParse f = do
   directives <- ExceptT $ parse f <$> readFile f
-  others <- mapM parseFile (getIncludeFiles f directives)
-  return $ mconcat (directives : others)
+  d <-
+    concat . (directives :) <$>
+    traverse recursiveParse (getIncludeFiles f directives)
+  case traverse completeTransaction d of
+    Left e -> throwError e
+    Right l -> return l
 
-doParse :: IO ()
+prettyPrint :: [Directive P.SourcePos] -> IO ()
+prettyPrint = print . vsep . map ((<> hardline) . pretty)
+
+doParse :: ExceptT P.ParseError IO ()
 doParse = do
-  (file:_) <- getArgs
-  result <- runExceptT $ parseFile file
-  case result of
-    Left err -> print err
-    Right directives -> do
-      let complete = completeTransaction <$> directives
-      print $ vsep (((<+> hardline) . pretty) <$> rights complete)
-      print $ length directives
+  (file:_) <- liftIO getArgs
+  directives <- recursiveParse file
+  liftIO $ prettyPrint directives
 
-newtype DatedMap =
-  DatedMap (M.Map Day [Directive])
+fn :: IO ()
+fn = void $ runExceptT $ doParse `catchError` (liftIO . print)
+
+newtype DatedMap a =
+  DatedMap (M.Map Day [Directive a])
   deriving (Show)
 
-instance Pretty DatedMap where
+instance Pretty (DatedMap a) where
   pretty (DatedMap m) = M.foldlWithKey f emptyDoc m
     where
       f doc d dds = doc <> cat (map (ppDir d) dds) <> hardline

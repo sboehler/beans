@@ -5,16 +5,19 @@ import Data.List ((\\))
 import qualified Data.Map.Lazy as M
 import Data.Maybe (mapMaybe)
 import Parser.AST
+import qualified Text.Parsec as P
+import Text.Parsec.Error (Message(..), newErrorMessage)
 
 type Weight = (CommodityName, Decimal)
 
 type Weights = [Weight]
 
-completeTransaction :: Directive -> Either String Directive
-completeTransaction d@(Trn t@Transaction {..}) =
+completeTransaction ::
+     Directive P.SourcePos -> Either P.ParseError (Directive P.SourcePos)
+completeTransaction (Trn t@Transaction {..} pos) =
   case completePostings _postings of
-    Left s -> Left $ s ++ " " ++ show d
-    Right p -> Right $ Trn t {_postings = p}
+    Left s -> Left $ newErrorMessage (Message s) pos
+    Right p -> Right $ Trn t {_postings = p} pos
 completeTransaction x = Right x
 
 completePostings :: [Posting] -> Either String [Posting]

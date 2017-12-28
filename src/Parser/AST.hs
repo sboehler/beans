@@ -22,24 +22,31 @@ import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
 
 -- Type to wrap the AST of a file
-data Directive
+data Directive a
   = Opn Open
+        a
   | Cls Close
+        a
   | Bal Balance
+        a
   | Trn Transaction
+        a
   | Prc Price
+        a
   | Opt Option
+        a
   | Inc Include
-  deriving (Eq, Show)
+        a
+  deriving (Eq, Show, Functor)
 
-instance Pretty Directive where
-  pretty (Opn x) = pretty x
-  pretty (Cls x) = pretty x
-  pretty (Bal x) = pretty x
-  pretty (Trn x) = pretty x
-  pretty (Prc x) = pretty x
-  pretty (Opt x) = pretty x
-  pretty (Inc x) = pretty x
+instance Pretty (Directive a) where
+  pretty (Opn x _) = pretty x
+  pretty (Cls x _) = pretty x
+  pretty (Bal x _) = pretty x
+  pretty (Trn x _) = pretty x
+  pretty (Prc x _) = pretty x
+  pretty (Opt x _) = pretty x
+  pretty (Inc x _) = pretty x
 
 prettyDay :: Day -> Doc a
 prettyDay d = pretty $ show d

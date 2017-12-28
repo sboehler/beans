@@ -24,6 +24,7 @@ dependencies:
 - containers
 - Decimal
 - filepath
+- lens
 - parsec
 - parsec3-numbers
 - mtl
@@ -34,6 +35,7 @@ dependencies:
 default-extensions:
 - DataKinds
 - DeriveGeneric
+- DeriveFunctor
 - GeneralizedNewtypeDeriving
 - DuplicateRecordFields
 - NamedFieldPuns

@@ -1,5 +1,5 @@
 module Parser
-  ( parse'
+  ( parse
   ) where
 
 import Control.Monad (void)
@@ -9,7 +9,8 @@ import Data.Time.Calendar (Day, fromGregorian)
 import Text.Parsec
        (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
         count, digit, eof, letter, many, many1, manyTill, newline, noneOf,
-        oneOf, option, optionMaybe, parse, sepBy, sepBy1, string, try)
+        oneOf, option, optionMaybe, sepBy, sepBy1, string, try)
+import qualified Text.Parsec as P
 import Text.Parsec.Number (fractional2, sign)
 
 import Parser.AST
@@ -167,5 +168,5 @@ block p = p `surroundedBy` many (comment <|> eol)
 directives :: Parser [Directive]
 directives = many (block directive) <* eof
 
-parse' :: FilePath -> Text -> Either ParseError [Directive]
-parse' = parse directives
+parse :: FilePath -> Text -> Either ParseError [Directive]
+parse = P.parse directives

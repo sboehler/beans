@@ -7,7 +7,7 @@ import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
 import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
-import Parser (parse')
+import Parser (parse)
 import Parser.AST (Directive(..), Include(..))
 import Parser.Interpreter (completeTransaction)
 import Prelude hiding (readFile)
@@ -27,7 +27,7 @@ getIncludeFiles _ [] = []
 
 parseFile :: FilePath -> ExceptT ParseError IO [Directive]
 parseFile f = do
-  directives <- ExceptT $ parse' f <$> readFile f
+  directives <- ExceptT $ parse f <$> readFile f
   others <- mapM parseFile (getIncludeFiles f directives)
   return $ mconcat (directives : others)
 

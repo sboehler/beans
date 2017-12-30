@@ -29,6 +29,7 @@ dependencies:
 - parsec3-numbers
 - mtl
 - prettyprinter
+- exceptions
 - text
 - time
 

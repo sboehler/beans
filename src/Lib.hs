@@ -2,6 +2,8 @@ module Lib
   ( fn
   ) where
 
+import Control.Monad.Catch (MonadThrow, throwM)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans (liftIO)
 import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
@@ -15,9 +17,6 @@ import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)
 import qualified Text.Parsec as P
 
-import Control.Monad.Except
-       (ExceptT(..), catchError, runExceptT, throwError, void)
-
 getIncludeFiles :: FilePath -> [Directive a] -> [FilePath]
 getIncludeFiles currentPath (d:ds) =
   case d of
@@ -26,27 +25,28 @@ getIncludeFiles currentPath (d:ds) =
     _ -> getIncludeFiles currentPath ds
 getIncludeFiles _ [] = []
 
-recursiveParse :: FilePath -> ExceptT P.ParseError IO [Directive P.SourcePos]
+recursiveParse ::
+     (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
 recursiveParse f = do
-  directives <- ExceptT $ parse f <$> readFile f
-  d <-
-    concat . (directives :) <$>
-    traverse recursiveParse (getIncludeFiles f directives)
+  t <- liftIO $ readFile f
+  directives <- parse f t
+  others <- traverse recursiveParse (getIncludeFiles f directives)
+  let d = directives ++ concat others
   case traverse completeTransaction d of
-    Left e -> throwError e
+    Left e -> throwM e
     Right l -> return l
 
 prettyPrint :: [Directive P.SourcePos] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
-doParse :: ExceptT P.ParseError IO ()
+doParse :: (MonadIO m, MonadThrow m) => m ()
 doParse = do
   (file:_) <- liftIO getArgs
   directives <- recursiveParse file
   liftIO $ prettyPrint directives
 
 fn :: IO ()
-fn = void $ runExceptT $ doParse `catchError` (liftIO . print)
+fn = doParse
 
 newtype DatedMap a =
   DatedMap (M.Map Day [Directive a])

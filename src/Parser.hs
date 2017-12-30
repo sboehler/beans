@@ -1,15 +1,17 @@
 module Parser
   ( parse
+  , ParseException
   ) where
 
 import Control.Monad (void)
+import Control.Monad.Catch (MonadThrow, throwM)
 import Data.Decimal (Decimal)
 import Data.Text.Lazy (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
 import Text.Parsec
-       (ParseError, Parsec, (<|>), alphaNum, anyChar, between, char,
-        count, digit, eof, letter, many, many1, manyTill, newline, noneOf,
-        oneOf, option, optionMaybe, sepBy, sepBy1, string, try)
+       (Parsec, (<|>), alphaNum, anyChar, between, char, count, digit,
+        eof, letter, many, many1, manyTill, newline, noneOf, oneOf, option,
+        optionMaybe, sepBy, sepBy1, string, try)
 import qualified Text.Parsec as P
 import Text.Parsec.Number (fractional2, sign)
 
@@ -169,5 +171,8 @@ block p = p `surroundedBy` many (comment <|> eol)
 directives :: Parser [Directive P.SourcePos]
 directives = many (block directive) <* eof
 
-parse :: FilePath -> Text -> Either ParseError [Directive P.SourcePos]
-parse = P.parse directives
+parse :: (MonadThrow m) => FilePath -> Text -> m [Directive P.SourcePos]
+parse f t =
+  case P.parse directives f t of
+    Left e -> throwM $ ParseException e
+    Right d -> return d

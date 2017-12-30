@@ -8,6 +8,7 @@ module Parser.AST
   , Include(..)
   , Open(..)
   , Option(..)
+  , ParseException(..)
   , Posting(..)
   , PostingCost(..)
   , PostingPrice(..)
@@ -16,10 +17,18 @@ module Parser.AST
   , Transaction(..)
   ) where
 
+import Control.Exception (Exception)
 import Data.Decimal (Decimal)
 import Data.Text.Lazy (Text, intercalate)
 import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
+import Text.Parsec (ParseError)
+
+newtype ParseException =
+  ParseException ParseError
+  deriving (Show)
+
+instance Exception ParseException
 
 -- Type to wrap the AST of a file
 data Directive a

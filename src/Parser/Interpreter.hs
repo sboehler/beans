@@ -1,5 +1,6 @@
 module Parser.Interpreter where
 
+import Control.Monad.Catch (MonadThrow, throwM)
 import Data.Decimal (Decimal)
 import Data.List ((\\))
 import qualified Data.Map.Lazy as M
@@ -13,12 +14,12 @@ type Weight = (CommodityName, Decimal)
 type Weights = [Weight]
 
 completeTransaction ::
-     Directive P.SourcePos -> Either P.ParseError (Directive P.SourcePos)
+     (MonadThrow m) => Directive P.SourcePos -> m (Directive P.SourcePos)
 completeTransaction (Trn t@Transaction {..} pos) =
   case completePostings _postings of
-    Left s -> Left $ newErrorMessage (Message s) pos
-    Right p -> Right $ Trn t {_postings = p} pos
-completeTransaction x = Right x
+    Left s -> throwM $ ParseException $ newErrorMessage (Message s) pos
+    Right p -> return $ Trn t {_postings = p} pos
+completeTransaction x = return x
 
 completePostings :: [Posting] -> Either String [Posting]
 completePostings p =

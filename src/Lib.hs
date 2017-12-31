@@ -1,8 +1,8 @@
 module Lib
-  ( fn
+  ( doParse
   ) where
 
-import Control.Monad.Catch (MonadThrow, throwM)
+import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans (liftIO)
 import qualified Data.Map.Lazy as M
@@ -18,23 +18,14 @@ import System.FilePath.Posix ((</>), takeDirectory)
 import qualified Text.Parsec as P
 
 getIncludeFiles :: FilePath -> [Directive a] -> [FilePath]
-getIncludeFiles currentPath (d:ds) =
-  case d of
-    Inc (Include filePath) _ ->
-      (takeDirectory currentPath </> filePath) : getIncludeFiles currentPath ds
-    _ -> getIncludeFiles currentPath ds
-getIncludeFiles _ [] = []
+getIncludeFiles path ds = [takeDirectory path </> f | (Inc (Include f) _) <- ds]
 
 recursiveParse ::
      (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
 recursiveParse f = do
-  t <- liftIO $ readFile f
-  directives <- parse f t
-  others <- traverse recursiveParse (getIncludeFiles f directives)
-  let d = directives ++ concat others
-  case traverse completeTransaction d of
-    Left e -> throwM e
-    Right l -> return l
+  directives <- liftIO (readFile f) >>= parse f >>= traverse completeTransaction
+  others <- traverse recursiveParse . getIncludeFiles f $ directives
+  return $ directives ++ concat others
 
 prettyPrint :: [Directive P.SourcePos] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
@@ -42,11 +33,7 @@ prettyPrint = print . vsep . map ((<> hardline) . pretty)
 doParse :: (MonadIO m, MonadThrow m) => m ()
 doParse = do
   (file:_) <- liftIO getArgs
-  directives <- recursiveParse file
-  liftIO $ prettyPrint directives
-
-fn :: IO ()
-fn = doParse
+  liftIO $ prettyPrint =<< recursiveParse file
 
 newtype DatedMap a =
   DatedMap (M.Map Day [Directive a])

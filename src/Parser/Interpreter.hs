@@ -1,37 +1,44 @@
 module Parser.Interpreter where
 
-import Control.Monad.Catch (MonadThrow, throwM)
+import Control.Lens ((%~), (.~), (^.), mapMOf, view)
+import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Data.Decimal (Decimal)
 import Data.List ((\\))
 import qualified Data.Map.Lazy as M
 import Data.Maybe (mapMaybe)
 import Parser.AST
 import qualified Text.Parsec as P
-import Text.Parsec.Error (Message(..), newErrorMessage)
 
 type Weight = (CommodityName, Decimal)
 
 type Weights = [Weight]
 
+data HaricotException
+  = NoWildcardPostings
+  | TooManyWildcardPostings
+  deriving (Eq, Show)
+
+instance Exception HaricotException
+
 completeTransaction ::
      (MonadThrow m) => Directive P.SourcePos -> m (Directive P.SourcePos)
-completeTransaction (Trn t@Transaction {..} pos) =
-  case completePostings _postings of
-    Left s -> throwM $ ParseException $ newErrorMessage (Message s) pos
-    Right p -> return $ Trn t {_postings = p} pos
+completeTransaction (Trn t pos) = do
+  balanced <- completePostings $ t ^. postings
+  let t' = postings .~ balanced $ t
+  return $ Trn t' pos
 completeTransaction x = return x
 
-completePostings :: [Posting] -> Either String [Posting]
+completePostings :: (MonadThrow m) => [Posting] -> m [Posting]
 completePostings p =
   case imbalances of
-    [] -> Right $ p \\ wildcards
+    [] -> return $ p \\ wildcards
     _ ->
       case wildcards of
         [WildcardPosting accountName] ->
           let balances = createBalanceBooking accountName <$> imbalances
-          in Right $ balances ++ (p \\ wildcards)
-        [] -> Left "Error: No wildcard posting"
-        _ -> Left "Error: Too many wildcard postings"
+          in return $ balances ++ (p \\ wildcards)
+        [] -> throwM NoWildcardPostings
+        _ -> throwM TooManyWildcardPostings
   where
     imbalances = calculateImbalances p
     wildcards = [w | w@WildcardPosting {..} <- p]

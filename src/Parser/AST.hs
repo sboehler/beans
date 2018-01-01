@@ -1,23 +1,7 @@
-module Parser.AST
-  ( AccountName(..)
-  , Balance(..)
-  , Close(..)
-  , CommodityName(..)
-  , Directive(..)
-  , Flag(..)
-  , Include(..)
-  , Open(..)
-  , Option(..)
-  , ParseException(..)
-  , Posting(..)
-  , PostingCost(..)
-  , PostingPrice(..)
-  , Price(..)
-  , Tag(..)
-  , Transaction(..)
-  ) where
+module Parser.AST where
 
 import Control.Exception (Exception)
+import Control.Lens (makeLenses)
 import Data.Decimal (Decimal)
 import Data.Text.Lazy (Text, intercalate)
 import Data.Text.Prettyprint.Doc
@@ -210,3 +194,13 @@ data PostingPrice
 instance Pretty PostingPrice where
   pretty (UnitPrice a c) = "@" <+> prettyDec a <+> pretty c
   pretty (TotalPrice a c) = "@@" <+> prettyDec a <+> pretty c
+
+makeLenses ''Transaction
+
+makeLenses ''Tag
+
+makeLenses ''AccountName
+
+makeLenses ''CommodityName
+
+makeLenses ''Posting

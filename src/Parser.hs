@@ -1,6 +1,5 @@
 module Parser
   ( parse
-  , ParseException
   ) where
 
 import Control.Monad (void)
@@ -16,6 +15,10 @@ import qualified Text.Parsec as P
 import Text.Parsec.Number (fractional2, sign)
 
 import Parser.AST
+       (AccountName(..), Balance(..), Close(..), CommodityName(..),
+        Directive(..), Flag(..), Include(..), Open(..), Option(..),
+        ParseException(..), Posting(..), PostingCost(..), PostingPrice(..),
+        Price(..), Tag(..), Transaction(..))
 
 type Parser = Parsec Text ()
 

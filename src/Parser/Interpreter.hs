@@ -1,6 +1,6 @@
 module Parser.Interpreter where
 
-import Control.Lens ((%~), (.~), (^.), mapMOf, view)
+import Control.Lens (_1, mapMOf)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Data.Decimal (Decimal)
 import Data.List ((\\))
@@ -22,11 +22,7 @@ instance Exception HaricotException
 
 completeTransaction ::
      (MonadThrow m) => Directive P.SourcePos -> m (Directive P.SourcePos)
-completeTransaction (Trn t pos) = do
-  balanced <- completePostings $ t ^. postings
-  let t' = postings .~ balanced $ t
-  return $ Trn t' pos
-completeTransaction x = return x
+completeTransaction = mapMOf (_Trn . _1 . postings) completePostings
 
 completePostings :: (MonadThrow m) => [Posting] -> m [Posting]
 completePostings p =
@@ -34,10 +30,10 @@ completePostings p =
     [] -> return $ p \\ wildcards
     _ ->
       case wildcards of
+        [] -> throwM NoWildcardPostings
         [WildcardPosting accountName] ->
           let balances = createBalanceBooking accountName <$> imbalances
           in return $ balances ++ (p \\ wildcards)
-        [] -> throwM NoWildcardPostings
         _ -> throwM TooManyWildcardPostings
   where
     imbalances = calculateImbalances p
@@ -54,7 +50,6 @@ notZero :: Decimal -> Bool
 notZero n = abs n > 0.005
 
 calculateWeight :: Posting -> Maybe (CommodityName, Decimal)
-calculateWeight WildcardPosting {..} = Nothing
 calculateWeight CompletePosting {..} =
   case findCost _postingCost of
     Just (c, a) -> Just (c, _amount * a)
@@ -65,6 +60,7 @@ calculateWeight CompletePosting {..} =
         Just TotalPrice {..} ->
           Just (_totalPriceCommodity, signum _amount * _totalPriceAmount)
         Nothing -> Just (_postingCommodityName, _amount)
+calculateWeight _ = Nothing
 
 findCost :: [PostingCost] -> Maybe (CommodityName, Decimal)
 findCost (PostingCostAmount {..}:_) =

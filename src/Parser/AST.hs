@@ -1,7 +1,7 @@
 module Parser.AST where
 
 import Control.Exception (Exception)
-import Control.Lens (makeLenses)
+import Control.Lens (makeLenses, makePrisms)
 import Data.Decimal (Decimal)
 import Data.Text.Lazy (Text, intercalate)
 import Data.Text.Prettyprint.Doc
@@ -204,3 +204,5 @@ makeLenses ''AccountName
 makeLenses ''CommodityName
 
 makeLenses ''Posting
+
+makePrisms ''Directive

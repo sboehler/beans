@@ -2,6 +2,7 @@ module Parser.Interpreter where
 
 import Control.Applicative ((<|>))
 import Control.Lens
+import Control.Monad (join)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Data.Decimal (Decimal)
 import Data.Foldable (asum)
@@ -39,7 +40,7 @@ summarize =
   M.toList . M.filter notZero . M.fromListWith (+) . mapMaybe calculateWeight
 
 balance :: AccountName -> [(CommodityName, Decimal)] -> [Posting]
-balance account = map (\(c, a) -> CompletePosting account (-a) c [] Nothing)
+balance account = fmap $ \(c, a) -> CompletePosting account (-a) c [] Nothing
 
 notZero :: Decimal -> Bool
 notZero n = abs n > 0.005
@@ -49,19 +50,17 @@ calculateWeight posting =
   atCost posting <|> atPrice posting <|> asBooked posting
 
 atCost :: Posting -> Maybe (CommodityName, Decimal)
-atCost CompletePosting {..} = asum (f <$> _postingCost)
+atCost CompletePosting {..} = asum . fmap f $ _postingCost
   where
     f (PostingCostAmount a c) = Just (c, _amount * a)
     f _ = Nothing
 atCost _ = Nothing
 
 atPrice :: Posting -> Maybe (CommodityName, Decimal)
-atPrice CompletePosting {..} = f <$> _postingPrice
+atPrice p = f <$> preview amount p <*> join (preview postingPrice p)
   where
-    f (UnitPrice a c) = (c, _amount * a)
-    f (TotalPrice a c) = (c, signum _amount * a)
-atPrice _ = Nothing
+    f amt (UnitPrice a c) = (c, amt * a)
+    f amt (TotalPrice a c) = (c, signum amt * a)
 
 asBooked :: Posting -> Maybe (CommodityName, Decimal)
-asBooked CompletePosting {..} = Just (_postingCommodityName, _amount)
-asBooked _ = Nothing
+asBooked p = (,) <$> preview postingCommodityName p <*> preview amount p

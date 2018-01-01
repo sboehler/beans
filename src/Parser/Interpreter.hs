@@ -1,9 +1,10 @@
 module Parser.Interpreter where
 
-import Control.Lens (_1, mapMOf)
+import Control.Applicative ((<|>))
+import Control.Lens
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Data.Decimal (Decimal)
-import Data.List ((\\))
+import Data.Foldable (asum)
 import qualified Data.Map.Lazy as M
 import Data.Maybe (mapMaybe)
 import Parser.AST
@@ -13,9 +14,8 @@ type Weight = (CommodityName, Decimal)
 
 type Weights = [Weight]
 
-data HaricotException
-  = NoWildcardPostings
-  | TooManyWildcardPostings
+data HaricotException =
+  UnbalancedTransaction
   deriving (Eq, Show)
 
 instance Exception HaricotException
@@ -26,44 +26,42 @@ completeTransaction = mapMOf (_Trn . _1 . postings) completePostings
 
 completePostings :: (MonadThrow m) => [Posting] -> m [Posting]
 completePostings p =
-  case imbalances of
-    [] -> return $ p \\ wildcards
-    _ ->
-      case wildcards of
-        [] -> throwM NoWildcardPostings
-        [WildcardPosting accountName] ->
-          let balances = createBalanceBooking accountName <$> imbalances
-          in return $ balances ++ (p \\ wildcards)
-        _ -> throwM TooManyWildcardPostings
+  case (summarize p, wildcardAccounts) of
+    ([], []) -> return p
+    (imbalances, [account]) -> return $ complete ++ balance account imbalances
+    (_, _) -> throwM UnbalancedTransaction
   where
-    imbalances = calculateImbalances p
-    wildcards = [w | w@WildcardPosting {..} <- p]
+    wildcardAccounts = [_postingAccountName | WildcardPosting {..} <- p]
+    complete = [x | x@CompletePosting {..} <- p]
 
-createBalanceBooking :: AccountName -> (CommodityName, Decimal) -> Posting
-createBalanceBooking account (c, a) = CompletePosting account (-a) c [] Nothing
-
-calculateImbalances :: [Posting] -> [(CommodityName, Decimal)]
-calculateImbalances =
+summarize :: [Posting] -> [(CommodityName, Decimal)]
+summarize =
   M.toList . M.filter notZero . M.fromListWith (+) . mapMaybe calculateWeight
+
+balance :: AccountName -> [(CommodityName, Decimal)] -> [Posting]
+balance account = map (\(c, a) -> CompletePosting account (-a) c [] Nothing)
 
 notZero :: Decimal -> Bool
 notZero n = abs n > 0.005
 
 calculateWeight :: Posting -> Maybe (CommodityName, Decimal)
-calculateWeight CompletePosting {..} =
-  case findCost _postingCost of
-    Just (c, a) -> Just (c, _amount * a)
-    Nothing ->
-      case _postingPrice of
-        Just UnitPrice {..} ->
-          Just (_unitPriceCommodity, _amount * _unitPriceAmount)
-        Just TotalPrice {..} ->
-          Just (_totalPriceCommodity, signum _amount * _totalPriceAmount)
-        Nothing -> Just (_postingCommodityName, _amount)
-calculateWeight _ = Nothing
+calculateWeight posting =
+  atCost posting <|> atPrice posting <|> asBooked posting
 
-findCost :: [PostingCost] -> Maybe (CommodityName, Decimal)
-findCost (PostingCostAmount {..}:_) =
-  Just (_postingCostCommmodity, _postingCostAmount)
-findCost (_:costs) = findCost costs
-findCost [] = Nothing
+atCost :: Posting -> Maybe (CommodityName, Decimal)
+atCost CompletePosting {..} = asum (f <$> _postingCost)
+  where
+    f (PostingCostAmount a c) = Just (c, _amount * a)
+    f _ = Nothing
+atCost _ = Nothing
+
+atPrice :: Posting -> Maybe (CommodityName, Decimal)
+atPrice CompletePosting {..} = f <$> _postingPrice
+  where
+    f (UnitPrice a c) = (c, _amount * a)
+    f (TotalPrice a c) = (c, signum _amount * a)
+atPrice _ = Nothing
+
+asBooked :: Posting -> Maybe (CommodityName, Decimal)
+asBooked CompletePosting {..} = Just (_postingCommodityName, _amount)
+asBooked _ = Nothing

@@ -206,3 +206,7 @@ makeLenses ''CommodityName
 makeLenses ''Posting
 
 makePrisms ''Directive
+
+makePrisms ''Posting
+
+makePrisms ''PostingPrice

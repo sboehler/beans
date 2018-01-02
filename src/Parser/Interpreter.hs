@@ -13,6 +13,7 @@ import Data.Foldable (asum)
 import qualified Data.Holdings as H
 import qualified Data.Map.Lazy as M
 import Data.Maybe (mapMaybe)
+import Data.Price (Price(..))
 import Parser.AST
 import qualified Text.Parsec as P
 
@@ -26,11 +27,14 @@ data HaricotException =
 
 instance Exception HaricotException
 
-completeTransaction ::
-     (MonadThrow m) => Directive P.SourcePos -> m (Directive P.SourcePos)
+completeTransaction
+  :: (MonadThrow m)
+  => Directive P.SourcePos -> m (Directive P.SourcePos)
 completeTransaction = mapMOf (_Trn . _1 . postings) completePostings
 
-completePostings :: (MonadThrow m) => [Posting] -> m [Posting]
+completePostings
+  :: (MonadThrow m)
+  => [Posting] -> m [Posting]
 completePostings p =
   case (summarize p, wildcardAccounts) of
     ([], []) -> return p
@@ -63,8 +67,8 @@ atCost _ = Nothing
 atPrice :: Posting -> Maybe (Amount Decimal)
 atPrice p = f <$> preview amount p <*> join (preview postingPrice p)
   where
-    f (Amount a _) (UnitPrice a' c') = Amount (a * a') c'
-    f (Amount a _) (TotalPrice a' c') = Amount (signum a * a') c'
+    f (Amount a _) (UnitPrice (Price _ amt)) = (a *) <$> amt
+    f (Amount a _) (TotalAmount amt) = (signum a *) <$> amt
 
 asBooked :: Posting -> Maybe (Amount Decimal)
 asBooked = preview amount

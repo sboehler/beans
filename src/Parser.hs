@@ -43,7 +43,9 @@ doubleQuote = char '\"'
 token :: Parser a -> Parser a
 token p = p <* many space
 
-readInt :: (Read a) => Int -> Parser a
+readInt
+  :: (Read a)
+  => Int -> Parser a
 readInt n = read <$> count n digit
 
 date :: Parser Date
@@ -81,14 +83,14 @@ commodityName = token $ CommodityName . pack <$> many alphaNum
 amount :: Parser (Amount Decimal)
 amount = Amount <$> decimal <*> commodityName
 
-postingPriceUnit :: Parser PostingPrice
-postingPriceUnit = symbol "@" >> UnitPrice <$> decimal <*> commodityName
+postingPriceUnit :: CommodityName -> Parser PostingPrice
+postingPriceUnit c = symbol "@" >> UnitPrice <$> price c
 
 postingPriceTotal :: Parser PostingPrice
-postingPriceTotal = symbol "@@" >> TotalPrice <$> decimal <*> commodityName
+postingPriceTotal = symbol "@@" >> TotalAmount <$> amount
 
-postingPrice :: Parser PostingPrice
-postingPrice = try postingPriceUnit <|> try postingPriceTotal
+postingPrice :: CommodityName -> Parser PostingPrice
+postingPrice c = try (postingPriceUnit c) <|> try postingPriceTotal
 
 postingCostDate :: Parser PostingCost
 postingCostDate = PostingCostDate <$> date
@@ -110,9 +112,12 @@ wildcardPosting :: Parser Posting
 wildcardPosting = WildcardPosting <$> accountName
 
 completePosting :: Parser Posting
-completePosting =
-  CompletePosting <$> accountName <*> amount <*> option [] postingCost <*>
-  optionMaybe postingPrice
+completePosting = do
+  account' <- accountName
+  amount' <- amount
+  cost' <- option [] postingCost
+  price' <- optionMaybe $ postingPrice (_commodity amount')
+  return $ CompletePosting account' amount' cost' price'
 
 posting :: Parser Posting
 posting = newline >> symbol " " >> (try completePosting <|> try wildcardPosting)
@@ -145,11 +150,15 @@ close = Close <$> date <* symbol "close" <*> accountName
 balance :: Parser Balance
 balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount
 
-price :: Parser (Price Decimal)
-price = Price <$> commodityName <*> amount
+price :: CommodityName -> Parser (Price Decimal)
+price c = Price c <$> amount
 
 priceDirective :: Parser PriceDirective
-priceDirective = PriceDirective <$> date <* symbol "price" <*> price
+priceDirective = do
+  date' <- date
+  _ <- symbol "price"
+  commodity <- commodityName
+  PriceDirective date' <$> price commodity
 
 include :: Parser Include
 include = symbol "include" >> Include . unpack <$> quotedString
@@ -178,7 +187,9 @@ block p = p `surroundedBy` many (comment <|> eol)
 directives :: Parser [Directive P.SourcePos]
 directives = many (block directive) <* eof
 
-parse :: (MonadThrow m) => FilePath -> Text -> m [Directive P.SourcePos]
+parse
+  :: (MonadThrow m)
+  => FilePath -> Text -> m [Directive P.SourcePos]
 parse f t =
   case P.parse directives f t of
     Left e -> throwM $ ParseException e

@@ -4,21 +4,24 @@ module Parser
 
 import Control.Monad (void)
 import Control.Monad.Catch (MonadThrow, throwM)
+import Data.Accounts (AccountName(..))
+import Data.Amount (Amount(..))
+import Data.Commodity (CommodityName(..))
+import Data.Date (Date, fromGregorian)
 import Data.Decimal (Decimal)
+import Data.Price (Price(..))
 import Data.Text.Lazy (Text, cons, pack, unpack)
-import Data.Time.Calendar (Day, fromGregorian)
+import Parser.AST
+       (Balance(..), Close(..), Directive(..), Flag(..), Include(..),
+        Open(..), Option(..), ParseException(..), Posting(..),
+        PostingCost(..), PostingPrice(..), PriceDirective(..), Tag(..),
+        Transaction(..))
 import Text.Parsec
        (Parsec, (<|>), alphaNum, anyChar, between, char, count, digit,
         eof, letter, many, many1, manyTill, newline, noneOf, oneOf, option,
         optionMaybe, sepBy, sepBy1, string, try)
 import qualified Text.Parsec as P
 import Text.Parsec.Number (fractional2, sign)
-
-import Parser.AST
-       (AccountName(..), Balance(..), Close(..), CommodityName(..),
-        Directive(..), Flag(..), Include(..), Open(..), Option(..),
-        ParseException(..), Posting(..), PostingCost(..), PostingPrice(..),
-        Price(..), Tag(..), Transaction(..))
 
 type Parser = Parsec Text ()
 
@@ -43,7 +46,7 @@ token p = p <* many space
 readInt :: (Read a) => Int -> Parser a
 readInt n = read <$> count n digit
 
-date :: Parser Day
+date :: Parser Date
 date =
   token $
   fromGregorian <$> readInt 4 <* dash <*> readInt 2 <* dash <*> readInt 2
@@ -75,6 +78,9 @@ accountName = token $ AccountName <$> accountNameSegment `sepBy` colon
 commodityName :: Parser CommodityName
 commodityName = token $ CommodityName . pack <$> many alphaNum
 
+amount :: Parser (Amount Decimal)
+amount = Amount <$> decimal <*> commodityName
+
 postingPriceUnit :: Parser PostingPrice
 postingPriceUnit = symbol "@" >> UnitPrice <$> decimal <*> commodityName
 
@@ -105,8 +111,7 @@ wildcardPosting = WildcardPosting <$> accountName
 
 completePosting :: Parser Posting
 completePosting =
-  CompletePosting <$> accountName <*> decimal <*> commodityName <*>
-  option [] postingCost <*>
+  CompletePosting <$> accountName <*> amount <*> option [] postingCost <*>
   optionMaybe postingPrice
 
 posting :: Parser Posting
@@ -138,14 +143,13 @@ close :: Parser Close
 close = Close <$> date <* symbol "close" <*> accountName
 
 balance :: Parser Balance
-balance =
-  Balance <$> date <* symbol "balance" <*> accountName <*> decimal <*>
-  commodityName
+balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount
 
-price :: Parser Price
-price =
-  Price <$> date <* symbol "price" <*> commodityName <*> decimal <*>
-  commodityName
+price :: Parser (Price Decimal)
+price = Price <$> commodityName <*> amount
+
+priceDirective :: Parser PriceDirective
+priceDirective = PriceDirective <$> date <* symbol "price" <*> price
 
 include :: Parser Include
 include = symbol "include" >> Include . unpack <$> quotedString
@@ -156,7 +160,7 @@ config = symbol "option" >> Option <$> quotedString <*> quotedString
 directive :: Parser (Directive P.SourcePos)
 directive =
   (Opn <$> try open <|> Cls <$> try close <|> Trn <$> try transaction <|>
-   Prc <$> try price <|>
+   Prc <$> try priceDirective <|>
    Bal <$> try balance <|>
    Inc <$> include <|>
    Opt <$> config) <*>

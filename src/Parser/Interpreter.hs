@@ -4,8 +4,13 @@ import Control.Applicative ((<|>))
 import Control.Lens
 import Control.Monad (join)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
+import Data.Accounts (AccountName)
+import Data.Amount (Amount(..))
+import qualified Data.Amount as A
+import Data.Commodity (CommodityName)
 import Data.Decimal (Decimal)
 import Data.Foldable (asum)
+import qualified Data.Holdings as H
 import qualified Data.Map.Lazy as M
 import Data.Maybe (mapMaybe)
 import Parser.AST
@@ -35,32 +40,31 @@ completePostings p =
     wildcardAccounts = [_postingAccountName | WildcardPosting {..} <- p]
     complete = [x | x@CompletePosting {..} <- p]
 
-summarize :: [Posting] -> [(CommodityName, Decimal)]
-summarize =
-  M.toList . M.filter notZero . M.fromListWith (+) . mapMaybe calculateWeight
+summarize :: [Posting] -> [Amount Decimal]
+summarize = H.toList . H.filter notZero . H.fromList . mapMaybe calculateWeight
 
-balance :: AccountName -> [(CommodityName, Decimal)] -> [Posting]
-balance account = fmap $ \(c, a) -> CompletePosting account (-a) c [] Nothing
+balance :: AccountName -> [Amount Decimal] -> [Posting]
+balance account = fmap $ \a -> CompletePosting account (negate <$> a) [] Nothing
 
 notZero :: Decimal -> Bool
 notZero n = abs n > 0.005
 
-calculateWeight :: Posting -> Maybe (CommodityName, Decimal)
+calculateWeight :: Posting -> Maybe (Amount Decimal)
 calculateWeight posting =
   atCost posting <|> atPrice posting <|> asBooked posting
 
-atCost :: Posting -> Maybe (CommodityName, Decimal)
+atCost :: Posting -> Maybe (Amount Decimal)
 atCost CompletePosting {..} = asum . fmap f $ _postingCost
   where
-    f (PostingCostAmount a c) = Just (c, _amount * a)
+    f (PostingCostAmount a c) = Just $ Amount (A._amount _amount * a) c
     f _ = Nothing
 atCost _ = Nothing
 
-atPrice :: Posting -> Maybe (CommodityName, Decimal)
+atPrice :: Posting -> Maybe (Amount Decimal)
 atPrice p = f <$> preview amount p <*> join (preview postingPrice p)
   where
-    f amt (UnitPrice a c) = (c, amt * a)
-    f amt (TotalPrice a c) = (c, signum amt * a)
+    f (Amount a _) (UnitPrice a' c') = Amount (a * a') c'
+    f (Amount a _) (TotalPrice a' c') = Amount (signum a * a') c'
 
-asBooked :: Posting -> Maybe (CommodityName, Decimal)
-asBooked p = (,) <$> preview postingCommodityName p <*> preview amount p
+asBooked :: Posting -> Maybe (Amount Decimal)
+asBooked = preview amount

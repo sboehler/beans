@@ -132,11 +132,11 @@ prettyDec :: Decimal -> Doc a
 prettyDec = pretty . show
 
 data Posting
-  = WildcardPosting { _postingAccountName :: AccountName }
+  = WildcardPosting { _postingAccountName :: AccountName}
   | CompletePosting { _postingAccountName :: AccountName
-                    , _amount :: Amount Decimal
-                    , _postingCost :: [PostingCost]
-                    , _postingPrice :: Maybe PostingPrice }
+                   ,  _amount :: Amount Decimal
+                   ,  _postingCost :: [PostingCost]
+                   ,  _postingPrice :: Maybe PostingPrice}
   deriving (Show, Eq)
 
 instance Pretty Posting where
@@ -151,7 +151,7 @@ prettyCost c = encloseSep "{" "}" "," (map pretty c)
 
 data PostingCost
   = PostingCostAmount { _postingCostAmount :: Decimal
-                      , _postingCostCommmodity :: CommodityName }
+                     ,  _postingCostCommmodity :: CommodityName}
   | PostingCostDate Date
   | PostingCostLabel Text
   deriving (Show, Eq)
@@ -162,15 +162,13 @@ instance Pretty PostingCost where
   pretty (PostingCostLabel label) = pretty label
 
 data PostingPrice
-  = UnitPrice { _unitPriceAmount :: Decimal
-              , _unitPriceCommodity :: CommodityName }
-  | TotalPrice { _totalPriceAmount :: Decimal
-               , _totalPriceCommodity :: CommodityName }
+  = UnitPrice { _price :: Price Decimal}
+  | TotalAmount { _amount :: Amount Decimal}
   deriving (Show, Eq)
 
 instance Pretty PostingPrice where
-  pretty (UnitPrice a c) = "@" <+> prettyDec a <+> pretty c
-  pretty (TotalPrice a c) = "@@" <+> prettyDec a <+> pretty c
+  pretty (UnitPrice p) = "@" <+> pretty p
+  pretty (TotalAmount a) = "@@" <+> pretty a
 
 makeLenses ''Transaction
 

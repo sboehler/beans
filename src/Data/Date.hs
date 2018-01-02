@@ -11,7 +11,7 @@ newtype Date = Date
   } deriving (Eq, Show)
 
 instance Pretty Date where
-  pretty = pretty . show
+  pretty = pretty . show . _day
 
 fromGregorian :: Integer -> Int -> Int -> Date
 fromGregorian y m d = Date (C.fromGregorian y m d)

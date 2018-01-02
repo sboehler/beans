@@ -6,20 +6,13 @@ import Control.Monad (join)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Data.Accounts (AccountName)
 import Data.Amount (Amount(..))
-import qualified Data.Amount as A
-import Data.Commodity (CommodityName)
 import Data.Decimal (Decimal)
 import Data.Foldable (asum)
 import qualified Data.Holdings as H
-import qualified Data.Map.Lazy as M
 import Data.Maybe (mapMaybe)
-import Data.Price (Price(..))
+import Data.Price ((<@>))
 import Parser.AST
 import qualified Text.Parsec as P
-
-type Weight = (CommodityName, Decimal)
-
-type Weights = [Weight]
 
 data HaricotException =
   UnbalancedTransaction
@@ -48,7 +41,8 @@ summarize :: [Posting] -> [Amount Decimal]
 summarize = H.toList . H.filter notZero . H.fromList . mapMaybe calculateWeight
 
 balance :: AccountName -> [Amount Decimal] -> [Posting]
-balance account = fmap $ \a -> CompletePosting account (negate <$> a) [] Nothing
+balance account amounts =
+  [CompletePosting account (negate <$> a) [] Nothing | a <- amounts]
 
 notZero :: Decimal -> Bool
 notZero n = abs n > 0.005
@@ -60,14 +54,14 @@ calculateWeight posting =
 atCost :: Posting -> Maybe (Amount Decimal)
 atCost CompletePosting {..} = asum . fmap f $ _postingCost
   where
-    f (PostingCostAmount a c) = Just $ Amount (A._amount _amount * a) c
+    f (PostingCostAmount p) = Just $ _amount <@> p
     f _ = Nothing
 atCost _ = Nothing
 
 atPrice :: Posting -> Maybe (Amount Decimal)
 atPrice p = f <$> preview amount p <*> join (preview postingPrice p)
   where
-    f (Amount a _) (UnitPrice (Price _ amt)) = (a *) <$> amt
+    f am (UnitPrice pr) = am <@> pr
     f (Amount a _) (TotalAmount amt) = (signum a *) <$> amt
 
 asBooked :: Posting -> Maybe (Amount Decimal)

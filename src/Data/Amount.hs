@@ -10,5 +10,6 @@ data Amount a = Amount
   , _commodity :: CommodityName
   } deriving (Eq, Show, Functor)
 
-instance Show a => Pretty (Amount a) where
+instance Show a =>
+         Pretty (Amount a) where
   pretty Amount {..} = pretty (show _amount) <+> pretty _commodity

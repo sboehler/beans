@@ -128,9 +128,6 @@ newtype Tag =
 instance Pretty Tag where
   pretty (Tag t) = pretty t
 
-prettyDec :: Decimal -> Doc a
-prettyDec = pretty . show
-
 data Posting
   = WildcardPosting { _postingAccountName :: AccountName}
   | CompletePosting { _postingAccountName :: AccountName
@@ -150,14 +147,13 @@ prettyCost [] = mempty
 prettyCost c = encloseSep "{" "}" "," (map pretty c)
 
 data PostingCost
-  = PostingCostAmount { _postingCostAmount :: Decimal
-                     ,  _postingCostCommmodity :: CommodityName}
+  = PostingCostAmount { _price :: Price Decimal}
   | PostingCostDate Date
   | PostingCostLabel Text
   deriving (Show, Eq)
 
 instance Pretty PostingCost where
-  pretty (PostingCostAmount a c) = prettyDec a <+> pretty c
+  pretty (PostingCostAmount p) = pretty p
   pretty (PostingCostDate date) = pretty $ show date
   pretty (PostingCostLabel label) = pretty label
 

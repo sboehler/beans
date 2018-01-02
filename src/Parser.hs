@@ -95,18 +95,20 @@ postingPrice c = try (postingPriceUnit c) <|> try postingPriceTotal
 postingCostDate :: Parser PostingCost
 postingCostDate = PostingCostDate <$> date
 
-postingCostAmount :: Parser PostingCost
-postingCostAmount = PostingCostAmount <$> decimal <*> commodityName
+postingCostAmount :: CommodityName -> Parser PostingCost
+postingCostAmount commodity = PostingCostAmount <$> price commodity
 
 postingCostLabel :: Parser PostingCost
 postingCostLabel = PostingCostLabel <$> quotedString
 
-postingCostElement :: Parser PostingCost
-postingCostElement =
-  try postingCostLabel <|> try postingCostDate <|> try postingCostAmount
+postingCostElement :: CommodityName -> Parser PostingCost
+postingCostElement commodity =
+  try postingCostLabel <|> try postingCostDate <|>
+  try (postingCostAmount commodity)
 
-postingCost :: Parser [PostingCost]
-postingCost = braces (postingCostElement `sepBy1` symbol ",")
+postingCost :: CommodityName -> Parser [PostingCost]
+postingCost commodity =
+  braces (postingCostElement commodity `sepBy1` symbol ",")
 
 wildcardPosting :: Parser Posting
 wildcardPosting = WildcardPosting <$> accountName
@@ -115,7 +117,7 @@ completePosting :: Parser Posting
 completePosting = do
   account' <- accountName
   amount' <- amount
-  cost' <- option [] postingCost
+  cost' <- option [] $ postingCost (_commodity amount')
   price' <- optionMaybe $ postingPrice (_commodity amount')
   return $ CompletePosting account' amount' cost' price'
 

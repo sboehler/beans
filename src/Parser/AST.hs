@@ -129,11 +129,11 @@ instance Pretty Tag where
   pretty (Tag t) = pretty t
 
 data Posting
-  = WildcardPosting { _postingAccountName :: AccountName}
+  = WildcardPosting { _postingAccountName :: AccountName }
   | CompletePosting { _postingAccountName :: AccountName
-                   ,  _amount :: Amount Decimal
-                   ,  _postingCost :: [PostingCost]
-                   ,  _postingPrice :: Maybe PostingPrice}
+                    , _amount :: Amount Decimal
+                    , _postingCost :: [PostingCost]
+                    , _postingPrice :: Maybe PostingPrice }
   deriving (Show, Eq)
 
 instance Pretty Posting where
@@ -147,7 +147,7 @@ prettyCost [] = mempty
 prettyCost c = encloseSep "{" "}" "," (map pretty c)
 
 data PostingCost
-  = PostingCostAmount { _price :: Price Decimal}
+  = PostingCostAmount { _price :: Price Decimal }
   | PostingCostDate Date
   | PostingCostLabel Text
   deriving (Show, Eq)
@@ -158,8 +158,8 @@ instance Pretty PostingCost where
   pretty (PostingCostLabel label) = pretty label
 
 data PostingPrice
-  = UnitPrice { _price :: Price Decimal}
-  | TotalAmount { _amount :: Amount Decimal}
+  = UnitPrice { _price :: Price Decimal }
+  | TotalAmount { _amount :: Amount Decimal }
   deriving (Show, Eq)
 
 instance Pretty PostingPrice where

@@ -128,19 +128,26 @@ newtype Tag =
 instance Pretty Tag where
   pretty (Tag t) = pretty t
 
-data Posting
-  = WildcardPosting { _postingAccountName :: AccountName }
-  | CompletePosting { _postingAccountName :: AccountName
-                    , _amount :: Amount Decimal
-                    , _postingCost :: [PostingCost]
-                    , _postingPrice :: Maybe PostingPrice }
+data PostingDirective
+  = WildcardPosting AccountName
+  | CompletePosting Posting
   deriving (Show, Eq)
 
+instance Pretty PostingDirective where
+  pretty (CompletePosting p) = pretty p
+  pretty (WildcardPosting n) = pretty n
+
+data Posting = Posting
+  { _postingAccountName :: AccountName
+  , _amount :: Amount Decimal
+  , _postingCost :: [PostingCost]
+  , _postingPrice :: Maybe PostingPrice
+  } deriving (Show, Eq)
+
 instance Pretty Posting where
-  pretty CompletePosting {..} =
+  pretty Posting {..} =
     pretty _postingAccountName <+>
     pretty _amount <+> prettyCost _postingCost <+> pretty _postingPrice
-  pretty (WildcardPosting n) = pretty n
 
 prettyCost :: [PostingCost] -> Doc a
 prettyCost [] = mempty

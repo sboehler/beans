@@ -11,7 +11,6 @@ import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
 import Parser (parse)
 import Parser.AST (Directive(..), Include(..))
-import Parser.Interpreter (completeTransaction)
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)
@@ -23,7 +22,7 @@ getIncludeFiles path ds = [takeDirectory path </> f | (Inc (Include f) _) <- ds]
 recursiveParse ::
      (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
 recursiveParse f = do
-  directives <- liftIO (readFile f) >>= parse f >>= traverse completeTransaction
+  directives <- liftIO (readFile f) >>= parse f
   others <- traverse recursiveParse . getIncludeFiles f $ directives
   return $ directives ++ concat others
 

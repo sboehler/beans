@@ -9,21 +9,23 @@ import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName(..))
 import Data.Date (Date, fromGregorian)
 import Data.Decimal (Decimal)
+import Data.Functor.Identity (Identity)
 import Data.Price (Price(..))
 import Data.Text.Lazy (Text, cons, pack, unpack)
 import Parser.AST
        (Balance(..), Close(..), Directive(..), Flag(..), Include(..),
         Open(..), Option(..), ParseException(..), Posting(..),
-        PostingCost(..), PostingPrice(..), PriceDirective(..), Tag(..),
-        Transaction(..))
+        PostingCost(..), PostingDirective(..), PostingPrice(..),
+        PriceDirective(..), Tag(..), Transaction(..))
+import Parser.Interpreter (completePostings)
 import Text.Parsec
-       (Parsec, (<|>), alphaNum, anyChar, between, char, count, digit,
-        eof, letter, many, many1, manyTill, newline, noneOf, oneOf, option,
+       ((<|>), alphaNum, anyChar, between, char, count, digit, eof,
+        letter, many, many1, manyTill, newline, noneOf, oneOf, option,
         optionMaybe, sepBy, sepBy1, string, try)
 import qualified Text.Parsec as P
 import Text.Parsec.Number (fractional2, sign)
 
-type Parser = Parsec Text ()
+type Parser = P.ParsecT Text () Identity
 
 space :: Parser Char
 space = char ' '
@@ -43,9 +45,7 @@ doubleQuote = char '\"'
 token :: Parser a -> Parser a
 token p = p <* many space
 
-readInt
-  :: (Read a)
-  => Int -> Parser a
+readInt :: (Read a) => Int -> Parser a
 readInt n = read <$> count n digit
 
 date :: Parser Date
@@ -110,19 +110,18 @@ postingCost :: CommodityName -> Parser [PostingCost]
 postingCost commodity =
   braces (postingCostElement commodity `sepBy1` symbol ",")
 
-wildcardPosting :: Parser Posting
-wildcardPosting = WildcardPosting <$> accountName
-
-completePosting :: Parser Posting
-completePosting = do
+posting :: Parser Posting
+posting = do
   account' <- accountName
   amount' <- amount
   cost' <- option [] $ postingCost (_commodity amount')
   price' <- optionMaybe $ postingPrice (_commodity amount')
-  return $ CompletePosting account' amount' cost' price'
+  return $ Posting account' amount' cost' price'
 
-posting :: Parser Posting
-posting = newline >> symbol " " >> (try completePosting <|> try wildcardPosting)
+postingDirective :: Parser PostingDirective
+postingDirective =
+  newline >> symbol " " >>
+  (try (CompletePosting <$> posting) <|> try (WildcardPosting <$> accountName))
 
 flagIncomplete :: Parser Flag
 flagIncomplete = Incomplete <$ symbol "!"
@@ -137,9 +136,15 @@ tag :: Parser Tag
 tag = Tag <$> (cons <$> hash <*> text alphaNum)
 
 transaction :: Parser Transaction
-transaction =
-  Transaction <$> date <*> flag <*> quotedString <*> many tag <*>
-  many1 (try posting)
+transaction = do
+  d <- date
+  f <- flag
+  desc <- quotedString
+  t <- many tag
+  postings <- completePostings <$> many1 (try postingDirective)
+  case postings of
+    Left err -> P.unexpected $ show err
+    Right p -> return $ Transaction d f desc t p
 
 open :: Parser Open
 open =
@@ -189,9 +194,7 @@ block p = p `surroundedBy` many (comment <|> eol)
 directives :: Parser [Directive P.SourcePos]
 directives = many (block directive) <* eof
 
-parse
-  :: (MonadThrow m)
-  => FilePath -> Text -> m [Directive P.SourcePos]
+parse :: (MonadThrow m) => FilePath -> Text -> m [Directive P.SourcePos]
 parse f t =
   case P.parse directives f t of
     Left e -> throwM $ ParseException e

@@ -20,9 +20,8 @@ import qualified Text.Parsec as P
 getIncludeFiles :: FilePath -> [Directive a] -> [FilePath]
 getIncludeFiles path ds = [takeDirectory path </> f | (Inc (Include f) _) <- ds]
 
-recursiveParse
-  :: (MonadIO m, MonadThrow m)
-  => FilePath -> m [Directive P.SourcePos]
+recursiveParse ::
+     (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
 recursiveParse f = do
   directives <- liftIO (readFile f) >>= parse f >>= traverse completeTransaction
   others <- traverse recursiveParse . getIncludeFiles f $ directives
@@ -31,9 +30,7 @@ recursiveParse f = do
 prettyPrint :: [Directive P.SourcePos] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
-doParse
-  :: (MonadIO m, MonadThrow m)
-  => m ()
+doParse :: (MonadIO m, MonadThrow m) => m ()
 doParse = do
   (file:_) <- liftIO getArgs
   liftIO $ prettyPrint =<< recursiveParse file

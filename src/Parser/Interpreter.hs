@@ -1,4 +1,6 @@
-module Parser.Interpreter where
+module Parser.Interpreter
+  ( completeTransaction
+  ) where
 
 import Control.Applicative ((<|>))
 import Control.Lens
@@ -9,7 +11,7 @@ import Data.Amount (Amount(..))
 import Data.Decimal (Decimal)
 import Data.Foldable (asum)
 import qualified Data.Holdings as H
-import Data.Maybe (mapMaybe)
+import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Price ((<@>))
 import Parser.AST
 import qualified Text.Parsec as P
@@ -20,29 +22,28 @@ data HaricotException =
 
 instance Exception HaricotException
 
-completeTransaction
-  :: (MonadThrow m)
-  => Directive P.SourcePos -> m (Directive P.SourcePos)
+completeTransaction ::
+     (MonadThrow m) => Directive P.SourcePos -> m (Directive P.SourcePos)
 completeTransaction = mapMOf (_Trn . _1 . postings) completePostings
 
-completePostings
-  :: (MonadThrow m)
-  => [Posting] -> m [Posting]
+completePostings :: (MonadThrow m) => [Posting] -> m [Posting]
 completePostings p =
-  case (summarize p, wildcardAccounts) of
-    ([], []) -> return p
-    (imbalances, [account]) -> return $ complete ++ balance account imbalances
-    (_, _) -> throwM UnbalancedTransaction
+  case (imbalances, wildcardAccount) of
+    ([], Nothing) -> return postings
+    (_, Just account) -> return $ postings ++ balance account imbalances
+    _ -> throwM UnbalancedTransaction
   where
-    wildcardAccounts = [_postingAccountName | WildcardPosting {..} <- p]
-    complete = [x | x@CompletePosting {..} <- p]
+    wildcardAccount =
+      listToMaybe [_postingAccountName | WildcardPosting {..} <- p]
+    postings = [c | c@CompletePosting {..} <- p]
+    imbalances = calculateImbalances postings
 
-summarize :: [Posting] -> [Amount Decimal]
-summarize = H.toList . H.filter notZero . H.fromList . mapMaybe calculateWeight
+calculateImbalances :: [Posting] -> [Amount Decimal]
+calculateImbalances =
+  H.toList . H.filter notZero . H.fromList . mapMaybe calculateWeight
 
 balance :: AccountName -> [Amount Decimal] -> [Posting]
-balance account amounts =
-  [CompletePosting account (negate <$> a) [] Nothing | a <- amounts]
+balance account = map (\a -> CompletePosting account (negate <$> a) [] Nothing)
 
 notZero :: Decimal -> Bool
 notZero n = abs n > 0.005
@@ -52,7 +53,7 @@ calculateWeight posting =
   atCost posting <|> atPrice posting <|> asBooked posting
 
 atCost :: Posting -> Maybe (Amount Decimal)
-atCost CompletePosting {..} = asum . fmap f $ _postingCost
+atCost CompletePosting {..} = asum $ f <$> _postingCost
   where
     f (PostingCostAmount p) = Just $ _amount <@> p
     f _ = Nothing

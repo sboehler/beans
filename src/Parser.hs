@@ -4,19 +4,21 @@ module Parser
 
 import Control.Monad (void)
 import Control.Monad.Catch (MonadThrow, throwM)
-import Data.Accounts (AccountName(..))
+import Data.Account (AccountName(..))
 import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName(..))
 import Data.Date (Date, fromGregorian)
 import Data.Decimal (Decimal)
 import Data.Functor.Identity (Identity)
+import Data.Maybe (listToMaybe)
+import Data.Posting (Posting(..), PostingPrice(..))
 import Data.Price (Price(..))
 import Data.Text.Lazy (Text, cons, pack, unpack)
+import Data.Transaction (Flag(..), Tag(..), Transaction(..))
 import Parser.AST
-       (Balance(..), Close(..), Directive(..), Flag(..), Include(..),
-        Open(..), Option(..), ParseException(..), Posting(..),
-        PostingCost(..), PostingDirective(..), PostingPrice(..),
-        PriceDirective(..), Tag(..), Transaction(..))
+       (Balance(..), Close(..), Directive(..), Include(..), Open(..),
+        Option(..), ParseException(..), PostingCost(..),
+        PostingDirective(..), PriceDirective(..))
 import Parser.Interpreter (completePostings)
 import Text.Parsec
        ((<|>), alphaNum, anyChar, between, char, count, digit, eof,
@@ -87,7 +89,7 @@ postingPriceUnit :: CommodityName -> Parser PostingPrice
 postingPriceUnit c = symbol "@" >> UnitPrice <$> price c
 
 postingPriceTotal :: Parser PostingPrice
-postingPriceTotal = symbol "@@" >> TotalAmount <$> amount
+postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
 
 postingPrice :: CommodityName -> Parser PostingPrice
 postingPrice c = try (postingPriceUnit c) <|> try postingPriceTotal
@@ -114,9 +116,12 @@ posting :: Parser Posting
 posting = do
   account' <- accountName
   amount' <- amount
-  cost' <- option [] $ postingCost (_commodity amount')
+  postingCost' <- option [] $ postingCost (_commodity amount')
   price' <- optionMaybe $ postingPrice (_commodity amount')
-  return $ Posting account' amount' cost' price'
+  let cost' = listToMaybe [c | (PostingCostAmount c) <- postingCost']
+  let label' = listToMaybe [l | (PostingCostLabel l) <- postingCost']
+  let date' = listToMaybe [d | (PostingCostDate d) <- postingCost']
+  return $ Posting account' amount' price' cost' label' date'
 
 postingDirective :: Parser PostingDirective
 postingDirective =

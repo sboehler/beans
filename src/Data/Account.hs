@@ -1,4 +1,4 @@
-module Data.Accounts
+module Data.Account
   ( Accounts(..)
   , AccountName(..)
   ) where

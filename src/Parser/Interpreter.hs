@@ -2,18 +2,14 @@ module Parser.Interpreter
   ( completePostings
   ) where
 
-import Control.Applicative ((<|>))
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
-import Data.Accounts (AccountName)
-import Data.Amount (Amount(..))
+import Data.Account (AccountName)
+import Data.Amount (Amount(..), (<@@>))
 import Data.Decimal (Decimal)
-import Data.Foldable (asum)
 import qualified Data.Holdings as H
-import Data.Maybe (listToMaybe, mapMaybe)
+import Data.Posting (Posting(..), PostingPrice(..))
 import Data.Price ((<@>))
-import Parser.AST
-       (Posting(..), PostingCost(..), PostingDirective(..),
-        PostingPrice(..))
+import Parser.AST (PostingDirective(..))
 
 data HaricotException =
   UnbalancedTransaction
@@ -23,37 +19,26 @@ instance Exception HaricotException
 
 completePostings :: (MonadThrow m) => [PostingDirective] -> m [Posting]
 completePostings p =
-  case (imbalances, wildcardAccount) of
-    ([], Nothing) -> return postings
-    (_, Just account) -> return (postings ++ balance account imbalances)
+  case (calculateImbalances postings, wildcardAccount) of
+    ([], []) -> return postings
+    (im, [account]) -> return $ postings ++ (balance account <$> im)
     _ -> throwM UnbalancedTransaction
   where
-    wildcardAccount = listToMaybe [n | WildcardPosting n <- p]
+    wildcardAccount = [n | WildcardPosting n <- p]
     postings = [p' | CompletePosting p' <- p]
-    imbalances = calculateImbalances postings
+
+balance :: AccountName -> Amount Decimal -> Posting
+balance account amount =
+  Posting account (negate <$> amount) Nothing Nothing Nothing Nothing
 
 calculateImbalances :: [Posting] -> [Amount Decimal]
 calculateImbalances =
-  H.toList . H.filter notZero . H.fromList . mapMaybe calculateWeight
+  H.toList . H.filter ((> 0.005) . abs) . H.fromList . fmap weight
 
-balance :: (Functor f) => AccountName -> f (Amount Decimal) -> f Posting
-balance account = fmap (\a -> Posting account (negate <$> a) [] Nothing)
-
-notZero :: Decimal -> Bool
-notZero n = abs n > 0.005
-
-calculateWeight :: Posting -> Maybe (Amount Decimal)
-calculateWeight posting@Posting {..} =
-  atCost posting <|> atPrice posting <|> Just _amount
-
-atCost :: Posting -> Maybe (Amount Decimal)
-atCost Posting {..} = asum $ f <$> _postingCost
-  where
-    f (PostingCostAmount p) = Just $ _amount <@> p
-    f _ = Nothing
-
-atPrice :: Posting -> Maybe (Amount Decimal)
-atPrice (Posting _ a _ (Just (UnitPrice pr))) = Just $ a <@> pr
-atPrice (Posting _ (Amount a _) _ (Just (TotalAmount ta))) =
-  Just $ (signum a *) <$> ta
-atPrice _ = Nothing
+weight :: Posting -> Amount Decimal
+weight Posting {..} =
+  case (_lotCost, _price) of
+    (Just lotCost, _) -> _amount <@> lotCost
+    (Nothing, Just (UnitPrice unitPrice)) -> _amount <@> unitPrice
+    (Nothing, Just (TotalPrice totalPrice)) -> _amount <@@> totalPrice
+    _ -> _amount

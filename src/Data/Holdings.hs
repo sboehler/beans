@@ -1,5 +1,5 @@
 module Data.Holdings
-  ( Holdings
+  ( Holdings(..)
   , toList
   , fromList
   , filter
@@ -13,6 +13,10 @@ import Prelude hiding (filter)
 newtype Holdings a = Holdings
   { _unHoldings :: M.Map CommodityName a
   } deriving (Show, Eq, Functor)
+
+instance Num a => Monoid (Holdings a) where
+  mempty = Holdings M.empty
+  (Holdings a) `mappend` (Holdings b) = Holdings (M.unionWith (+) a b)
 
 toList :: Holdings a -> [Amount a]
 toList h = (M.toList . _unHoldings) h >>= \(c, a) -> return $ Amount a c

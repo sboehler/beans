@@ -8,11 +8,17 @@ module Data.Holdings
 import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName)
 import qualified Data.Map.Lazy as M
+import Data.Text.Prettyprint.Doc (Pretty, (<+>), pretty, vsep)
 import Prelude hiding (filter)
 
 newtype Holdings a = Holdings
   { _unHoldings :: M.Map CommodityName a
   } deriving (Show, Eq, Functor)
+
+instance (Show a) => Pretty (Holdings a) where
+  pretty (Holdings h) = vsep (map f (M.toList h))
+    where
+      f (k, v) = pretty k <+> (pretty . show) v
 
 instance Num a => Monoid (Holdings a) where
   mempty = Holdings M.empty

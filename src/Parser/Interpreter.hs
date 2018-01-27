@@ -37,8 +37,10 @@ calculateImbalances =
 
 weight :: Num a => Posting a -> Amount a
 weight Posting {..} =
-  case (_lotCost, _price) of
-    (Just lotCost, _) -> _amount <@> lotCost
-    (Nothing, Just (UnitPrice unitPrice)) -> _amount <@> unitPrice
-    (Nothing, Just (TotalPrice totalPrice)) -> _amount <@@> totalPrice
-    _ -> _amount
+  case _lotCost of
+    Just lotCost -> _amount <@> lotCost
+    Nothing ->
+      case _price of
+        (Just (UnitPrice unitPrice)) -> _amount <@> unitPrice
+        (Just (TotalPrice totalPrice)) -> _amount <@@> totalPrice
+        _ -> _amount

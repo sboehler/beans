@@ -35,7 +35,7 @@ insert :: Num a => Account a -> Amount a -> Account a
 insert (Account accounts h) a = Account accounts (H.insert h a)
 
 addPosting :: Num a => Account a -> Posting a -> Account a
-addPosting account Posting {..} = f (_unAccountName _postingAccountName) account
+addPosting account Posting {..} = f (_unAccountName _accountName) account
   where
     f (n:ns) (Account (Accounts accounts) h) =
       Account (Accounts $ M.insert n account' accounts) h

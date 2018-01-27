@@ -10,7 +10,7 @@ import Data.Text.Lazy (Text)
 import Data.Time.Calendar (Day)
 
 data Posting a = Posting
-  { _postingAccountName :: AccountName
+  { _accountName :: AccountName
   , _amount :: Amount a
   , _price :: Maybe (PostingPrice a)
   , _lotCost :: Maybe (Price a)

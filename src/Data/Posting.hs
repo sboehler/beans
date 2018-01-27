@@ -3,41 +3,22 @@ module Data.Posting
   , Posting(..)
   ) where
 
-import Control.Lens (makePrisms)
-import Data.Account (AccountName)
+import Data.AccountName (AccountName)
 import Data.Amount (Amount)
-import Data.Date (Date)
-import Data.Decimal (Decimal)
 import Data.Price (Price)
 import Data.Text.Lazy (Text)
-import Data.Text.Prettyprint.Doc
-       (Pretty, (<+>), encloseSep, pretty)
+import Data.Time.Calendar (Day)
 
-data Posting = Posting
+data Posting a = Posting
   { _postingAccountName :: AccountName
-  , _amount :: Amount Decimal
-  , _price :: Maybe PostingPrice
-  , _lotCost :: Maybe (Price Decimal)
+  , _amount :: Amount a
+  , _price :: Maybe (PostingPrice a)
+  , _lotCost :: Maybe (Price a)
   , _lotLabel :: Maybe Text
-  , _lotDate :: Maybe Date
+  , _lotDate :: Maybe Day
   } deriving (Show, Eq)
 
-instance Pretty Posting where
-  pretty Posting {..} =
-    pretty _postingAccountName <+>
-    pretty _amount <+> pretty _price <+> pretty' _lotCost _lotLabel _lotDate
-    where
-      pretty' Nothing Nothing Nothing = mempty
-      pretty' c' l' d' =
-        encloseSep "{" "}" "," [pretty c', pretty l', pretty d']
-
-data PostingPrice
-  = UnitPrice { _unitPrice :: Price Decimal }
-  | TotalPrice { _totalPrice :: Amount Decimal }
+data PostingPrice a
+  = UnitPrice { _unitPrice :: Price a }
+  | TotalPrice { _totalPrice :: Amount a }
   deriving (Show, Eq)
-
-instance Pretty PostingPrice where
-  pretty (UnitPrice p) = "@" <+> pretty p
-  pretty (TotalPrice a) = "@@" <+> pretty a
-
-makePrisms ''PostingPrice

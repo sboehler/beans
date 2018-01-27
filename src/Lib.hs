@@ -5,12 +5,11 @@ module Lib
 import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans (liftIO)
-import qualified Data.Map.Lazy as M
 import Data.Text.Lazy.IO (readFile)
 import Data.Text.Prettyprint.Doc
-import Data.Time.Calendar (Day)
 import Parser (parse)
 import Parser.AST (Directive(..), Include(..))
+import Parser.Pretty ()
 import Prelude hiding (readFile)
 import System.Environment (getArgs)
 import System.FilePath.Posix ((</>), takeDirectory)
@@ -36,13 +35,3 @@ doParse :: (MonadIO m, MonadThrow m) => m ()
 doParse = do
   (file:_) <- liftIO getArgs
   liftIO $ prettyPrint =<< recursiveParse file
-
-newtype DatedMap a =
-  DatedMap (M.Map Day [Directive a])
-  deriving (Show)
-
-instance Pretty (DatedMap a) where
-  pretty (DatedMap m) = M.foldlWithKey f emptyDoc m
-    where
-      f doc d dds = doc <> cat (map (ppDir d) dds) <> hardline
-      ppDir day dir = pretty (show day) <+> pretty dir <> hardline

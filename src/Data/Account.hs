@@ -1,31 +1,21 @@
 module Data.Account
   ( Account(..)
+  , Accounts(..)
+  , insert
+  , addPosting
   , AccountName(..)
   ) where
 
-import Data.Holdings (Holdings(..))
+import Data.AccountName (AccountName(..))
+import Data.Amount (Amount(..))
+import qualified Data.Holdings as H
 import qualified Data.Map.Lazy as M
-import Data.Text.Lazy (Text, intercalate, unpack)
-import Data.Text.Prettyprint.Doc (Pretty, (<+>), pretty, vsep)
-
-newtype AccountName = AccountName
-  { _unAccountName :: [Text]
-  } deriving (Eq)
-
-instance Show AccountName where
-  show = unpack . intercalate ":" . _unAccountName
-
-instance Pretty AccountName where
-  pretty = pretty . show
+import Data.Posting (Posting(..))
+import Data.Text.Lazy (Text)
 
 newtype Accounts a = Accounts
   { _unAccounts :: M.Map Text (Account a)
   } deriving (Show, Eq)
-
-instance (Show a) => Pretty (Accounts a) where
-  pretty (Accounts m) = vsep (map f (M.toList m))
-    where
-      f (k, v) = pretty k <+> pretty v
 
 instance Num a => Monoid (Accounts a) where
   mempty = Accounts mempty
@@ -33,13 +23,22 @@ instance Num a => Monoid (Accounts a) where
 
 data Account a = Account
   { _accounts :: Accounts a
-  , _holdings :: Holdings a
+  , _holdings :: H.Holdings a
   } deriving (Show, Eq)
-
-instance (Show a) => Pretty (Account a) where
-  pretty (Account a h) = pretty a <+> pretty h
 
 instance Num a => Monoid (Account a) where
   mempty = Account mempty mempty
   (Account a h) `mappend` (Account a' h') =
     Account (a `mappend` a') (h `mappend` h')
+
+insert :: Num a => Account a -> Amount a -> Account a
+insert (Account accounts h) a = Account accounts (H.insert h a)
+
+addPosting :: Num a => Account a -> Posting a -> Account a
+addPosting account Posting {..} = f (_unAccountName _postingAccountName) account
+  where
+    f (n:ns) (Account (Accounts accounts) h) =
+      Account (Accounts $ M.insert n account' accounts) h
+      where
+        account' = f ns (M.findWithDefault mempty n accounts)
+    f [] (Account a h) = Account a (H.insert h _amount)

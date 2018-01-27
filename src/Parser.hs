@@ -7,13 +7,13 @@ import Control.Monad.Catch (MonadThrow, throwM)
 import Data.Account (AccountName(..))
 import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName(..))
-import Data.Date (Date, fromGregorian)
 import Data.Decimal (Decimal)
 import Data.Functor.Identity (Identity)
 import Data.Maybe (listToMaybe)
 import Data.Posting (Posting(..), PostingPrice(..))
 import Data.Price (Price(..))
 import Data.Text.Lazy (Text, cons, pack, unpack)
+import Data.Time.Calendar (Day, fromGregorian)
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
 import Parser.AST
        (Balance(..), Close(..), Directive(..), Include(..), Open(..),
@@ -50,7 +50,7 @@ token p = p <* many space
 readInt :: (Read a) => Int -> Parser a
 readInt n = read <$> count n digit
 
-date :: Parser Date
+date :: Parser Day
 date =
   token $
   fromGregorian <$> readInt 4 <* dash <*> readInt 2 <* dash <*> readInt 2
@@ -85,13 +85,13 @@ commodityName = token $ CommodityName . pack <$> many alphaNum
 amount :: Parser (Amount Decimal)
 amount = Amount <$> decimal <*> commodityName
 
-postingPriceUnit :: CommodityName -> Parser PostingPrice
+postingPriceUnit :: CommodityName -> Parser (PostingPrice Decimal)
 postingPriceUnit c = symbol "@" >> UnitPrice <$> price c
 
-postingPriceTotal :: Parser PostingPrice
+postingPriceTotal :: Parser (PostingPrice Decimal)
 postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
 
-postingPrice :: CommodityName -> Parser PostingPrice
+postingPrice :: CommodityName -> Parser (PostingPrice Decimal)
 postingPrice c = try (postingPriceUnit c) <|> try postingPriceTotal
 
 postingCostDate :: Parser PostingCost
@@ -112,7 +112,7 @@ postingCost :: CommodityName -> Parser [PostingCost]
 postingCost commodity =
   braces (postingCostElement commodity `sepBy1` symbol ",")
 
-posting :: Parser Posting
+posting :: Parser (Posting Decimal)
 posting = do
   account' <- accountName
   amount' <- amount

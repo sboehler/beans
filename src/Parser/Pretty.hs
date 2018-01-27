@@ -64,7 +64,7 @@ instance (Show a) => Pretty (Holdings a) where
 
 instance (Show a) => Pretty (Posting a) where
   pretty Posting {..} =
-    pretty _postingAccountName <+>
+    pretty _accountName <+>
     pretty _amount <+> pretty _price <+> pretty' _lotCost _lotLabel _lotDate
     where
       pretty' Nothing Nothing Nothing = mempty

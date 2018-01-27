@@ -17,7 +17,7 @@ data HaricotException =
 
 instance Exception HaricotException
 
-completePostings :: (MonadThrow m) => [PostingDirective] -> m [Posting]
+completePostings :: (MonadThrow m) => [PostingDirective] -> m [Posting Decimal]
 completePostings p =
   case (calculateImbalances postings, wildcardAccount) of
     ([], []) -> return postings
@@ -27,15 +27,15 @@ completePostings p =
     wildcardAccount = [n | WildcardPosting n <- p]
     postings = [p' | CompletePosting p' <- p]
 
-balance :: AccountName -> Amount Decimal -> Posting
+balance :: (Num a) => AccountName -> Amount a -> Posting a
 balance account amount =
   Posting account (negate <$> amount) Nothing Nothing Nothing Nothing
 
-calculateImbalances :: [Posting] -> [Amount Decimal]
+calculateImbalances :: (Ord a, Fractional a) => [Posting a] -> [Amount a]
 calculateImbalances =
   H.toList . H.filter ((> 0.005) . abs) . H.fromList . fmap weight
 
-weight :: Posting -> Amount Decimal
+weight :: Num a => Posting a -> Amount a
 weight Posting {..} =
   case (_lotCost, _price) of
     (Just lotCost, _) -> _amount <@> lotCost

@@ -2,23 +2,18 @@ module Data.Holdings
   ( Holdings(..)
   , toList
   , fromList
+  , insert
   , filter
   ) where
 
 import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName)
 import qualified Data.Map.Lazy as M
-import Data.Text.Prettyprint.Doc (Pretty, (<+>), pretty, vsep)
 import Prelude hiding (filter)
 
 newtype Holdings a = Holdings
   { _unHoldings :: M.Map CommodityName a
   } deriving (Show, Eq, Functor)
-
-instance (Show a) => Pretty (Holdings a) where
-  pretty (Holdings h) = vsep (map f (M.toList h))
-    where
-      f (k, v) = pretty k <+> (pretty . show) v
 
 instance Num a => Monoid (Holdings a) where
   mempty = Holdings M.empty
@@ -32,3 +27,6 @@ fromList = Holdings . M.fromListWith (+) . fmap (\(Amount a c) -> (c, a))
 
 filter :: (a -> Bool) -> Holdings a -> Holdings a
 filter f h = Holdings $ M.filter f (_unHoldings h)
+
+insert :: Num a => Holdings a -> Amount a -> Holdings a
+insert (Holdings m) (Amount a c) = Holdings $ M.insertWith (+) c a m

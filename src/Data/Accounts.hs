@@ -14,7 +14,7 @@ newtype Accounts a = Accounts
 
 instance Monoid a => Monoid (Accounts a) where
   mempty = Accounts mempty
-  mappend (Accounts a) (Accounts a') = Accounts $ M.unionWith mappend a a'
+  (Accounts a) `mappend` (Accounts a') = Accounts $ M.unionWith mappend a a'
 
 find :: (Monoid a) => Text -> Accounts a -> a
 find n = M.findWithDefault mempty n . _unAccounts

@@ -27,5 +27,5 @@ fromList = Holdings . M.fromListWith (+)
 filter :: (a -> Bool) -> Holdings a -> Holdings a
 filter f h = Holdings $ M.filter f (_unHoldings h)
 
-insert :: Num a => Holdings a -> CommodityName -> a -> Holdings a
-insert (Holdings m) c a = Holdings $ M.insertWith (+) c a m
+insert :: Num a => CommodityName -> a -> Holdings a -> Holdings a
+insert c a (Holdings m) = Holdings $ M.insertWith (+) c a m

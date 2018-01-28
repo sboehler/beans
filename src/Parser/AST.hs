@@ -6,7 +6,6 @@ import Data.Amount (Amount)
 import Data.Commodity (CommodityName(..))
 import Data.Decimal (Decimal)
 import Data.Posting (Posting)
-import Data.Price (Price(..))
 import Data.Text.Lazy (Text)
 import Data.Time.Calendar (Day)
 import Data.Transaction (Transaction)
@@ -55,11 +54,12 @@ data Close = Close
 
 data PriceDirective = PriceDirective
   { _date :: Day
-  , _price :: Price Decimal
+  , _commodity :: CommodityName
+  , _price :: Amount Decimal
   } deriving (Show, Eq)
 
 data LotElement
-  = LotElementAmount (Price Decimal)
+  = LotElementAmount (Amount Decimal)
   | LotElementLabel Text
   | LotElementDate Day
 

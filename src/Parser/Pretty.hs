@@ -16,7 +16,6 @@ import Data.Commodity (CommodityName(..))
 import Data.Holdings (Holdings(..))
 import Data.Lot (Lot(..))
 import Data.Posting (Posting(..), PostingPrice(..))
-import Data.Price (Price(..))
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
 import Parser.AST
        (Balance(..), Close(..), Directive(..), Include(..), Open(..),
@@ -41,9 +40,6 @@ instance Pretty CommodityName where
 
 instance Pretty Day where
   pretty = pretty . show
-
-instance Show a => Pretty (Price a) where
-  pretty Price {..} = (pretty . show) _amount <+> pretty _targetCommodity
 
 instance Pretty Transaction where
   pretty Transaction {..} =

@@ -7,7 +7,6 @@ import Data.AccountName (AccountName)
 import Data.Amount (Amount)
 import Data.Commodity (CommodityName)
 import Data.Lot (Lot)
-import Data.Price (Price)
 
 data Posting a = Posting
   { _accountName :: AccountName
@@ -18,6 +17,6 @@ data Posting a = Posting
   } deriving (Show, Eq)
 
 data PostingPrice a
-  = UnitPrice (Price a)
+  = UnitPrice (Amount a)
   | TotalPrice (Amount a)
   deriving (Show, Eq)

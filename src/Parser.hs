@@ -12,7 +12,6 @@ import Data.Functor.Identity (Identity)
 import Data.Lot (Lot(..))
 import Data.Maybe (listToMaybe)
 import Data.Posting (Posting(..), PostingPrice(..))
-import Data.Price (Price(..))
 import Data.Text.Lazy (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
@@ -86,36 +85,36 @@ commodityName = token $ CommodityName . pack <$> many alphaNum
 amount :: Parser (Amount Decimal)
 amount = Amount <$> decimal <*> commodityName
 
-postingPriceUnit :: CommodityName -> Parser (PostingPrice Decimal)
-postingPriceUnit c = symbol "@" >> UnitPrice <$> price c
+postingPriceUnit :: Parser (PostingPrice Decimal)
+postingPriceUnit = symbol "@" >> UnitPrice <$> amount
 
 postingPriceTotal :: Parser (PostingPrice Decimal)
 postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
 
-postingPrice :: CommodityName -> Parser (PostingPrice Decimal)
-postingPrice c = try (postingPriceUnit c) <|> try postingPriceTotal
+postingPrice :: Parser (PostingPrice Decimal)
+postingPrice = try postingPriceUnit <|> try postingPriceTotal
 
 lotDate :: Parser LotElement
 lotDate = LotElementDate <$> date
 
-lotCost :: CommodityName -> Parser LotElement
-lotCost commodity = LotElementAmount <$> price commodity
+lotCost :: Parser LotElement
+lotCost = LotElementAmount <$> amount
 
 lotLabel :: Parser LotElement
 lotLabel = LotElementLabel <$> quotedString
 
-lot :: CommodityName -> Parser LotElement
-lot commodity = try lotLabel <|> try lotDate <|> try (lotCost commodity)
+lot :: Parser LotElement
+lot = try lotLabel <|> try lotDate <|> try lotCost
 
-postingCost :: CommodityName -> Parser [LotElement]
-postingCost commodity = braces (lot commodity `sepBy1` symbol ",")
+postingCost :: Parser [LotElement]
+postingCost = braces (lot `sepBy1` symbol ",")
 
 posting :: Parser (Posting Decimal)
 posting = do
   _accountName <- accountName
   _amount <- decimal
   _commodity <- commodityName
-  postingCost' <- option [] $ postingCost _commodity
+  postingCost' <- option [] postingCost
   let _lot =
         Just
           Lot
@@ -123,7 +122,7 @@ posting = do
           , _label = listToMaybe [l | (LotElementLabel l) <- postingCost']
           , _date = listToMaybe [d | (LotElementDate d) <- postingCost']
           }
-  _price <- optionMaybe $ postingPrice _commodity
+  _price <- optionMaybe postingPrice
   return Posting {..}
 
 postingDirective :: Parser PostingDirective
@@ -165,18 +164,9 @@ close = Close <$> date <* symbol "close" <*> accountName
 balance :: Parser Balance
 balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount
 
-price :: CommodityName -> Parser (Price Decimal)
-price _sourceCommodity = do
-  _amount <- decimal
-  _targetCommodity <- commodityName
-  return Price {..}
-
 priceDirective :: Parser PriceDirective
-priceDirective = do
-  date' <- date
-  _ <- symbol "price"
-  commodity <- commodityName
-  PriceDirective date' <$> price commodity
+priceDirective =
+  PriceDirective <$> date <* symbol "price" <*> commodityName <*> amount
 
 include :: Parser Include
 include = symbol "include" >> Include . unpack <$> quotedString

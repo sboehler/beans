@@ -10,7 +10,6 @@ import Data.Decimal (Decimal)
 import Data.Lot (Lot(..))
 import qualified Data.Map.Lazy as M
 import Data.Posting (Posting(..), PostingPrice(..))
-import Data.Price (Price(..))
 import Parser.AST (PostingDirective(..))
 
 data HaricotException =
@@ -41,9 +40,9 @@ calculateImbalances =
 weight :: Num a => Posting a -> (CommodityName, a)
 weight Posting {_amount, _lot, _price, _commodity} =
   case _lot of
-    (Just Lot {_cost = Just (Price a ct _)}) -> (ct, a * _amount)
+    (Just Lot {_cost = Just (Amount a ct)}) -> (ct, a * _amount)
     _ ->
       case _price of
-        (Just (UnitPrice (Price a ct _))) -> (ct, a * _amount)
+        (Just (UnitPrice (Amount a ct))) -> (ct, a * _amount)
         (Just (TotalPrice (Amount a c))) -> (c, signum _amount * a)
         _ -> (_commodity, _amount)

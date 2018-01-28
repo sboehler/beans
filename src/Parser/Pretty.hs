@@ -8,8 +8,9 @@ import Data.Text.Prettyprint.Doc
         line, nest, pretty, sep, vcat, vsep)
 import Data.Time.Calendar (Day)
 
-import Data.Account (Account(..), Accounts(..))
+import Data.Account (Account(..))
 import Data.AccountName (AccountName(..))
+import Data.Accounts (Accounts(..))
 import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName(..))
 import Data.Holdings (Holdings(..))
@@ -23,7 +24,7 @@ import Parser.AST
 instance (Show a) => Pretty (Account a) where
   pretty (Account a h) = pretty h <+> line <+> nest 2 (pretty a)
 
-instance (Show a) => Pretty (Accounts a) where
+instance (Pretty a) => Pretty (Accounts a) where
   pretty (Accounts m) = vsep (fmap f (M.toList m))
     where
       f (name, account) = pretty name <+> pretty account

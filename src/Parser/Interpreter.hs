@@ -38,11 +38,8 @@ calculateImbalances =
   M.toList . M.filter ((> 0.005) . abs) . M.fromListWith (+) . fmap weight
 
 weight :: Num a => Posting a -> (CommodityName, a)
-weight Posting {_amount, _lot, _price, _commodity} =
-  case _lot of
-    (Just Lot {_cost = (Amount a ct)}) -> (ct, a * _amount)
-    Nothing ->
-      case _price of
-        (Just (UnitPrice (Amount a ct))) -> (ct, a * _amount)
-        (Just (TotalPrice (Amount a c))) -> (c, signum _amount * a)
-        _ -> (_commodity, _amount)
+weight Posting {_lot = Just (Lot (Amount p c) _ _), ..} = (c, _amount * p)
+weight Posting {_price = Just (UnitPrice (Amount p c)), ..} = (c, _amount * p)
+weight Posting {_price = Just (TotalPrice (Amount a c)), ..} =
+  (c, signum _amount * a)
+weight Posting {..} = (_commodity, _amount)

@@ -61,7 +61,6 @@ instance (Show a) => Pretty (Holdings a) where
       f (c, a) = (pretty . show) a <+> pretty c
 
 instance (Show a) => Pretty (Lot a) where
-  pretty (Lot Nothing Nothing Nothing) = mempty
   pretty Lot {..} =
     encloseSep "{" "}" "," [pretty _cost, pretty _label, pretty _date]
 

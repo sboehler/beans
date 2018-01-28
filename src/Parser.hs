@@ -10,20 +10,19 @@ import Data.Commodity (CommodityName(..))
 import Data.Decimal (Decimal)
 import Data.Functor.Identity (Identity)
 import Data.Lot (Lot(..))
-import Data.Maybe (listToMaybe)
 import Data.Posting (Posting(..), PostingPrice(..))
 import Data.Text.Lazy (Text, cons, pack, unpack)
 import Data.Time.Calendar (Day, fromGregorian)
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
 import Parser.AST
-       (Balance(..), Close(..), Directive(..), Include(..),
-        LotElement(..), Open(..), Option(..), ParseException(..),
-        PostingDirective(..), PriceDirective(..))
+       (Balance(..), Close(..), Directive(..), Include(..), Open(..),
+        Option(..), ParseException(..), PostingDirective(..),
+        PriceDirective(..))
 import Parser.Interpreter (completePostings)
 import Text.Parsec
        ((<|>), alphaNum, anyChar, between, char, count, digit, eof,
-        letter, many, many1, manyTill, newline, noneOf, oneOf, option,
-        optionMaybe, sepBy, sepBy1, string, try)
+        letter, many, many1, manyTill, newline, noneOf, oneOf, optionMaybe,
+        sepBy, string, try)
 import qualified Text.Parsec as P
 import Text.Parsec.Number (fractional2, sign)
 
@@ -94,41 +93,27 @@ postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
 postingPrice :: Parser (PostingPrice Decimal)
 postingPrice = try postingPriceUnit <|> try postingPriceTotal
 
-lotDate :: Parser LotElement
-lotDate = LotElementDate <$> date
+lot :: Day -> Parser (Lot Decimal)
+lot d =
+  braces $ do
+    _cost <- amount
+    _date <- try (symbol "," >> date) <|> return d
+    _label <- optionMaybe (symbol "," >> quotedString)
+    return Lot {..}
 
-lotCost :: Parser LotElement
-lotCost = LotElementAmount <$> amount
-
-lotLabel :: Parser LotElement
-lotLabel = LotElementLabel <$> quotedString
-
-lot :: Parser LotElement
-lot = try lotLabel <|> try lotDate <|> try lotCost
-
-postingCost :: Parser [LotElement]
-postingCost = braces (lot `sepBy1` symbol ",")
-
-posting :: Parser (Posting Decimal)
-posting = do
+posting :: Day -> Parser (Posting Decimal)
+posting d = do
   _accountName <- accountName
   _amount <- decimal
   _commodity <- commodityName
-  postingCost' <- option [] postingCost
-  let _lot =
-        Just
-          Lot
-          { _cost = listToMaybe [c | (LotElementAmount c) <- postingCost']
-          , _label = listToMaybe [l | (LotElementLabel l) <- postingCost']
-          , _date = listToMaybe [d | (LotElementDate d) <- postingCost']
-          }
+  _lot <- optionMaybe $ lot d
   _price <- optionMaybe postingPrice
   return Posting {..}
 
-postingDirective :: Parser PostingDirective
-postingDirective =
+postingDirective :: Day -> Parser PostingDirective
+postingDirective d =
   newline >> symbol " " >>
-  (try (CompletePosting <$> posting) <|> try (WildcardPosting <$> accountName))
+  (try (CompletePosting <$> posting d) <|> try (WildcardPosting <$> accountName))
 
 flagIncomplete :: Parser Flag
 flagIncomplete = Incomplete <$ symbol "!"
@@ -148,7 +133,7 @@ transaction = do
   f <- flag
   desc <- quotedString
   t <- many tag
-  postings <- completePostings <$> many1 (try postingDirective)
+  postings <- completePostings <$> many1 (try $ postingDirective d)
   case postings of
     Left err -> P.unexpected $ show err
     Right p -> return $ Transaction d f desc t p

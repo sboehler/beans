@@ -7,7 +7,7 @@ module Data.Account
   ) where
 
 import Data.AccountName (AccountName(..))
-import Data.Amount (Amount(..))
+import Data.Commodity (CommodityName)
 import qualified Data.Holdings as H
 import qualified Data.Map.Lazy as M
 import Data.Posting (Posting(..))
@@ -31,8 +31,8 @@ instance Num a => Monoid (Account a) where
   (Account a h) `mappend` (Account a' h') =
     Account (a `mappend` a') (h `mappend` h')
 
-insert :: Num a => Account a -> Amount a -> Account a
-insert (Account accounts h) a = Account accounts (H.insert h a)
+insert :: Num a => Account a -> CommodityName -> a -> Account a
+insert (Account accounts h) c a = Account accounts (H.insert h c a)
 
 addPosting :: Num a => Account a -> Posting a -> Account a
 addPosting account Posting {..} = f (_unAccountName _accountName) account
@@ -41,4 +41,4 @@ addPosting account Posting {..} = f (_unAccountName _accountName) account
       Account (Accounts $ M.insert n account' accounts) h
       where
         account' = f ns (M.findWithDefault mempty n accounts)
-    f [] (Account a h) = Account a (H.insert h _amount)
+    f [] (Account a h) = Account a (H.insert h _commodity _amount)

@@ -35,10 +35,10 @@ balance account (commodity, amount) =
 calculateImbalances ::
      (Ord a, Fractional a) => [Posting a] -> [(CommodityName, a)]
 calculateImbalances =
-  M.toList . M.filter ((> 0.005) . abs) . M.fromList . fmap weight
+  M.toList . M.filter ((> 0.005) . abs) . M.fromListWith (+) . fmap weight
 
 weight :: Num a => Posting a -> (CommodityName, a)
-weight Posting {..} =
+weight Posting {_amount, _lotCost, _price, _commodity} =
   case _lotCost of
     Just (Price a ct _) -> (ct, a * _amount)
     Nothing ->

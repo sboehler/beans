@@ -62,7 +62,11 @@ instance (Show a) => Pretty (Holdings a) where
 
 instance (Show a) => Pretty (Lot a) where
   pretty Lot {..} =
-    encloseSep "{" "}" "," [pretty _cost, pretty _label, pretty _date]
+    encloseSep "{" "}" "," $
+    [pretty _cost, pretty _date] ++
+    case _label of
+      Nothing -> []
+      _ -> [pretty _label]
 
 instance (Show a) => Pretty (Posting a) where
   pretty Posting {..} =

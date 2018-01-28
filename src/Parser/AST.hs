@@ -58,10 +58,10 @@ data PriceDirective = PriceDirective
   , _price :: Price Decimal
   } deriving (Show, Eq)
 
-data PostingCost
-  = PostingCostAmount (Price Decimal)
-  | PostingCostLabel Text
-  | PostingCostDate Day
+data LotElement
+  = LotElementAmount (Price Decimal)
+  | LotElementLabel Text
+  | LotElementDate Day
 
 newtype Include = Include
   { _filePath :: FilePath

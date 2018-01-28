@@ -14,6 +14,7 @@ import Data.Accounts (Accounts(..))
 import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName(..))
 import Data.Holdings (Holdings(..))
+import Data.Lot (Lot(..))
 import Data.Posting (Posting(..), PostingPrice(..))
 import Data.Price (Price(..))
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
@@ -63,15 +64,16 @@ instance (Show a) => Pretty (Holdings a) where
     where
       f (c, a) = (pretty . show) a <+> pretty c
 
+instance (Show a) => Pretty (Lot a) where
+  pretty (Lot Nothing Nothing Nothing) = mempty
+  pretty Lot {..} =
+    encloseSep "{" "}" "," [pretty _cost, pretty _label, pretty _date]
+
 instance (Show a) => Pretty (Posting a) where
   pretty Posting {..} =
     pretty _accountName <+>
     (pretty . show) _amount <+>
-    pretty _commodity <+> pretty _price <+> pretty' _lotCost _lotLabel _lotDate
-    where
-      pretty' Nothing Nothing Nothing = mempty
-      pretty' c' l' d' =
-        encloseSep "{" "}" "," [pretty c', pretty l', pretty d']
+    pretty _commodity <+> pretty _price <+> pretty _lot
 
 instance (Show a) => Pretty (PostingPrice a) where
   pretty (UnitPrice p) = "@" <+> pretty p

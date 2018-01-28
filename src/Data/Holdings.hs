@@ -6,7 +6,6 @@ module Data.Holdings
   , filter
   ) where
 
-import Data.Amount (Amount(..))
 import Data.Commodity (CommodityName)
 import qualified Data.Map.Lazy as M
 import Prelude hiding (filter)
@@ -19,14 +18,14 @@ instance Num a => Monoid (Holdings a) where
   mempty = Holdings M.empty
   (Holdings a) `mappend` (Holdings b) = Holdings (M.unionWith (+) a b)
 
-toList :: Holdings a -> [Amount a]
-toList h = (M.toList . _unHoldings) h >>= \(c, a) -> return $ Amount a c
+toList :: Holdings a -> [(CommodityName, a)]
+toList = M.toList . _unHoldings
 
-fromList :: Num a => [Amount a] -> Holdings a
-fromList = Holdings . M.fromListWith (+) . fmap (\(Amount a c) -> (c, a))
+fromList :: Num a => [(CommodityName, a)] -> Holdings a
+fromList = Holdings . M.fromListWith (+)
 
 filter :: (a -> Bool) -> Holdings a -> Holdings a
 filter f h = Holdings $ M.filter f (_unHoldings h)
 
-insert :: Num a => Holdings a -> Amount a -> Holdings a
-insert (Holdings m) (Amount a c) = Holdings $ M.insertWith (+) c a m
+insert :: Num a => Holdings a -> CommodityName -> a -> Holdings a
+insert (Holdings m) c a = Holdings $ M.insertWith (+) c a m

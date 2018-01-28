@@ -41,7 +41,7 @@ instance Pretty Day where
   pretty = pretty . show
 
 instance Show a => Pretty (Price a) where
-  pretty Price {..} = pretty _amount
+  pretty Price {..} = (pretty . show) _amount <+> pretty _targetCommodity
 
 instance Pretty Transaction where
   pretty Transaction {..} =
@@ -65,7 +65,8 @@ instance (Show a) => Pretty (Holdings a) where
 instance (Show a) => Pretty (Posting a) where
   pretty Posting {..} =
     pretty _accountName <+>
-    pretty _amount <+> pretty _price <+> pretty' _lotCost _lotLabel _lotDate
+    (pretty . show) _amount <+>
+    pretty _commodity <+> pretty _price <+> pretty' _lotCost _lotLabel _lotDate
     where
       pretty' Nothing Nothing Nothing = mempty
       pretty' c' l' d' =

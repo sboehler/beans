@@ -114,14 +114,15 @@ postingCost commodity =
 
 posting :: Parser (Posting Decimal)
 posting = do
-  account' <- accountName
-  amount' <- amount
-  postingCost' <- option [] $ postingCost (_commodity amount')
-  price' <- optionMaybe $ postingPrice (_commodity amount')
-  let cost' = listToMaybe [c | (PostingCostAmount c) <- postingCost']
-  let label' = listToMaybe [l | (PostingCostLabel l) <- postingCost']
-  let date' = listToMaybe [d | (PostingCostDate d) <- postingCost']
-  return $ Posting account' amount' price' cost' label' date'
+  _accountName <- accountName
+  _amount <- decimal
+  _commodity <- commodityName
+  postingCost' <- option [] $ postingCost _commodity
+  _price <- optionMaybe $ postingPrice _commodity
+  let _lotCost = listToMaybe [c | (PostingCostAmount c) <- postingCost']
+  let _lotLabel = listToMaybe [l | (PostingCostLabel l) <- postingCost']
+  let _lotDate = listToMaybe [d | (PostingCostDate d) <- postingCost']
+  return Posting {..}
 
 postingDirective :: Parser PostingDirective
 postingDirective =
@@ -163,7 +164,10 @@ balance :: Parser Balance
 balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount
 
 price :: CommodityName -> Parser (Price Decimal)
-price c = Price c <$> amount
+price _sourceCommodity = do
+  _amount <- decimal
+  _targetCommodity <- commodityName
+  return Price {..}
 
 priceDirective :: Parser PriceDirective
 priceDirective = do

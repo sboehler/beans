@@ -58,11 +58,6 @@ data PriceDirective = PriceDirective
   , _price :: Amount Decimal
   } deriving (Show, Eq)
 
-data LotElement
-  = LotElementAmount (Amount Decimal)
-  | LotElementLabel Text
-  | LotElementDate Day
-
 newtype Include = Include
   { _filePath :: FilePath
   } deriving (Show, Eq)

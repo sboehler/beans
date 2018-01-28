@@ -22,14 +22,14 @@ completePostings :: (MonadThrow m) => [PostingDirective] -> m [Posting Decimal]
 completePostings p =
   case (calculateImbalances postings, wildcardAccount) of
     ([], []) -> return postings
-    (im, [account]) -> return $ postings ++ (balance account <$> im)
+    (im, [account]) -> return $ postings ++ (uncurry (balance account) <$> im)
     _ -> throwM UnbalancedTransaction
   where
     wildcardAccount = [n | WildcardPosting n <- p]
     postings = [p' | CompletePosting p' <- p]
 
-balance :: (Num a) => AccountName -> (CommodityName, a) -> Posting a
-balance account (commodity, amount) =
+balance :: (Num a) => AccountName -> CommodityName -> a -> Posting a
+balance account commodity amount =
   Posting account (negate amount) commodity Nothing Nothing Nothing Nothing
 
 calculateImbalances ::

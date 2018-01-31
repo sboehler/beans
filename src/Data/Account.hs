@@ -1,6 +1,6 @@
 module Data.Account
   ( Account(..)
-  , addPosting
+  , insert
   , AccountName(..)
   ) where
 
@@ -15,17 +15,17 @@ data Account a = Account
   , _holdings :: H.Holdings a
   } deriving (Show, Eq)
 
-instance Num a => Monoid (Account a) where
+instance (Ord a, Num a) => Monoid (Account a) where
   mempty = Account mempty mempty
   (Account a h) `mappend` (Account a' h') =
     Account (a `mappend` a') (h `mappend` h')
 
 makeLenses 'Account
 
-addPosting :: Num a => Posting a -> Account a -> Account a
-addPosting Posting {..} =
-  case _unAccountName _accountName of
+insert :: (Ord a, Num a) => Posting a -> Account a -> Account a
+insert p =
+  case _unAccountName (_accountName p) of
     (n:ns) ->
-      let f = addPosting Posting {_accountName = AccountName ns, ..}
-      in accounts %~ A.adjust f n
-    [] -> holdings %~ H.insert _commodity _amount
+      accounts %~
+      A.adjustWithDefault (insert p {_accountName = AccountName ns}) n
+    [] -> holdings %~ H.insert p

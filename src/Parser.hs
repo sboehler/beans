@@ -94,21 +94,16 @@ postingPrice :: Parser (PostingPrice Decimal)
 postingPrice = try postingPriceUnit <|> try postingPriceTotal
 
 lot :: Day -> Parser (Lot Decimal)
-lot d =
-  braces $ do
-    _cost <- amount
-    _date <- try (symbol "," >> date) <|> return d
-    _label <- optionMaybe (symbol "," >> quotedString)
-    return Lot {..}
+lot d = braces $ Lot <$> amount <*> date' <*> label'
+  where
+    date' = try (symbol "," >> date) <|> pure d
+    label' = optionMaybe (symbol "," >> quotedString)
 
 posting :: Day -> Parser (Posting Decimal)
-posting d = do
-  _accountName <- accountName
-  _amount <- decimal
-  _commodity <- commodityName
-  _lot <- optionMaybe $ lot d
-  _price <- optionMaybe postingPrice
-  return Posting {..}
+posting d =
+  Posting <$> accountName <*> decimal <*> commodityName <*>
+  optionMaybe postingPrice <*>
+  optionMaybe (lot d)
 
 postingDirective :: Day -> Parser PostingDirective
 postingDirective d =

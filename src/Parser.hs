@@ -16,8 +16,7 @@ import Data.Time.Calendar (Day, fromGregorian)
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
 import Parser.AST
        (Balance(..), Close(..), Directive(..), Include(..), Open(..),
-        Option(..), ParseException(..), PostingDirective(..),
-        PriceDirective(..))
+        Option(..), ParseException(..), PostingDirective(..), Price(..))
 import Parser.Interpreter (completePostings)
 import Text.Parsec
        ((<|>), alphaNum, anyChar, between, char, count, digit, eof,
@@ -144,9 +143,8 @@ close = Close <$> date <* symbol "close" <*> accountName
 balance :: Parser Balance
 balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount
 
-priceDirective :: Parser PriceDirective
-priceDirective =
-  PriceDirective <$> date <* symbol "price" <*> commodityName <*> amount
+price :: Parser Price
+price = Price <$> date <* symbol "price" <*> commodityName <*> amount
 
 include :: Parser Include
 include = symbol "include" >> Include . unpack <$> quotedString
@@ -157,7 +155,7 @@ config = symbol "option" >> Option <$> quotedString <*> quotedString
 directive :: Parser (Directive P.SourcePos)
 directive =
   (Opn <$> try open <|> Cls <$> try close <|> Trn <$> try transaction <|>
-   Prc <$> try priceDirective <|>
+   Prc <$> try price <|>
    Bal <$> try balance <|>
    Inc <$> include <|>
    Opt <$> config) <*>

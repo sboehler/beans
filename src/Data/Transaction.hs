@@ -16,15 +16,15 @@ data Transaction = Transaction
   , _description :: Text
   , _tags :: [Tag]
   , _postings :: [Posting Decimal]
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
 
 data Flag
   = Complete
   | Incomplete
-  deriving (Eq, Show)
+  deriving (Eq, Show, Ord)
 
 newtype Tag =
   Tag Text
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 makeLenses ''Tag

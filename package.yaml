@@ -24,6 +24,7 @@ dependencies:
 - containers
 - Decimal
 - filepath
+- free
 - lens
 - parsec
 - parsec3-numbers

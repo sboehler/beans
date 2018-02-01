@@ -14,9 +14,9 @@ data Posting a = Posting
   , _commodity :: CommodityName
   , _price :: Maybe (PostingPrice a)
   , _lot :: Maybe (Lot a)
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 data PostingPrice a
   = UnitPrice (Amount a)
   | TotalPrice (Amount a)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)

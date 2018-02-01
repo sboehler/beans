@@ -21,53 +21,53 @@ instance Exception ParseException
 data Directive a
   = Opn Open
         a
-  | Cls Close
-        a
   | Bal Balance
         a
   | Trn Transaction
         a
-  | Prc PriceDirective
+  | Cls Close
+        a
+  | Prc Price
         a
   | Opt Option
         a
   | Inc Include
         a
-  deriving (Eq, Show, Functor)
+  deriving (Eq, Show, Functor, Ord)
 
 data Balance = Balance
   { _date :: Day
   , _accountName :: AccountName
   , _amount :: Amount Decimal
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
 
 data Open = Open
   { _date :: Day
   , _accountName :: AccountName
   , _commodities :: [CommodityName]
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 data Close = Close
   { _date :: Day
   , _accountName :: AccountName
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
-data PriceDirective = PriceDirective
+data Price = Price
   { _date :: Day
   , _commodity :: CommodityName
   , _price :: Amount Decimal
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 newtype Include = Include
   { _filePath :: FilePath
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 data Option =
   Option Text
          Text
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data PostingDirective
   = WildcardPosting AccountName
   | CompletePosting (Posting Decimal)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)

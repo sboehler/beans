@@ -19,7 +19,7 @@ import Data.Posting (Posting(..), PostingPrice(..))
 import Data.Transaction (Flag(..), Tag(..), Transaction(..))
 import Parser.AST
        (Balance(..), Close(..), Directive(..), Include(..), Open(..),
-        Option(..), PostingDirective(..), PriceDirective(..))
+        Option(..), PostingDirective(..), Price(..))
 
 instance (Show a) => Pretty (Account a) where
   pretty (Account a h) = pretty h <+> line <+> nest 2 (pretty a)
@@ -99,8 +99,8 @@ instance Pretty Open where
 instance Pretty Close where
   pretty Close {..} = pretty _date <+> "close" <+> pretty _accountName
 
-instance Pretty PriceDirective where
-  pretty PriceDirective {..} = pretty _date <+> "price" <+> pretty _price
+instance Pretty Price where
+  pretty Price {..} = pretty _date <+> "price" <+> pretty _price
 
 instance Pretty Include where
   pretty (Include filePath) = "include" <+> pretty filePath

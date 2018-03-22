@@ -2,28 +2,29 @@ module Parser
   ( parse
   ) where
 
-import Control.Monad (void)
-import Control.Monad.Catch (MonadThrow, throwM)
-import Data.Account (AccountName(..))
-import Data.Amount (Amount(..))
-import Data.Commodity (CommodityName(..))
-import Data.Decimal (Decimal)
-import Data.Functor.Identity (Identity)
-import Data.Lot (Lot(..))
-import Data.Posting (Posting(..), PostingPrice(..))
-import Data.Text.Lazy (Text, cons, pack, unpack)
-import Data.Time.Calendar (Day, fromGregorian)
-import Data.Transaction (Flag(..), Tag(..), Transaction(..))
-import Parser.AST
-       (Balance(..), Close(..), Directive(..), Include(..), Open(..),
-        Option(..), ParseException(..), PostingDirective(..), Price(..))
-import Parser.Interpreter (completePostings)
-import Text.Parsec
-       ((<|>), alphaNum, anyChar, between, char, count, digit, eof,
-        letter, many, many1, manyTill, newline, noneOf, oneOf, optionMaybe,
-        sepBy, string, try)
-import qualified Text.Parsec as P
-import Text.Parsec.Number (fractional2, sign)
+import           Control.Monad         (void)
+import           Control.Monad.Catch   (MonadThrow, throwM)
+import           Data.Account          (AccountName (..))
+import           Data.Amount           (Amount (..))
+import           Data.Commodity        (CommodityName (..))
+import           Data.Decimal          (Decimal)
+import           Data.Functor.Identity (Identity)
+import           Data.Lot              (Lot (..))
+import           Data.Posting          (Posting (..), PostingPrice (..))
+import           Data.Text.Lazy        (Text, cons, pack, unpack)
+import           Data.Time.Calendar    (Day, fromGregorian)
+import           Data.Transaction      (Flag (..), Tag (..), Transaction (..))
+import           Parser.AST            (Balance (..), Close (..),
+                                        Directive (..), Include (..), Open (..),
+                                        Option (..), ParseException (..),
+                                        PostingDirective (..), Price (..))
+import           Parser.Interpreter    (completePostings)
+import           Text.Parsec           (alphaNum, anyChar, between, char, count,
+                                        digit, eof, letter, many, many1,
+                                        manyTill, newline, noneOf, oneOf,
+                                        optionMaybe, sepBy, string, try, (<|>))
+import qualified Text.Parsec           as P
+import           Text.Parsec.Number    (fractional2, sign)
 
 type Parser = P.ParsecT Text () Identity
 
@@ -130,7 +131,7 @@ transaction = do
   postings <- completePostings <$> many1 (try $ postingDirective d)
   case postings of
     Left err -> P.unexpected $ show err
-    Right p -> return $ Transaction d f desc t p
+    Right p  -> return $ Transaction d f desc t p
 
 open :: Parser Open
 open =
@@ -165,7 +166,7 @@ eol :: Parser ()
 eol = void $ token newline
 
 comment :: Parser ()
-comment = void (oneOf ";#" >> anyChar `manyTill` try eol)
+comment = void (oneOf ";#*" >> anyChar `manyTill` try eol)
 
 block :: Parser a -> Parser a
 block p = p `surroundedBy` many (comment <|> eol)
@@ -176,5 +177,5 @@ directives = many (block directive) <* eof
 parse :: (MonadThrow m) => FilePath -> Text -> m [Directive P.SourcePos]
 parse f t =
   case P.parse directives f t of
-    Left e -> throwM $ ParseException e
+    Left e  -> throwM $ ParseException e
     Right d -> return d

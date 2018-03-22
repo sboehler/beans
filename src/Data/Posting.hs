@@ -4,9 +4,9 @@ module Data.Posting
   ) where
 
 import Data.AccountName (AccountName)
-import Data.Amount (Amount)
-import Data.Commodity (CommodityName)
-import Data.Lot (Lot)
+import Data.Amount      (Amount)
+import Data.Commodity   (CommodityName)
+import Data.Lot         (Lot)
 
 data Posting a = Posting
   { _accountName :: AccountName

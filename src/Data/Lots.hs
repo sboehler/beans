@@ -6,15 +6,16 @@ module Data.Lots
 import Data.Lot (Lot)
 import qualified Data.Map.Lazy as M
 import Data.Posting (Posting(..))
+import Data.Scientific (Scientific)
 
-newtype Lots a = Lots
-  { _unLots :: M.Map (Maybe (Lot a)) a
+newtype Lots = Lots
+  { _unLots :: M.Map (Maybe Lot) Scientific
   } deriving (Show, Eq)
 
-instance (Ord a, Num a) => Monoid (Lots a) where
+instance Monoid Lots  where
   mempty = Lots M.empty
   (Lots a) `mappend` (Lots b) = Lots (M.unionWith (+) a b)
 
-insert :: (Ord a, Num a) => Posting a -> Lots a -> Lots a
+insert :: Posting -> Lots -> Lots 
 insert Posting {_lot, _amount} (Lots lots) =
   Lots $ M.insertWith (+) _lot _amount lots

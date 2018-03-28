@@ -1,16 +1,16 @@
-{ mkDerivation, base, containers, Decimal, exceptions, filepath
-, free, lens, mtl, parsec, parsec3-numbers, prettyprinter, stdenv
-, text, time, apply-refact, hlint, hasktags, hoogle, stylish-haskell, hindent
+{ mkDerivation, base, containers, exceptions, filepath
+, free, lens, megaparsec, mtl, parsec, parsec3-numbers
+, prettyprinter, scientific, stdenv, text, time
 }:
 mkDerivation {
   pname = "haricot";
   version = "0.1.0.0";
   src = ./.;
+  isLibrary = false;
   isExecutable = true;
-  buildDepends = [apply-refact hlint hasktags hoogle stylish-haskell hindent];
   executableHaskellDepends = [
-    base containers Decimal exceptions filepath free lens mtl parsec
-    parsec3-numbers prettyprinter text time
+    base containers exceptions filepath free lens megaparsec
+    mtl parsec parsec3-numbers prettyprinter scientific text time
   ];
   homepage = "https://github.com/sboehler/haricot#readme";
   description = "A Haskell parser for beancount";

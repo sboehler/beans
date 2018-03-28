@@ -4,7 +4,6 @@ import Control.Exception (Exception)
 import Data.Account (AccountName(..))
 import Data.Amount (Amount)
 import Data.Commodity (CommodityName(..))
-import Data.Decimal (Decimal)
 import Data.Posting (Posting)
 import Data.Text.Lazy (Text)
 import Data.Time.Calendar (Day)
@@ -38,7 +37,7 @@ data Directive a
 data Balance = Balance
   { _date :: Day
   , _accountName :: AccountName
-  , _amount :: Amount Decimal
+  , _amount :: Amount 
   } deriving (Eq, Show, Ord)
 
 data Open = Open
@@ -55,7 +54,7 @@ data Close = Close
 data Price = Price
   { _date :: Day
   , _commodity :: CommodityName
-  , _price :: Amount Decimal
+  , _price :: Amount 
   } deriving (Show, Eq, Ord)
 
 newtype Include = Include
@@ -69,5 +68,5 @@ data Option =
 
 data PostingDirective
   = WildcardPosting AccountName
-  | CompletePosting (Posting Decimal)
+  | CompletePosting (Posting )
   deriving (Show, Eq, Ord)

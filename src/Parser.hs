@@ -2,29 +2,29 @@ module Parser
   ( parse
   ) where
 
-import           Control.Monad         (void)
-import           Control.Monad.Catch   (MonadThrow, throwM)
-import           Data.Account          (AccountName (..))
-import           Data.Amount           (Amount (..))
-import           Data.Commodity        (CommodityName (..))
-import           Data.Decimal          (Decimal)
+import           Control.Monad (void)
+import           Control.Monad.Catch (MonadThrow, throwM)
+import           Data.Account (AccountName (..))
+import           Data.Amount (Amount (..))
+import           Data.Commodity (CommodityName (..))
+import           Data.Scientific (Scientific)
 import           Data.Functor.Identity (Identity)
-import           Data.Lot              (Lot (..))
-import           Data.Posting          (Posting (..), PostingPrice (..))
-import           Data.Text.Lazy        (Text, cons, pack, unpack)
-import           Data.Time.Calendar    (Day, fromGregorian)
-import           Data.Transaction      (Flag (..), Tag (..), Transaction (..))
+import           Data.Lot (Lot (..))
+import           Data.Posting (Posting (..), PostingPrice (..))
+import           Data.Text.Lazy (Text, cons, pack, unpack)
+import           Data.Time.Calendar (Day, fromGregorian)
+import           Data.Transaction (Flag (..), Tag (..), Transaction (..))
 import           Parser.AST            (Balance (..), Close (..),
                                         Directive (..), Include (..), Open (..),
                                         Option (..), ParseException (..),
                                         PostingDirective (..), Price (..))
-import           Parser.Interpreter    (completePostings)
+import           Parser.Interpreter (completePostings)
 import           Text.Parsec           (alphaNum, anyChar, between, char, count,
                                         digit, eof, letter, many, many1,
                                         manyTill, newline, noneOf, oneOf,
                                         optionMaybe, sepBy, string, try, (<|>))
-import qualified Text.Parsec           as P
-import           Text.Parsec.Number    (fractional2, sign)
+import qualified Text.Parsec as P
+import           Text.Parsec.Number (fractional2, sign)
 
 type Parser = P.ParsecT Text () Identity
 
@@ -69,7 +69,7 @@ quotedString = token $ text (noneOf "\"") `surroundedBy` doubleQuote
 braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
 
-decimal :: Parser Decimal
+decimal :: Parser Scientific
 decimal = token $ sign <*> fractional2 True
 
 accountNameSegment :: Parser Text
@@ -81,25 +81,25 @@ accountName = token $ AccountName <$> accountNameSegment `sepBy` colon
 commodityName :: Parser CommodityName
 commodityName = token $ CommodityName . pack <$> many alphaNum
 
-amount :: Parser (Amount Decimal)
+amount :: Parser Amount
 amount = Amount <$> decimal <*> commodityName
 
-postingPriceUnit :: Parser (PostingPrice Decimal)
+postingPriceUnit :: Parser PostingPrice
 postingPriceUnit = symbol "@" >> UnitPrice <$> amount
 
-postingPriceTotal :: Parser (PostingPrice Decimal)
+postingPriceTotal :: Parser PostingPrice
 postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
 
-postingPrice :: Parser (PostingPrice Decimal)
+postingPrice :: Parser PostingPrice
 postingPrice = try postingPriceUnit <|> try postingPriceTotal
 
-lot :: Day -> Parser (Lot Decimal)
+lot :: Day -> Parser Lot
 lot d = braces $ Lot <$> amount <*> date' <*> label'
   where
     date' = try (symbol "," >> date) <|> pure d
     label' = optionMaybe (symbol "," >> quotedString)
 
-posting :: Day -> Parser (Posting Decimal)
+posting :: Day -> Parser Posting 
 posting d =
   Posting <$> accountName <*> decimal <*> commodityName <*>
   optionMaybe postingPrice <*>

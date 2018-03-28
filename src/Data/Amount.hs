@@ -3,8 +3,9 @@ module Data.Amount
   ) where
 
 import Data.Commodity (CommodityName)
+import Data.Scientific(Scientific)
 
-data Amount a = Amount
-  { _amount :: a
+data Amount  = Amount
+  { _amount :: Scientific
   , _commodity :: CommodityName
-  } deriving (Eq, Show, Functor, Ord)
+  } deriving (Eq, Show, Ord)

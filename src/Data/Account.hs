@@ -10,19 +10,19 @@ import qualified Data.Accounts as A
 import qualified Data.Holdings as H
 import Data.Posting (Posting(..))
 
-data Account a = Account
-  { _accounts :: A.Accounts (Account a)
-  , _holdings :: H.Holdings a
+data Account = Account
+  { _accounts :: A.Accounts Account
+  , _holdings :: H.Holdings 
   } deriving (Show, Eq)
 
-instance (Ord a, Num a) => Monoid (Account a) where
+instance Monoid Account  where
   mempty = Account mempty mempty
   (Account a h) `mappend` (Account a' h') =
     Account (a `mappend` a') (h `mappend` h')
 
 makeLenses 'Account
 
-insert :: (Ord a, Num a) => Posting a -> Account a -> Account a
+insert ::  Posting  -> Account  -> Account 
 insert p =
   case _unAccountName (_accountName p) of
     (n:ns) ->

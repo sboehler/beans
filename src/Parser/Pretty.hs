@@ -21,7 +21,7 @@ import Parser.AST
        (Balance(..), Close(..), Directive(..), Include(..), Open(..),
         Option(..), PostingDirective(..), Price(..))
 
-instance (Show a) => Pretty (Account a) where
+instance Pretty Account where
   pretty (Account a h) = pretty h <+> line <+> nest 2 (pretty a)
 
 instance (Pretty a) => Pretty (Accounts a) where
@@ -32,7 +32,7 @@ instance (Pretty a) => Pretty (Accounts a) where
 instance Pretty AccountName where
   pretty = pretty . show
 
-instance Show a => Pretty (Amount a) where
+instance Pretty Amount where
   pretty Amount {..} = pretty (show _amount) <+> pretty _commodity
 
 instance Pretty CommodityName where
@@ -55,12 +55,12 @@ instance Pretty Flag where
 instance Pretty Tag where
   pretty (Tag t) = pretty t
 
-instance (Show a) => Pretty (Holdings a) where
+instance Pretty Holdings where
   pretty (Holdings h) = align $ vsep (map f (M.toList h))
     where
       f (c, a) = (pretty . show) a <+> pretty c
 
-instance (Show a) => Pretty (Lot a) where
+instance Pretty Lot where
   pretty Lot {..} =
     encloseSep "{" "}" "," $
     [pretty _cost, pretty _date] ++
@@ -68,13 +68,13 @@ instance (Show a) => Pretty (Lot a) where
       Nothing -> []
       _ -> [pretty _label]
 
-instance (Show a) => Pretty (Posting a) where
+instance Pretty Posting where
   pretty Posting {..} =
     pretty _accountName <+>
     (pretty . show) _amount <+>
     pretty _commodity <+> pretty _price <+> pretty _lot
 
-instance (Show a) => Pretty (PostingPrice a) where
+instance Pretty PostingPrice where
   pretty (UnitPrice p) = "@" <+> pretty p
   pretty (TotalPrice a) = "@@" <+> pretty a
 

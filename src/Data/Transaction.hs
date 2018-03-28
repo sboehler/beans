@@ -5,7 +5,6 @@ module Data.Transaction
   ) where
 
 import Control.Lens (makeLenses)
-import Data.Decimal (Decimal)
 import Data.Posting (Posting)
 import Data.Text.Lazy (Text)
 import Data.Time.Calendar (Day)
@@ -15,7 +14,7 @@ data Transaction = Transaction
   , _flag :: Flag
   , _description :: Text
   , _tags :: [Tag]
-  , _postings :: [Posting Decimal]
+  , _postings :: [Posting]
   } deriving (Eq, Show, Ord)
 
 data Flag

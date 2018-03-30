@@ -10,7 +10,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     base containers exceptions filepath free lens megaparsec
-    mtl parsec parsec3-numbers prettyprinter scientific text time
+    mtl prettyprinter scientific text time
   ];
   homepage = "https://github.com/sboehler/haricot#readme";
   description = "A Haskell parser for beancount";

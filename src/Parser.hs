@@ -1,181 +1,157 @@
-module Parser
-  ( parse
-  ) where
+module Parser where
 
-import           Control.Monad (void)
-import           Control.Monad.Catch (MonadThrow, throwM)
-import           Data.Account (AccountName (..))
-import           Data.Amount (Amount (..))
-import           Data.Commodity (CommodityName (..))
-import           Data.Scientific (Scientific)
-import           Data.Functor.Identity (Identity)
-import           Data.Lot (Lot (..))
-import           Data.Posting (Posting (..), PostingPrice (..))
-import           Data.Text.Lazy (Text, cons, pack, unpack)
-import           Data.Time.Calendar (Day, fromGregorian)
-import           Data.Transaction (Flag (..), Tag (..), Transaction (..))
-import           Parser.AST            (Balance (..), Close (..),
-                                        Directive (..), Include (..), Open (..),
-                                        Option (..), ParseException (..),
-                                        PostingDirective (..), Price (..))
-import           Parser.Interpreter (completePostings)
-import           Text.Parsec           (alphaNum, anyChar, between, char, count,
-                                        digit, eof, letter, many, many1,
-                                        manyTill, newline, noneOf, oneOf,
-                                        optionMaybe, sepBy, string, try, (<|>))
-import qualified Text.Parsec as P
-import           Text.Parsec.Number (fractional2, sign)
+import           Control.Monad              (void)
+import           Control.Monad.Catch        (MonadThrow, throwM)
+import           Data.Account               (AccountName (..))
+import           Data.Amount                (Amount (..))
+import           Data.Char                  (isAlphaNum)
+import           Data.Commodity             (CommodityName (..))
+import           Data.Lot                   (Lot (..))
+import           Data.Posting               (Posting (..), PostingPrice (..))
+import           Data.Scientific            (Scientific)
+import           Data.Text.Lazy             (Text, cons, unpack)
+import           Data.Time.Calendar         (Day, fromGregorian)
+import           Data.Transaction           (Flag (..), Tag (..),
+                                             Transaction (..))
+import           Data.Void                  (Void)
+import           Parser.AST                 (Balance (..), Close (..),
+                                             Directive (..), Include (..),
+                                             Open (..), Option (..),
+                                             PostingDirective (..), Price (..))
+import           Parser.Interpreter         (completePostings)
+import           Text.Megaparsec
+import           Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 
-type Parser = P.ParsecT Text () Identity
 
-space :: Parser Char
-space = char ' '
+type Parser = Parsec Void Text
 
-dash :: Parser Char
-dash = char '-'
+lineComment :: Parser ()
+lineComment = L.skipLineComment "*" <|> L.skipLineComment "#" <|> L.skipLineComment ";"
 
-colon :: Parser Char
-colon = char ':'
+scn ::  Parser ()
+scn = L.space space1 lineComment empty
 
-hash :: Parser Char
-hash = char '#'
+sc :: Parser ()
+sc = L.space (void $ takeWhile1P Nothing f) empty empty
+  where
+    f x = x == ' ' || x == '\t'
 
-doubleQuote :: Parser Char
-doubleQuote = char '\"'
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme sc
 
-token :: Parser a -> Parser a
-token p = p <* many space
+symbol :: Text -> Parser Text
+symbol = L.symbol sc
 
 readInt :: (Read a) => Int -> Parser a
-readInt n = read <$> count n digit
+readInt n = read <$> count n digitChar
 
 date :: Parser Day
 date =
-  token $
-  fromGregorian <$> readInt 4 <* dash <*> readInt 2 <* dash <*> readInt 2
-
-text :: Parser Char -> Parser Text
-text p = pack <$> many p
-
-surroundedBy :: Parser a -> Parser b -> Parser a
-surroundedBy p s = between s s p
-
-symbol :: String -> Parser Text
-symbol i = token $ pack <$> string i
-
-quotedString :: Parser Text
-quotedString = token $ text (noneOf "\"") `surroundedBy` doubleQuote
-
-braces :: Parser a -> Parser a
-braces = between (symbol "{") (symbol "}")
-
-decimal :: Parser Scientific
-decimal = token $ sign <*> fractional2 True
-
-accountNameSegment :: Parser Text
-accountNameSegment = cons <$> letter <*> text alphaNum
+  lexeme $
+  fromGregorian <$> readInt 4 <* symbol "-" <*> readInt 2 <* symbol "-" <*> readInt 2
 
 accountName :: Parser AccountName
-accountName = token $ AccountName <$> accountNameSegment `sepBy` colon
+accountName = lexeme $ AccountName <$> accountNameSegment `sepBy` symbol ":"
+  where
+    accountNameSegment =
+      cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
 
 commodityName :: Parser CommodityName
-commodityName = token $ CommodityName . pack <$> many alphaNum
+commodityName = lexeme $ CommodityName <$> takeWhileP (Just "alphanumeric") isAlphaNum
+
+number :: Parser Scientific
+number = lexeme (L.signed sc L.scientific)
 
 amount :: Parser Amount
-amount = Amount <$> decimal <*> commodityName
-
-postingPriceUnit :: Parser PostingPrice
-postingPriceUnit = symbol "@" >> UnitPrice <$> amount
-
-postingPriceTotal :: Parser PostingPrice
-postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
+amount = Amount <$> number <*> commodityName
 
 postingPrice :: Parser PostingPrice
 postingPrice = try postingPriceUnit <|> try postingPriceTotal
+  where
+    postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
+    postingPriceUnit = symbol "@" >> UnitPrice <$> amount
+
+braces :: Parser a -> Parser a
+braces = between (symbol "{") (symbol "}")
 
 lot :: Day -> Parser Lot
 lot d = braces $ Lot <$> amount <*> date' <*> label'
   where
     date' = try (symbol "," >> date) <|> pure d
-    label' = optionMaybe (symbol "," >> quotedString)
+    label' = optional (symbol "," >> quotedString)
 
-posting :: Day -> Parser Posting 
+quotedString :: Parser Text
+quotedString =
+  lexeme $ between (char '"') (char '"') (takeWhileP (Just "no quote") (/= '"'))
+
+posting :: Day -> Parser Posting
 posting d =
-  Posting <$> accountName <*> decimal <*> commodityName <*>
-  optionMaybe postingPrice <*>
-  optionMaybe (lot d)
+  Posting <$> accountName <*> number <*> commodityName <*>
+  optional postingPrice <*>
+  optional (lot d)
 
-postingDirective :: Day -> Parser PostingDirective
-postingDirective d =
-  newline >> symbol " " >>
-  (try (CompletePosting <$> posting d) <|> try (WildcardPosting <$> accountName))
-
-flagIncomplete :: Parser Flag
-flagIncomplete = Incomplete <$ symbol "!"
-
-flagComplete :: Parser Flag
-flagComplete = Complete <$ symbol "*"
 
 flag :: Parser Flag
 flag = flagComplete <|> flagIncomplete
+  where
+    flagComplete = Complete <$ symbol "*"
+    flagIncomplete = Incomplete <$ symbol "!"
 
 tag :: Parser Tag
-tag = Tag <$> (cons <$> hash <*> text alphaNum)
+tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
+
+postingDirective :: Day -> Parser PostingDirective
+postingDirective d =
+  try (CompletePosting <$> posting d) <|> try (WildcardPosting <$> accountName)
 
 transaction :: Parser Transaction
-transaction = do
-  d <- date
-  f <- flag
-  desc <- quotedString
-  t <- many tag
-  postings <- completePostings <$> many1 (try $ postingDirective d)
-  case postings of
-    Left err -> P.unexpected $ show err
-    Right p  -> return $ Transaction d f desc t p
+transaction = L.indentBlock scn p
+  where
+    p = do
+      d <- date
+      f <- flag
+      desc <- quotedString
+      t <- many tag
+      let fn a = do
+            let result = completePostings a
+            case result of
+              Left err       -> fail $ show err
+              Right postings -> return $ Transaction d f desc t postings
+      return $ L.IndentSome Nothing fn (postingDirective d)
 
 open :: Parser Open
 open =
   Open <$> date <* symbol "open" <*> accountName <*>
-  commodityName `sepBy` symbol ","
+  (commodityName `sepBy` symbol ",") <* scn
 
 close :: Parser Close
-close = Close <$> date <* symbol "close" <*> accountName
+close = Close <$> date <* symbol "close" <*> accountName <* scn
 
 balance :: Parser Balance
-balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount
+balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount <* scn
 
 price :: Parser Price
-price = Price <$> date <* symbol "price" <*> commodityName <*> amount
+price = Price <$> date <* symbol "price" <*> commodityName <*> amount <* scn
 
 include :: Parser Include
-include = symbol "include" >> Include . unpack <$> quotedString
+include = symbol "include" >> Include . unpack <$> quotedString <* scn
 
 config :: Parser Option
-config = symbol "option" >> Option <$> quotedString <*> quotedString
+config = symbol "option" >> Option <$> quotedString <*> quotedString <* scn
 
-directive :: Parser (Directive P.SourcePos)
+directive :: Parser (Directive SourcePos)
 directive =
-  (Opn <$> try open <|> Cls <$> try close <|> Trn <$> try transaction <|>
-   Prc <$> try price <|>
+  (Trn <$> try transaction <|> Opn <$> try open <|> Cls <$> try close <|> Prc <$> try price <|>
    Bal <$> try balance <|>
    Inc <$> include <|>
    Opt <$> config) <*>
-  P.getPosition
+  getPosition
 
-eol :: Parser ()
-eol = void $ token newline
+directives :: Parser [Directive SourcePos]
+directives = many (L.nonIndented scn directive) <* eof
 
-comment :: Parser ()
-comment = void (oneOf ";#*" >> anyChar `manyTill` try eol)
-
-block :: Parser a -> Parser a
-block p = p `surroundedBy` many (comment <|> eol)
-
-directives :: Parser [Directive P.SourcePos]
-directives = many (block directive) <* eof
-
-parse :: (MonadThrow m) => FilePath -> Text -> m [Directive P.SourcePos]
-parse f t =
-  case P.parse directives f t of
-    Left e  -> throwM $ ParseException e
+parse' :: (MonadThrow m) => FilePath -> Text -> m [Directive SourcePos]
+parse' f t = case parse directives f t of
+    Left e  -> throwM e
     Right d -> return d

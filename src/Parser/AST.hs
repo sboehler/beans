@@ -1,6 +1,5 @@
 module Parser.AST where
 
-import Control.Exception (Exception)
 import Data.Account (AccountName(..))
 import Data.Amount (Amount)
 import Data.Commodity (CommodityName(..))
@@ -8,13 +7,6 @@ import Data.Posting (Posting)
 import Data.Text.Lazy (Text)
 import Data.Time.Calendar (Day)
 import Data.Transaction (Transaction)
-import Text.Parsec (ParseError)
-
-newtype ParseException =
-  ParseException ParseError
-  deriving (Show)
-
-instance Exception ParseException
 
 -- Type to wrap the AST of a file
 data Directive a

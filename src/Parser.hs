@@ -2,23 +2,12 @@ module Parser where
 
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
-import           Data.Account               (AccountName (..))
-import           Data.Amount                (Amount (..))
 import           Data.Char                  (isAlphaNum)
-import           Data.Commodity             (CommodityName (..))
-import           Data.Lot                   (Lot (..))
-import           Data.Posting               (Posting (..), PostingPrice (..))
 import           Data.Scientific            (Scientific)
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Time.Calendar         (Day, fromGregorian)
-import           Data.Transaction           (Flag (..), Tag (..),
-                                             Transaction (..))
 import           Data.Void                  (Void)
-import           Parser.AST                 (Balance (..), Close (..),
-                                             Directive (..), Include (..),
-                                             Open (..), Option (..),
-                                             PostingDirective (..), Price (..))
-import           Parser.Interpreter         (completePostings)
+import           Parser.AST
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -51,34 +40,25 @@ date =
   lexeme $
   fromGregorian <$> readInt 4 <* symbol "-" <*> readInt 2 <* symbol "-" <*> readInt 2
 
-accountName :: Parser AccountName
-accountName = lexeme $ AccountName <$> accountNameSegment `sepBy` symbol ":"
+account :: Parser AccountName
+account = lexeme $ AccountName <$> segment `sepBy` symbol ":"
   where
-    accountNameSegment =
+    segment =
       cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
 
-commodityName :: Parser CommodityName
-commodityName = lexeme $ CommodityName <$> takeWhileP (Just "alphanumeric") isAlphaNum
+commodity :: Parser CommodityName
+commodity = lexeme $ CommodityName <$> takeWhileP (Just "alphanumeric") isAlphaNum
 
 number :: Parser Scientific
 number = lexeme (L.signed sc L.scientific)
-
-amount :: Parser Amount
-amount = Amount <$> number <*> commodityName
-
-postingPrice :: Parser PostingPrice
-postingPrice = try postingPriceUnit <|> try postingPriceTotal
-  where
-    postingPriceTotal = symbol "@@" >> TotalPrice <$> amount
-    postingPriceUnit = symbol "@" >> UnitPrice <$> amount
 
 braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
 
 lot :: Day -> Parser Lot
-lot d = braces $ Lot <$> amount <*> date' <*> label'
+lot d = braces $ Lot <$> number <*> commodity <*> date' <*> label'
   where
-    date' = try (symbol "," >> date) <|> pure d
+    date' = (symbol "," >> date) <|> pure d
     label' = optional (symbol "," >> quotedString)
 
 quotedString :: Parser Text
@@ -86,11 +66,9 @@ quotedString =
   lexeme $ between (char '"') (char '"') (takeWhileP (Just "no quote") (/= '"'))
 
 posting :: Day -> Parser Posting
-posting d =
-  Posting <$> accountName <*> number <*> commodityName <*>
-  optional postingPrice <*>
-  optional (lot d)
-
+posting d = do
+  a <- account
+  Posting a <$> number <*> commodity <*> optional (lot d) <|> return (Wildcard a)
 
 flag :: Parser Flag
 flag = flagComplete <|> flagIncomplete
@@ -101,38 +79,29 @@ flag = flagComplete <|> flagIncomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-postingDirective :: Day -> Parser PostingDirective
-postingDirective d =
-  try (CompletePosting <$> posting d) <|> try (WildcardPosting <$> accountName)
-
 transaction :: Parser Transaction
-transaction = L.indentBlock scn p
-  where
-    p = do
-      d <- date
-      f <- flag
-      desc <- quotedString
-      t <- many tag
-      let fn a = do
-            let result = completePostings a
-            case result of
-              Left err       -> fail $ show err
-              Right postings -> return $ Transaction d f desc t postings
-      return $ L.IndentSome Nothing fn (postingDirective d)
+transaction =
+  L.indentBlock scn $ do
+    d <- date
+    f <- flag
+    desc <- quotedString
+    t <- many tag
+    return $
+      L.IndentSome Nothing (return . Transaction d f desc t) (posting d)
 
 open :: Parser Open
 open =
-  Open <$> date <* symbol "open" <*> accountName <*>
-  (commodityName `sepBy` symbol ",") <* scn
+  Open <$> date <* symbol "open" <*> account <*>
+  (commodity `sepBy` symbol ",") <* scn
 
 close :: Parser Close
-close = Close <$> date <* symbol "close" <*> accountName <* scn
+close = Close <$> date <* symbol "close" <*> account <* scn
 
 balance :: Parser Balance
-balance = Balance <$> date <* symbol "balance" <*> accountName <*> amount <* scn
+balance = Balance <$> date <* symbol "balance" <*> account <*> number <*> commodity <* scn
 
 price :: Parser Price
-price = Price <$> date <* symbol "price" <*> commodityName <*> amount <* scn
+price = Price <$> date <* symbol "price" <*> commodity <*> number <*> commodity <* scn
 
 include :: Parser Include
 include = symbol "include" >> Include . unpack <$> quotedString <* scn

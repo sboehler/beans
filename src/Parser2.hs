@@ -49,10 +49,10 @@ readInt n = read <$> count n digitChar
 date :: Parser Day
 date =
   lexeme $
-  fromGregorian <$> readInt 4 <* (symbol "-") <*> readInt 2 <* (symbol "-") <*> readInt 2
+  fromGregorian <$> readInt 4 <* symbol "-" <*> readInt 2 <* symbol "-" <*> readInt 2
 
 accountName :: Parser AccountName
-accountName = lexeme $ AccountName <$> accountNameSegment `sepBy` (symbol ":")
+accountName = lexeme $ AccountName <$> accountNameSegment `sepBy` symbol ":"
   where
     accountNameSegment =
       cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
@@ -85,7 +85,7 @@ quotedString :: Parser Text
 quotedString =
   lexeme $ between (char '"') (char '"') (takeWhileP (Just "no quote") (/= '"'))
 
-posting :: Day -> Parser Posting 
+posting :: Day -> Parser Posting
 posting d =
   Posting <$> accountName <*> number <*> commodityName <*>
   optional postingPrice <*>
@@ -99,27 +99,26 @@ flag = flagComplete <|> flagIncomplete
     flagIncomplete = Incomplete <$ symbol "!"
 
 tag :: Parser Tag
-tag = Tag <$> (cons <$> (char '#') <*> takeWhile1P (Just "alphanum") isAlphaNum)
+tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
 postingDirective :: Day -> Parser PostingDirective
 postingDirective d =
-  (try (CompletePosting <$> posting d) <|> try (WildcardPosting <$> accountName))
+  try (CompletePosting <$> posting d) <|> try (WildcardPosting <$> accountName)
 
 transaction :: Parser Transaction
 transaction = L.indentBlock scn p
-  where 
+  where
     p = do
       d <- date
       f <- flag
       desc <- quotedString
       t <- many tag
-      let fn = \a -> do
+      let fn a = do
             let result = completePostings a
             case result of
               Left err -> fail $ show err
               Right postings -> return $ Transaction d f desc t postings
       return $ L.IndentSome Nothing fn (postingDirective d)
-
 
 open :: Parser Open
 open =
@@ -151,7 +150,7 @@ directive =
   getPosition
 
 directives :: Parser [Directive SourcePos]
-directives = (many (L.nonIndented scn directive)) <* eof
+directives = many (L.nonIndented scn directive) <* eof
 
 parse' :: (MonadThrow m) => FilePath -> Text -> m [Directive SourcePos]
 parse' f t = case parse directives f t of

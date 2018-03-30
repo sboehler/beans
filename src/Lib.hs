@@ -2,18 +2,18 @@ module Lib
   ( doParse
   ) where
 
-import Control.Monad.Catch (MonadThrow)
-import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Trans (liftIO)
-import Data.Text.Lazy.IO (readFile)
-import Data.Text.Prettyprint.Doc
-import Parser2 (parse')
-import Parser.AST (Directive(..), Include(..))
-import Parser.Pretty ()
-import Prelude hiding (readFile)
-import System.Environment (getArgs)
-import System.FilePath.Posix ((</>), takeDirectory)
-import qualified Text.Megaparsec as P
+import           Control.Monad.Catch       (MonadThrow)
+import           Control.Monad.IO.Class    (MonadIO)
+import           Control.Monad.Trans       (liftIO)
+import           Data.Text.Lazy.IO         (readFile)
+import           Data.Text.Prettyprint.Doc
+import           Parser                    (parse')
+import           Parser.AST                (Directive (..), Include (..))
+import           Parser.Pretty             ()
+import           Prelude                   hiding (readFile)
+import           System.Environment        (getArgs)
+import           System.FilePath.Posix     (takeDirectory, (</>))
+import qualified Text.Megaparsec           as P
 
 collectRelativePaths :: [Directive a] -> [FilePath]
 collectRelativePaths directives =

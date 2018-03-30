@@ -68,5 +68,5 @@ data Option =
 
 data PostingDirective
   = WildcardPosting AccountName
-  | CompletePosting (Posting )
+  | CompletePosting Posting
   deriving (Show, Eq, Ord)

@@ -11,7 +11,7 @@ import Data.Scientific(Scientific)
 
 data Posting = Posting
   { _accountName :: AccountName
-  , _amount ::Scientific 
+  , _amount ::Scientific
   , _commodity :: CommodityName
   , _price :: Maybe PostingPrice
   , _lot :: Maybe Lot
@@ -19,10 +19,10 @@ data Posting = Posting
 
 data PostingDirective
   = WildcardPosting AccountName
-  | CompletePosting (Posting )
+  | CompletePosting Posting
   deriving (Show, Eq, Ord)
 
-data PostingPrice 
+data PostingPrice
   = UnitPrice Amount
   | TotalPrice Amount
   deriving (Show, Eq, Ord)

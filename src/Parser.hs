@@ -3,6 +3,7 @@ module Parser where
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Data.Char                  (isAlphaNum)
+import           Data.Functor               (($>))
 import           Data.Scientific            (Scientific)
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Time.Calendar         (Day, fromGregorian)
@@ -56,6 +57,12 @@ number = lexeme $ L.signed sc L.scientific
 braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
 
+quotedString :: Parser Text
+quotedString =
+  lexeme $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
+  where
+    quote = char '"'
+
 lot :: Day -> Parser Lot
 lot d = braces $ Lot <$> number <*> commodity <*> lotDate <*> lotLabel
   where
@@ -63,16 +70,13 @@ lot d = braces $ Lot <$> number <*> commodity <*> lotDate <*> lotLabel
     lotDate = (comma >> date) <|> pure d
     lotLabel = optional (comma >> quotedString)
 
-quotedString :: Parser Text
-quotedString =
-  lexeme $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
-  where
-    quote = char '"'
+postingPrice :: Parser ()
+postingPrice = (symbol "@@" *> number *> commodity) $> ()
 
 posting :: Day -> Parser Posting
 posting d = do
   a <- account
-  Posting a <$> number <*> commodity <*> optional (lot d) <|>
+  Posting a <$> number <*> commodity <*> optional (lot d) <* optional postingPrice <|>
     return (Wildcard a)
 
 flag :: Parser Flag

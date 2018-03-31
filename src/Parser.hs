@@ -11,14 +11,15 @@ import           Parser.AST
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-
+import qualified Text.Megaparsec.Pos        as P
 
 type Parser = Parsec Void Text
 
 lineComment :: Parser ()
-lineComment = L.skipLineComment "*" <|> L.skipLineComment "#" <|> L.skipLineComment ";"
+lineComment =
+  L.skipLineComment "*" <|> L.skipLineComment "#" <|> L.skipLineComment ";"
 
-scn ::  Parser ()
+scn :: Parser ()
 scn = L.space space1 lineComment empty
 
 sc :: Parser ()
@@ -32,95 +33,102 @@ lexeme = L.lexeme sc
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
-readInt :: (Read a) => Int -> Parser a
-readInt n = read <$> count n digitChar
-
 date :: Parser Day
 date =
-  lexeme $
-  fromGregorian <$> readInt 4 <* symbol "-" <*> readInt 2 <* symbol "-" <*> readInt 2
+  lexeme $ fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
+  where
+    dash = symbol "-"
+    digits n = read <$> count n digitChar
 
 account :: Parser AccountName
-account = lexeme $ AccountName <$> segment `sepBy` symbol ":"
+account = lexeme $ AccountName <$> segment `sepBy` colon
   where
-    segment =
-      cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
+    segment = cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
+    colon = symbol ":"
 
 commodity :: Parser CommodityName
-commodity = lexeme $ CommodityName <$> takeWhileP (Just "alphanumeric") isAlphaNum
+commodity =
+  lexeme $ CommodityName <$> takeWhileP (Just "alphanumeric") isAlphaNum
 
 number :: Parser Scientific
-number = lexeme (L.signed sc L.scientific)
+number = lexeme $ L.signed sc L.scientific
 
 braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
 
 lot :: Day -> Parser Lot
-lot d = braces $ Lot <$> number <*> commodity <*> date' <*> label'
+lot d = braces $ Lot <$> number <*> commodity <*> lotDate <*> lotLabel
   where
-    date' = (symbol "," >> date) <|> pure d
-    label' = optional (symbol "," >> quotedString)
+    comma = symbol ","
+    lotDate = (comma >> date) <|> pure d
+    lotLabel = optional (comma >> quotedString)
 
 quotedString :: Parser Text
 quotedString =
-  lexeme $ between (char '"') (char '"') (takeWhileP (Just "no quote") (/= '"'))
+  lexeme $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
+  where
+    quote = char '"'
 
 posting :: Day -> Parser Posting
 posting d = do
   a <- account
-  Posting a <$> number <*> commodity <*> optional (lot d) <|> return (Wildcard a)
+  Posting a <$> number <*> commodity <*> optional (lot d) <|>
+    return (Wildcard a)
 
 flag :: Parser Flag
-flag = flagComplete <|> flagIncomplete
+flag = complete <|> incomplete
   where
-    flagComplete = Complete <$ symbol "*"
-    flagIncomplete = Incomplete <$ symbol "!"
+    complete = Complete <$ symbol "*"
+    incomplete = Incomplete <$ symbol "!"
 
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: Parser Transaction
-transaction =
-  L.indentBlock scn $ do
-    d <- date
-    f <- flag
-    desc <- quotedString
-    t <- many tag
-    return $
-      L.IndentSome Nothing (return . Transaction d f desc t) (posting d)
+transaction :: Day -> Parser Event
+transaction d = do
+  f <- flag
+  desc <- quotedString
+  t <- many tag
+  indent <- L.indentGuard scn GT P.pos1
+  p <- some $ try (L.indentGuard scn EQ indent *> posting d)
+  return $ Trn d $ Transaction f desc t p
 
-open :: Parser Open
-open =
-  Open <$> date <* symbol "open" <*> account <*>
-  (commodity `sepBy` symbol ",") <* scn
+open :: Day -> Parser Event
+open d =
+  Opn d <$>
+  (Open <$ symbol "open" <*> account <*> (commodity `sepBy` symbol ","))
 
-close :: Parser Close
-close = Close <$> date <* symbol "close" <*> account <* scn
+close :: Day -> Parser Event
+close d = Cls d <$> (Close <$ symbol "close" <*> account)
 
-balance :: Parser Balance
-balance = Balance <$> date <* symbol "balance" <*> account <*> number <*> commodity <* scn
+balance :: Day -> Parser Event
+balance d =
+  Bal d <$> (Balance <$ symbol "balance" <*> account <*> number <*> commodity)
 
-price :: Parser Price
-price = Price <$> date <* symbol "price" <*> commodity <*> number <*> commodity <* scn
+price :: Day -> Parser Event
+price d =
+  Prc d <$> (Price <$ symbol "price" <*> commodity <*> number <*> commodity)
+
+event :: Parser Event
+event =
+  date >>= \d -> transaction d <|> open d <|> close d <|> balance d <|> price d
 
 include :: Parser Include
-include = symbol "include" >> Include . unpack <$> quotedString <* scn
+include = symbol "include" >> Include . unpack <$> quotedString
 
 config :: Parser Option
-config = symbol "option" >> Option <$> quotedString <*> quotedString <* scn
+config = symbol "option" >> Option <$> quotedString <*> quotedString
 
 directive :: Parser (Directive SourcePos)
 directive =
-  (Trn <$> try transaction <|> Opn <$> try open <|> Cls <$> try close <|> Prc <$> try price <|>
-   Bal <$> try balance <|>
-   Inc <$> include <|>
-   Opt <$> config) <*>
-  getPosition
+  L.nonIndented scn $
+  (Evt <$> event <|> Inc <$> include <|> Opt <$> config) <*> getPosition <* scn
 
 directives :: Parser [Directive SourcePos]
-directives = many (L.nonIndented scn directive) <* eof
+directives = some directive <* eof
 
-parse' :: (MonadThrow m) => FilePath -> Text -> m [Directive SourcePos]
-parse' f t = case parse directives f t of
+parseFile :: (MonadThrow m) => FilePath -> Text -> m [Directive SourcePos]
+parseFile f t =
+  case parse directives f t of
     Left e  -> throwM e
     Right d -> return d

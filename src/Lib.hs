@@ -7,7 +7,7 @@ import           Control.Monad.IO.Class    (MonadIO)
 import           Control.Monad.Trans       (liftIO)
 import           Data.Text.Lazy.IO         (readFile)
 import           Data.Text.Prettyprint.Doc
-import           Parser                    (parse')
+import           Parser                    (parseFile)
 import           Parser.AST                (Directive (..), Include (..))
 import           Parser.Pretty             ()
 import           Prelude                   hiding (readFile)
@@ -23,7 +23,7 @@ recursiveParse ::
      (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
 recursiveParse filePath = do
   fileContent <- liftIO $ readFile filePath
-  directives <- parse' filePath fileContent
+  directives <- parseFile filePath fileContent
   let dirPath = takeDirectory filePath
       absPaths = (dirPath </>) <$> collectRelativePaths directives
   (directives ++) . concat <$> traverse recursiveParse absPaths

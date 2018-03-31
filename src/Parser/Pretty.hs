@@ -2,10 +2,10 @@
 
 module Parser.Pretty where
 
-import Data.Text.Prettyprint.Doc ( Pretty , (<+>) , (<>) , cat , dquotes , encloseSep , indent , line , pretty , sep , vcat)
 import Data.Scientific (Scientific)
 import Data.Time.Calendar (Day)
 
+import Data.Text.Prettyprint.Doc 
 import Parser.AST
 
 instance Pretty Scientific where
@@ -22,7 +22,6 @@ instance Pretty Day where
 
 instance Pretty Transaction where
   pretty Transaction {..} =
-    pretty _date <+>
     pretty _flag <+>
     dquotes (pretty _description) <+>
     cat (map pretty _tags) <> line <> (indent 2 . vcat) (map pretty _postings)
@@ -49,28 +48,30 @@ instance Pretty Posting where
   pretty (Wildcard a) = pretty a
 
 instance Pretty (Directive a) where
-  pretty (Opn x _) = pretty x
-  pretty (Cls x _) = pretty x
-  pretty (Bal x _) = pretty x
-  pretty (Trn x _) = pretty x
-  pretty (Prc x _) = pretty x
+  pretty (Evt e _) = pretty e
   pretty (Opt x _) = pretty x
   pretty (Inc x _) = pretty x
 
+instance Pretty Event where
+  pretty (Bal d b) = pretty d <+> pretty b
+  pretty (Opn d o) = pretty d <+> pretty o
+  pretty (Cls d c) = pretty d <+> pretty c
+  pretty (Trn d t) = pretty d <+> pretty t
+  pretty (Prc d p) = pretty d <+> pretty p
+  
+
 instance Pretty Balance where
-  pretty Balance { _date, _account, _amount, _commodity} =
-    pretty _date <+> "balance" <+> pretty _account <+> pretty _amount <+> pretty _commodity
+  pretty Balance { _account, _amount, _commodity} =
+    "balance" <+> pretty _account <+> pretty _amount <+> pretty _commodity
 
 instance Pretty Open where
-  pretty Open {..} =
-    pretty _date <+>
-    "open" <+> pretty _accountName <+> sep (map pretty _commodities)
+  pretty Open { _account, _commodities} = "open" <+> pretty _account <+> hsep (map pretty _commodities)
 
 instance Pretty Close where
-  pretty Close {..} = pretty _date <+> "close" <+> pretty _account
+  pretty Close { _account} = "close" <+> pretty _account
 
 instance Pretty Price where
-  pretty Price {..} = pretty _date <+> "price" <+> pretty _commodity <+> pretty _price <+> pretty _targetCommodity
+  pretty Price { _commodity, _price, _targetCommodity } = "price" <+> pretty _commodity <+> pretty _price <+> pretty _targetCommodity
 
 instance Pretty Include where
   pretty (Include filePath) = "include" <+> pretty filePath

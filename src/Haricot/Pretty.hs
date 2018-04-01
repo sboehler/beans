@@ -1,14 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Haricot.Pretty
-  (
+  ( prettyPrint
   ) where
 
 import Data.Scientific (Scientific)
-import Data.Time.Calendar (Day)
-
 import Data.Text.Prettyprint.Doc
+import Data.Time.Calendar (Day)
 import Haricot.AST
+import qualified Text.Megaparsec as P
 
 instance Pretty Scientific where
   pretty = pretty . show
@@ -81,3 +81,6 @@ instance Pretty Include where
 
 instance Pretty Option where
   pretty (Option d t) = "option" <+> pretty d <+> pretty t
+
+prettyPrint :: [Directive P.SourcePos] -> IO ()
+prettyPrint = print . vsep . map ((<> hardline) . pretty)

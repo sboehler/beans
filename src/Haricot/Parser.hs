@@ -1,7 +1,12 @@
 module Haricot.Parser where
 
+import           Prelude                   hiding (readFile)
+import           Data.Text.Lazy.IO         (readFile)
+import           System.FilePath.Posix     (takeDirectory, (</>))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
+import           Control.Monad.Trans        (liftIO)
+import           Control.Monad.IO.Class     (MonadIO)
 import           Data.Char                  (isAlphaNum)
 import           Data.Functor               (($>))
 import           Data.Scientific            (Scientific)
@@ -138,3 +143,16 @@ parseFile f t =
   case parse directives f t of
     Left e  -> throwM e
     Right d -> return d
+
+collectRelativePaths :: [Directive a] -> [FilePath]
+collectRelativePaths d =
+  [relPath | (Inc (Include relPath) _) <- d]
+
+parseFiles ::
+     (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
+parseFiles filePath = do
+  fileContent <- liftIO $ readFile filePath
+  ast <- parseFile filePath fileContent
+  let dirPath = takeDirectory filePath
+      absPaths = (dirPath </>) <$> collectRelativePaths ast
+  (ast ++) . concat <$> traverse parseFiles absPaths

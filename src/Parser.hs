@@ -44,7 +44,8 @@ date =
 account :: Parser AccountName
 account = lexeme $ AccountName <$> segment `sepBy` colon
   where
-    segment = cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
+    segment =
+      cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
     colon = symbol ":"
 
 commodity :: Parser CommodityName
@@ -76,7 +77,8 @@ postingPrice = (symbol "@@" *> number *> commodity) $> ()
 posting :: Day -> Parser Posting
 posting d = do
   a <- account
-  Posting a <$> number <*> commodity <*> optional (lot d) <* optional postingPrice <|>
+  Posting a <$> number <*> commodity <*> optional (lot d) <*
+    optional postingPrice <|>
     return (Wildcard a)
 
 flag :: Parser Flag

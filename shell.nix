@@ -1,4 +1,4 @@
-{ nixpkgs ? import ~/.nix-defexpr/channels/unstable {}, compiler ? "ghc802" }:
+{ nixpkgs ? import <nixos-unstable> {}, compiler ? "ghc802" }:
 
 let
 

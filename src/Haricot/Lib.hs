@@ -1,4 +1,4 @@
-module Lib
+module Haricot.Lib
   ( doParse
   ) where
 
@@ -7,9 +7,9 @@ import           Control.Monad.IO.Class    (MonadIO)
 import           Control.Monad.Trans       (liftIO)
 import           Data.Text.Lazy.IO         (readFile)
 import           Data.Text.Prettyprint.Doc
-import           Parser                    (parseFile)
-import           Parser.AST                (Directive (..), Include (..))
-import           Parser.Pretty             ()
+import           Haricot.AST               (Directive (..), Include (..))
+import           Haricot.Parser            (parseFile)
+import           Haricot.Pretty            ()
 import           Prelude                   hiding (readFile)
 import           System.Environment        (getArgs)
 import           System.FilePath.Posix     (takeDirectory, (</>))

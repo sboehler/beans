@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import           Haricot.Lib
 
 main :: IO ()
 main = doParse

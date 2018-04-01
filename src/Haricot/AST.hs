@@ -1,4 +1,4 @@
-module Parser.AST where
+module Haricot.AST where
 
 import           Data.Scientific    (Scientific)
 import           Data.Text.Lazy     (Text, intercalate, unpack)

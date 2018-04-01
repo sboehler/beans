@@ -1,4 +1,4 @@
-module Parser where
+module Haricot.Parser where
 
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
@@ -8,7 +8,7 @@ import           Data.Scientific            (Scientific)
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Data.Void                  (Void)
-import           Parser.AST
+import           Haricot.AST
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L

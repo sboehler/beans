@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Parser.Pretty
+module Haricot.Pretty
   (
   ) where
 
@@ -8,7 +8,7 @@ import Data.Scientific (Scientific)
 import Data.Time.Calendar (Day)
 
 import Data.Text.Prettyprint.Doc
-import Parser.AST
+import Haricot.AST
 
 instance Pretty Scientific where
   pretty = pretty . show

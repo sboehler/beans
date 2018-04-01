@@ -5,7 +5,8 @@ import           Data.Text.Lazy     (Text, intercalate, unpack)
 import           Data.Time.Calendar (Day)
 
 data Directive a
-  = Evt Event a
+  = Evt Event
+        a
   | Opt Option
         a
   | Inc Include

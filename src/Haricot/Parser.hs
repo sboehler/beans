@@ -1,19 +1,19 @@
 module Haricot.Parser where
 
-import           Prelude                   hiding (readFile)
-import           Data.Text.Lazy.IO         (readFile)
-import           System.FilePath.Posix     (takeDirectory, (</>))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
-import           Control.Monad.Trans        (liftIO)
 import           Control.Monad.IO.Class     (MonadIO)
+import           Control.Monad.Trans        (liftIO)
 import           Data.Char                  (isAlphaNum)
 import           Data.Functor               (($>))
 import           Data.Scientific            (Scientific)
 import           Data.Text.Lazy             (Text, cons, unpack)
+import           Data.Text.Lazy.IO          (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Data.Void                  (Void)
 import           Haricot.AST
+import           Prelude                    hiding (readFile)
+import           System.FilePath.Posix      (combine, takeDirectory)
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -144,15 +144,14 @@ parseFile f t =
     Left e  -> throwM e
     Right d -> return d
 
-collectRelativePaths :: [Directive a] -> [FilePath]
-collectRelativePaths d =
-  [relPath | (Inc (Include relPath) _) <- d]
+getIncludedFiles :: FilePath -> [Directive a] -> [FilePath]
+getIncludedFiles fp ast =
+  [combine (takeDirectory fp) path | (Inc (Include path) _) <- ast]
 
 parseFiles ::
      (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
 parseFiles filePath = do
   fileContent <- liftIO $ readFile filePath
   ast <- parseFile filePath fileContent
-  let dirPath = takeDirectory filePath
-      absPaths = (dirPath </>) <$> collectRelativePaths ast
-  (ast ++) . concat <$> traverse parseFiles absPaths
+  asts <- traverse parseFiles (getIncludedFiles filePath ast)
+  return $ ast ++ concat asts

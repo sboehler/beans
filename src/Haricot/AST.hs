@@ -1,65 +1,70 @@
 module Haricot.AST where
 
-import           Data.Scientific    (Scientific)
-import           Data.Text.Lazy     (Text, intercalate, unpack)
-import           Data.Time.Calendar (Day)
+import           Data.Scientific     (Scientific)
+import           Data.Text.Lazy      (Text, intercalate, unpack)
+import           Data.Time.Calendar  (Day)
+import qualified Text.Megaparsec.Pos as P
 
-data Directive a
+data Directive
   = Evt Event
-        a
   | Opt Option
-        a
   | Inc Include
-        a
-  deriving (Eq, Show, Functor, Ord)
+  deriving (Eq, Show, Ord)
 
 data Event
-  = Bal Day
-        Balance
-  | Opn Day
-        Open
-  | Cls Day
-        Close
-  | Trn Day
-        Transaction
-  | Prc Day
-        Price
+  = Bal Balance
+  | Opn Open
+  | Cls Close
+  | Trn Transaction
+  | Prc Price
   deriving (Eq, Show, Ord)
 
 data Balance = Balance
-  { _account   :: AccountName
+  { _pos       :: P.SourcePos
+  , _date      :: Day
+  , _account   :: AccountName
   , _amount    :: Scientific
   , _commodity :: CommodityName
   } deriving (Eq, Show, Ord)
 
 data Open = Open
-  { _account     :: AccountName
+  { _pos         :: P.SourcePos
+  , _date        :: Day
+  , _account     :: AccountName
   , _commodities :: [CommodityName]
   } deriving (Show, Eq, Ord)
 
-newtype Close = Close
-  { _account :: AccountName
+data Close = Close
+  { _pos     :: P.SourcePos
+  , _date    :: Day
+  , _account :: AccountName
   } deriving (Show, Eq, Ord)
 
 data Price = Price
-  { _commodity       :: CommodityName
+  { _pos             :: P.SourcePos
+  , _date            :: Day
+  , _commodity       :: CommodityName
   , _price           :: Scientific
   , _targetCommodity :: CommodityName
   } deriving (Show, Eq, Ord)
 
 data Transaction = Transaction
-  { _flag        :: Flag
+  { _pos         :: P.SourcePos
+  , _date        :: Day
+  , _flag        :: Flag
   , _description :: Text
   , _tags        :: [Tag]
   , _postings    :: [Posting]
   } deriving (Eq, Show, Ord)
 
 data Posting
-  = Posting { _account   :: AccountName
+  = Posting { _pos       :: P.SourcePos
+            , _account   :: AccountName
             , _amount    :: Scientific
             , _commodity :: CommodityName
             , _lot       :: Maybe Lot }
-  | Wildcard AccountName
+  | Wildcard { _pos     :: P.SourcePos
+             , _account :: AccountName }
   deriving (Show, Eq, Ord)
 
 data Flag
@@ -78,12 +83,14 @@ data Lot = Lot
   , _label           :: Maybe Text
   } deriving (Show, Eq, Ord)
 
-newtype Include = Include
-  { _filePath :: FilePath
+data Include = Include
+  {
+    _pos      :: P.SourcePos,
+    _filePath :: FilePath
   } deriving (Show, Eq, Ord)
 
 data Option =
-  Option Text
+  Option P.SourcePos Text
          Text
   deriving (Show, Eq, Ord)
 

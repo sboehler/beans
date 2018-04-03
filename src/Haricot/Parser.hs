@@ -81,10 +81,10 @@ postingPrice = (symbol "@" *> optional (symbol "@") *> number *> commodity) $> (
 
 posting :: Day -> Parser Posting
 posting d = do
+  pos <- getPosition
   a <- account
-  Posting a <$> number <*> commodity <*> optional (lot d) <*
-    optional postingPrice <|>
-    return (Wildcard a)
+  Posting pos a <$> number <*> commodity <*> optional (lot d) <*
+    optional postingPrice <|> return (Wildcard pos a)
 
 flag :: Parser Flag
 flag = complete <|> incomplete
@@ -95,61 +95,62 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: Day -> Parser Event
-transaction d = do
+transaction :: P.SourcePos -> Day -> Parser Event
+transaction pos d = do
   f <- flag
   desc <- quotedString
   t <- many tag
   indent <- L.indentGuard scn GT P.pos1
   p <- some $ try (L.indentGuard scn EQ indent *> posting d)
-  return $ Trn d $ Transaction f desc t p
+  return $ Trn $ Transaction pos d f desc t p
 
-open :: Day -> Parser Event
-open d =
-  Opn d <$>
-  (Open <$ symbol "open" <*> account <*> (commodity `sepBy` symbol ","))
+open :: P.SourcePos -> Day -> Parser Event
+open pos d = Opn <$> (Open pos d <$ symbol "open" <*> account <*> (commodity `sepBy` symbol ","))
 
-close :: Day -> Parser Event
-close d = Cls d <$> (Close <$ symbol "close" <*> account)
+close :: P.SourcePos -> Day -> Parser Event
+close pos d = Cls <$> (Close pos d <$ symbol "close" <*> account)
 
-balance :: Day -> Parser Event
-balance d =
-  Bal d <$> (Balance <$ symbol "balance" <*> account <*> number <*> commodity)
+balance :: P.SourcePos -> Day -> Parser Event
+balance pos d =
+  Bal <$> (Balance pos d <$ symbol "balance" <*> account <*> number <*> commodity)
 
-price :: Day -> Parser Event
-price d =
-  Prc d <$> (Price <$ symbol "price" <*> commodity <*> number <*> commodity)
+price :: P.SourcePos -> Day -> Parser Event
+price pos d =
+  Prc <$> (Price pos d <$ symbol "price" <*> commodity <*> number <*> commodity)
 
 event :: Parser Event
-event =
-  date >>= \d -> transaction d <|> open d <|> close d <|> balance d <|> price d
+event = do
+  pos <- getPosition
+  d <- date
+  transaction pos d <|> open pos d <|> close pos d <|> balance pos d <|>
+    price pos d
 
 include :: Parser Include
-include = symbol "include" >> Include . unpack <$> quotedString
+include = symbol "include" >> Include <$> getPosition <*> (unpack <$> quotedString)
 
 config :: Parser Option
-config = symbol "option" >> Option <$> quotedString <*> quotedString
+config = symbol "option" >> Option <$> getPosition <*> quotedString <*> quotedString
 
-directive :: Parser (Directive SourcePos)
+directive :: Parser Directive
 directive =
   L.nonIndented scn $
-  (Evt <$> event <|> Inc <$> include <|> Opt <$> config) <*> getPosition <* scn
+  (Evt <$> event <|> Inc <$> include <|> Opt <$> config) <* scn
 
-directives :: Parser [Directive SourcePos]
+directives :: Parser [Directive]
 directives = some directive <* eof
 
-parseFile :: (MonadThrow m) => FilePath -> Text -> m [Directive SourcePos]
+parseFile :: (MonadThrow m) => FilePath -> Text -> m [Directive]
 parseFile f t =
   case parse directives f t of
     Left e  -> throwM e
     Right d -> return d
 
-getIncludedFiles :: FilePath -> [Directive a] -> [FilePath]
+getIncludedFiles :: FilePath -> [Directive] -> [FilePath]
 getIncludedFiles fp ast =
-  [combine (takeDirectory fp) path | (Inc (Include path) _) <- ast]
+  [combine (takeDirectory fp) path | (Inc (Include _ path)) <- ast]
 
 parseFiles ::
-     (MonadIO m, MonadThrow m) => FilePath -> m [Directive P.SourcePos]
+     (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
 parseFiles filePath = do
   fileContent <- liftIO $ readFile filePath
   ast <- parseFile filePath fileContent

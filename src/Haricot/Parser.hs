@@ -139,8 +139,8 @@ directive =
 directives :: Parser [Directive]
 directives = some directive <* eof
 
-parseFile :: (MonadThrow m) => FilePath -> Text -> m [Directive]
-parseFile f t =
+parseSource :: (MonadThrow m) => FilePath -> Text -> m [Directive]
+parseSource f t =
   case parse directives f t of
     Left e  -> throwM e
     Right d -> return d
@@ -149,10 +149,10 @@ getIncludedFiles :: FilePath -> [Directive] -> [FilePath]
 getIncludedFiles fp ast =
   [combine (takeDirectory fp) path | (Inc (Include _ path)) <- ast]
 
-parseFiles ::
+parseFile ::
      (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
-parseFiles filePath = do
-  fileContent <- liftIO $ readFile filePath
-  ast <- parseFile filePath fileContent
-  asts <- traverse parseFiles (getIncludedFiles filePath ast)
+parseFile filePath = do
+  source <- liftIO $ readFile filePath
+  ast <- parseSource filePath source
+  asts <- traverse parseFile (getIncludedFiles filePath ast)
   return $ ast ++ concat asts

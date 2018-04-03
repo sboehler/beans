@@ -8,7 +8,6 @@ import Data.Scientific (Scientific)
 import Data.Text.Prettyprint.Doc
 import Data.Time.Calendar (Day)
 import Haricot.AST
-import qualified Text.Megaparsec as P
 
 instance Pretty Scientific where
   pretty = pretty . show
@@ -47,19 +46,19 @@ instance Pretty Posting where
   pretty Posting {_account, _amount, _commodity, _lot} =
     pretty _account <+>
     (pretty . show) _amount <+> pretty _commodity <+> pretty _lot
-  pretty (Wildcard a) = pretty a
+  pretty (Wildcard _ a) = pretty a
 
-instance Pretty (Directive a) where
-  pretty (Evt e _) = pretty e
-  pretty (Opt x _) = pretty x
-  pretty (Inc x _) = pretty x
+instance Pretty Directive where
+  pretty (Evt e) = pretty e
+  pretty (Opt x) = pretty x
+  pretty (Inc x) = pretty x
 
 instance Pretty Event where
-  pretty (Bal d b) = pretty d <+> pretty b
-  pretty (Opn d o) = pretty d <+> pretty o
-  pretty (Cls d c) = pretty d <+> pretty c
-  pretty (Trn d t) = pretty d <+> pretty t
-  pretty (Prc d p) = pretty d <+> pretty p
+  pretty (Bal b) = pretty b
+  pretty (Opn o) = pretty o
+  pretty (Cls c) = pretty c
+  pretty (Trn t) = pretty t
+  pretty (Prc p) = pretty p
 
 instance Pretty Balance where
   pretty Balance {_account, _amount, _commodity} =
@@ -77,10 +76,10 @@ instance Pretty Price where
     "price" <+> pretty _commodity <+> pretty _price <+> pretty _targetCommodity
 
 instance Pretty Include where
-  pretty (Include filePath) = "include" <+> pretty filePath
+  pretty (Include _ filePath) = "include" <+> pretty filePath
 
 instance Pretty Option where
-  pretty (Option d t) = "option" <+> pretty d <+> pretty t
+  pretty (Option _ d t) = "option" <+> pretty d <+> pretty t
 
-prettyPrint :: [Directive P.SourcePos] -> IO ()
+prettyPrint :: [Directive] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)

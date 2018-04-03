@@ -13,4 +13,5 @@ import           System.Environment        (getArgs)
 parse :: (MonadIO m, MonadThrow m) => m ()
 parse = do
   (file:_) <- liftIO getArgs
-  liftIO $ prettyPrint =<< parseFiles file
+  ast <- parseFiles file
+  liftIO $ prettyPrint ast

@@ -77,7 +77,7 @@ lot d = braces $ Lot <$> number <*> commodity <*> lotDate <*> lotLabel
     lotLabel = optional (comma >> quotedString)
 
 postingPrice :: Parser ()
-postingPrice = (symbol "@@" *> number *> commodity) $> ()
+postingPrice = (symbol "@" *> optional (symbol "@") *> number *> commodity) $> ()
 
 posting :: Day -> Parser Posting
 posting d = do

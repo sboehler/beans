@@ -155,5 +155,5 @@ parseFile ::
 parseFile filePath = do
   source <- liftIO $ readFile filePath
   ast <- parseSource filePath source
-  asts <- traverse parseFile (getIncludedFiles filePath ast)
-  return $ ast ++ concat asts
+  asts <- concat <$> traverse parseFile (getIncludedFiles filePath ast)
+  return $ ast ++ asts

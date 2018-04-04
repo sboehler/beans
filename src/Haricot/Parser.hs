@@ -95,35 +95,36 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: P.SourcePos -> Day -> Parser Event
+transaction :: P.SourcePos -> Day -> Parser Transaction
 transaction pos d = do
   f <- flag
   desc <- quotedString
   t <- many tag
   indent <- L.indentGuard scn GT P.pos1
   p <- some $ try (L.indentGuard scn EQ indent *> posting d)
-  return $ Trn $ Transaction pos d f desc t p
+  return $ Transaction pos d f desc t p
 
-open :: P.SourcePos -> Day -> Parser Event
-open pos d = Opn <$> (Open pos d <$ symbol "open" <*> account <*> (commodity `sepBy` symbol ","))
+open :: P.SourcePos -> Day -> Parser Open
+open pos d = Open pos d <$ symbol "open" <*> account <*> (commodity `sepBy` symbol ",")
 
-close :: P.SourcePos -> Day -> Parser Event
-close pos d = Cls <$> (Close pos d <$ symbol "close" <*> account)
+close :: P.SourcePos -> Day -> Parser Close
+close pos d = Close pos d <$ symbol "close" <*> account
 
-balance :: P.SourcePos -> Day -> Parser Event
+balance :: P.SourcePos -> Day -> Parser Balance
 balance pos d =
-  Bal <$> (Balance pos d <$ symbol "balance" <*> account <*> number <*> commodity)
+  Balance pos d <$ symbol "balance" <*> account <*> number <*> commodity
 
-price :: P.SourcePos -> Day -> Parser Event
+price :: P.SourcePos -> Day -> Parser Price
 price pos d =
-  Prc <$> (Price pos d <$ symbol "price" <*> commodity <*> number <*> commodity)
+  Price pos d <$ symbol "price" <*> commodity <*> number <*> commodity
 
-event :: Parser Event
+event :: Parser Directive
 event = do
   pos <- getPosition
   d <- date
-  transaction pos d <|> open pos d <|> close pos d <|> balance pos d <|>
-    price pos d
+  Trn <$> transaction pos d <|> Opn <$> open pos d <|> Cls <$> close pos d <|>
+    Bal <$> balance pos d <|>
+    Prc <$> price pos d
 
 include :: Parser Include
 include = symbol "include" >> Include <$> getPosition <*> (unpack <$> quotedString)
@@ -134,7 +135,7 @@ config = symbol "option" >> Option <$> getPosition <*> quotedString <*> quotedSt
 directive :: Parser Directive
 directive =
   L.nonIndented scn $
-  (Evt <$> event <|> Inc <$> include <|> Opt <$> config) <* scn
+  (event <|> Inc <$> include <|> Opt <$> config) <* scn
 
 directives :: Parser [Directive]
 directives = some directive <* eof

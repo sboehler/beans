@@ -49,11 +49,8 @@ instance Pretty Posting where
   pretty (Wildcard _ a) = pretty a
 
 instance Pretty Directive where
-  pretty (Evt e) = pretty e
   pretty (Opt x) = pretty x
   pretty (Inc x) = pretty x
-
-instance Pretty Event where
   pretty (Bal b) = pretty b
   pretty (Opn o) = pretty o
   pretty (Cls c) = pretty c

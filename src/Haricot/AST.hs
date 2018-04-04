@@ -6,17 +6,13 @@ import           Data.Time.Calendar  (Day)
 import qualified Text.Megaparsec.Pos as P
 
 data Directive
-  = Evt Event
-  | Opt Option
-  | Inc Include
-  deriving (Eq, Show, Ord)
-
-data Event
   = Bal Balance
   | Opn Open
   | Cls Close
   | Trn Transaction
   | Prc Price
+  | Opt Option
+  | Inc Include
   deriving (Eq, Show, Ord)
 
 data Balance = Balance

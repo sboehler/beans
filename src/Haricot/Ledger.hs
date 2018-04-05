@@ -6,12 +6,11 @@ import           Haricot.AST
 
 
 data Timestep = Timestep
-  { _date         :: Day
-  , _openings     :: [Open]
-  , _closings     :: [Close]
-  , _balances     :: [Balance]
+  { _openings :: [Open]
+  , _closings :: [Close]
+  , _balances :: [Balance]
   , _transactions :: [Transaction]
-  , _prices       :: [Price]
+  , _prices :: [Price]
   } deriving (Show)
 
 type Ledger = M.Map Day Timestep
@@ -20,12 +19,13 @@ buildLedger :: [Directive] -> Ledger
 buildLedger = foldr updateLedger M.empty
 
 updateLedger :: Directive -> Ledger -> Ledger
-updateLedger directive ledger = case date directive of
-  Just day -> let
-      t = M.findWithDefault (Timestep day [] [] [] [] []) day ledger
-      t' = updateTimestep directive t
-    in M.insert day t' ledger
-  Nothing -> ledger
+updateLedger directive ledger =
+  case date directive of
+    Just day ->
+      let t = M.findWithDefault (Timestep [] [] [] [] []) day ledger
+          t' = updateTimestep directive t
+       in M.insert day t' ledger
+    Nothing -> ledger
 
 updateTimestep :: Directive -> Timestep -> Timestep
 updateTimestep directive ts@Timestep{..} = case directive of

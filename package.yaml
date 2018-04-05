@@ -34,25 +34,11 @@ dependencies:
 - time
 
 default-extensions:
-- DataKinds
-- DeriveGeneric
-- DeriveFunctor
-- GeneralizedNewtypeDeriving
 - DuplicateRecordFields
 - NamedFieldPuns
-- LambdaCase
-- FlexibleContexts
 - OverloadedStrings
-- FlexibleInstances
-- RankNTypes
 - RecordWildCards
-- ScopedTypeVariables
-- ScopedTypeVariables
-- StandaloneDeriving
-- TemplateHaskell
-- UndecidableInstances
 - TypeFamilies
-- TypeOperators
 
 ghc-options:
   - -Wall

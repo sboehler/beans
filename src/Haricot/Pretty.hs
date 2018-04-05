@@ -4,10 +4,10 @@ module Haricot.Pretty
   ( prettyPrint
   ) where
 
-import Data.Scientific (Scientific)
-import Data.Text.Prettyprint.Doc
-import Data.Time.Calendar (Day)
-import Haricot.AST
+import           Data.Scientific           (Scientific)
+import           Data.Text.Prettyprint.Doc
+import           Data.Time.Calendar        (Day)
+import           Haricot.AST
 
 instance Pretty Scientific where
   pretty = pretty . show
@@ -28,7 +28,7 @@ instance Pretty Transaction where
     cat (map pretty _tags) <> line <> (indent 2 . vcat) (map pretty _postings)
 
 instance Pretty Flag where
-  pretty Complete = "*"
+  pretty Complete   = "*"
   pretty Incomplete = "!"
 
 instance Pretty Tag where
@@ -40,13 +40,19 @@ instance Pretty Lot where
     [pretty _price, pretty _targetCommodity, pretty _date] ++
     case _label of
       Nothing -> []
-      _ -> [pretty _label]
+      _       -> [pretty _label]
 
 instance Pretty Posting where
-  pretty Posting {_account, _amount, _commodity, _lot} =
+  pretty (CP p) = pretty p
+  pretty (WP w) = pretty w
+
+instance Pretty CompletePosting where
+  pretty CompletePosting {_account, _amount, _commodity, _lot} =
     pretty _account <+>
     (pretty . show) _amount <+> pretty _commodity <+> pretty _lot
-  pretty (Wildcard _ a) = pretty a
+
+instance Pretty WildcardPosting where
+  pretty (WildcardPosting _ a) = pretty a
 
 instance Pretty Directive where
   pretty (Opt x) = pretty x
@@ -62,8 +68,12 @@ instance Pretty Balance where
     "balance" <+> pretty _account <+> pretty _amount <+> pretty _commodity
 
 instance Pretty Open where
-  pretty Open {_account, _commodities} =
-    "open" <+> pretty _account <+> hsep (map pretty _commodities)
+  pretty Open {_account, _restriction} =
+    "open" <+> pretty _account <+> pretty _restriction
+
+instance Pretty Restriction where
+  pretty NoRestriction    = mempty
+  pretty (RestrictedTo c) = hsep (map pretty c)
 
 instance Pretty Close where
   pretty Close {_account} = "close" <+> pretty _account

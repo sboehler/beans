@@ -79,12 +79,19 @@ lot d = braces $ Lot <$> number <*> commodity <*> lotDate <*> lotLabel
 postingPrice :: Parser ()
 postingPrice = (symbol "@" *> optional (symbol "@") *> number *> commodity) $> ()
 
+completePosting :: Day -> P.SourcePos -> AccountName -> Parser CompletePosting
+completePosting d p a =
+  CompletePosting p a <$> number <*> commodity <*> optional (lot d) <*
+  optional postingPrice 
+
+wildcardPosting :: P.SourcePos -> AccountName -> Parser WildcardPosting
+wildcardPosting p a = return $ WildcardPosting p a
+
 posting :: Day -> Parser Posting
 posting d = do
   pos <- getPosition
   a <- account
-  Posting pos a <$> number <*> commodity <*> optional (lot d) <*
-    optional postingPrice <|> return (Wildcard pos a)
+  CP <$> completePosting d pos a <|> WP <$> wildcardPosting pos a
 
 flag :: Parser Flag
 flag = complete <|> incomplete
@@ -105,7 +112,10 @@ transaction pos d = do
   return $ Transaction pos d f desc t p
 
 open :: P.SourcePos -> Day -> Parser Open
-open pos d = Open pos d <$ symbol "open" <*> account <*> (commodity `sepBy` symbol ",")
+open pos d = Open pos d <$ symbol "open" <*> account <*> restriction
+
+restriction :: Parser Restriction
+restriction =  RestrictedTo <$> (commodity `sepBy1` symbol ",") <|> return NoRestriction
 
 close :: P.SourcePos -> Day -> Parser Close
 close pos d = Close pos d <$ symbol "close" <*> account

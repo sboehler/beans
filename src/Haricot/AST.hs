@@ -13,7 +13,7 @@ data Directive
   | Prc Price
   | Opt Option
   | Inc Include
-  deriving (Eq, Show, Ord)
+  deriving (Eq, Show)
 
 data Balance = Balance
   { _pos       :: P.SourcePos
@@ -21,20 +21,30 @@ data Balance = Balance
   , _account   :: AccountName
   , _amount    :: Scientific
   , _commodity :: CommodityName
-  } deriving (Eq, Show, Ord)
+  } deriving (Eq, Show)
 
 data Open = Open
   { _pos         :: P.SourcePos
   , _date        :: Day
   , _account     :: AccountName
-  , _commodities :: [CommodityName]
-  } deriving (Show, Eq, Ord)
+  , _restriction :: Restriction
+  } deriving (Show, Eq)
+
+data Restriction
+  = NoRestriction
+  | RestrictedTo [CommodityName]
+  deriving (Show, Eq)
+
+compatibleWith :: CommodityName -> Restriction -> Bool
+compatibleWith _ NoRestriction = True
+compatibleWith c (RestrictedTo r) = c `elem` r
+
 
 data Close = Close
   { _pos     :: P.SourcePos
   , _date    :: Day
   , _account :: AccountName
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Eq)
 
 data Price = Price
   { _pos             :: P.SourcePos
@@ -42,7 +52,7 @@ data Price = Price
   , _commodity       :: CommodityName
   , _price           :: Scientific
   , _targetCommodity :: CommodityName
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Eq)
 
 data Transaction = Transaction
   { _pos         :: P.SourcePos
@@ -51,26 +61,34 @@ data Transaction = Transaction
   , _description :: Text
   , _tags        :: [Tag]
   , _postings    :: [Posting]
-  } deriving (Eq, Show, Ord)
+  } deriving (Eq, Show)
 
 data Posting
-  = Posting { _pos       :: P.SourcePos
-            , _account   :: AccountName
-            , _amount    :: Scientific
-            , _commodity :: CommodityName
-            , _lot       :: Maybe Lot }
-  | Wildcard { _pos     :: P.SourcePos
-             , _account :: AccountName }
-  deriving (Show, Eq, Ord)
+  = CP CompletePosting
+  | WP WildcardPosting
+  deriving (Show, Eq)
+
+data CompletePosting = CompletePosting
+  { _pos :: P.SourcePos
+  , _account :: AccountName
+  , _amount :: Scientific
+  , _commodity :: CommodityName
+  , _lot :: Maybe Lot
+  } deriving (Show, Eq)
+
+data WildcardPosting = WildcardPosting
+  { _pos :: P.SourcePos
+  , _account :: AccountName
+  } deriving (Show, Eq)
 
 data Flag
   = Complete
   | Incomplete
-  deriving (Eq, Show, Ord)
+  deriving (Eq, Show)
 
 newtype Tag =
   Tag Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq)
 
 data Lot = Lot
   { _price           :: Scientific
@@ -83,12 +101,12 @@ data Include = Include
   {
     _pos      :: P.SourcePos,
     _filePath :: FilePath
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Eq)
 
 data Option =
   Option P.SourcePos Text
          Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq)
 
 newtype AccountName = AccountName
   { _unAccountName :: [Text]

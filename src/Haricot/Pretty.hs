@@ -26,11 +26,11 @@ instance Pretty CommodityName where
 instance Pretty Day where
   pretty = pretty . show
 
-instance Pretty Transaction where
+instance (Pretty a) => Pretty (Transaction [a]) where
   pretty Transaction {..} =
     pretty _flag <+>
     dquotes (pretty _description) <+>
-    cat (map pretty _tags) <> line <> (indent 2 . vcat) (map pretty _postings)
+    cat (map pretty _tags) <> line <> (indent 2 . vcat) (fmap pretty _postings)
 
 instance Pretty Flag where
   pretty Complete   = "*"
@@ -59,7 +59,7 @@ instance Pretty CompletePosting where
 instance Pretty WildcardPosting where
   pretty (WildcardPosting _ a) = pretty a
 
-instance Pretty Directive where
+instance Pretty a => Pretty (Directive [a]) where
   pretty (Opt x) = pretty x
   pretty (Inc x) = pretty x
   pretty (Bal b) = pretty b
@@ -93,7 +93,7 @@ instance Pretty Include where
 instance Pretty Option where
   pretty (Option _ d t) = "option" <+> pretty d <+> pretty t
 
-prettyPrint :: [Directive] -> IO ()
+prettyPrint :: [Directive [Posting]] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
 prettyPrintLedger :: Ledger -> IO()
@@ -115,6 +115,6 @@ prettyPrintAccounts accounts = print $ vsep $ map p (M.toList accounts)
 instance Pretty Account where
   pretty Account {_holdings}= (vsep . map p . M.toList) _holdings
     where
-      p (k, v) = pretty k
+      p (k, _) = pretty k
 
 

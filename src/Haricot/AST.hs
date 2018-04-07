@@ -5,15 +5,37 @@ import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
 import qualified Text.Megaparsec.Pos as P
 
-data Directive
+data Directive a
   = Bal Balance
   | Opn Open
   | Cls Close
-  | Trn Transaction
+  | Trn (Transaction a)
   | Prc Price
   | Opt Option
   | Inc Include
   deriving (Eq, Show)
+
+instance Functor Directive where
+  fmap f (Trn t) = Trn $ fmap f t
+  fmap _ (Bal b) = Bal b
+  fmap _ (Opn b) = Opn b
+  fmap _ (Cls b) = Cls b
+  fmap _ (Prc b) = Prc b
+  fmap _ (Opt b) = Opt b
+  fmap _ (Inc b) = Inc b
+
+instance Foldable Directive where
+  foldMap f (Trn t) = foldMap f t
+  foldMap _ _ = mempty
+
+instance Traversable Directive where
+  traverse f (Trn t) = Trn <$> traverse f t
+  traverse _ (Bal b) = pure $ Bal b
+  traverse _ (Opn b) = pure $ Opn b
+  traverse _ (Cls b) = pure $ Cls b
+  traverse _ (Prc b) = pure $ Prc b
+  traverse _ (Opt b) = pure $ Opt b
+  traverse _ (Inc b) = pure $ Inc b
 
 data Balance = Balance
   { _pos       :: P.SourcePos
@@ -39,7 +61,6 @@ compatibleWith :: CommodityName -> Restriction -> Bool
 compatibleWith _ NoRestriction = True
 compatibleWith c (RestrictedTo r) = c `elem` r
 
-
 data Close = Close
   { _pos     :: P.SourcePos
   , _date    :: Day
@@ -54,14 +75,25 @@ data Price = Price
   , _targetCommodity :: CommodityName
   } deriving (Show, Eq)
 
-data Transaction = Transaction
+data Transaction a = Transaction
   { _pos         :: P.SourcePos
   , _date        :: Day
   , _flag        :: Flag
   , _description :: Text
   , _tags        :: [Tag]
-  , _postings    :: [Posting]
+  , _postings    :: a
   } deriving (Eq, Show)
+
+instance Functor Transaction where
+  fmap f t@Transaction {_postings} = t {_postings = f _postings}
+
+instance Foldable Transaction where
+  foldMap f Transaction {_postings} = f _postings
+
+instance Traversable Transaction where
+  traverse f Transaction {_postings, ..} = t <$> f _postings
+    where
+      t p = Transaction {_postings = p, ..}
 
 data Posting
   = CP CompletePosting

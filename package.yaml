@@ -38,7 +38,9 @@ default-extensions:
 - NamedFieldPuns
 - OverloadedStrings
 - RecordWildCards
+- DeriveFunctor
 - TypeFamilies
+- FlexibleInstances
 
 ghc-options:
   - -Wall

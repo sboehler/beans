@@ -82,7 +82,7 @@ postingPrice = (symbol "@" *> optional (symbol "@") *> number *> commodity) $> (
 completePosting :: Day -> P.SourcePos -> AccountName -> Parser CompletePosting
 completePosting d p a =
   CompletePosting p a <$> number <*> commodity <*> optional (lot d) <*
-  optional postingPrice 
+  optional postingPrice
 
 wildcardPosting :: P.SourcePos -> AccountName -> Parser WildcardPosting
 wildcardPosting p a = return $ WildcardPosting p a
@@ -102,7 +102,7 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: P.SourcePos -> Day -> Parser Transaction
+transaction :: P.SourcePos -> Day -> Parser (Transaction [Posting])
 transaction pos d = do
   f <- flag
   desc <- quotedString
@@ -128,7 +128,7 @@ price :: P.SourcePos -> Day -> Parser Price
 price pos d =
   Price pos d <$ symbol "price" <*> commodity <*> number <*> commodity
 
-event :: Parser Directive
+event :: Parser (Directive [Posting])
 event = do
   pos <- getPosition
   d <- date
@@ -142,26 +142,25 @@ include = symbol "include" >> Include <$> getPosition <*> (unpack <$> quotedStri
 config :: Parser Option
 config = symbol "option" >> Option <$> getPosition <*> quotedString <*> quotedString
 
-directive :: Parser Directive
+directive :: Parser (Directive [Posting])
 directive =
   L.nonIndented scn $
   (event <|> Inc <$> include <|> Opt <$> config) <* scn
 
-directives :: Parser [Directive]
+directives :: Parser [Directive [Posting]]
 directives = some directive <* eof
 
-parseSource :: (MonadThrow m) => FilePath -> Text -> m [Directive]
+parseSource :: (MonadThrow m) => FilePath -> Text -> m [Directive [Posting]]
 parseSource f t =
   case parse directives f t of
     Left e  -> throwM e
     Right d -> return d
 
-getIncludedFiles :: FilePath -> [Directive] -> [FilePath]
+getIncludedFiles :: FilePath -> [Directive [Posting]] -> [FilePath]
 getIncludedFiles fp ast =
   [combine (takeDirectory fp) path | (Inc (Include _ path)) <- ast]
 
-parseFile ::
-     (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
+parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m [Directive [Posting]]
 parseFile filePath = do
   source <- liftIO $ readFile filePath
   ast <- parseSource filePath source

@@ -1,6 +1,9 @@
 module Haricot.Accounts
   ( AccountsException(..)
   , Accounts
+  , Account(..)
+  , Holdings
+  , Lots
   , book
   , updateAccounts
   ) where
@@ -52,17 +55,18 @@ openAccount open@Open {_account, _restriction} accounts =
 closeAccount :: MonadThrow m =>  Close -> Accounts -> m Accounts
 closeAccount closing@Close {..} accounts =
   case M.lookup _account accounts of
-    Just Account { _holdings }
+    Just Account {_holdings}
       | all (all (== 0)) _holdings -> return $ M.delete _account accounts
-      | otherwise                 -> throwM $ BalanceIsNotZero closing
-    Nothing                       -> throwM $ AccountIsNotOpen closing
+      | otherwise -> throwM $ BalanceIsNotZero closing
+    Nothing -> throwM $ AccountIsNotOpen closing
 
 
 book :: (MonadThrow m) => Accounts -> CompletePosting -> m Accounts
 book accounts p@CompletePosting {_account, _commodity} =
   case M.lookup _account accounts of
-    Just a ->
-      updateAccount a p >>= \a' -> return $ M.insert _account a' accounts
+    Just a -> do
+      a' <- updateAccount a p
+      return $ M.insert _account a' accounts
     _ -> throwM $ BookingErrorAccountNotOpen p
 
 updateAccount :: MonadThrow m => Account -> CompletePosting -> m Account

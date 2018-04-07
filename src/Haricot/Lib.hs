@@ -5,8 +5,13 @@ module Haricot.Lib
 import           Control.Monad.Catch    (MonadThrow)
 import           Control.Monad.IO.Class (MonadIO)
 import           Control.Monad.Trans    (liftIO)
+import           Data.Foldable          (foldlM)
+import qualified Data.Map.Strict        as M
+import           Haricot.Accounts
+import           Haricot.AST
+import           Haricot.Ledger
 import           Haricot.Parser         (parseFile)
-import           Haricot.Ledger         (buildLedger)
+import           Haricot.Pretty
 import           System.Environment     (getArgs)
 
 
@@ -15,4 +20,18 @@ parse = do
   (file:_) <- liftIO getArgs
   ast <- parseFile file
   let ledger = buildLedger ast
-  liftIO $ print ledger
+  _ <- foldlM test M.empty ledger
+  return ()
+  --liftIO $ print ledger
+
+
+test :: (MonadIO m, MonadThrow m) => Accounts -> Timestep -> m Accounts
+test accounts ts@Timestep {_date} = do
+  accounts' <- updateAccounts accounts ts
+  liftIO $ prettyPrintAccounts $ M.filterWithKey (\k _ -> filterAssets k) accounts
+  return accounts'
+
+filterAssets :: AccountName -> Bool
+filterAssets (AccountName (a:_)) = a == "Assets"
+filterAssets (AccountName [])    = False
+

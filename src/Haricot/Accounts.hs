@@ -35,6 +35,8 @@ data AccountsException
   | BookingErrorAccountNotOpen Posting
   | AccountIsAlreadyOpen Open
   | BalanceIsNotZero Close
+  | AccountDoesNotExist Balance
+  | BalanceDoesNotMatch Balance Scientific
   deriving (Show)
 
 instance Exception AccountsException
@@ -44,6 +46,7 @@ updateAccounts :: (MonadThrow m) => Accounts -> Timestep -> m Accounts
 updateAccounts accounts Timestep {..} = do
   accounts' <- foldrM openAccount accounts _openings
   accounts'' <- foldrM closeAccount accounts' _closings
+  _ <- mapM_ (checkBalance accounts'') _balances
   foldrM bookTransaction accounts'' _transactions
 
 openAccount :: MonadThrow m => Open -> Accounts -> m Accounts
@@ -60,6 +63,22 @@ closeAccount closing@Close {..} accounts =
       | all (all (== 0)) _holdings -> return $ M.delete _account accounts
       | otherwise -> throwM $ BalanceIsNotZero closing
     Nothing -> throwM $ AccountIsNotOpen closing
+
+checkBalance :: MonadThrow m => Accounts -> Balance -> m ()
+checkBalance a bal@Balance {_account, _amount, _commodity} = do
+  case M.lookup _account a of
+    Nothing -> throwM $ AccountDoesNotExist bal
+    Just Account {_holdings} ->
+      let
+        amount' = calculateAmount _holdings _commodity
+      in if amount' /= _amount
+          then throwM $ BalanceDoesNotMatch bal amount'
+          else return () 
+
+calculateAmount :: Holdings -> CommodityName -> Scientific
+calculateAmount h c = case M.lookup c h of
+  Just m -> sum m
+  Nothing -> 0
 
 bookTransaction :: MonadThrow m => Transaction -> Accounts  -> m Accounts
 bookTransaction Transaction{_postings} a = foldlM book a _postings

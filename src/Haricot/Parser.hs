@@ -60,16 +60,17 @@ date =
     dash = symbol "-"
     digits n = read <$> count n digitChar
 
+identifier :: Parser Text
+identifier = cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
+
 account :: Parser AccountName
-account = lexeme $ AccountName <$> segment `sepBy` colon
+account = lexeme $ AccountName <$> identifier `sepBy` colon
   where
-    segment =
-      cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
     colon = symbol ":"
 
 commodity :: Parser CommodityName
 commodity =
-  lexeme $ CommodityName <$> takeWhileP (Just "alphanumeric") isAlphaNum
+  lexeme $ CommodityName <$> identifier
 
 number :: Parser Scientific
 number = lexeme $ L.signed sc L.scientific

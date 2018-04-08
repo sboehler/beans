@@ -106,8 +106,11 @@ prettyPrintAccounts accounts = print $ vsep $ map p (M.toList accounts)
 
 
 instance Pretty Account where
-  pretty Account {_holdings}= (vsep . map p . M.toList) _holdings
+  pretty Account {_holdings} = hardline <> (indent 2 $ ((vsep . map f . M.toList) _holdings))
     where
-      p (k, _) = pretty k
+      f (k, v)= pretty k <+> pretty v
 
-
+instance Pretty Lots where
+  pretty l = align $ (vsep . map f . M.toList) l
+    where
+      f (k, v) = pretty v <+> pretty k

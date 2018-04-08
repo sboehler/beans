@@ -24,7 +24,7 @@ data Account = Account {
 
 type Holdings = M.Map CommodityName Lots
 
-type Lots = M.Map (Maybe Lot) Scientific
+type Lots = M.Map Lot Scientific
 
 instance Monoid Account where
   mempty = Account NoRestriction M.empty

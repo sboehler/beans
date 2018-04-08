@@ -46,6 +46,7 @@ instance Pretty Lot where
     case _label of
       Nothing -> []
       _       -> [pretty _label]
+  pretty NoLot = ""
 
 instance Pretty Posting where
   pretty Posting {_account, _amount, _commodity, _lot} =
@@ -106,7 +107,7 @@ prettyPrintAccounts accounts = print $ vsep $ map p (M.toList accounts)
 
 
 instance Pretty Account where
-  pretty Account {_holdings} = hardline <> (indent 2 $ ((vsep . map f . M.toList) _holdings))
+  pretty Account {_holdings} = hardline <> indent 2 ((vsep . map f . M.toList) _holdings)
     where
       f (k, v)= pretty k <+> pretty v
 

@@ -67,7 +67,7 @@ data Posting = Posting
   , _account :: AccountName
   , _amount :: Scientific
   , _commodity :: CommodityName
-  , _lot :: Maybe Lot
+  , _lot :: Lot
   } deriving (Show, Eq)
 
 data Flag
@@ -79,12 +79,13 @@ newtype Tag =
   Tag Text
   deriving (Show, Eq)
 
-data Lot = Lot
-  { _price           :: Scientific
-  , _targetCommodity :: CommodityName
-  , _date            :: Day
-  , _label           :: Maybe Text
-  } deriving (Show, Eq, Ord)
+data Lot
+  = Lot { _price :: Scientific
+        , _targetCommodity :: CommodityName
+        , _date :: Day
+        , _label :: Maybe Text }
+  | NoLot
+  deriving (Show, Eq, Ord)
 
 data Include = Include
   {

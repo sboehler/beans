@@ -10,16 +10,16 @@ data Timestep = Timestep
     _openings     :: [Open]
   , _closings     :: [Close]
   , _balances     :: [Balance]
-  , _transactions :: [Transaction [CompletePosting]]
+  , _transactions :: [Transaction]
   , _prices       :: [Price]
   } deriving (Show)
 
 type Ledger = M.Map Day Timestep
 
-buildLedger :: [Directive [CompletePosting]] -> Ledger
+buildLedger :: [Directive ] -> Ledger
 buildLedger = foldr updateLedger M.empty
 
-updateLedger :: Directive [CompletePosting] -> Ledger -> Ledger
+updateLedger :: Directive  -> Ledger -> Ledger
 updateLedger directive ledger =
   case date directive of
     Just day ->
@@ -28,7 +28,7 @@ updateLedger directive ledger =
        in M.insert day t' ledger
     Nothing -> ledger
 
-updateTimestep :: Directive [CompletePosting] -> Timestep -> Timestep
+updateTimestep :: Directive  -> Timestep -> Timestep
 updateTimestep directive ts@Timestep{..} = case directive of
     Cls c -> ts { _closings = c:_closings }
     Opn o -> ts { _openings = o:_openings}
@@ -37,7 +37,7 @@ updateTimestep directive ts@Timestep{..} = case directive of
     Prc p -> ts { _prices = p:_prices}
     _     -> ts
 
-date :: Directive [CompletePosting] -> Maybe Day
+date :: Directive -> Maybe Day
 date d =
   case d of
     Cls Close {_date}       -> Just _date

@@ -10,7 +10,6 @@ import qualified Data.Map.Strict        as M
 import           Haricot.Accounts
 import           Haricot.AST
 import           Haricot.Ledger
-import Haricot.Verify
 import           Haricot.Parser         (parseFile)
 import           Haricot.Pretty
 import           System.Environment     (getArgs)
@@ -20,8 +19,7 @@ parse :: (MonadIO m, MonadThrow m) => m ()
 parse = do
   (file:_) <- liftIO getArgs
   ast <- parseFile file
-  ast' <- completeDirectives ast
-  let ledger = buildLedger ast'
+  let ledger = buildLedger ast
   _ <- foldlM test M.empty ledger
   return ()
   --liftIO $ print ledger
@@ -30,7 +28,7 @@ parse = do
 test :: (MonadIO m, MonadThrow m) => Accounts -> Timestep -> m Accounts
 test accounts ts@Timestep {_date} = do
   accounts' <- updateAccounts accounts ts
-  liftIO $ prettyPrintAccounts $ M.filterWithKey (\k _ -> filterAssets k) accounts
+  liftIO $ prettyPrintAccounts $ M.filterWithKey (const . filterAssets) accounts
   return accounts'
 
 filterAssets :: AccountName -> Bool

@@ -32,7 +32,7 @@ instance Monoid Account where
 
 data AccountsException
   = AccountIsNotOpen Close
-  | BookingErrorAccountNotOpen CompletePosting
+  | BookingErrorAccountNotOpen Posting
   | AccountIsAlreadyOpen Open
   | BalanceIsNotZero Close
   deriving (Show)
@@ -61,25 +61,25 @@ closeAccount closing@Close {..} accounts =
     Nothing -> throwM $ AccountIsNotOpen closing
 
 
-book :: (MonadThrow m) => Accounts -> CompletePosting -> m Accounts
-book accounts p@CompletePosting {_account, _commodity} =
+book :: (MonadThrow m) => Accounts -> Posting -> m Accounts
+book accounts p@Posting {_account, _commodity} =
   case M.lookup _account accounts of
     Just a -> do
       a' <- updateAccount a p
       return $ M.insert _account a' accounts
     _ -> throwM $ BookingErrorAccountNotOpen p
 
-updateAccount :: MonadThrow m => Account -> CompletePosting -> m Account
-updateAccount a@Account {_restriction, _holdings} p@CompletePosting {_commodity} =
+updateAccount :: MonadThrow m => Account -> Posting -> m Account
+updateAccount a@Account {_restriction, _holdings} p@Posting {_commodity} =
   if _commodity `compatibleWith` _restriction
     then return $ a {_holdings = updateHoldings _holdings p}
     else throwM $ BookingErrorAccountNotOpen p
 
-updateHoldings :: Holdings -> CompletePosting -> Holdings
-updateHoldings h p@CompletePosting {_lot, _amount, _commodity} =
+updateHoldings :: Holdings -> Posting -> Holdings
+updateHoldings h p@Posting {_lot, _amount, _commodity} =
   let lots = M.findWithDefault M.empty _commodity h
    in M.insert _commodity (updateLot lots p) h
 
-updateLot :: Lots -> CompletePosting -> Lots
-updateLot lots CompletePosting {_lot, _amount} =
+updateLot :: Lots -> Posting -> Lots
+updateLot lots Posting {_lot, _amount} =
   M.insertWith (+) _lot _amount lots

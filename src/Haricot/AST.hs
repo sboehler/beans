@@ -5,37 +5,15 @@ import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
 import qualified Text.Megaparsec.Pos as P
 
-data Directive a
+data Directive 
   = Bal Balance
   | Opn Open
   | Cls Close
-  | Trn (Transaction a)
+  | Trn Transaction 
   | Prc Price
   | Opt Option
   | Inc Include
   deriving (Eq, Show)
-
-instance Functor Directive where
-  fmap f (Trn t) = Trn $ fmap f t
-  fmap _ (Bal b) = Bal b
-  fmap _ (Opn b) = Opn b
-  fmap _ (Cls b) = Cls b
-  fmap _ (Prc b) = Prc b
-  fmap _ (Opt b) = Opt b
-  fmap _ (Inc b) = Inc b
-
-instance Foldable Directive where
-  foldMap f (Trn t) = foldMap f t
-  foldMap _ _ = mempty
-
-instance Traversable Directive where
-  traverse f (Trn t) = Trn <$> traverse f t
-  traverse _ (Bal b) = pure $ Bal b
-  traverse _ (Opn b) = pure $ Opn b
-  traverse _ (Cls b) = pure $ Cls b
-  traverse _ (Prc b) = pure $ Prc b
-  traverse _ (Opt b) = pure $ Opt b
-  traverse _ (Inc b) = pure $ Inc b
 
 data Balance = Balance
   { _pos       :: P.SourcePos
@@ -75,42 +53,21 @@ data Price = Price
   , _targetCommodity :: CommodityName
   } deriving (Show, Eq)
 
-data Transaction a = Transaction
+data Transaction = Transaction
   { _pos         :: P.SourcePos
   , _date        :: Day
   , _flag        :: Flag
   , _description :: Text
   , _tags        :: [Tag]
-  , _postings    :: a
+  , _postings    :: [Posting]
   } deriving (Eq, Show)
 
-instance Functor Transaction where
-  fmap f t@Transaction {_postings} = t {_postings = f _postings}
-
-instance Foldable Transaction where
-  foldMap f Transaction {_postings} = f _postings
-
-instance Traversable Transaction where
-  traverse f Transaction {_postings, ..} = t <$> f _postings
-    where
-      t p = Transaction {_postings = p, ..}
-
-data Posting
-  = CP CompletePosting
-  | WP WildcardPosting
-  deriving (Show, Eq)
-
-data CompletePosting = CompletePosting
+data Posting = Posting
   { _pos :: P.SourcePos
   , _account :: AccountName
   , _amount :: Scientific
   , _commodity :: CommodityName
   , _lot :: Maybe Lot
-  } deriving (Show, Eq)
-
-data WildcardPosting = WildcardPosting
-  { _pos :: P.SourcePos
-  , _account :: AccountName
   } deriving (Show, Eq)
 
 data Flag

@@ -9,7 +9,7 @@ module Haricot.Accounts
   ) where
 
 import           Control.Monad.Catch
-import           Data.Foldable       (foldrM)
+import           Data.Foldable       (foldrM, foldlM)
 import qualified Data.Map.Strict     as M
 import           Data.Scientific
 import           Haricot.AST
@@ -43,7 +43,8 @@ instance Exception AccountsException
 updateAccounts :: (MonadThrow m) => Accounts -> Timestep -> m Accounts
 updateAccounts accounts Timestep {..} = do
   accounts' <- foldrM openAccount accounts _openings
-  foldrM closeAccount accounts' _closings
+  accounts'' <- foldrM closeAccount accounts' _closings
+  foldrM bookTransaction accounts'' _transactions
 
 openAccount :: MonadThrow m => Open -> Accounts -> m Accounts
 openAccount open@Open {_account, _restriction} accounts =
@@ -60,8 +61,10 @@ closeAccount closing@Close {..} accounts =
       | otherwise -> throwM $ BalanceIsNotZero closing
     Nothing -> throwM $ AccountIsNotOpen closing
 
+bookTransaction :: MonadThrow m => Transaction -> Accounts  -> m Accounts
+bookTransaction Transaction{_postings} a = foldlM book a _postings
 
-book :: (MonadThrow m) => Accounts -> Posting -> m Accounts
+book :: MonadThrow m => Accounts -> Posting -> m Accounts
 book accounts p@Posting {_account, _commodity} =
   case M.lookup _account accounts of
     Just a -> do

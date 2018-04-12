@@ -92,16 +92,15 @@ lot d = braces (Lot <$> number <*> commodity <*> lotDate <*> lotLabel) <|> retur
     lotLabel = optional (comma >> quotedString)
 
 postingPrice :: Parser ()
-postingPrice = (symbol "@" *> optional (symbol "@") *> number *> commodity) $> ()
+postingPrice = (at *> optional at *> number *> commodity) $> ()
+  where
+    at = symbol "@"
 
 data PostingDirective
   = CP Posting
   | WP WildcardPosting
 
-data WildcardPosting = WildcardPosting
-  { _pos     :: P.SourcePos
-  , _account :: AccountName
-  } deriving (Show, Eq)
+data WildcardPosting = WildcardPosting P.SourcePos AccountName deriving (Show, Eq)
 
 posting :: Day -> P.SourcePos -> AccountName -> Parser Posting
 posting d p a =
@@ -135,7 +134,7 @@ transaction pos d = do
   p <- some $ try (L.indentGuard scn EQ indent *> postingDirective d)
   let postings = completePostings pos p
   case postings of
-    Left _ -> verifyError pos
+    Left _   -> verifyError pos
     Right p' -> return $ Transaction pos d f desc t p'
 
 
@@ -207,9 +206,8 @@ completePostings pos p =
             _   -> throwM $ UnbalancedTransaction pos
 
 balanceImbalance :: WildcardPosting -> (CommodityName, Scientific) -> Posting
-balanceImbalance WildcardPosting {_pos, _account} (c, a) =
-  Posting
-    {_amount = negate a, _commodity = c, _lot = NoLot, ..}
+balanceImbalance (WildcardPosting _pos _account) (c, a) =
+  Posting {_amount = negate a, _commodity = c, _lot = NoLot, ..}
 
 calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
 calculateImbalances =

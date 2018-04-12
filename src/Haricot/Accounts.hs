@@ -4,16 +4,19 @@ module Haricot.Accounts
   , Account(..)
   , Holdings
   , Lots
-  , book
-  , updateAccounts
+  , calculateAccounts
   ) where
 
+import           Control.Monad       (when)
 import           Control.Monad.Catch
-import           Data.Foldable       (foldrM, foldlM)
+import           Data.Foldable       (foldlM, foldrM)
 import qualified Data.Map.Strict     as M
 import           Data.Scientific
+import           Data.Time.Calendar  (Day)
 import           Haricot.AST
 import           Haricot.Ledger
+
+type AccountsHistory = M.Map Day Accounts
 
 type Accounts = M.Map AccountName Account
 
@@ -41,9 +44,15 @@ data AccountsException
 
 instance Exception AccountsException
 
+calculateAccounts :: (MonadThrow m) => Ledger -> m AccountsHistory
+calculateAccounts l = fst <$> foldlM f (M.empty, M.empty) l
+  where
+    f (accountsHistory, latest) ts@Timestep {_date} = do
+      latest' <- updateAccounts ts latest
+      return (M.insert _date latest' accountsHistory, latest')
 
-updateAccounts :: (MonadThrow m) => Accounts -> Timestep -> m Accounts
-updateAccounts accounts Timestep {..} = do
+updateAccounts :: (MonadThrow m) => Timestep -> Accounts -> m Accounts
+updateAccounts Timestep {..} accounts = do
   accounts' <- foldrM openAccount accounts _openings
   accounts'' <- foldrM closeAccount accounts' _closings
   _ <- mapM_ (checkBalance accounts'') _balances
@@ -65,19 +74,16 @@ closeAccount closing@Close {..} accounts =
     Nothing -> throwM $ AccountIsNotOpen closing
 
 checkBalance :: MonadThrow m => Accounts -> Balance -> m ()
-checkBalance a bal@Balance {_account, _amount, _commodity} = do
+checkBalance a bal@Balance {_account, _amount, _commodity} =
   case M.lookup _account a of
     Nothing -> throwM $ AccountDoesNotExist bal
     Just Account {_holdings} ->
-      let
-        amount' = calculateAmount _holdings _commodity
-      in if amount' /= _amount
-          then throwM $ BalanceDoesNotMatch bal amount'
-          else return () 
+      let amount' = calculateAmount _holdings _commodity
+       in when (amount' /= _amount) $ throwM (BalanceDoesNotMatch bal amount')
 
 calculateAmount :: Holdings -> CommodityName -> Scientific
 calculateAmount h c = case M.lookup c h of
-  Just m -> sum m
+  Just m  -> sum m
   Nothing -> 0
 
 bookTransaction :: MonadThrow m => Transaction -> Accounts  -> m Accounts

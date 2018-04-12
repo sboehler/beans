@@ -8,7 +8,7 @@ module Haricot.Accounts
   ) where
 
 import           Control.Monad.Catch
-import           Data.Foldable       (foldrM)
+import           Data.Foldable       (foldlM, foldrM)
 import qualified Data.Map.Strict     as M
 import           Data.Scientific
 import           Data.Time.Calendar  (Day)
@@ -46,15 +46,15 @@ data AccountsException
 instance Exception AccountsException
 
 calculateAccounts :: (MonadThrow m) => Ledger -> m AccountsHistory
-calculateAccounts l = fst <$> foldrM f (M.empty, M.empty) l
+calculateAccounts l = fst <$> foldlM f (M.empty, M.empty) l
   where
-    f ts@Timestep {_date} (accountsHistory, latest) = do
+    f (accountsHistory, latest) ts@Timestep {_date}  = do
       latest' <- updateAccounts ts latest
       return (M.insert _date latest' accountsHistory, latest')
 
 updateAccounts :: (MonadThrow m) => Timestep -> Accounts -> m Accounts
 updateAccounts Timestep {..} accounts =
-  pure accounts >>= openAccounts >>= closeAccounts >>= checkBalances >>=
+  openAccounts accounts >>= closeAccounts >>= checkBalances >>=
   bookTransactions
   where
     openAccounts a = foldrM openAccount a _openings

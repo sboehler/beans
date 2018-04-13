@@ -1,6 +1,5 @@
 module Haricot.Prices
-  (
-   PricesHistory
+  ( PricesHistory
   , Prices
   , calculatePrices
   ) where
@@ -18,11 +17,11 @@ type Prices = M.Map CommodityName (M.Map CommodityName Scientific)
 calculatePrices :: Ledger -> PricesHistory
 calculatePrices l = fst $ foldl f (M.empty, M.empty) l
   where
-    f  (accountsHistory, latest) ts@Timestep {_date}=
-      let latest' = updatePrices ts latest
-       in (M.insert _date latest' accountsHistory, latest')
+    f (pricesHistory, prices) ts@Timestep {_date} =
+      let prices' = updatePrices ts prices
+       in (M.insert _date prices' pricesHistory, prices')
 
-updatePrices ::  Timestep -> Prices -> Prices
+updatePrices :: Timestep -> Prices -> Prices
 updatePrices Timestep {..} prices = foldr addPrice prices _prices
 
 addPrice :: Price -> Prices -> Prices

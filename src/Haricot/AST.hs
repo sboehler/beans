@@ -1,6 +1,7 @@
 module Haricot.AST where
 
 import qualified Data.List           as L
+import           Data.Monoid         ((<>))
 import           Data.Scientific     (Scientific)
 import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
@@ -91,7 +92,11 @@ data Lot
         , _date            :: Day
         , _label           :: Maybe Text }
   | NoLot
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord)
+
+instance Show Lot where
+  show NoLot = ""
+  show (Lot p t d l) = show p <> " " <> show t <> " " <> show d <> " " <> show l
 
 data Include = Include
   {

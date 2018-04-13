@@ -1,5 +1,6 @@
 module Haricot.Accounts
   ( AccountsException(..)
+  , AccountsHistory
   , Accounts
   , Account(..)
   , Holdings
@@ -51,14 +52,13 @@ instance Exception AccountsException
 calculateAccounts :: (MonadThrow m) => Ledger -> m AccountsHistory
 calculateAccounts l = fst <$> foldlM f (M.empty, M.empty) l
   where
-    f (accountsHistory, latest) ts@Timestep {_date}  = do
-      latest' <- updateAccounts ts latest
-      return (M.insert _date latest' accountsHistory, latest')
+    f (accountsHistory, accounts) ts@Timestep {_date} = do
+      accounts' <- updateAccounts ts accounts
+      return (M.insert _date accounts' accountsHistory, accounts')
 
 updateAccounts :: (MonadThrow m) => Timestep -> Accounts -> m Accounts
 updateAccounts Timestep {..} accounts =
-  openAccounts accounts >>= closeAccounts >>= checkBalances >>=
-  bookTransactions
+  openAccounts accounts >>= closeAccounts >>= checkBalances >>= bookTransactions
   where
     openAccounts a = foldrM openAccount a _openings
     closeAccounts a = foldrM closeAccount a _closings
@@ -95,10 +95,10 @@ calculateAmount commodity = sum . M.findWithDefault M.empty commodity
 
 bookTransaction :: MonadThrow m => Transaction -> Accounts -> m Accounts
 bookTransaction Transaction {_postings} accounts =
-  foldrM book accounts _postings
+  foldrM bookPosting accounts _postings
 
-book :: MonadThrow m => Posting -> Accounts -> m Accounts
-book p@Posting {_account, _commodity} accounts =
+bookPosting :: MonadThrow m => Posting -> Accounts -> m Accounts
+bookPosting p@Posting {_account, _commodity} accounts =
   case M.lookup _account accounts of
     Just a -> do
       a' <- updateAccount p a

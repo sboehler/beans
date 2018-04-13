@@ -22,5 +22,4 @@ parse = do
   let prices = calculatePrices ledger
   accounts <- calculateAccounts ledger
   liftIO $ print (M.lookupLE (fromGregorian 2017 12 9) accounts)
-  liftIO $ print "prices"
   liftIO $ print (M.lookupLE (fromGregorian 2017 12 9) prices)

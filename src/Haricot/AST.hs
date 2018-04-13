@@ -1,9 +1,9 @@
 module Haricot.AST where
 
+import qualified Data.List           as L
 import           Data.Scientific     (Scientific)
 import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
-import qualified Data.List as L
 import qualified Text.Megaparsec.Pos as P
 
 data Directive
@@ -42,7 +42,7 @@ instance Monoid Restriction where
   _ `mappend` _ = NoRestriction
 
 compatibleWith :: CommodityName -> Restriction -> Bool
-compatibleWith _ NoRestriction = True
+compatibleWith _ NoRestriction    = True
 compatibleWith c (RestrictedTo r) = c `elem` r
 
 data Close = Close
@@ -69,11 +69,11 @@ data Transaction = Transaction
   } deriving (Eq, Show)
 
 data Posting = Posting
-  { _pos :: P.SourcePos
-  , _account :: AccountName
-  , _amount :: Scientific
+  { _pos       :: P.SourcePos
+  , _account   :: AccountName
+  , _amount    :: Scientific
   , _commodity :: CommodityName
-  , _lot :: Lot
+  , _lot       :: Lot
   } deriving (Show, Eq)
 
 data Flag
@@ -86,10 +86,10 @@ newtype Tag =
   deriving (Show, Eq)
 
 data Lot
-  = Lot { _price :: Scientific
+  = Lot { _price           :: Scientific
         , _targetCommodity :: CommodityName
-        , _date :: Day
-        , _label :: Maybe Text }
+        , _date            :: Day
+        , _label           :: Maybe Text }
   | NoLot
   deriving (Show, Eq, Ord)
 
@@ -100,7 +100,8 @@ data Include = Include
   } deriving (Show, Eq)
 
 data Option =
-  Option P.SourcePos Text
+  Option P.SourcePos
+         Text
          Text
   deriving (Show, Eq)
 

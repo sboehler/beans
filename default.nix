@@ -1,6 +1,6 @@
-{ mkDerivation, base, containers, exceptions, filepath
-, free, lens, megaparsec, mtl, parsec, parsec3-numbers
-, prettyprinter, scientific, stdenv, text, time
+{ mkDerivation, base, containers, exceptions, fgl
+, filepath, lens, megaparsec, mtl, prettyprinter
+, scientific, stdenv, text, time
 }:
 mkDerivation {
   pname = "haricot";
@@ -9,7 +9,7 @@ mkDerivation {
   isLibrary = false;
   isExecutable = true;
   executableHaskellDepends = [
-    base containers exceptions filepath free lens megaparsec
+    base containers exceptions fgl filepath lens megaparsec
     mtl prettyprinter scientific text time
   ];
   homepage = "https://github.com/sboehler/haricot#readme";

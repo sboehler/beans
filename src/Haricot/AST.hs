@@ -5,11 +5,11 @@ import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
 import qualified Text.Megaparsec.Pos as P
 
-data Directive 
+data Directive
   = Bal Balance
   | Opn Open
   | Cls Close
-  | Trn Transaction 
+  | Trn Transaction
   | Prc Price
   | Opt Option
   | Inc Include
@@ -107,4 +107,7 @@ instance Show AccountName where
 
 newtype CommodityName = CommodityName
   { _unCommodityName :: Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Eq, Ord)
+
+instance Show CommodityName where
+  show (CommodityName n) = unpack n

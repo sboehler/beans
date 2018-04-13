@@ -22,7 +22,10 @@ type Accounts = M.Map AccountName Account
 data Account = Account
   { _restriction :: Restriction
   , _holdings    :: Holdings
-  } deriving (Show)
+  }
+
+instance Show Account where
+  show (Account _ h) = show h
 
 type Holdings = M.Map CommodityName Lots
 

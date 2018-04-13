@@ -9,6 +9,7 @@ import qualified Data.Map.Strict        as M
 import           Data.Time.Calendar
 import           Haricot.Accounts
 import           Haricot.Ledger
+import           Haricot.AST
 import           Haricot.Parser         (parseFile)
 import           Haricot.Prices
 import           System.Environment     (getArgs)
@@ -20,6 +21,10 @@ parse = do
   ast <- parseFile file
   let ledger = buildLedger ast
   let prices = calculatePrices ledger
-  accounts <- calculateAccounts ledger
-  liftIO $ print (M.lookupLE (fromGregorian 2017 12 9) accounts)
-  liftIO $ print (M.lookupLE (fromGregorian 2017 12 9) prices)
+  accountsHistory <- calculateAccounts ledger
+  let accounts = M.lookupLE (fromGregorian 2017 12 9) accountsHistory
+      accounts' = M.mapKeysWith mappend f . snd <$> accounts
+  liftIO $ print accounts'
+  where
+    f (AccountName (n:_)) = n
+    f (AccountName []) = ""

@@ -27,14 +27,14 @@ data Account = Account
 instance Show Account where
   show (Account _ h) = show h
 
+instance Monoid Account where
+  mempty = Account mempty mempty
+  Account r1 l1 `mappend` Account r2 l2 =
+    Account (r1 `mappend` r2) (M.unionWith (M.unionWith (+)) l1 l2)
+
 type Holdings = M.Map CommodityName Lots
 
 type Lots = M.Map Lot Scientific
-
-instance Monoid Account where
-  mempty = Account NoRestriction M.empty
-  Account _ l1 `mappend` Account _ l2 =
-    Account NoRestriction (M.unionWith (M.unionWith (+)) l1 l2)
 
 data AccountsException
   = AccountIsNotOpen Close

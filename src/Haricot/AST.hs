@@ -3,6 +3,7 @@ module Haricot.AST where
 import           Data.Scientific     (Scientific)
 import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
+import qualified Data.List as L
 import qualified Text.Megaparsec.Pos as P
 
 data Directive
@@ -34,6 +35,11 @@ data Restriction
   = NoRestriction
   | RestrictedTo [CommodityName]
   deriving (Show, Eq)
+
+instance Monoid Restriction where
+  mempty = RestrictedTo []
+  RestrictedTo x `mappend` RestrictedTo y = RestrictedTo (x `L.union` y)
+  _ `mappend` _ = NoRestriction
 
 compatibleWith :: CommodityName -> Restriction -> Bool
 compatibleWith _ NoRestriction = True

@@ -1,15 +1,20 @@
-# haricot
+# Haricot
 
-Haricot is (so far) a Haskell implementation of a parser and a pretty-printer for the [beancount](https://furius.ca/beancouont) plain text accounting format. It doesn't do anything useful yet, but I have some ideas.
+Haricot is a [plain text accounting](http://plaintextaccounting.org/) tool in the tradition of ]ledger](https://ledger-cli.org), [beancount](https://furius.ca/beancount) and others. Distinctive features and objectives:
 
-## Text-based accounting?
+* Clean implementation in Haskell
+* Aim for the best abstractions
+* Native support multi-asset and multi-currency 
+* Hopelessly incomplete compared to others :-)
 
-[Read this](http://plaintextaccounting.org/).
+Accounting with Haricot is based on text files, and adopts a subset of the beancount syntax, which I found the easiest to parse.
 
-## Why beancount?
+## Why another ledger clone?
 
-Compared to [ledger](https://www.ledger-cli.org) and [hledger](https://www.hledger.org), I like the file format better. Also, it has extremely nice support for creating custom importers for various file formats. It is full-featured with CLI and web-based tools, and serves my purpose really well.
+I love Haskell and Finance and want to write my own accounting tool (classical not-invented-her :-). Secondly, other implementations are quite complex and have many features I don't need, while at the same time multi-currency support and mark-to-market valuation and reconciliation, which are key requirements for me, are second class citizens. 
 
-## Why create another implementation?
+## Project ideas
 
-For the fun of it! I love Haskell, I love beancount, and I love writing tools.
+* Integrate QuickCheck for testing
+* Write a ncurses-like tool for analysis
+* Good pretty-printing 

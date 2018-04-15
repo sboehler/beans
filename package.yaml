@@ -38,7 +38,10 @@ default-extensions:
 - OverloadedStrings
 - RecordWildCards
 - DeriveFunctor
+- FlexibleContexts
 - TypeFamilies
+- TupleSections
+- ScopedTypeVariables
 - FlexibleInstances
 
 ghc-options:

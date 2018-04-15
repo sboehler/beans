@@ -104,7 +104,7 @@ data WildcardPosting = WildcardPosting P.SourcePos AccountName deriving (Show, E
 
 posting :: Day -> P.SourcePos -> AccountName -> Parser Posting
 posting d p a =
-  Posting p a <$> number <*> commodity <*> lot d <*
+  Posting (Just p) a <$> number <*> commodity <*> lot d <*
   optional postingPrice
 
 wildcardPosting :: P.SourcePos -> AccountName -> Parser WildcardPosting
@@ -135,7 +135,7 @@ transaction pos d = do
   let postings = completePostings pos p
   case postings of
     Left _   -> verifyError pos
-    Right p' -> return $ Transaction pos d f desc t p'
+    Right p' -> return $ Transaction (Just pos) d f desc t p'
 
 
 open :: P.SourcePos -> Day -> Parser Open
@@ -207,7 +207,8 @@ completePostings pos p =
 
 balanceImbalance :: WildcardPosting -> (CommodityName, Scientific) -> Posting
 balanceImbalance (WildcardPosting _pos _account) (c, a) =
-  Posting {_amount = negate a, _commodity = c, _lot = NoLot, ..}
+  Posting
+    {_pos = Just _pos, _amount = negate a, _commodity = c, _lot = NoLot, ..}
 
 calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
 calculateImbalances =

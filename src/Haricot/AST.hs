@@ -61,7 +61,7 @@ data Price = Price
   } deriving (Show, Eq)
 
 data Transaction = Transaction
-  { _pos         :: P.SourcePos
+  { _pos         :: Maybe P.SourcePos
   , _date        :: Day
   , _flag        :: Flag
   , _description :: Text
@@ -70,7 +70,7 @@ data Transaction = Transaction
   } deriving (Eq, Show)
 
 data Posting = Posting
-  { _pos       :: P.SourcePos
+  { _pos       :: Maybe P.SourcePos
   , _account   :: AccountName
   , _amount    :: Scientific
   , _commodity :: CommodityName

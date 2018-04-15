@@ -6,6 +6,8 @@ module Haricot.Prices
   ) where
 
 import           Control.Applicative ((<|>))
+import           Control.Exception
+import           Control.Monad.Catch (MonadThrow, throwM)
 import           Data.Foldable       (asum)
 import qualified Data.Map.Strict     as M
 import           Data.Scientific     (Scientific)
@@ -16,6 +18,12 @@ import           Haricot.Ledger
 type PricesHistory = M.Map Day Prices
 
 type Prices = M.Map CommodityName (M.Map CommodityName Scientific)
+
+data PriceException =
+  NoPriceFound CommodityName
+               CommodityName
+  deriving (Show)
+instance Exception PriceException
 
 calculatePrices :: Ledger -> PricesHistory
 calculatePrices l = fst $ foldl f (M.empty, M.empty) l
@@ -32,8 +40,14 @@ addPrice Price {..} prices =
   let p = M.findWithDefault M.empty _commodity prices
    in M.insert _commodity (M.insert _targetCommodity _price p) prices
 
-getPrice :: Prices -> CommodityName -> CommodityName -> Maybe Scientific
-getPrice prices commodity targetCommodity = do
+getPrice :: MonadThrow m => Prices -> CommodityName -> CommodityName -> m Scientific
+getPrice prices c t= case getPrice' prices c t of
+  Just p  -> return p
+  Nothing -> throwM $ NoPriceFound c t
+
+
+getPrice' :: Prices -> CommodityName -> CommodityName -> Maybe Scientific
+getPrice' prices commodity targetCommodity = do
   m <- M.lookup commodity prices
   M.lookup targetCommodity m <|> asum (M.mapWithKey f m)
   where

@@ -23,8 +23,8 @@ parse = do
   let prices = calculatePrices ledger
   accountsHistory <- calculateAccounts ledger
   let accounts = M.lookupLE (fromGregorian 2017 12 9) accountsHistory
-      accounts' = M.mapKeysWith mappend f . snd <$> accounts
+      accounts' = M.mapKeysWith mappend (const "a") . snd <$> accounts
   liftIO $ print accounts'
   where
-    f (AccountName (n:_)) = n
+    f (AccountName (n:ns)) = n
     f (AccountName []) = ""

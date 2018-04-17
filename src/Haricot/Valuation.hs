@@ -46,7 +46,8 @@ convertTimestep ts@Timestep {..} = do
   let currPrices = lookupLE _date _pricesHistory
       prevPrices = lookupLT _date _pricesHistory
       prevAccounts = lookupLT _date _accountsHistory
-  _balances' <- convertBalances currPrices _balances
+  _openings' <- convertOpenings _openings
+  _balances' <- convertBalances prevPrices _balances
   _transactions' <- convertTransactions currPrices _transactions
   _valueTransactions <-
     adjustValuationForAccounts _date prevAccounts prevPrices currPrices
@@ -54,7 +55,14 @@ convertTimestep ts@Timestep {..} = do
     ts
       { _balances = _balances'
       , _transactions = _transactions' ++ _valueTransactions
+      , _openings = _openings'
       }
+
+convertOpenings ::
+     (MonadThrow m, MonadReader ValuationContext m) => [Open] -> m [Open]
+convertOpenings =
+  mapM $ \open@Open {..} ->
+    return $ (open :: Open) {_restriction = NoRestriction}
 
 convertBalances ::
      (MonadThrow m, MonadReader ValuationContext m)

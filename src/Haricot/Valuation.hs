@@ -19,41 +19,42 @@ data ValuationContext = VC
   }
 
 calculateValuation ::
-     (MonadThrow m, MonadReader ValuationContext m)
-  => Ledger -> m Ledger
-calculateValuation ledger = do
-  ledger' <- openUnrealizedAccount ledger
-  mapM convertTimestep ledger'
+     (MonadThrow m, MonadReader ValuationContext m) => Ledger -> m Ledger
+calculateValuation ledger =
+  openUnrealizedAccount ledger >>= mapM convertTimestep
 
 openUnrealizedAccount :: (MonadThrow m, MonadReader ValuationContext m) => Ledger -> m Ledger
 openUnrealizedAccount ledger = do
-  account <- asks _unrealizedAccount
-  target <- asks _target
-  case M.lookupMin ledger of
-    Just (d, ts@Timestep {_openings}) ->
-      let opening =
-            Open
-              { _pos = Nothing
-              , _date = d
-              , _account = account
-              , _restriction = RestrictedTo [target]
-              }
-          ledger' = M.insert d (ts {_openings = opening : _openings}) ledger
-       in return ledger'
-    Nothing -> return ledger -- TODO: throw an exception
+  VC {_unrealizedAccount, _target} <- ask
+  return $
+    case M.lookupMin ledger of
+      Just (d, ts@Timestep {_openings}) ->
+        let opening =
+              Open
+                { _pos = Nothing
+                , _date = d
+                , _account = _unrealizedAccount
+                , _restriction = RestrictedTo [_target]
+                }
+         in M.insert d (ts {_openings = opening : _openings}) ledger
+      Nothing -> ledger
 
 convertTimestep ::
      (MonadThrow m, MonadReader ValuationContext m) => Timestep -> m Timestep
-convertTimestep ts@Timestep {..}
- = do
-  VC {_pricesHistory, _accountsHistory } <- ask
+convertTimestep ts@Timestep {..} = do
+  VC {_pricesHistory, _accountsHistory} <- ask
   let currPrices = lookupLE _date _pricesHistory
       prevPrices = lookupLT _date _pricesHistory
       prevAccounts = lookupLT _date _accountsHistory
   _balances' <- convertBalances currPrices _balances
   _transactions' <- convertTransactions currPrices _transactions
-  _valueTransactions <- adjustValuationForAccounts _date prevAccounts prevPrices currPrices
-  return $ ts {_balances = _balances'}
+  _valueTransactions <-
+    adjustValuationForAccounts _date prevAccounts prevPrices currPrices
+  return $
+    ts
+      { _balances = _balances'
+      , _transactions = _transactions' ++ _valueTransactions
+      }
 
 convertBalances ::
      (MonadThrow m, MonadReader ValuationContext m)
@@ -92,19 +93,22 @@ adjustValuationForAccounts day accounts p0 p1 =
   if p0 == p1
     then pure []
     else catMaybes <$>
-         traverse (adjustValuationForAccount day p0 p1) (flatten accounts)
+         sequence (mapWithKeys (adjustValuationForAccount day p0 p1) accounts)
 
 adjustValuationForAccount ::
      (MonadThrow m, MonadReader ValuationContext m)
-  => Day -> Prices
+  => Day
   -> Prices
-  -> (AccountName, CommodityName, Lot, Scientific)
+  -> Prices
+  -> AccountName
+  -> CommodityName
+  -> Lot
+  -> Scientific
   -> m (Maybe Transaction)
-adjustValuationForAccount _date p0 p1 (a, c, l, s) = do
-  target <- asks _target
-  unrealizedAccount <- asks _unrealizedAccount
-  v0 <- getPrice p0 c target
-  v1 <- getPrice p1 c target
+adjustValuationForAccount _date p0 p1 a c l s = do
+  VC {_target, _unrealizedAccount} <- ask
+  v0 <- getPrice p0 c _target
+  v1 <- getPrice p1 c _target
   let t =
         Transaction
           { _pos = Nothing
@@ -116,29 +120,31 @@ adjustValuationForAccount _date p0 p1 (a, c, l, s) = do
               [ Posting
                   { _pos = Nothing
                   , _account = a
-                  , _commodity = target
+                  , _commodity = _target
                   , _amount = s * (v1 - v0)
                   , _lot = l
                   }
               , Posting
                   { _pos = Nothing
-                  , _account = unrealizedAccount
-                  , _commodity = target
+                  , _account = _unrealizedAccount
+                  , _commodity = _target
                   , _amount = (-s) * (v1 - v0)
                   , _lot = NoLot
                   }
               ]
           }
-   in if v0 == v1
-        then return Nothing
-        else return $ Just t
+   in return $
+      if v0 == v1
+        then Nothing
+        else Just t
 
-flatten :: Accounts -> [(AccountName, CommodityName, Lot, Scientific)]
-flatten accounts = do
-  (name, Account{_holdings}) <- M.toList accounts
+mapWithKeys ::
+     (AccountName -> CommodityName -> Lot -> Scientific -> a) -> Accounts -> [a]
+mapWithKeys f accounts = do
+  (name, Account {_holdings}) <- M.toList accounts
   (commodity, lots) <- M.toList _holdings
   (lot, amount) <- M.toList lots
-  return (name, commodity, lot, amount)
+  return $ f name commodity lot amount
 
 lookupLT :: (Monoid v, Ord k) => k -> M.Map k v -> v
 lookupLT k m = maybe mempty snd (M.lookupLT k m)

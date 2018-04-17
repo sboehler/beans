@@ -18,7 +18,7 @@ data Directive
   deriving (Eq, Show)
 
 data Balance = Balance
-  { _pos       :: P.SourcePos
+  { _pos       :: Maybe P.SourcePos
   , _date      :: Day
   , _account   :: AccountName
   , _amount    :: Scientific
@@ -26,7 +26,7 @@ data Balance = Balance
   } deriving (Eq, Show)
 
 data Open = Open
-  { _pos         :: P.SourcePos
+  { _pos         :: Maybe P.SourcePos
   , _date        :: Day
   , _account     :: AccountName
   , _restriction :: Restriction
@@ -47,7 +47,7 @@ compatibleWith _ NoRestriction    = True
 compatibleWith c (RestrictedTo r) = c `elem` r
 
 data Close = Close
-  { _pos     :: P.SourcePos
+  { _pos     :: Maybe P.SourcePos
   , _date    :: Day
   , _account :: AccountName
   } deriving (Show, Eq)

@@ -9,8 +9,6 @@ import           Data.Time.Calendar         (Day)
 import           Haricot.Accounts
 import           Haricot.AST
 import           Haricot.Ledger
-import qualified Text.Megaparsec.Pos        as P
-
 import           Haricot.Prices
 
 data ValuationContext = VC
@@ -35,7 +33,7 @@ openUnrealizedAccount ledger = do
     Just (d, ts@Timestep {_openings}) ->
       let opening =
             Open
-              { _pos = P.initialPos ""
+              { _pos = Nothing
               , _date = d
               , _account = account
               , _restriction = RestrictedTo [target]

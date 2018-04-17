@@ -139,17 +139,17 @@ transaction pos d = do
 
 
 open :: P.SourcePos -> Day -> Parser Open
-open pos d = Open pos d <$ symbol "open" <*> account <*> restriction
+open pos d = Open (Just pos) d <$ symbol "open" <*> account <*> restriction
 
 restriction :: Parser Restriction
 restriction =  RestrictedTo <$> (commodity `sepBy1` symbol ",") <|> return NoRestriction
 
 close :: P.SourcePos -> Day -> Parser Close
-close pos d = Close pos d <$ symbol "close" <*> account
+close pos d = Close (Just pos) d <$ symbol "close" <*> account
 
 balance :: P.SourcePos -> Day -> Parser Balance
 balance pos d =
-  Balance pos d <$ symbol "balance" <*> account <*> number <*> commodity
+  Balance (Just pos) d <$ symbol "balance" <*> account <*> number <*> commodity
 
 price :: P.SourcePos -> Day -> Parser Price
 price pos d =

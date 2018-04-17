@@ -4,14 +4,17 @@ module Haricot.Lib
 
 import           Control.Monad.Catch    (MonadThrow)
 import           Control.Monad.IO.Class (MonadIO)
+import           Control.Monad.Reader   (runReaderT)
 import           Control.Monad.Trans    (liftIO)
 import qualified Data.Map.Strict        as M
+import           Data.Text              (Text)
 import           Data.Time.Calendar
 import           Haricot.Accounts
-import           Haricot.Ledger
 import           Haricot.AST
+import           Haricot.Ledger
 import           Haricot.Parser         (parseFile)
 import           Haricot.Prices
+import           Haricot.Valuation
 import           System.Environment     (getArgs)
 
 
@@ -20,11 +23,18 @@ parse = do
   (file:_) <- liftIO getArgs
   ast <- parseFile file
   let ledger = buildLedger ast
-  let prices = calculatePrices ledger
+  let pricesHistory = calculatePrices ledger
   accountsHistory <- calculateAccounts ledger
-  let accounts = M.lookupLE (fromGregorian 2017 12 9) accountsHistory
-      accounts' = M.mapKeysWith mappend (const "a") . snd <$> accounts
+  let vc =
+        VC
+          (CommodityName "CHF")
+          (AccountName ["Equity", "Unrealized"])
+          accountsHistory
+          pricesHistory
+  valuation <- runReaderT (calculateValuation ledger) vc
+
+  valHistory <- calculateAccounts valuation
+
+  let accounts = M.lookupLE (fromGregorian 2017 12 9) valHistory
+      accounts' = M.mapKeysWith mappend (const ("a" :: Text)) . snd <$> accounts
   liftIO $ print accounts'
-  where
-    f (AccountName (n:ns)) = n
-    f (AccountName []) = ""

@@ -5,6 +5,7 @@ module Haricot.Accounts
   , Account(..)
   , Holdings
   , Lots
+  , mapWithKeys
   , calculateAccounts
   ) where
 
@@ -48,6 +49,14 @@ data AccountsException
   deriving (Show)
 
 instance Exception AccountsException
+
+mapWithKeys ::
+     (AccountName -> CommodityName -> Lot -> Scientific -> a) -> Accounts -> [a]
+mapWithKeys f accounts = do
+  (name, Account {_holdings}) <- M.toList accounts
+  (commodity, lots) <- M.toList _holdings
+  (lot, amount) <- M.toList lots
+  return $ f name commodity lot amount
 
 calculateAccounts :: (MonadThrow m) => Ledger -> m AccountsHistory
 calculateAccounts l = fst <$> foldlM f (M.empty, M.empty) l

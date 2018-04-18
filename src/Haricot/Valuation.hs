@@ -146,14 +146,6 @@ adjustValuationForAccount _date p0 p1 a c l s = do
         then Nothing
         else Just t
 
-mapWithKeys ::
-     (AccountName -> CommodityName -> Lot -> Scientific -> a) -> Accounts -> [a]
-mapWithKeys f accounts = do
-  (name, Account {_holdings}) <- M.toList accounts
-  (commodity, lots) <- M.toList _holdings
-  (lot, amount) <- M.toList lots
-  return $ f name commodity lot amount
-
 lookupLT :: (Monoid v, Ord k) => k -> M.Map k v -> v
 lookupLT k m = maybe mempty snd (M.lookupLT k m)
 

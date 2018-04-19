@@ -97,7 +97,9 @@ data Lot
 instance Show Lot where
   show NoLot = ""
   show (Lot p t d l) =
-    L.intercalate ", " $ catMaybes [Just $ show p ++ " " ++ show t, Just $ show d, show <$> l]
+    let price = show p ++ " " ++ show t
+        elems = catMaybes [Just price, Just $ show d, show <$> l]
+     in "{ " ++ L.intercalate ", " elems ++ " }"
 
 data Include = Include
   {

@@ -16,7 +16,7 @@ data Timestep = Timestep
 
 type Ledger = M.Map Day Timestep
 
-buildLedger :: [Directive ] -> Ledger
+buildLedger :: [Directive] -> Ledger
 buildLedger = foldr updateLedger M.empty
 
 updateLedger :: Directive  -> Ledger -> Ledger

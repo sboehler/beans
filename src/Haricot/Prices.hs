@@ -61,7 +61,7 @@ find prices current target visited queue =
            Just m ->
              let p = M.findWithDefault 1 current visited
                  neighbors = fmap (* p) . M.filter (`notElem` visited) $ m
-                 visited' = M.union visited neighbors
+                 visited' = visited `M.union` neighbors
                  queue' = queue ++ M.keys neighbors
               in case queue' of
                    (current':qs) -> find prices current' target visited' qs

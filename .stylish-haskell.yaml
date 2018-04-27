@@ -222,5 +222,6 @@ newline: native
 language_extensions:
   - NamedFieldPuns
   - RecordWildCards
+  - LambdaCase
   - MultiParamTypeClasses
   - FlexibleContexts

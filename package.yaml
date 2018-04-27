@@ -37,6 +37,7 @@ default-extensions:
 - OverloadedStrings
 - RecordWildCards
 - DeriveFunctor
+- LambdaCase
 - FlexibleContexts
 - TypeFamilies
 - TupleSections

@@ -36,7 +36,9 @@ updatePrices Timestep {..} prices = foldr addPrice prices _prices
 addPrice :: Price -> Prices -> Prices
 addPrice Price {..} prices =
   let p = M.findWithDefault M.empty _commodity prices
-   in M.insert _commodity (M.insert _targetCommodity _price p) prices
+      q = M.findWithDefault M.empty _targetCommodity prices
+      prices' = M.insert _commodity (M.insert _targetCommodity _price p) prices
+   in M.insert _targetCommodity (M.insert _commodity (1 / _price) q) prices'
 
 getPrice :: MonadThrow m => Prices -> CommodityName -> CommodityName -> m Scientific
 getPrice prices source target =

@@ -5,13 +5,11 @@ module Haricot.Prices
   , getPrice
   ) where
 
-import           Control.Applicative ((<|>))
 import           Control.Exception
-import           Control.Monad.Catch (MonadThrow, throwM)
-import           Data.Foldable       (asum)
-import qualified Data.Map.Strict     as M
-import           Data.Scientific     (Scientific)
-import           Data.Time.Calendar  (Day)
+import           Control.Monad.Catch(MonadThrow, throwM)
+import qualified Data.Map.Strict    as M
+import           Data.Scientific    (Scientific)
+import           Data.Time.Calendar (Day)
 import           Haricot.AST
 import           Haricot.Ledger
 
@@ -41,15 +39,29 @@ addPrice Price {..} prices =
    in M.insert _commodity (M.insert _targetCommodity _price p) prices
 
 getPrice :: MonadThrow m => Prices -> CommodityName -> CommodityName -> m Scientific
-getPrice prices c t= case getPrice' prices c t of
-  Just p  -> return p
-  Nothing -> throwM $ NoPriceFound c t
+getPrice prices source target =
+  let v = find prices source target (M.fromList [(source, 1.0)]) []
+   in case M.lookup target v of
+        Just p -> return p
+        _ -> throwM $ NoPriceFound source target
 
-
-getPrice' :: Prices -> CommodityName -> CommodityName -> Maybe Scientific
-getPrice' prices commodity targetCommodity = do
-  m <- M.lookup commodity prices
-  M.lookup targetCommodity m <|> asum (M.mapWithKey f m)
-  where
-    f c p = (p *) <$> getPrice prices' c targetCommodity
-    prices' = M.delete commodity prices
+find ::
+     Prices
+  -> CommodityName
+  -> CommodityName
+  -> M.Map CommodityName Scientific
+  -> [CommodityName]
+  -> M.Map CommodityName Scientific
+find prices current target visited queue =
+  if current == target
+    then visited
+    else case M.lookup current prices of
+           Just m ->
+             let p = M.findWithDefault 1 current visited
+                 neighbors = fmap (* p) . M.filter (`notElem` visited) $ m
+                 visited' = M.union visited neighbors
+                 queue' = queue ++ M.keys neighbors
+              in case queue' of
+                   (current':qs) -> find prices current' target visited' qs
+                   [] -> visited
+           Nothing -> visited

@@ -9,8 +9,8 @@ module Haricot.Accounts
   , calculateAccounts
   ) where
 
-import           Control.Monad.Catch
-import           Data.Foldable       (foldlM, foldrM)
+import           Control.Monad.Catch (Exception, MonadThrow, throwM)
+import           Control.Monad.State (get, put, evalStateT, MonadState, execStateT)
 import qualified Data.Map.Strict     as M
 import           Data.Scientific
 import           Data.Time.Calendar  (Day)
@@ -58,60 +58,62 @@ mapWithKeys f accounts = do
   (lot, amount) <- M.toList lots
   return $ f name commodity lot amount
 
-calculateAccounts :: (MonadThrow m) => Ledger -> m AccountsHistory
-calculateAccounts l = fst <$> foldlM f (M.empty, M.empty) l
+calculateAccounts :: (MonadThrow m, Traversable t) => t Timestep -> m (t Accounts)
+calculateAccounts ledger = evalStateT (mapM f ledger) M.empty
   where
-    f (accountsHistory, accounts) ts@Timestep {_date} = do
-      accounts' <- updateAccounts ts accounts
-      return (M.insert _date accounts' accountsHistory, accounts')
+    f ts = do
+      accounts <- get >>= updateAccounts ts
+      put accounts
+      return accounts
 
 updateAccounts :: (MonadThrow m) => Timestep -> Accounts -> m Accounts
-updateAccounts Timestep {..} accounts =
-  openAccounts accounts >>= closeAccounts >>= checkBalances >>= bookTransactions
-  where
-    openAccounts a = foldrM openAccount a _openings
-    closeAccounts a = foldrM closeAccount a _closings
-    checkBalances a = foldrM checkBalance a _balances
-    bookTransactions a = foldrM bookTransaction a _transactions
+updateAccounts Timestep {..} =
+  execStateT $
+  mapM_ openAccount _openings >> mapM_ closeAccount _closings >>
+  mapM_ checkBalance _balances >>
+  mapM_ bookTransaction _transactions
 
-openAccount :: MonadThrow m => Open -> Accounts -> m Accounts
-openAccount open@Open {_account, _restriction} accounts =
+openAccount :: (MonadThrow m, MonadState Accounts m) => Open -> m ()
+openAccount open@Open {_account, _restriction} = do
+  accounts <- get
   case M.lookup _account accounts of
     Nothing ->
-      return $ M.insert _account (Account _restriction M.empty) accounts
+      put $ M.insert _account (Account _restriction M.empty) accounts
     Just _ -> throwM $ AccountIsAlreadyOpen open
 
-closeAccount :: MonadThrow m => Close -> Accounts -> m Accounts
-closeAccount closing@Close {..} accounts =
+closeAccount :: (MonadThrow m, MonadState Accounts m) => Close -> m ()
+closeAccount closing@Close {..} = do
+  accounts <- get
   case M.lookup _account accounts of
     Just Account {_holdings}
-      | all (all (== 0)) _holdings -> return $ M.delete _account accounts
+      | all (all (== 0)) _holdings -> put $ M.delete _account accounts
       | otherwise -> throwM $ BalanceIsNotZero closing
     Nothing -> throwM $ AccountIsNotOpen closing
 
-checkBalance :: MonadThrow m => Balance -> Accounts -> m Accounts
-checkBalance bal@Balance {_account, _amount, _commodity} accounts =
+checkBalance :: (MonadState Accounts m,MonadThrow m) => Balance -> m ()
+checkBalance bal@Balance {_account, _amount, _commodity} = do
+  accounts <- get
   case M.lookup _account accounts of
     Nothing -> throwM $ AccountDoesNotExist bal
     Just Account {_holdings} ->
       let amount' = calculateAmount _commodity _holdings
        in if amount' /= _amount
             then throwM (BalanceDoesNotMatch bal amount')
-            else return accounts
+            else put accounts
 
 calculateAmount :: CommodityName -> Holdings -> Scientific
 calculateAmount commodity = sum . M.findWithDefault M.empty commodity
 
-bookTransaction :: MonadThrow m => Transaction -> Accounts -> m Accounts
-bookTransaction Transaction {_postings} accounts =
-  foldrM bookPosting accounts _postings
+bookTransaction :: (MonadState Accounts m, MonadThrow m) => Transaction -> m ()
+bookTransaction Transaction {_postings} = mapM_ bookPosting _postings
 
-bookPosting :: MonadThrow m => Posting -> Accounts -> m Accounts
-bookPosting p@Posting {_account, _commodity} accounts =
+bookPosting :: (MonadState Accounts m, MonadThrow m) => Posting -> m ()
+bookPosting p@Posting {_account, _commodity}  = do
+  accounts <- get
   case M.lookup _account accounts of
     Just a -> do
       a' <- updateAccount p a
-      return $ M.insert _account a' accounts
+      put $ M.insert _account a' accounts
     _ -> throwM $ BookingErrorAccountNotOpen p
 
 updateAccount :: MonadThrow m => Posting -> Account -> m Account

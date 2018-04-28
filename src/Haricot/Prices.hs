@@ -53,19 +53,19 @@ invert p@Price {..} =
 getPrice ::
      MonadThrow m => Prices -> CommodityName -> CommodityName -> m Scientific
 getPrice prices source target =
-  let v = find prices source target (M.fromList [(source, 1.0)]) []
+  let v = getPrice' prices source target (M.fromList [(source, 1.0)]) []
    in case M.lookup target v of
         Just p -> return p
         _      -> throwM $ NoPriceFound source target
 
-find ::
+getPrice' ::
      Prices
   -> CommodityName
   -> CommodityName
   -> M.Map CommodityName Scientific
   -> [CommodityName]
   -> M.Map CommodityName Scientific
-find prices current target visited queue =
+getPrice' prices current target visited queue =
   if current == target
     then visited
     else case M.lookup current prices of
@@ -75,6 +75,6 @@ find prices current target visited queue =
                  visited' = visited `M.union` neighbors
                  queue' = queue ++ M.keys neighbors
               in case queue' of
-                   (current':qs) -> find prices current' target visited' qs
-                   []            -> visited
+                   (current':qs) -> getPrice' prices current' target visited' qs
+                   [] -> visited
            Nothing -> visited

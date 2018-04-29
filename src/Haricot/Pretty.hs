@@ -10,8 +10,14 @@ import qualified Data.Map.Strict           as M
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)
-import           Haricot.Accounts
-import           Haricot.AST
+import           Haricot.Accounts          (Account (..), Accounts, Lots)
+import           Haricot.AST               (AccountName (..), Balance (..),
+                                            Close (..), CommodityName (..),
+                                            Directive (..), Flag (..),
+                                            Include (..), Lot (..), Open (..),
+                                            Option (..), Posting (..),
+                                            Price (..), Restriction (..),
+                                            Tag (..), Transaction (..))
 import           Haricot.Ledger
 
 instance Pretty Scientific where

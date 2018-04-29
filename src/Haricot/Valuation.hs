@@ -1,20 +1,27 @@
 module Haricot.Valuation where
 
 import           Control.Monad.Catch        (MonadThrow)
+import           Control.Monad.Reader       (runReaderT)
 import           Control.Monad.Reader.Class (MonadReader, ask, asks)
 import           Control.Monad.State        (MonadState, evalStateT, get, put)
 import qualified Data.Map.Strict            as M
 import           Data.Maybe                 (catMaybes)
 import           Data.Scientific            (Scientific)
 import           Data.Time.Calendar         (Day)
-import           Haricot.Accounts
-import           Haricot.AST
-import           Haricot.Ledger
-import           Haricot.Prices
+import           Haricot.Accounts           (Accounts, mapWithKeys,
+                                             updateAccounts)
+import           Haricot.AST                (AccountName (..), Balance (..),
+                                             CommodityName (..), Flag (..),
+                                             Lot (..), Open (..), Posting (..),
+                                             Restriction (..), Transaction (..))
+import           Haricot.Ledger             (Ledger, Timestep (..))
+import           Haricot.Prices             (NormalizedPrices, Prices,
+                                             lookupPrice, normalize,
+                                             updatePrices)
 
 data Config = Config
-  { _target            :: CommodityName
-  , _unrealizedAccount :: AccountName
+  { _target           :: CommodityName
+  , _valuationAccount :: AccountName
   }
 
 data ValuationState = ValuationState
@@ -23,9 +30,13 @@ data ValuationState = ValuationState
   , _accounts         :: Accounts
   }
 
-calculateValuation :: (MonadThrow m, MonadReader Config m) => Ledger -> m Ledger
-calculateValuation ledger =
-  evalStateT (mapM convertTimestep ledger) (ValuationState mempty mempty mempty)
+calculateValuation :: MonadThrow m => CommodityName -> AccountName -> Ledger -> m Ledger
+calculateValuation _target _valuationAccount ledger =
+  runReaderT
+    (evalStateT
+       (mapM convertTimestep ledger)
+       (ValuationState mempty mempty mempty))
+    Config {..}
 
 convertTimestep ::
      (MonadThrow m, MonadReader Config m, MonadState ValuationState m)
@@ -124,7 +135,7 @@ adjustValuationForAccount ::
   -> Scientific
   -> m (Maybe Transaction)
 adjustValuationForAccount _date p0 p1 a c l s = do
-  Config {_target, _unrealizedAccount} <- ask
+  Config {_target, _valuationAccount} <- ask
   v0 <- lookupPrice c p0
   v1 <- lookupPrice c p1
   let t =
@@ -144,7 +155,7 @@ adjustValuationForAccount _date p0 p1 a c l s = do
                   }
               , Posting
                   { _pos = Nothing
-                  , _account = _unrealizedAccount
+                  , _account = _valuationAccount
                   , _commodity = _target
                   , _amount = (-s) * (v1 - v0)
                   , _lot = NoLot

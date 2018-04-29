@@ -12,11 +12,23 @@ import qualified Data.Set                   as S
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Text.Lazy.IO          (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
-import           Haricot.AST
+import           Haricot.AST                (AccountName (..), Balance (..),
+                                             Close (..), CommodityName (..),
+                                             Directive (..), Flag (..),
+                                             Include (..), Lot (..), Open (..),
+                                             Option (..), Posting (..),
+                                             Price (..), Restriction (..),
+                                             Tag (..), Transaction (..))
 import           Prelude                    hiding (readFile)
 import           System.FilePath.Posix      (combine, takeDirectory)
-import           Text.Megaparsec
-import           Text.Megaparsec.Char
+import           Text.Megaparsec            (ErrorFancy (..), Parsec,
+                                             ShowErrorComponent (..), between,
+                                             count, empty, eof, fancyFailure,
+                                             getPosition, many, optional, parse,
+                                             sepBy, sepBy1, some, takeWhile1P,
+                                             takeWhileP, try, (<|>))
+import           Text.Megaparsec.Char       (char, digitChar, letterChar,
+                                             space1)
 import qualified Text.Megaparsec.Char.Lexer as L
 import qualified Text.Megaparsec.Pos        as P
 

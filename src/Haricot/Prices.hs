@@ -8,16 +8,15 @@ module Haricot.Prices
   , lookupPrice
   ) where
 
-import           Control.Exception
-import qualified Data.List as L
-import           Control.Monad.Catch (MonadThrow, throwM)
+import           Control.Monad.Catch (Exception, MonadThrow, throwM)
 import           Control.Monad.State (evalState, get, modify)
 import           Data.Foldable       (foldl')
+import qualified Data.List           as L
 import qualified Data.Map.Strict     as M
 import           Data.Scientific     (Scientific, fromFloatDigits, toRealFloat)
 import           Data.Time.Calendar  (Day)
-import           Haricot.AST
-import           Haricot.Ledger
+import           Haricot.AST         (CommodityName (..), Price (..))
+import           Haricot.Ledger      (Timestep (..))
 
 type PricesHistory = M.Map Day Prices
 
@@ -80,12 +79,12 @@ normalize' prices current visited queue =
           queue' = queue `L.union` M.keys neighbors
        in case queue' of
             (current':qs) -> normalize' prices current' visited' qs
-            [] -> visited
-    Nothing -> visited 
+            []            -> visited
+    Nothing -> visited
 
 lookupPrice ::
      (MonadThrow m) => CommodityName -> NormalizedPrices -> m Scientific
 lookupPrice commodityName prices =
   case M.lookup commodityName prices of
     Just p -> return $ 1 `sdiv` p
-    _ -> throwM $ NoNormalizedPriceFound prices commodityName
+    _      -> throwM $ NoNormalizedPriceFound prices commodityName

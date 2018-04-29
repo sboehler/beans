@@ -2,7 +2,8 @@ module Haricot.Ledger where
 
 import qualified Data.Map.Strict    as M
 import           Data.Time.Calendar (Day)
-import           Haricot.AST
+import           Haricot.AST        (Balance (..), Close (..), Directive (..),
+                                     Open (..), Price (..), Transaction (..))
 
 
 data Timestep = Timestep

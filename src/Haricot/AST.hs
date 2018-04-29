@@ -1,10 +1,10 @@
 module Haricot.AST where
 
 import qualified Data.List           as L
+import           Data.Maybe          (catMaybes)
 import           Data.Scientific     (Scientific)
 import           Data.Text.Lazy      (Text, intercalate, unpack)
 import           Data.Time.Calendar  (Day)
-import           Data.Maybe(catMaybes)
 import qualified Text.Megaparsec.Pos as P
 
 data Directive

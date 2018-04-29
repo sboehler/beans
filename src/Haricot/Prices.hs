@@ -1,5 +1,6 @@
 module Haricot.Prices
   ( PricesHistory
+  , NormalizedPrices
   , Prices
   , calculatePrices
   , updatePrices
@@ -20,12 +21,15 @@ import           Haricot.Ledger
 
 type PricesHistory = M.Map Day Prices
 
+type NormalizedPrices = M.Map CommodityName Scientific
+
 type Prices = M.Map CommodityName (M.Map CommodityName Scientific)
+
 
 data PriceException
   = NoPriceFound CommodityName
                  CommodityName
-  | NoNormalizedPriceFound (M.Map CommodityName Scientific)
+  | NoNormalizedPriceFound NormalizedPrices
                            CommodityName
   deriving (Show)
 
@@ -57,16 +61,16 @@ invert p@Price {..} =
 sdiv :: Scientific -> Scientific -> Scientific
 sdiv x y = fromFloatDigits (toRealFloat x / toRealFloat y :: Double)
 
-normalize :: Prices -> CommodityName -> M.Map CommodityName Scientific
+normalize :: Prices -> CommodityName -> NormalizedPrices
 normalize prices current =
   normalize' prices current (M.fromList [(current, 1.0)]) []
 
 normalize' ::
      Prices
   -> CommodityName
-  -> M.Map CommodityName Scientific
+  -> NormalizedPrices
   -> [CommodityName]
-  -> M.Map CommodityName Scientific
+  -> NormalizedPrices
 normalize' prices current visited queue =
   case M.lookup current prices of
     Just m ->
@@ -79,7 +83,8 @@ normalize' prices current visited queue =
             [] -> visited
     Nothing -> visited 
 
-lookupPrice :: (MonadThrow m) => CommodityName -> M.Map CommodityName Scientific  -> m Scientific
+lookupPrice ::
+     (MonadThrow m) => CommodityName -> NormalizedPrices -> m Scientific
 lookupPrice commodityName prices =
   case M.lookup commodityName prices of
     Just p -> return $ 1 `sdiv` p

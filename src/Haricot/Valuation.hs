@@ -2,6 +2,7 @@ module Haricot.Valuation where
 
 import           Control.Monad.Catch        (MonadThrow)
 import           Control.Monad.Reader.Class (MonadReader, ask, asks)
+import           Control.Monad.State        (MonadState, evalStateT, get, put)
 import qualified Data.Map.Strict            as M
 import           Data.Maybe                 (catMaybes)
 import           Data.Scientific            (Scientific)
@@ -11,46 +12,46 @@ import           Haricot.AST
 import           Haricot.Ledger
 import           Haricot.Prices
 
-data ValuationContext = VC
+data Config = Config
   { _target            :: CommodityName
   , _unrealizedAccount :: AccountName
-  , _accountsHistory   :: AccountsHistory
-  , _pricesHistory     :: PricesHistory
   }
 
-calculateValuation ::
-     (MonadThrow m, MonadReader ValuationContext m) => Ledger -> m Ledger
-calculateValuation ledger =
-  openUnrealizedAccount ledger >>= mapM convertTimestep
+data ValuationState = ValuationState
+  { _prices           :: Prices
+  , _normalizedPrices :: NormalizedPrices
+  , _accounts         :: Accounts
+  }
 
-openUnrealizedAccount :: (MonadThrow m, MonadReader ValuationContext m) => Ledger -> m Ledger
-openUnrealizedAccount ledger = do
-  VC {_unrealizedAccount, _target} <- ask
-  return $
-    case M.lookupMin ledger of
-      Just (d, ts@Timestep {_openings}) ->
-        let opening =
-              Open
-                { _pos = Nothing
-                , _date = d
-                , _account = _unrealizedAccount
-                , _restriction = RestrictedTo [_target]
-                }
-         in M.insert d (ts {_openings = opening : _openings}) ledger
-      Nothing -> ledger
+calculateValuation :: (MonadThrow m, MonadReader Config m) => Ledger -> m Ledger
+calculateValuation ledger =
+  evalStateT (mapM convertTimestep ledger) (ValuationState mempty mempty mempty)
 
 convertTimestep ::
-     (MonadThrow m, MonadReader ValuationContext m) => Timestep -> m Timestep
+     (MonadThrow m, MonadReader Config m, MonadState ValuationState m)
+  => Timestep
+  -> m Timestep
 convertTimestep ts@Timestep {..} = do
-  VC {_pricesHistory, _accountsHistory, _target} <- ask
-  let currPrices = normalize (lookupLE _date _pricesHistory) _target
-      prevPrices = normalize (lookupLT _date _pricesHistory) _target
-      prevAccounts = lookupLT _date _accountsHistory
+  Config {_target} <- ask
+  ValuationState {_prices, _accounts, _normalizedPrices} <- get
+  _accounts' <- updateAccounts ts _accounts
+  let _prices' = updatePrices ts _prices
+      _normalizedPrices' = normalize _prices' _target
+  put
+    ValuationState
+      { _prices = _prices'
+      , _normalizedPrices = _normalizedPrices'
+      , _accounts = _accounts'
+      }
   _openings' <- convertOpenings _openings
-  _balances' <- convertBalances prevPrices _balances
-  _transactions' <- convertTransactions currPrices _transactions
+  _balances' <- convertBalances _normalizedPrices _balances
+  _transactions' <- convertTransactions _normalizedPrices' _transactions
   _valueTransactions <-
-    adjustValuationForAccounts _date prevAccounts prevPrices currPrices
+    adjustValuationForAccounts
+      _date
+      _accounts
+      _normalizedPrices
+      _normalizedPrices'
   return $
     ts
       { _balances = _balances'
@@ -58,29 +59,38 @@ convertTimestep ts@Timestep {..} = do
       , _openings = _openings'
       }
 
-convertOpenings ::
-     (MonadThrow m, MonadReader ValuationContext m) => [Open] -> m [Open]
+convertOpenings :: (MonadThrow m, MonadReader Config m) => [Open] -> m [Open]
 convertOpenings =
   mapM $ \open@Open {..} ->
     return $ (open :: Open) {_restriction = NoRestriction}
 
 convertBalances ::
-     (MonadThrow m, MonadReader ValuationContext m)
-  => M.Map CommodityName Scientific
+     (MonadThrow m, MonadReader Config m)
+  => NormalizedPrices
   -> [Balance]
   -> m [Balance]
-convertBalances p = mapM $ \bal@Balance {..} -> do
-  tc <- asks _target
-  price <- lookupPrice _commodity p
-  let amount = _amount * price
-  return $ (bal :: Balance) {_amount = amount, _commodity = tc}
+convertBalances p =
+  mapM $ \bal@Balance {..} -> do
+    tc <- asks _target
+    price <- lookupPrice _commodity p
+    let amount = _amount * price
+    return $ (bal :: Balance) {_amount = amount, _commodity = tc}
 
-convertTransactions :: (MonadThrow m, MonadReader ValuationContext m) => M.Map CommodityName Scientific -> [Transaction] -> m [Transaction]
-convertTransactions p = mapM $ \t@Transaction {..} -> do
-  postings' <- convertPostings p _postings
-  return $ t { _postings = postings'}
+convertTransactions ::
+     (MonadThrow m, MonadReader Config m)
+  => NormalizedPrices
+  -> [Transaction]
+  -> m [Transaction]
+convertTransactions p =
+  mapM $ \t@Transaction {..} -> do
+    postings' <- convertPostings p _postings
+    return $ t {_postings = postings'}
 
-convertPostings :: (MonadThrow m, MonadReader ValuationContext m) => M.Map CommodityName Scientific -> [Posting] -> m [Posting]
+convertPostings ::
+     (MonadThrow m, MonadReader Config m)
+  => NormalizedPrices
+  -> [Posting]
+  -> m [Posting]
 convertPostings prices =
   mapM $ \p@Posting {..} -> do
     tc <- asks _target
@@ -91,11 +101,11 @@ convertPostings prices =
         return $ (p :: Posting) {_amount = _amount * price, _commodity = tc}
 
 adjustValuationForAccounts ::
-     (MonadThrow m, MonadReader ValuationContext m)
+     (MonadThrow m, MonadReader Config m)
   => Day
   -> Accounts
-  -> M.Map CommodityName Scientific
-  -> M.Map CommodityName Scientific
+  -> NormalizedPrices
+  -> NormalizedPrices
   -> m [Transaction]
 adjustValuationForAccounts day accounts p0 p1 =
   if p0 == p1
@@ -104,17 +114,17 @@ adjustValuationForAccounts day accounts p0 p1 =
          sequence (mapWithKeys (adjustValuationForAccount day p0 p1) accounts)
 
 adjustValuationForAccount ::
-     (MonadThrow m, MonadReader ValuationContext m)
+     (MonadThrow m, MonadReader Config m)
   => Day
-  -> M.Map CommodityName Scientific
-  -> M.Map CommodityName Scientific
+  -> NormalizedPrices
+  -> NormalizedPrices
   -> AccountName
   -> CommodityName
   -> Lot
   -> Scientific
   -> m (Maybe Transaction)
 adjustValuationForAccount _date p0 p1 a c l s = do
-  VC {_target, _unrealizedAccount} <- ask
+  Config {_target, _unrealizedAccount} <- ask
   v0 <- lookupPrice c p0
   v1 <- lookupPrice c p1
   let t =

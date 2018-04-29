@@ -13,7 +13,6 @@ import           Haricot.Accounts
 import           Haricot.AST
 import           Haricot.Ledger
 import           Haricot.Parser         (parseFile)
-import           Haricot.Prices
 import           Haricot.Tabular
 import           Haricot.Valuation
 import           System.Environment     (getArgs)
@@ -24,14 +23,10 @@ parse = do
   (file:_) <- liftIO getArgs
   ast <- parseFile file
   let ledger = buildLedger ast
-  let pricesHistory = calculatePrices ledger
-  accountsHistory <- calculateAccounts ledger
   let valuationContext =
-        VC
+        Config
           (CommodityName "CHF")
-          (AccountName ["Equity", "Unrealized"])
-          accountsHistory
-          pricesHistory
+          (AccountName ["Equity", "Valuation"])
   valuation <- runReaderT (calculateValuation ledger) valuationContext
   valHistory <- calculateAccounts valuation
 

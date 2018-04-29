@@ -3,10 +3,12 @@ module Haricot.Prices
   , Prices
   , calculatePrices
   , updatePrices
-  , getPrice
+  , normalize
+  , lookupPrice
   ) where
 
 import           Control.Exception
+import qualified Data.List as L
 import           Control.Monad.Catch (MonadThrow, throwM)
 import           Control.Monad.State (evalState, get, modify)
 import           Data.Foldable       (foldl')
@@ -20,9 +22,11 @@ type PricesHistory = M.Map Day Prices
 
 type Prices = M.Map CommodityName (M.Map CommodityName Scientific)
 
-data PriceException =
-  NoPriceFound CommodityName
-               CommodityName
+data PriceException
+  = NoPriceFound CommodityName
+                 CommodityName
+  | NoNormalizedPriceFound (M.Map CommodityName Scientific)
+                           CommodityName
   deriving (Show)
 
 instance Exception PriceException
@@ -47,34 +51,36 @@ invert p@Price {..} =
   p
     { _commodity = _targetCommodity
     , _targetCommodity = _commodity
-    , _price = fromFloatDigits (1 / toRealFloat _price :: Double)
+    , _price = 1 `sdiv` _price
     }
 
-getPrice ::
-     MonadThrow m => Prices -> CommodityName -> CommodityName -> m Scientific
-getPrice prices source target =
-  let v = getPrice' prices source target (M.fromList [(source, 1.0)]) []
-   in case M.lookup target v of
-        Just p -> return p
-        _      -> throwM $ NoPriceFound source target
+sdiv :: Scientific -> Scientific -> Scientific
+sdiv x y = fromFloatDigits (toRealFloat x / toRealFloat y :: Double)
 
-getPrice' ::
+normalize :: Prices -> CommodityName -> M.Map CommodityName Scientific
+normalize prices current =
+  normalize' prices current (M.fromList [(current, 1.0)]) []
+
+normalize' ::
      Prices
-  -> CommodityName
   -> CommodityName
   -> M.Map CommodityName Scientific
   -> [CommodityName]
   -> M.Map CommodityName Scientific
-getPrice' prices current target visited queue =
-  if current == target
-    then visited
-    else case M.lookup current prices of
-           Just m ->
-             let p = M.findWithDefault 1 current visited
-                 neighbors = fmap (* p) . M.filter (`notElem` visited) $ m
-                 visited' = visited `M.union` neighbors
-                 queue' = queue ++ M.keys neighbors
-              in case queue' of
-                   (current':qs) -> getPrice' prices current' target visited' qs
-                   [] -> visited
-           Nothing -> visited
+normalize' prices current visited queue =
+  case M.lookup current prices of
+    Just m ->
+      let p = M.findWithDefault 1 current visited
+          neighbors = fmap (* p) (m `M.difference` visited)
+          visited' = visited `M.union` neighbors
+          queue' = queue `L.union` M.keys neighbors
+       in case queue' of
+            (current':qs) -> normalize' prices current' visited' qs
+            [] -> visited
+    Nothing -> visited 
+
+lookupPrice :: (MonadThrow m) => CommodityName -> M.Map CommodityName Scientific  -> m Scientific
+lookupPrice commodityName prices =
+  case M.lookup commodityName prices of
+    Just p -> return $ 1 `sdiv` p
+    _ -> throwM $ NoNormalizedPriceFound prices commodityName

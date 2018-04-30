@@ -1,4 +1,6 @@
-module Haricot.AST where
+module Haricot.AST
+  ( module Haricot.AST
+  ) where
 
 import qualified Data.List           as L
 import           Data.Maybe          (catMaybes)

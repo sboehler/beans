@@ -1,4 +1,4 @@
-module Haricot.Tabular where
+module Haricot.Report.Table where
 
 import           Data.List (intercalate, transpose)
 

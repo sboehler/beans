@@ -11,7 +11,7 @@ import           Haricot.Accounts       (calculateAccounts)
 import           Haricot.AST            (AccountName (..), CommodityName (..))
 import           Haricot.Ledger         (buildLedger)
 import           Haricot.Parser         (parseFile)
-import           Haricot.Report.Balance (printAccounts)
+import           Haricot.Report.Balance (printAccounts, summarize)
 import           Haricot.Valuation      (calculateValuation)
 import           System.Environment     (getArgs)
 
@@ -25,5 +25,5 @@ parse = do
   valHistory <- calculateAccounts =<< calculateValuation target account ledger
   let accounts = M.lookupLE (fromGregorian 2017 12 9) valHistory
   case accounts of
-    Just (_, a) -> liftIO $ printAccounts a
+    Just (_, a) -> liftIO $ printAccounts $ summarize 2 a
     Nothing     -> return ()

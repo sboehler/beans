@@ -20,11 +20,10 @@ parse :: (MonadIO m, MonadThrow m) => m ()
 parse = do
   (file:_) <- liftIO getArgs
   ledger <- buildLedger <$> parseFile file
-  accountsHistory <- calculateAccounts ledger
   let target = CommodityName "CHF"
       account = AccountName ["Equity", "Valuation"]
   valHistory <- calculateAccounts =<< calculateValuation target account ledger
-  let accounts = M.lookupLE (fromGregorian 2017 1 1) valHistory
+  let accounts = M.lookupLE (fromGregorian 2017 12 9) valHistory
   case accounts of
-    Just (_, a) -> liftIO $ printAccounts $ eraseLots <$> a
+    Just (_, a) -> liftIO $ printAccounts $ eraseLots <$> summarize 1 a
     Nothing     -> return ()

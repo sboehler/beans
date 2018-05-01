@@ -94,8 +94,28 @@ convertTransactions ::
   -> m [Transaction]
 convertTransactions p =
   mapM $ \t@Transaction {..} -> do
+    _account <- asks _valuationAccount
     postings' <- convertPostings p _postings
-    return $ t {_postings = postings'}
+    let imbalances = calculateImbalances postings'
+        balancePostings =
+          map
+            (\(c, a) ->
+               Posting
+                 { _pos = Nothing
+                 , _amount = negate a
+                 , _commodity = c
+                 , _account = _account
+                 , _lot = NoLot
+                 })
+            imbalances
+    return $ t {_postings = postings' ++ balancePostings}
+
+
+calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
+calculateImbalances =
+  M.toList . M.filter ((> 0.005) . abs) . M.fromListWith (+) . fmap weight
+  where
+    weight Posting {..} = (_commodity, _amount)
 
 convertPostings ::
      (MonadThrow m, MonadReader Config m)

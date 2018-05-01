@@ -23,12 +23,14 @@ printAccounts :: Accounts -> IO()
 printAccounts accounts =
   putStrLn $
   showTable
-    [ ColDesc left "Account" left (show . account)
-    , ColDesc left "Amount" right (formatScientific Fixed (Just 2) . amount)
-    , ColDesc left "Commodity" left (show . commodity)
-    , ColDesc left "Lot" left (show . lot)
+    [ ColDesc left "Account" left (show . account) (const "Total")
+    , ColDesc left "Amount" right (format . amount) (format . sum . map amount)
+    , ColDesc left "Commodity" left (show . commodity) (const "")
+    , ColDesc left "Lot" left (show . lot) (const "")
     ]
     (mapWithKeys Row accounts)
+  where
+    format = formatScientific Fixed (Just 2) 
 
 summarize :: Int -> Accounts -> Accounts
 summarize depth  = M.mapKeysWith mappend m

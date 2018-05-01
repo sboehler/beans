@@ -6,11 +6,13 @@ import           Data.List (intercalate, transpose)
 type Filler = Int -> String -> String
 
 -- a type for describing table columns
-data ColDesc t = ColDesc { colTitleFill :: Filler
-                         , colTitle     :: String
-                         , colValueFill :: Filler
-                         , colValue     :: t -> String
-                         }
+data ColDesc t = ColDesc
+  { colTitleFill :: Filler
+  , colTitle     :: String
+  , colValueFill :: Filler
+  , colValue     :: t -> String
+  , colSummary   :: [t] -> String
+  }
 
 -- Table formatting inspired by:
 -- https://stackoverflow.com/questions/5929377/format-list-output-in-haskell
@@ -34,7 +36,8 @@ showTable :: [ColDesc t] -> [t] -> String
 showTable cs ts =
   let header = map colTitle cs
       rows = [[colValue c t | c <- cs] | t <- ts]
-      widths = [maximum $ map length col | col <- transpose $ header : rows]
+      footer = [colSummary c ts | c <- cs]
+      widths = [maximum $ map length col | col <- transpose $ header : rows ++ [footer]]
       separator = intercalate "-+-" [replicate width '-' | width <- widths]
       fillCols fill cols =
         intercalate
@@ -42,4 +45,4 @@ showTable cs ts =
           [fill c width col | (c, width, col) <- zip3 cs widths cols]
    in unlines $
       fillCols colTitleFill header :
-      separator : map (fillCols colValueFill) rows
+      separator : map (fillCols colValueFill) rows ++ [separator] ++ [fillCols colValueFill footer]

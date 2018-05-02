@@ -5,7 +5,8 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, containers, exceptions, filepath
-      , megaparsec, mtl, prettyprinter, scientific, stdenv, text, time
+      , megaparsec, mtl, optparse-applicative, prettyprinter, scientific
+      , stdenv, text, time
       }:
       mkDerivation {
         pname = "haricot";
@@ -14,8 +15,8 @@ let
         isLibrary = false;
         isExecutable = true;
         executableHaskellDepends = [
-          base containers exceptions filepath megaparsec mtl prettyprinter
-          scientific text time
+          base containers exceptions filepath megaparsec mtl
+          optparse-applicative prettyprinter scientific text time
         ];
         homepage = "https://github.com/sboehler/haricot#readme";
         description = "A Haskell parser for beancount";

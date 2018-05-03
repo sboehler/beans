@@ -48,17 +48,22 @@ cmd =
 
 config :: Parser Options
 config =
-  Options <$> journal <*> markToMarket <*> dateparser "from" <*> dateparser "to" <*>
-  cmd
+  Options <$> journal <*> markToMarket <*> dateparser "from" <*> dateparser "to" <*> cmd
+
+parserConfig :: ParserInfo Options
+parserConfig =
+  info
+    (helper <*> config)
+    (fullDesc <> progDesc "Evaluate a haricot journal" <>
+     header "haricot - a plain text accounting tool")
 
 main :: IO ()
-main = greet =<< execParser opts
-  where
-    opts =
-      info
-        (helper <*> config)
-        (fullDesc <> progDesc "Evaluate a haricot journal" <>
-         header "haricot - a plain text accounting tool")
+main = execParser parserConfig >>= run
 
-greet :: Options -> IO ()
-greet = print
+run :: Options -> IO()
+run options@Options {..}= case optCommand of
+  Balance -> runBalance options
+
+runBalance :: Options -> IO()
+runBalance = print
+  

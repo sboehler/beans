@@ -7,10 +7,10 @@ module Haricot.Report.Balance
 import qualified Data.Map             as M
 import           Data.Scientific      (FPFormat (Fixed), Scientific,
                                        formatScientific)
-import           Haricot.Accounts     (Accounts, mapWithKeys, Account(..))
-import           Haricot.AST          (AccountName(..), CommodityName, Lot(NoLot))
+import           Haricot.Accounts     (Account (..), Accounts, mapWithKeys)
+import           Haricot.AST          (AccountName (..), CommodityName,
+                                       Lot (NoLot))
 import           Haricot.Report.Table (ColDesc (..), left, right, showTable)
-
 
 data Row = Row
   { account   :: AccountName
@@ -19,7 +19,7 @@ data Row = Row
   , amount    :: Scientific
   } deriving (Show)
 
-printAccounts :: Accounts -> IO()
+printAccounts :: Accounts -> IO ()
 printAccounts accounts =
   putStrLn $
   showTable
@@ -30,10 +30,10 @@ printAccounts accounts =
     ]
     (mapWithKeys Row accounts)
   where
-    format = formatScientific Fixed (Just 2) 
+    format = formatScientific Fixed (Just 2)
 
 summarize :: Int -> Accounts -> Accounts
-summarize depth  = M.mapKeysWith mappend m
+summarize depth = M.mapKeysWith mappend m
   where
     m (AccountName l) = AccountName $ take depth l
 

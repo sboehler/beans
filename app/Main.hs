@@ -18,6 +18,10 @@ market :: Parser (Maybe CommodityName)
 market =
   optional $ option (toReadM P.commodity) (long "at-value" <> short 'v')
 
+lots :: Parser Bool
+lots =
+  switch (long "lots" <> short 'l')
+
 dateparser :: String -> Parser (Maybe Day)
 dateparser l =
   optional $ option (toReadM P.date) (long l)
@@ -38,7 +42,9 @@ cmd =
 
 config :: Parser Options
 config =
-  Options <$> journal <*> market <*> dateparser "from" <*> dateparser "to" <*> cmd
+  Options <$> journal <*> market <*> lots <*> dateparser "from" <*>
+  dateparser "to" <*>
+  cmd
 
 parserConfig :: ParserInfo Options
 parserConfig =

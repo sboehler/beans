@@ -16,7 +16,7 @@ toReadM p = maybeReader $ parseMaybe p . T.pack
 
 market :: Parser (Maybe CommodityName)
 market =
-  optional $ option (toReadM P.commodity) (long "market" <> short 'm')
+  optional $ option (toReadM P.commodity) (long "at-value" <> short 'v')
 
 dateparser :: String -> Parser (Maybe Day)
 dateparser l =

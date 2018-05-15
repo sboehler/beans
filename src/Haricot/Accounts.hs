@@ -8,19 +8,22 @@ module Haricot.Accounts
   , mapWithKeys
   , calculateAccounts
   , updateAccounts
+  , diffAccounts
   ) where
 
-import           Control.Monad.Catch (Exception, MonadThrow, throwM)
-import           Control.Monad.State (evalStateT, get, put)
-import           Data.Foldable       (foldlM)
-import qualified Data.Map.Strict     as M
-import           Data.Scientific     (Scientific)
-import           Data.Time.Calendar  (Day)
-import           Haricot.AST         (AccountName (..), Balance (..),
-                                      Close (..), CommodityName (..), Lot (..),
-                                      Open (..), Posting (..), Restriction (..),
-                                      Transaction (..), compatibleWith)
-import           Haricot.Ledger      (Timestep (..))
+import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
+import           Control.Monad.State   (evalStateT, get, put)
+import           Data.Foldable         (foldlM)
+import qualified Data.Map.Merge.Strict as MM
+import qualified Data.Map.Strict       as M
+import           Data.Scientific       (Scientific)
+import           Data.Time.Calendar    (Day)
+import           Haricot.AST           (AccountName (..), Balance (..),
+                                        Close (..), CommodityName (..),
+                                        Lot (..), Open (..), Posting (..),
+                                        Restriction (..), Transaction (..),
+                                        compatibleWith)
+import           Haricot.Ledger        (Timestep (..))
 
 type AccountsHistory = M.Map Day Accounts
 
@@ -42,6 +45,30 @@ instance Monoid Account where
 type Holdings = M.Map CommodityName Lots
 
 type Lots = M.Map Lot Scientific
+
+
+diffAccounts :: Accounts -> Accounts -> Accounts
+diffAccounts = MM.merge MM.preserveMissing
+  (MM.mapMissing $ const negateAccount)
+  (MM.zipWithMatched $ const diffAccount)
+
+negateAccount :: Account -> Account
+negateAccount (Account r h) = Account r ((fmap . fmap) negate h)
+
+diffAccount :: Account -> Account -> Account
+diffAccount (Account r h1) (Account _ h2) = Account r (diffHoldings h1 h2)
+
+diffHoldings :: Holdings -> Holdings -> Holdings
+diffHoldings = MM.merge MM.preserveMissing
+  (MM.mapMissing $ const (fmap negate))
+  (MM.zipWithMatched $ const diffLots)
+
+diffLots :: Lots -> Lots -> Lots
+diffLots =
+  MM.merge
+    MM.preserveMissing
+    (MM.mapMissing $ const negate)
+    (MM.zipWithMatched $ const (-))
 
 data AccountsException
   = AccountIsNotOpen Close

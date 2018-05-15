@@ -186,9 +186,3 @@ adjustValuationForAccount _date p0 p1 a c l s = do
       if v0 == v1
         then Nothing
         else Just t
-
-lookupLT :: (Monoid v, Ord k) => k -> M.Map k v -> v
-lookupLT k m = maybe mempty snd (M.lookupLT k m)
-
-lookupLE :: (Monoid v, Ord k) => k -> M.Map k v -> v
-lookupLE k m = maybe mempty snd (M.lookupLE k m)

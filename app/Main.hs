@@ -35,6 +35,14 @@ journal =
      long "journal" <>
      short 'f')
 
+depth :: Parser (Maybe Int)
+depth =
+  optional $
+  option
+    auto
+    (metavar "DEPTH" <> help "summarize accounts at level DEPTH" <> long "depth" <>
+     short 'd')
+
 cmd :: Parser Command
 cmd =
   subparser $
@@ -43,7 +51,7 @@ cmd =
 config :: Parser Options
 config =
   Options <$> journal <*> market <*> lots <*> dateparser "from" <*>
-  dateparser "to" <*>
+  dateparser "to" <*> depth <*>
   cmd
 
 parserConfig :: ParserInfo Options

@@ -8,11 +8,10 @@ import           Control.Monad.Catch      (MonadThrow)
 import           Control.Monad.IO.Class   (MonadIO)
 import           Control.Monad.Trans      (liftIO)
 import qualified Data.Map.Strict.Extended as M
-import           Data.Maybe               (fromMaybe)
 import           Data.Time.Calendar       (Day)
 import           Data.Time.LocalTime      (getZonedTime, localDay,
                                            zonedTimeToLocalTime)
-import           Haricot.Accounts         (calculateAccounts)
+import           Haricot.Accounts         (calculateAccounts, diffAccounts)
 import           Haricot.AST              (AccountName (..), CommodityName (..))
 import           Haricot.Ledger           (buildLedger)
 import           Haricot.Parser           (parseFile)
@@ -25,6 +24,7 @@ data Options = Options
   , optLots    :: Bool
   , optFrom    :: Maybe Day
   , optTo      :: Maybe Day
+  , optDepth   :: Maybe Int
   , optCommand :: Command
   } deriving (Show)
 
@@ -36,20 +36,18 @@ parse :: (MonadIO m, MonadThrow m) => Options -> m ()
 parse Options {..} = do
   ledger <- buildLedger <$> parseFile optJournal
   ledger' <-
-    case optMarket of
-      Nothing -> pure ledger
-      Just c ->
-        let account = AccountName ["Equity", "Valuation"]
-         in calculateValuation c account ledger
+    let account = AccountName ["Equity", "Valuation"]
+     in maybe pure (`calculateValuation` account) optMarket ledger
   history <- calculateAccounts ledger'
-  to <- (`fromMaybe` optTo) <$> liftIO getDate
-  let accounts = M.lookupLessEqual to history
+  to <- liftIO $ maybe getDate pure optTo
+  let accounts1 = M.lookupLessEqual to history
+      accounts0 = maybe mempty (`M.lookupLessEqual` history) optFrom
   liftIO $
     printAccounts $
     (if optLots
        then id
        else eraseLots) <$>
-    summarize 2 accounts
+    maybe id summarize optDepth (accounts1 `diffAccounts` accounts0)
 
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> liftIO getZonedTime

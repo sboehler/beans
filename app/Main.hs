@@ -33,7 +33,7 @@ journal =
     (value "journal.bean" <> metavar "JOURNAL" <>
      help "The journal file to parse" <>
      long "journal" <>
-     short 'f')
+     short 'j')
 
 depth :: Parser (Maybe Int)
 depth =

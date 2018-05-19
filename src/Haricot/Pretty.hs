@@ -10,7 +10,7 @@ import qualified Data.Map.Strict           as M
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)
-import           Haricot.Accounts          (Account (..), Accounts, Lots)
+import           Haricot.Accounts          (Accounts)
 import           Haricot.AST               (AccountName (..), Balance (..),
                                             Close (..), CommodityName (..),
                                             Directive (..), Flag (..),
@@ -110,14 +110,3 @@ prettyPrintAccounts :: Accounts -> IO ()
 prettyPrintAccounts accounts = print $ vsep $ map p (M.toList accounts)
   where
     p (k,v) = pretty k <+> pretty v
-
-
-instance Pretty Account where
-  pretty Account {_holdings} = hardline <> indent 2 ((vsep . map f . M.toList) _holdings)
-    where
-      f (k, v)= pretty k <+> pretty v
-
-instance Pretty Lots where
-  pretty l = align $ (vsep . map f . M.toList) l
-    where
-      f (k, v) = pretty v <+> pretty k

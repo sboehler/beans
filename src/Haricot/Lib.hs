@@ -8,6 +8,7 @@ import           Control.Monad.Catch      (MonadThrow)
 import           Control.Monad.IO.Class   (MonadIO)
 import           Control.Monad.Reader     (MonadReader, asks, runReaderT)
 import           Control.Monad.Trans      (liftIO)
+import           Data.Bool                (bool)
 import qualified Data.Map.Strict.Extended as M
 import           Data.Time.Calendar       (Day)
 import           Data.Time.LocalTime      (getZonedTime, localDay,
@@ -66,11 +67,9 @@ balanceReport  accountsHistory = do
 
 aggregationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Accounts -> m Accounts
 aggregationStage a = do
-  f1 <- (\case
-    True -> id
-    False -> eraseLots) <$> asks optLots
-  s <- asks optDepth >>= \n -> pure $ maybe id summarize n
-  return $ f1 <$> s a
+  f1 <- bool eraseLots id <$> asks optLots
+  s <- maybe id summarize <$> asks optDepth
+  return $ (f1 . s) a
 
 getDate :: IO Day
-getDate = localDay . zonedTimeToLocalTime <$> liftIO getZonedTime
+getDate = localDay . zonedTimeToLocalTime <$> getZonedTime

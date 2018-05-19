@@ -4,13 +4,12 @@ module Haricot.Report.Balance
   , eraseLots
   ) where
 
-import qualified Data.Map             as M
-import           Data.Scientific      (FPFormat (Fixed), Scientific,
-                                       formatScientific)
-import           Haricot.Accounts     (Account (..), Accounts, mapWithKeys)
-import           Haricot.AST          (AccountName (..), CommodityName,
-                                       Lot (NoLot))
-import           Haricot.Report.Table (ColDesc (..), left, right, showTable)
+import qualified Data.Map.Strict.Extended as M
+import           Data.Scientific          (FPFormat (Fixed), Scientific,
+                                           formatScientific)
+import           Haricot.Accounts         (Accounts)
+import           Haricot.AST              (AccountName (..), CommodityName, Lot(NoLot))
+import           Haricot.Report.Table     (ColDesc (..), left, right, showTable)
 
 data Row = Row
   { account   :: AccountName
@@ -28,15 +27,14 @@ printAccounts accounts =
     , ColDesc left "Commodity" left (show . commodity) (const "")
     , ColDesc left "Lot" left (show . lot) (const "")
     ]
-    (mapWithKeys Row accounts)
+    (M.toListWith (\((a, c, l), n) -> Row a c l n) accounts)
   where
     format = formatScientific Fixed (Just 2)
 
 summarize :: Int -> Accounts -> Accounts
-summarize depth = M.mapKeysWith mappend m
+summarize d = M.mapKeysWith (+) m
   where
-    m (AccountName l) = AccountName $ take depth l
+    m (AccountName n, c, l) = (AccountName $ take d n, c, l)
 
-eraseLots :: Account -> Account
-eraseLots Account {_holdings, ..} =
-  Account {_holdings = M.mapKeysWith (+) (const NoLot) <$> _holdings, ..}
+eraseLots :: Accounts -> Accounts
+eraseLots = M.mapKeysWith (+) (\(a, c, _) -> (a, c, NoLot))

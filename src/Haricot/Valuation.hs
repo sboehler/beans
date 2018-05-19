@@ -1,114 +1,102 @@
 module Haricot.Valuation where
 
-import           Control.Monad.Catch        (MonadThrow)
-import           Control.Monad.Reader       (runReaderT)
-import           Control.Monad.Reader.Class (MonadReader, ask, asks)
-import           Control.Monad.State        (MonadState, evalStateT, get, put)
-import qualified Data.Map.Strict            as M
-import           Data.Maybe                 (catMaybes)
-import           Data.Scientific            (Scientific)
-import           Data.Time.Calendar         (Day)
-import           Haricot.Accounts           (Accounts, mapWithKeys,
-                                             updateAccounts)
-import           Haricot.AST                (AccountName (..), Balance (..),
-                                             CommodityName (..), Flag (..),
-                                             Lot (..), Open (..), Posting (..),
-                                             Restriction (..), Transaction (..))
-import           Haricot.Ledger             (Ledger, Timestep (..))
-import           Haricot.Prices             (NormalizedPrices, Prices,
-                                             lookupPrice, normalize,
-                                             updatePrices)
-
-data Config = Config
-  { _target           :: CommodityName
-  , _valuationAccount :: AccountName
-  }
+import           Control.Monad.Catch      (MonadThrow)
+import           Control.Monad.State      (MonadState, evalStateT, execStateT,
+                                           get, gets, put)
+import qualified Data.Map.Strict.Extended as M
+import           Data.Maybe               (catMaybes)
+import           Data.Scientific          (Scientific)
+import           Data.Time.Calendar       (Day)
+import           Haricot.Accounts         (Accounts, RestrictedAccounts (..),
+                                           Restrictions, updateAccounts)
+import           Haricot.AST              (AccountName (..), Balance (..),
+                                           CommodityName (..), Flag (..),
+                                           Lot (..), Open (..), Posting (..),
+                                           Restriction (..), Transaction (..))
+import           Haricot.Ledger           (Ledger, Timestep (..))
+import           Haricot.Prices           (NormalizedPrices, Prices,
+                                           lookupPrice, normalize, updatePrices)
 
 data ValuationState = ValuationState
-  { _prices           :: Prices
-  , _normalizedPrices :: NormalizedPrices
-  , _accounts         :: Accounts
+  { _prices               :: Prices
+  , _prevNormalizedPrices :: NormalizedPrices
+  , _normalizedPrices     :: NormalizedPrices
+  , _prevAccounts         :: Accounts
+  , _accounts             :: Accounts
+  , _restrictions         :: Restrictions
+  , _target               :: CommodityName
+  , _valuationAccount     :: AccountName
   }
 
 calculateValuation :: MonadThrow m => CommodityName -> AccountName -> Ledger -> m Ledger
 calculateValuation _target _valuationAccount ledger =
-  runReaderT
-    (evalStateT
-       (mapM convertTimestep ledger)
-       (ValuationState mempty mempty mempty))
-    Config {..}
+  evalStateT
+     (mapM convertTimestep ledger)
+     ValuationState
+        { _prices = mempty
+        , _prevNormalizedPrices = mempty
+        , _normalizedPrices = mempty
+        , _prevAccounts = mempty
+        , _accounts = mempty
+        , _restrictions = mempty
+        , ..
+        }
 
 convertTimestep ::
-     (MonadThrow m, MonadReader Config m, MonadState ValuationState m)
+     (MonadThrow m, MonadState ValuationState m)
   => Timestep
   -> m Timestep
 convertTimestep ts@Timestep {..} = do
-  Config {_target} <- ask
-  ValuationState {_prices, _accounts, _normalizedPrices} <- get
-  _accounts' <- updateAccounts ts _accounts
+  ValuationState {..} <- get
+  RestrictedAccounts _accounts' _restrictions' <-
+    execStateT (updateAccounts ts) (RestrictedAccounts _accounts _restrictions)
   let _prices' = updatePrices ts _prices
-      _normalizedPrices' = normalize _prices' _target
   put
     ValuationState
       { _prices = _prices'
-      , _normalizedPrices = _normalizedPrices'
+      , _prevNormalizedPrices = _normalizedPrices
+      , _normalizedPrices = normalize _prices' _target
+      , _prevAccounts = _accounts
       , _accounts = _accounts'
+      , _restrictions = _restrictions'
+      , ..
       }
-  _openings' <- convertOpenings _openings
-  _balances' <- convertBalances _normalizedPrices _balances
-  _transactions' <- convertTransactions _normalizedPrices' _transactions
-  _valueTransactions <-
-    adjustValuationForAccounts
-      _date
-      _accounts
-      _normalizedPrices
-      _normalizedPrices'
+  _openings' <- mapM convertOpening _openings
+  _balances' <- mapM convertBalance _balances
+  _transactions' <-
+    (++) <$> mapM convertTransaction _transactions <*>
+    adjustValuationForAccounts _date
   return $
     ts
       { _balances = _balances'
-      , _transactions = _transactions' ++ _valueTransactions
+      , _transactions = _transactions'
       , _openings = _openings'
       }
 
-convertOpenings :: (MonadThrow m, MonadReader Config m) => [Open] -> m [Open]
-convertOpenings =
-  mapM $ \open@Open {..} ->
-    return $ (open :: Open) {_restriction = NoRestriction}
+convertOpening :: MonadState ValuationState m => Open -> m Open
+convertOpening o = do
+  t <- gets _target
+  return $ o {_restriction = RestrictedTo [t]}
 
-convertBalances ::
-     (MonadThrow m, MonadReader Config m)
-  => NormalizedPrices
-  -> [Balance]
-  -> m [Balance]
-convertBalances p =
-  mapM $ \bal@Balance {..} -> do
-    tc <- asks _target
-    price <- lookupPrice _commodity p
-    let amount = _amount * price
-    return $ (bal :: Balance) {_amount = amount, _commodity = tc}
+convertBalance ::
+     (MonadThrow m, MonadState ValuationState m) => Balance -> m Balance
+convertBalance Balance {..} = do
+  ValuationState {_target, _prevNormalizedPrices} <- get
+  price <- lookupPrice _commodity _prevNormalizedPrices
+  return Balance {_amount = _amount * price, _commodity = _target, ..}
 
-convertTransactions ::
-     (MonadThrow m, MonadReader Config m)
-  => NormalizedPrices
-  -> [Transaction]
-  -> m [Transaction]
-convertTransactions p =
-  mapM $ \t@Transaction {..} -> do
-    _account <- asks _valuationAccount
-    postings' <- convertPostings p _postings
-    let imbalances = calculateImbalances postings'
-        balancePostings =
-          map
-            (\(c, a) ->
-               Posting
-                 { _pos = Nothing
-                 , _amount = negate a
-                 , _commodity = c
-                 , _account = _account
-                 , _lot = NoLot
-                 })
-            imbalances
-    return $ t {_postings = postings' ++ balancePostings}
+convertTransaction ::
+     (MonadThrow m, MonadState ValuationState m)
+  => Transaction
+  -> m Transaction
+convertTransaction Transaction {..} = do
+  ValuationState { _valuationAccount, _normalizedPrices } <- get
+  postings <- mapM (convertPosting _normalizedPrices) _postings
+  let balancePostings = map (f _valuationAccount) (calculateImbalances postings)
+  return Transaction {_postings = postings ++ balancePostings, ..}
+  where
+    f _account (_commodity, amount) =
+      Posting {_pos = Nothing, _amount = negate amount, _lot = NoLot, ..}
 
 
 calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
@@ -117,72 +105,66 @@ calculateImbalances =
   where
     weight Posting {..} = (_commodity, _amount)
 
-convertPostings ::
-     (MonadThrow m, MonadReader Config m)
+convertPosting ::
+     (MonadThrow m, MonadState ValuationState m)
   => NormalizedPrices
-  -> [Posting]
-  -> m [Posting]
-convertPostings prices =
-  mapM $ \p@Posting {..} -> do
-    tc <- asks _target
-    if tc == _commodity
-      then return p
-      else do
-        price <- lookupPrice _commodity prices
-        return $ (p :: Posting) {_amount = _amount * price, _commodity = tc}
+  -> Posting
+  -> m Posting
+convertPosting prices Posting {..} = do
+  tc <- gets _target
+  if tc == _commodity
+    then return Posting {..}
+    else do
+      price <- lookupPrice _commodity prices
+      return Posting {_amount = _amount * price, _commodity = tc, ..}
 
 adjustValuationForAccounts ::
-     (MonadThrow m, MonadReader Config m)
+     (MonadThrow m, MonadState ValuationState m)
   => Day
-  -> Accounts
-  -> NormalizedPrices
-  -> NormalizedPrices
   -> m [Transaction]
-adjustValuationForAccounts day accounts p0 p1 =
-  if p0 == p1
-    then pure []
-    else catMaybes <$>
-         sequence (mapWithKeys (adjustValuationForAccount day p0 p1) accounts)
+adjustValuationForAccounts day = do
+  accounts <- gets _prevAccounts
+  s <- sequence $ M.mapWithKey (adjustValuationForAccount day) accounts
+  return $ catMaybes $ M.toListWith snd s
 
 adjustValuationForAccount ::
-     (MonadThrow m, MonadReader Config m)
+     (MonadThrow m, MonadState ValuationState m)
   => Day
-  -> NormalizedPrices
-  -> NormalizedPrices
-  -> AccountName
-  -> CommodityName
-  -> Lot
+  -> (AccountName, CommodityName, Lot)
   -> Scientific
   -> m (Maybe Transaction)
-adjustValuationForAccount _date p0 p1 a c l s = do
-  Config {_target, _valuationAccount} <- ask
-  v0 <- lookupPrice c p0
-  v1 <- lookupPrice c p1
-  let t =
-        Transaction
-          { _pos = Nothing
-          , _date
-          , _flag = Complete
-          , _description = "Unrealized"
-          , _tags = []
-          , _postings =
-              [ Posting
-                  { _pos = Nothing
-                  , _account = a
-                  , _commodity = _target
-                  , _amount = s * (v1 - v0)
-                  , _lot = l
-                  }
-              , Posting
-                  { _pos = Nothing
-                  , _account = _valuationAccount
-                  , _commodity = _target
-                  , _amount = (-s) * (v1 - v0)
-                  , _lot = NoLot
-                  }
-              ]
-          }
-   in return $
-      if v0 == v1
-        then Nothing
-        else Just t
+adjustValuationForAccount _date (a, c, l) s = do
+  ValuationState { _target
+                 , _valuationAccount
+                 , _prevNormalizedPrices
+                 , _normalizedPrices
+                 } <- get
+  v0 <- lookupPrice c _prevNormalizedPrices
+  v1 <- lookupPrice c _normalizedPrices
+  return $
+    if v0 == v1
+      then Nothing
+      else Just
+             Transaction
+               { _pos = Nothing
+               , _date
+               , _flag = Complete
+               , _description = "Unrealized"
+               , _tags = []
+               , _postings =
+                   [ Posting
+                       { _pos = Nothing
+                       , _account = a
+                       , _commodity = _target
+                       , _amount = s * (v1 - v0)
+                       , _lot = l
+                       }
+                   , Posting
+                       { _pos = Nothing
+                       , _account = _valuationAccount
+                       , _commodity = _target
+                       , _amount = (-s) * (v1 - v0)
+                       , _lot = NoLot
+                       }
+                   ]
+               }

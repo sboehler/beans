@@ -6,7 +6,7 @@ import           Control.Monad.State      (MonadState, evalStateT, execStateT,
 import qualified Data.Map.Strict.Extended as M
 import           Data.Maybe               (catMaybes)
 import           Data.Scientific          (Scientific)
-import           Data.Time.Calendar       (Day)
+import           Data.Time.Calendar       (Day, fromGregorian)
 import           Haricot.Accounts         (Accounts, RestrictedAccounts (..),
                                            Restrictions, updateAccounts)
 import           Haricot.AST              (AccountName (..), Balance (..),
@@ -26,6 +26,7 @@ data ValuationState = ValuationState
   , _restrictions         :: Restrictions
   , _target               :: CommodityName
   , _valuationAccount     :: AccountName
+  , _date                 :: Day
   }
 
 calculateValuation :: MonadThrow m => CommodityName -> AccountName -> Ledger -> m Ledger
@@ -39,6 +40,7 @@ calculateValuation _target _valuationAccount ledger =
         , _prevAccounts = mempty
         , _accounts = mempty
         , _restrictions = mempty
+        , _date = fromGregorian 1900 1 1
         , ..
         }
 
@@ -46,11 +48,13 @@ convertTimestep ::
      (MonadThrow m, MonadState ValuationState m)
   => Timestep
   -> m Timestep
-convertTimestep ts@Timestep {..} = do
+convertTimestep timestep@Timestep {..} = do
   ValuationState {..} <- get
   RestrictedAccounts _accounts' _restrictions' <-
-    execStateT (updateAccounts ts) (RestrictedAccounts _accounts _restrictions)
-  let _prices' = updatePrices ts _prices
+    execStateT
+      (updateAccounts timestep)
+      (RestrictedAccounts _accounts _restrictions)
+  let _prices' = updatePrices timestep _prices
   put
     ValuationState
       { _prices = _prices'
@@ -61,16 +65,15 @@ convertTimestep ts@Timestep {..} = do
       , _restrictions = _restrictions'
       , ..
       }
-  _openings' <- mapM convertOpening _openings
-  _balances' <- mapM convertBalance _balances
-  _transactions' <-
-    (++) <$> mapM convertTransaction _transactions <*>
-    adjustValuationForAccounts _date
+  convertedOpenings <- mapM convertOpening _openings
+  convertedBalances <- mapM convertBalance _balances
+  convertedTransactions <- mapM convertTransaction _transactions
+  valuationTransactions <- adjustValuationForAccounts
   return $
-    ts
-      { _balances = _balances'
-      , _transactions = _transactions'
-      , _openings = _openings'
+    timestep
+      { _balances = convertedBalances
+      , _transactions = convertedTransactions ++ valuationTransactions
+      , _openings = convertedOpenings
       }
 
 convertOpening :: MonadState ValuationState m => Open -> m Open
@@ -120,51 +123,54 @@ convertPosting prices Posting {..} = do
 
 adjustValuationForAccounts ::
      (MonadThrow m, MonadState ValuationState m)
-  => Day
-  -> m [Transaction]
-adjustValuationForAccounts day = do
-  accounts <- gets _prevAccounts
-  s <- sequence $ M.mapWithKey (adjustValuationForAccount day) accounts
+  => m [Transaction]
+adjustValuationForAccounts  = do
+  ValuationState { _prevAccounts, _date } <- get
+  s <- sequence $ M.mapWithKey adjustValuationForAccount _prevAccounts
   return $ catMaybes $ M.toListWith snd s
 
 adjustValuationForAccount ::
      (MonadThrow m, MonadState ValuationState m)
-  => Day
-  -> (AccountName, CommodityName, Lot)
+  => (AccountName, CommodityName, Lot)
   -> Scientific
   -> m (Maybe Transaction)
-adjustValuationForAccount _date (a, c, l) s = do
+adjustValuationForAccount (a, c, l) s = do
   ValuationState { _target
+                 , _date
                  , _valuationAccount
                  , _prevNormalizedPrices
                  , _normalizedPrices
                  } <- get
   v0 <- lookupPrice c _prevNormalizedPrices
   v1 <- lookupPrice c _normalizedPrices
-  return $
-    if v0 == v1
-      then Nothing
-      else Just
-             Transaction
-               { _pos = Nothing
-               , _date
-               , _flag = Complete
-               , _description = "Unrealized"
-               , _tags = []
-               , _postings =
-                   [ Posting
-                       { _pos = Nothing
-                       , _account = a
-                       , _commodity = _target
-                       , _amount = s * (v1 - v0)
-                       , _lot = l
-                       }
-                   , Posting
-                       { _pos = Nothing
-                       , _account = _valuationAccount
-                       , _commodity = _target
-                       , _amount = (-s) * (v1 - v0)
-                       , _lot = NoLot
-                       }
-                   ]
-               }
+  if v0 == v1
+    then return Nothing
+    else Just <$> createValuationTransaction a l (s * (v1 - v0))
+
+createValuationTransaction ::
+     MonadState ValuationState m
+  => AccountName
+  -> Lot
+  -> Scientific
+  -> m Transaction
+createValuationTransaction _account _lot _amount = do
+  ValuationState {_target, _date, _valuationAccount} <- get
+  return
+    Transaction
+      { _pos = Nothing
+      , _flag = Complete
+      , _description = "valuation"
+      , _tags = []
+      , _date
+      , _postings =
+          [ Posting
+              {_pos = Nothing, _account, _commodity = _target, _amount, _lot}
+          , Posting
+              { _pos = Nothing
+              , _account = _valuationAccount
+              , _commodity = _target
+              , _amount = -_amount
+              , _lot = NoLot
+              }
+          ]
+      }

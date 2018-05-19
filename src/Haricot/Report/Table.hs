@@ -1,7 +1,7 @@
 module Haricot.Report.Table where
 
-import           Data.List (intercalate, transpose)
 
+import Data.List (intercalate, transpose)
 -- a type for fill functions
 type Filler = Int -> String -> String
 
@@ -11,7 +11,6 @@ data ColDesc t = ColDesc
   , colTitle     :: String
   , colValueFill :: Filler
   , colValue     :: t -> String
-  , colSummary   :: [t] -> String
   }
 
 -- Table formatting inspired by:
@@ -32,17 +31,26 @@ left = fillLeft ' '
 right = fillRight ' '
 center = fillCenter ' '
 
-showTable :: [ColDesc t] -> [t] -> String
-showTable cs ts =
-  let header = map colTitle cs
-      rows = [[colValue c t | c <- cs] | t <- ts]
-      footer = [colSummary c ts | c <- cs]
-      widths = [maximum $ map length col | col <- transpose $ header : rows ++ [footer]]
+showTable :: [ColDesc item] -> [item] -> [item] -> String
+showTable coldefs items footers =
+  let header = colTitle <$> coldefs
+      rows = [[colValue coldef item | coldef <- coldefs] | item <- items]
+      footers' =
+        [[colValue coldef footer | coldef <- coldefs] | footer <- footers]
+      widths =
+        [ maximum $ length <$> column
+        | column <- transpose $ header : rows ++ footers'
+        ]
       separator = intercalate "-+-" [replicate width '-' | width <- widths]
-      fillCols fill cols =
+      fillColumns fill columns =
         intercalate
           " | "
-          [fill c width col | (c, width, col) <- zip3 cs widths cols]
+          [ fill c width column
+          | (c, width, column) <- zip3 coldefs widths columns
+          ]
    in unlines $
-      fillCols colTitleFill header :
-      separator : map (fillCols colValueFill) rows ++ [separator] ++ [fillCols colValueFill footer]
+      fillColumns colTitleFill header :
+      separator :
+      (fillColumns colValueFill <$> rows) ++
+      pure separator ++
+      (fillColumns colValueFill <$> footers') ++ pure separator

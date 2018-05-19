@@ -41,8 +41,9 @@ runHaricot = runReaderT run
 
 run :: (MonadIO m, MonadThrow m, MonadReader Options m) =>  m ()
 run = do
-  report <- parseStage >>= valuationStage >>= accountsStage >>= reportStage >>= aggregationStage
-  liftIO $ printAccounts report
+  parseStage >>= valuationStage >>= accountsStage >>= reportStage >>=
+    aggregationStage >>=
+    liftIO . printAccounts
 
 parseStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => m Ledger
 parseStage = buildLedger <$> (asks optJournal >>= parseFile)

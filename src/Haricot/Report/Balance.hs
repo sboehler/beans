@@ -5,31 +5,27 @@ module Haricot.Report.Balance
   ) where
 
 import qualified Data.Map.Strict.Extended as M
-import           Data.Scientific          (FPFormat (Fixed), Scientific,
-                                           formatScientific)
+import           Data.Scientific          (FPFormat (Fixed), formatScientific)
+import           Data.Text.Lazy           (Text)
 import           Haricot.Accounts         (Accounts)
-import           Haricot.AST              (AccountName (..), CommodityName, Lot(NoLot))
+import           Haricot.AST              (AccountName (..), Lot (NoLot))
 import           Haricot.Report.Table     (ColDesc (..), left, right, showTable)
-
-data Row = Row
-  { account   :: AccountName
-  , commodity :: CommodityName
-  , lot       :: Lot
-  , amount    :: Scientific
-  } deriving (Show)
 
 printAccounts :: Accounts -> IO ()
 printAccounts accounts =
   putStrLn $
   showTable
-    [ ColDesc left "Account" left (show . account) (const "Total")
-    , ColDesc left "Amount" right (format . amount) (format . sum . map amount)
-    , ColDesc left "Commodity" left (show . commodity) (const "")
-    , ColDesc left "Lot" left (show . lot) (const "")
+    [ ColDesc left "Account" left (show . (\(a, _, _) -> a) . fst)
+    , ColDesc left "Amount" right (format . snd)
+    , ColDesc left "Commodity" left (show . (\(_, c, _) -> c) . fst)
+    , ColDesc left "Lot" left (show . (\(_, _, l) -> l) . fst)
     ]
-    (M.toListWith (\((a, c, l), n) -> Row a c l n) accounts)
+    items
+    totals
   where
     format = formatScientific Fixed (Just 2)
+    items = M.toList accounts
+    totals = M.toList $ eraseLots $ eraseAccounts "Total" accounts
 
 summarize :: Int -> Accounts -> Accounts
 summarize d = M.mapKeysWith (+) m
@@ -38,3 +34,8 @@ summarize d = M.mapKeysWith (+) m
 
 eraseLots :: Accounts -> Accounts
 eraseLots = M.mapKeysWith (+) (\(a, c, _) -> (a, c, NoLot))
+
+eraseAccounts :: Text -> Accounts -> Accounts
+eraseAccounts label = M.mapKeysWith (+) m
+  where
+    m (_, c, l) = (AccountName [label], c, l)

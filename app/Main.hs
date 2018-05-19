@@ -1,7 +1,7 @@
 module Main where
 
 import           Data.Semigroup      ((<>))
-import           Haricot.Lib         (Command (..), Options (..), parse)
+import Haricot.Lib (Command(..), Options(..), runHaricot)
 import           Options.Applicative
 
 import qualified Data.Text.Lazy      as T
@@ -62,4 +62,4 @@ parserConfig =
      header "haricot - a plain text accounting tool")
 
 main :: IO ()
-main = execParser parserConfig >>= parse
+main = execParser parserConfig >>= runHaricot

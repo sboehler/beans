@@ -1,7 +1,7 @@
 module Haricot.Report.Table where
 
 
-import Data.List (intercalate, transpose)
+import           Data.List (intercalate, transpose)
 -- a type for fill functions
 type Filler = Int -> String -> String
 
@@ -32,14 +32,14 @@ right = fillRight ' '
 center = fillCenter ' '
 
 showTable :: [ColDesc item] -> [item] -> [item] -> String
-showTable coldefs items footers =
+showTable coldefs items totals =
   let header = colTitle <$> coldefs
       rows = [[colValue coldef item | coldef <- coldefs] | item <- items]
-      footers' =
-        [[colValue coldef footer | coldef <- coldefs] | footer <- footers]
+      totalRows =
+        [[colValue coldef footer | coldef <- coldefs] | footer <- totals]
       widths =
         [ maximum $ length <$> column
-        | column <- transpose $ header : rows ++ footers'
+        | column <- transpose $ header : rows ++ totalRows
         ]
       separator = intercalate "-+-" [replicate width '-' | width <- widths]
       fillColumns fill columns =
@@ -53,4 +53,4 @@ showTable coldefs items footers =
       separator :
       (fillColumns colValueFill <$> rows) ++
       pure separator ++
-      (fillColumns colValueFill <$> footers') ++ pure separator
+      (fillColumns colValueFill <$> totalRows) ++ pure separator

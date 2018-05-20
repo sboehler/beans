@@ -1,15 +1,19 @@
-module Haricot.Report.Balance
-  ( printAccounts
-  , summarize
-  , eraseLots
-  ) where
+module Haricot.Report.Balance where
 
 import qualified Data.Map.Strict.Extended as M
-import           Data.Scientific          (FPFormat (Fixed), formatScientific)
+import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
+                                           formatScientific)
 import           Data.Text.Lazy           (Text, pack)
 import           Haricot.Accounts         (Accounts)
-import           Haricot.AST              (AccountName (..), Lot (NoLot))
+import           Haricot.AST              (AccountName (..), CommodityName,
+                                           Lot (NoLot))
 import           Haricot.Report.Table     (ColDesc (..), left, right, showTable)
+
+type Item = ((AccountName, CommodityName, Lot), Scientific)
+
+data Group
+  = Group Text [Item]
+  | Groups [Group]
 
 printAccounts :: Accounts -> IO ()
 printAccounts accounts =
@@ -23,9 +27,15 @@ printAccounts accounts =
     items
     totals
   where
-    format = formatScientific Fixed (Just 2)
+    format = formatStandard
     items = M.toList accounts
-    totals = M.toList $ eraseLots $ eraseAccounts "Total" accounts
+    totals = M.toList . eraseLots . eraseAccounts "Total" $ accounts
+
+formatStandard :: Scientific -> String
+formatStandard = formatScientific Fixed (Just 2)
+
+-- formatK :: Scientific -> String
+-- formatK n = formatScientific Fixed (Just 0) (n `sdiv` 1000) ++ "k"
 
 summarize :: Int -> Accounts -> Accounts
 summarize d = M.mapKeysWith (+) m

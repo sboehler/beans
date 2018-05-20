@@ -8,15 +8,15 @@ module Haricot.Prices
   , lookupPrice
   ) where
 
-import           Control.Monad.Catch (Exception, MonadThrow, throwM)
-import           Control.Monad.State (evalState, get, modify)
-import           Data.Foldable       (foldl')
-import qualified Data.List           as L
-import qualified Data.Map.Strict     as M
-import           Data.Scientific     (Scientific, fromFloatDigits, toRealFloat)
-import           Data.Time.Calendar  (Day)
-import           Haricot.AST         (CommodityName (..), Price (..))
-import           Haricot.Ledger      (Timestep (..))
+import           Control.Monad.Catch      (Exception, MonadThrow, throwM)
+import           Control.Monad.State      (evalState, get, modify)
+import           Data.Foldable            (foldl')
+import qualified Data.List                as L
+import qualified Data.Map.Strict          as M
+import           Data.Scientific.Extended (Scientific, sdiv)
+import           Data.Time.Calendar       (Day)
+import           Haricot.AST              (CommodityName (..), Price (..))
+import           Haricot.Ledger           (Timestep (..))
 
 type PricesHistory = M.Map Day Prices
 
@@ -56,9 +56,6 @@ invert p@Price {..} =
     , _targetCommodity = _commodity
     , _price = 1 `sdiv` _price
     }
-
-sdiv :: Scientific -> Scientific -> Scientific
-sdiv x y = fromFloatDigits (toRealFloat x / toRealFloat y :: Double)
 
 normalize :: Prices -> CommodityName -> NormalizedPrices
 normalize prices current =

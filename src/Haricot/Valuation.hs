@@ -7,7 +7,8 @@ import qualified Data.Map.Strict.Extended as M
 import           Data.Maybe               (catMaybes)
 import           Data.Scientific          (Scientific)
 import           Data.Time.Calendar       (Day, fromGregorian)
-import           Haricot.Accounts         (Accounts, RestrictedAccounts (..),
+import           Haricot.Accounts         (Accounts, Key (..),
+                                           RestrictedAccounts (..),
                                            Restrictions, updateAccounts)
 import           Haricot.AST              (AccountName (..), Balance (..),
                                            CommodityName (..), Flag (..),
@@ -131,21 +132,21 @@ adjustValuationForAccounts  = do
 
 adjustValuationForAccount ::
      (MonadThrow m, MonadState ValuationState m)
-  => (AccountName, CommodityName, Lot)
+  => Key
   -> Scientific
   -> m (Maybe Transaction)
-adjustValuationForAccount (a, c, l) s = do
+adjustValuationForAccount Key {..} s = do
   ValuationState { _target
                  , _date
                  , _valuationAccount
                  , _prevNormalizedPrices
                  , _normalizedPrices
                  } <- get
-  v0 <- lookupPrice c _prevNormalizedPrices
-  v1 <- lookupPrice c _normalizedPrices
+  v0 <- lookupPrice keyCommodity _prevNormalizedPrices
+  v1 <- lookupPrice keyCommodity _normalizedPrices
   if v0 == v1
     then return Nothing
-    else Just <$> createValuationTransaction a l (s * (v1 - v0))
+    else Just <$> createValuationTransaction keyAccount keyLot (s * (v1 - v0))
 
 createValuationTransaction ::
      MonadState ValuationState m

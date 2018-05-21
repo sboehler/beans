@@ -2,6 +2,7 @@ module Haricot.Accounts
   ( AccountsException(..)
   , AccountsHistory
   , Accounts
+  , Key(..)
   , Restrictions
   , RestrictedAccounts(..)
   , calculateAccounts
@@ -25,7 +26,13 @@ import           Haricot.Ledger        (Timestep (..))
 
 type AccountsHistory = M.Map Day Accounts
 
-type Accounts = M.Map (AccountName, CommodityName, Lot) Scientific
+data Key = Key
+  { keyAccount   :: AccountName
+  , keyCommodity :: CommodityName
+  , keyLot       :: Lot
+  } deriving (Ord, Eq)
+
+type Accounts = M.Map Key Scientific
 type Restrictions = M.Map AccountName Restriction
 
 data RestrictedAccounts = RestrictedAccounts
@@ -76,7 +83,9 @@ closeAccount closing@Close {..} = do
   let (r, restrictions) =
         M.partitionWithKey (const . (== _account)) _restrictions
       (a, accounts) =
-        M.partitionWithKey (\(n, _, _) -> const $ n == _account) _accounts
+        M.partitionWithKey
+          (\Key {keyAccount} -> const $ keyAccount == _account)
+          _accounts
   when (M.null r) (throwM $ AccountIsNotOpen closing)
   unless (all (== 0) a) (throwM $ BalanceIsNotZero closing)
   put RestrictedAccounts {_restrictions = restrictions, _accounts = accounts}
@@ -88,7 +97,8 @@ checkBalance bal@Balance {_account, _amount, _commodity} = do
   let s =
         sum
           (M.filterWithKey
-             (\(a, c, _) -> const $ a == _account && c == _commodity)
+             (\Key {keyAccount, keyCommodity} ->
+                const $ keyAccount == _account && keyCommodity == _commodity)
              _accounts)
   unless (s == _amount) (throwM $ BalanceDoesNotMatch bal s)
 
@@ -107,6 +117,6 @@ bookPosting p@Posting {_account, _commodity, _amount, _lot} = do
       put
         RestrictedAccounts
           { _accounts =
-              M.insertWith (+) (_account, _commodity, _lot) _amount _accounts
+              M.insertWith (+) (Key _account _commodity _lot) _amount _accounts
           , ..
           }

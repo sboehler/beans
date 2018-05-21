@@ -119,6 +119,10 @@ newtype AccountName = AccountName
   { _unAccountName :: [Text]
   } deriving (Eq, Ord)
 
+instance Monoid AccountName where
+  mempty = AccountName []
+  (AccountName n1) `mappend` (AccountName n2) = AccountName (n1 `mappend` n2)
+
 instance Show AccountName where
   show = unpack . intercalate ":" . _unAccountName
 

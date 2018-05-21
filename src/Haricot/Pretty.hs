@@ -3,14 +3,12 @@
 module Haricot.Pretty
   ( prettyPrint
   , prettyPrintLedger
-  , prettyPrintAccounts
   ) where
 
 import qualified Data.Map.Strict           as M
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)
-import           Haricot.Accounts          (Accounts)
 import           Haricot.AST               (AccountName (..), Balance (..),
                                             Close (..), CommodityName (..),
                                             Directive (..), Flag (..),
@@ -105,8 +103,3 @@ instance Pretty Timestep where
       vsep (map pretty _openings) <> hardline <>
       vsep (map pretty _closings) <> hardline <>
       vsep (map pretty _transactions)
-
-prettyPrintAccounts :: Accounts -> IO ()
-prettyPrintAccounts accounts = print $ vsep $ map p (M.toList accounts)
-  where
-    p (k,v) = pretty k <+> pretty v

@@ -1,40 +1,41 @@
 module Haricot.Report.Balance where
 
-import           Data.List                as L
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
                                            formatScientific)
 import           Data.Text.Lazy           (Text, pack)
 import           Haricot.Accounts         (Accounts, Key (..))
-import           Haricot.AST              (AccountName (..), 
-                                           Lot (NoLot))
+import           Haricot.AST              (AccountName (..), Lot (NoLot))
 import           Haricot.Report.Table     (ColDesc (..), left, right, showTable)
 
-type Entry = (Key, Scientific)
+data Entry = Entry
+  { _labels :: [Text]
+  , _entry  :: (Key, Scientific)
+  } deriving (Eq, Ord)
 
+data Report
+  = Group Text
+          [Report]
+  | Single Entry 
 
-data Item
-  = EntryItem Entry
-  | GroupItem Group
+createReports :: [Entry] -> [Report]
+createReports entries =
+  let grouped = entries `groupBy` classify
+      reports = createReport <$> grouped
+   in concat reports
 
-data Group = Group
-  { _name   :: AccountName
-  , _items  :: [Item]
-  , _totals :: Accounts
-  }
+createReport :: (Maybe Text, [Entry]) -> [Report]
+createReport (Just n, es)  = [Group n (createReports es)]
+createReport (Nothing, es) = Single <$> es
 
-tree :: Group -> Group
-tree a = a
+classify :: Entry -> (Maybe Text, Entry)
+classify (Entry (s:ss) e) = (Just s, Entry ss e)
+classify (Entry [] e)     = (Nothing, Entry [] e)
 
-splitAccountName :: Int -> AccountName -> (AccountName, AccountName)
-splitAccountName n (AccountName a) =
-  let (prefix, suffix) = L.splitAt n a
-   in (AccountName prefix, AccountName suffix)
-
-part :: Ord l => (a -> l) -> [a] -> [(l, [a])]
-part key list =
-  let k = zip (key <$> list) (pure <$> list)
-   in M.toList $ M.fromListWith (++) k
+groupBy :: (Ord k) => [a] -> (a -> (k, v)) -> [(k, [v])]
+groupBy list key = M.toList $ M.fromListWith (++) (transform . key <$> list)
+  where
+    transform (a, b) = (a, pure b)
 
 printAccounts :: Accounts -> IO ()
 printAccounts accounts =

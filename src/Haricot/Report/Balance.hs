@@ -1,5 +1,6 @@
 module Haricot.Report.Balance where
 
+import           Data.Bifunctor           (second)
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
                                            formatScientific)
@@ -16,7 +17,7 @@ data Entry = Entry
 data Report
   = Group Text
           [Report]
-  | Single Entry 
+  | Single Entry
 
 createReports :: [Entry] -> [Report]
 createReports entries =
@@ -33,9 +34,7 @@ classify (Entry (s:ss) e) = (Just s, Entry ss e)
 classify (Entry [] e)     = (Nothing, Entry [] e)
 
 groupBy :: (Ord k) => [a] -> (a -> (k, v)) -> [(k, [v])]
-groupBy list key = M.toList $ M.fromListWith (++) (transform . key <$> list)
-  where
-    transform (a, b) = (a, pure b)
+groupBy list key = M.toList $ M.fromListWith (++) (second pure . key <$> list)
 
 printAccounts :: Accounts -> IO ()
 printAccounts accounts =

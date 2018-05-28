@@ -82,11 +82,9 @@ closeAccount closing@Close {..} = do
   RestrictedAccounts {..} <- get
   let (r, restrictions) =
         M.partitionWithKey (const . (== _account)) _restrictions
-      (a, accounts) =
-        M.partitionWithKey
-          (\Key {keyAccount} -> const $ keyAccount == _account)
-          _accounts
   when (M.null r) (throwM $ AccountIsNotOpen closing)
+  let (a, accounts) =
+        M.partitionWithKey (const . (== _account) . keyAccount) _accounts
   unless (all (== 0) a) (throwM $ BalanceIsNotZero closing)
   put RestrictedAccounts {_restrictions = restrictions, _accounts = accounts}
 

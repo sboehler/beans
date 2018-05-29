@@ -1,36 +1,49 @@
 module Haricot.Report.Report
-  (Report(..), createReports, Entry(..))
+  (Report(..), Entry(..), createReport)
 where
 
 import           Data.Bifunctor           (second)
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (Scientific)
-import           Data.Text.Lazy           (Text)
-import           Haricot.Accounts         (Key (..))
+import           Data.Text                (Text)
+import           Haricot.AST              (CommodityName (..), Lot (..))
 
-data Entry = Entry
-  { _labels :: [Text]
-  , _entry  :: (Key, Scientific)
-  } deriving (Eq, Ord)
 
-data Report
-  = Group Text
-          [Report]
-  | Single Entry
+newtype Report = Report [Entry]
 
-createReports :: [Entry] -> [Report]
-createReports entries =
-  let grouped = entries `groupBy` classify
-      reports = createReport <$> grouped
-   in concat reports
+data Position = Position CommodityName Lot Scientific
+  deriving (Eq, Ord)
 
-createReport :: (Maybe Text, [Entry]) -> [Report]
-createReport (Just n, es)  = [Group n (createReports es)]
-createReport (Nothing, es) = Single <$> es
+type Item = ([Text], [Position])
 
-classify :: Entry -> (Maybe Text, Entry)
-classify (Entry (s:ss) e) = (Just s, Entry ss e)
-classify (Entry [] e)     = (Nothing, Entry [] e)
+data Entry
+  = SingleEntry Item
+  | GroupEntry Text
+               [Entry]
+  deriving (Eq, Ord)
 
-groupBy :: (Ord k) => [a] -> (a -> (k, v)) -> [(k, [v])]
-groupBy list key = M.toList $ M.fromListWith (++) (second pure . key <$> list)
+createReport :: [Item] -> Report
+createReport = Report . groupEntries
+
+groupEntries :: [Item] -> [Entry]
+groupEntries = concatMap convert . groupWith split
+
+convert :: (Maybe Text, [Item]) -> [Entry]
+convert (Just n, [(_, positions)]) = [SingleEntry ([n], positions)]
+convert (Just n, items)            = [GroupEntry n (groupEntries items)]
+convert (Nothing, items)           = SingleEntry <$> items
+
+split :: Item -> (Maybe Text, Item)
+split (n:ns, positions) = (Just n, (ns, positions))
+split ([], positions)   = (Nothing, ([], positions))
+
+groupWith :: (Ord k) => (a -> (k, v)) -> [a] -> [(k, [v])]
+groupWith f l = M.toList $ M.fromListWith (++) (second pure . f <$> l)
+
+-- firstCol :: Report -> [String]
+-- firstCol (Group t reports) =
+--   unpack t : (indent 2 <$> concat (firstCol <$> reports))
+-- firstCol (Single Entry {..}) = [show _labels]
+
+-- indent :: Int -> String -> String
+-- indent n = (++ replicate n ' ')

@@ -9,7 +9,7 @@ let
       , scientific, stdenv, text, time
       }:
       mkDerivation {
-        pname = "haricot";
+        pname = "beans";
         version = "0.1.0.0";
         src = ./.;
         isLibrary = false;
@@ -18,7 +18,7 @@ let
           base bifunctors containers exceptions filepath megaparsec mtl
           optparse-applicative prettyprinter scientific text time
         ];
-        homepage = "https://github.com/sboehler/haricot#readme";
+        homepage = "https://github.com/sboehler/beans#readme";
         description = "A plain text accounting tool";
         license = stdenv.lib.licenses.bsd3;
       };

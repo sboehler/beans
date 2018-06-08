@@ -1,4 +1,4 @@
-module Haricot.Parser where
+module Beans.Parser where
 
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
@@ -12,7 +12,7 @@ import qualified Data.Set                   as S
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Text.Lazy.IO          (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
-import           Haricot.AST                (AccountName (..), Balance (..),
+import           Beans.AST                (AccountName (..), Balance (..),
                                              Close (..), CommodityName (..),
                                              Directive (..), Flag (..),
                                              Include (..), Lot (..), Open (..),

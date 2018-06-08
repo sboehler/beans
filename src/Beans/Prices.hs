@@ -1,4 +1,4 @@
-module Haricot.Prices
+module Beans.Prices
   ( PricesHistory
   , NormalizedPrices
   , Prices
@@ -15,8 +15,8 @@ import qualified Data.List                as L
 import qualified Data.Map.Strict          as M
 import           Data.Scientific.Extended (Scientific, sdiv)
 import           Data.Time.Calendar       (Day)
-import           Haricot.AST              (CommodityName (..), Price (..))
-import           Haricot.Ledger           (Timestep (..))
+import           Beans.AST              (CommodityName (..), Price (..))
+import           Beans.Ledger           (Timestep (..))
 
 type PricesHistory = M.Map Day Prices
 

@@ -1,13 +1,13 @@
 module Main where
 
 import           Data.Semigroup      ((<>))
-import Haricot.Lib (Command(..), Options(..), runHaricot)
+import Beans.Lib (Command(..), Options(..), runBeans)
 import           Options.Applicative
 
 import qualified Data.Text.Lazy      as T
 import           Data.Time.Calendar  (Day)
-import           Haricot.AST         (CommodityName)
-import qualified Haricot.Parser      as P
+import           Beans.AST         (CommodityName)
+import qualified Beans.Parser      as P
 import           Text.Megaparsec     (parseMaybe)
 
 
@@ -58,8 +58,8 @@ parserConfig :: ParserInfo Options
 parserConfig =
   info
     (helper <*> config)
-    (fullDesc <> progDesc "Evaluate a haricot journal" <>
-     header "haricot - a plain text accounting tool")
+    (fullDesc <> progDesc "Evaluate a journal" <>
+     header "Beans - a plain text accounting tool")
 
 main :: IO ()
-main = execParser parserConfig >>= runHaricot
+main = execParser parserConfig >>= runBeans

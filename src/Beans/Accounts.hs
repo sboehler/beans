@@ -1,4 +1,4 @@
-module Haricot.Accounts
+module Beans.Accounts
   ( AccountsException(..)
   , AccountsHistory
   , Accounts
@@ -17,12 +17,12 @@ import qualified Data.Map.Merge.Strict as MM
 import qualified Data.Map.Strict       as M
 import           Data.Scientific       (Scientific)
 import           Data.Time.Calendar    (Day)
-import           Haricot.AST           (AccountName (..), Balance (..),
+import           Beans.AST           (AccountName (..), Balance (..),
                                         Close (..), CommodityName (..),
                                         Lot (..), Open (..), Posting (..),
                                         Restriction (..), Transaction (..),
                                         compatibleWith)
-import           Haricot.Ledger        (Timestep (..))
+import           Beans.Ledger        (Timestep (..))
 
 type AccountsHistory = M.Map Day Accounts
 

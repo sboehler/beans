@@ -1,4 +1,4 @@
-module Haricot.Valuation where
+module Beans.Valuation where
 
 import           Control.Monad.Catch      (MonadThrow)
 import           Control.Monad.State      (MonadState, evalStateT, execStateT,
@@ -7,15 +7,15 @@ import qualified Data.Map.Strict.Extended as M
 import           Data.Maybe               (catMaybes)
 import           Data.Scientific          (Scientific)
 import           Data.Time.Calendar       (Day, fromGregorian)
-import           Haricot.Accounts         (Accounts, Key (..),
+import           Beans.Accounts         (Accounts, Key (..),
                                            RestrictedAccounts (..),
                                            Restrictions, updateAccounts)
-import           Haricot.AST              (AccountName (..), Balance (..),
+import           Beans.AST              (AccountName (..), Balance (..),
                                            CommodityName (..), Flag (..),
                                            Lot (..), Open (..), Posting (..),
                                            Restriction (..), Transaction (..))
-import           Haricot.Ledger           (Ledger, Timestep (..))
-import           Haricot.Prices           (NormalizedPrices, Prices,
+import           Beans.Ledger           (Ledger, Timestep (..))
+import           Beans.Prices           (NormalizedPrices, Prices,
                                            lookupPrice, normalize, updatePrices)
 
 data ValuationState = ValuationState

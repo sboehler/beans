@@ -1,12 +1,12 @@
-module Haricot.Report.Balance where
+module Beans.Report.Balance where
 
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
                                            formatScientific)
 import           Data.Text.Lazy           (Text, pack)
-import           Haricot.Accounts         (Accounts, Key (..))
-import           Haricot.AST              (AccountName (..), Lot (NoLot))
-import           Haricot.Report.Table     (ColDesc (..), left, right, showTable)
+import           Beans.Accounts         (Accounts, Key (..))
+import           Beans.AST              (AccountName (..), Lot (NoLot))
+import           Beans.Report.Table     (ColDesc (..), left, right, showTable)
 
 
 printAccounts :: Accounts -> IO ()

@@ -1,0 +1,29 @@
+; -*- mode: Org; eval: (beancount-mode 1); -*-
+
+option "operating_currency" "CHF"
+
+** Prices
+
+1970-01-01 price USD 1 USD
+2017-12-31 price CHF 2 USD
+2018-03-31 price CHF 1 USD
+
+** Accounts
+
+2018-01-01 open Equity:Valuation
+2018-01-01 open Income:Salary USD
+2018-01-01 open Assets:Accounts:Checking USD
+
+** Some Transactions
+
+2018-01-25 * "Salary January 2018"
+  Income:Salary 4000 USD
+  Assets:Accounts:Checking
+
+2018-02-25 * "Salary February 2018"
+  Income:Salary 4000 USD
+  Assets:Accounts:Checking
+
+2018-03-25 * "Salary March 2018"
+  Income:Salary 4000 USD
+  Assets:Accounts:Checking

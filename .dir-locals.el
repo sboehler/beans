@@ -1,1 +1,1 @@
-((nil . ((dante-target . "haricot"))))
+((nil . ((dante-target . "beans"))))

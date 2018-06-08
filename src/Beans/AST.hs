@@ -1,5 +1,5 @@
-module Haricot.AST
-  ( module Haricot.AST
+module Beans.AST
+  ( module Beans.AST
   ) where
 
 import qualified Data.List           as L

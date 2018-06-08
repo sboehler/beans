@@ -1,5 +1,5 @@
-module Haricot.Lib
-  ( runHaricot
+module Beans.Lib
+  ( runBeans
   , Options(..)
   , Command(..)
   ) where
@@ -13,13 +13,13 @@ import qualified Data.Map.Strict.Extended as M
 import           Data.Time.Calendar       (Day)
 import           Data.Time.LocalTime      (getZonedTime, localDay,
                                            zonedTimeToLocalTime)
-import           Haricot.Accounts         (Accounts, AccountsHistory,
+import           Beans.Accounts         (Accounts, AccountsHistory,
                                            calculateAccounts, diffAccounts)
-import           Haricot.AST              (AccountName (..), CommodityName (..))
-import           Haricot.Ledger           (Ledger, buildLedger)
-import           Haricot.Parser           (parseFile)
-import           Haricot.Report.Balance   (eraseLots, printAccounts, summarize)
-import           Haricot.Valuation        (calculateValuation)
+import           Beans.AST              (AccountName (..), CommodityName (..))
+import           Beans.Ledger           (Ledger, buildLedger)
+import           Beans.Parser           (parseFile)
+import           Beans.Report.Balance   (eraseLots, printAccounts, summarize)
+import           Beans.Valuation        (calculateValuation)
 
 data Options = Options
   { optJournal :: FilePath
@@ -36,8 +36,8 @@ data Command =
   deriving (Show)
 
 
-runHaricot :: (MonadIO m, MonadThrow m) => Options -> m ()
-runHaricot = runReaderT run
+runBeans :: (MonadIO m, MonadThrow m) => Options -> m ()
+runBeans = runReaderT run
 
 run :: (MonadIO m, MonadThrow m, MonadReader Options m) =>  m ()
 run = do

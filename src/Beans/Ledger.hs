@@ -1,8 +1,8 @@
-module Haricot.Ledger where
+module Beans.Ledger where
 
 import qualified Data.Map.Strict    as M
 import           Data.Time.Calendar (Day)
-import           Haricot.AST        (Balance (..), Close (..), Directive (..),
+import           Beans.AST        (Balance (..), Close (..), Directive (..),
                                      Open (..), Price (..), Transaction (..))
 
 

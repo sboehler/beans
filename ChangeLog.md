@@ -1,3 +1,3 @@
-# Changelog for haricot
+# Changelog for beans
 
 ## Unreleased changes

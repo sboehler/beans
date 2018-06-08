@@ -1,4 +1,4 @@
-module Haricot.Report.Report
+module Beans.Report.Report
   (Section(..), createReport)
 where
 
@@ -7,7 +7,7 @@ import qualified Data.Map.Strict.Extended as M
 import qualified Data.List as L
 import           Data.Scientific.Extended (Scientific)
 import           Data.Text                (Text)
-import           Haricot.AST              (CommodityName (..), Lot (..))
+import           Beans.AST              (CommodityName (..), Lot (..))
 
 data Section =
   Section Text

@@ -1,0 +1,65 @@
+-- This file has been generated from package.yaml by hpack version 0.21.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 2c5563e12c8731637fe8f697831e88a201bf304698026ec1bc5fea71128ff78e
+
+name:           beans
+version:        0.1.0.0
+synopsis:       A plain text accounting tool
+description:    Please see the README on Github at <https://github.com/sboehler/beans#readme>
+category:       Finance
+homepage:       https://github.com/sboehler/beans#readme
+bug-reports:    https://github.com/sboehler/beans/issues
+author:         Silvio Böhler
+maintainer:     sboehler@gmail.com
+copyright:      2017 Silvio Böhler
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    ChangeLog.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/sboehler/beans
+
+executable beans
+  main-is: Main.hs
+  other-modules:
+      Beans.Accounts
+      Beans.AST
+      Beans.Ledger
+      Beans.Lib
+      Beans.Parser
+      Beans.Pretty
+      Beans.Prices
+      Beans.Report.Balance
+      Beans.Report.Report
+      Beans.Report.Table
+      Beans.Valuation
+      Data.Map.Strict.Extended
+      Data.Scientific.Extended
+      Paths_beans
+  hs-source-dirs:
+      app
+      src
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards DeriveFunctor LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , bifunctors
+    , containers
+    , exceptions
+    , filepath
+    , megaparsec
+    , mtl
+    , optparse-applicative
+    , prettyprinter
+    , scientific
+    , text
+    , time
+  default-language: Haskell2010

@@ -1,6 +1,6 @@
-name:                haricot
+name:                beans
 version:             0.1.0.0
-github:              sboehler/haricot
+github:              sboehler/beans
 license:             BSD3
 author:              Silvio Böhler
 maintainer:          sboehler@gmail.com
@@ -17,7 +17,7 @@ category:            Finance
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on Github at <https://github.com/githubuser/haricot#readme>
+description:         Please see the README on Github at <https://github.com/sboehler/beans#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -50,7 +50,7 @@ ghc-options:
   - -Wall
 
 executables:
-  haricot:
+  beans:
     main: Main.hs
     source-dirs:
       - app

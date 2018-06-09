@@ -76,7 +76,7 @@ data Posting = Posting
   , _account   :: AccountName
   , _amount    :: Scientific
   , _commodity :: CommodityName
-  , _lot       :: Lot
+  , _lot       :: Maybe Lot
   } deriving (Show, Eq)
 
 data Flag
@@ -93,11 +93,9 @@ data Lot
         , _targetCommodity :: CommodityName
         , _date            :: Day
         , _label           :: Maybe Text }
-  | NoLot
   deriving (Eq, Ord)
 
 instance Show Lot where
-  show NoLot = ""
   show (Lot p t d l) =
     let price = show p ++ " " ++ show t
         elems = catMaybes [Just price, Just $ show d, show <$> l]

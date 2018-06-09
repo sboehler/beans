@@ -4,9 +4,9 @@ module Beans.Lib
   , Command(..)
   ) where
 
-import           Beans.Accounts           (Accounts, AccountsHistory,
-                                           calculateAccounts, diffAccounts)
-import           Beans.AST                (AccountName (..), CommodityName (..))
+import           Beans.Accounts           (Accounts, AccountsHistory, calculateAccounts, diffAccounts)
+import           Beans.AST                (AccountName (..), AccountType (..),
+                                           CommodityName (..))
 import           Beans.Ledger             (Ledger, buildLedger)
 import           Beans.Parser             (parseFile)
 import           Beans.Report.Balance     (eraseLots, printAccounts, summarize)
@@ -50,7 +50,7 @@ parseStage = buildLedger <$> (asks optJournal >>= parseFile)
 
 valuationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Ledger -> m Ledger
 valuationStage ledger = do
-    let account = AccountName ["Equity", "Valuation"]
+    let account = AccountName Equity ["Valuation"]
     asks optMarket >>= \m -> maybe pure (`calculateValuation` account) m ledger
 
 accountsStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Ledger -> m AccountsHistory

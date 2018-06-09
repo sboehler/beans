@@ -6,14 +6,12 @@ import           Beans.Report.Table       (ColDesc (..), left, right, showTable)
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
                                            formatScientific)
-import           Data.Text.Lazy           (Text, pack)
-
 
 printAccounts :: Accounts -> IO ()
 printAccounts accounts =
   putStrLn $
   showTable
-    [ ColDesc left "Account" left (show . keyAccount . fst)
+    [ ColDesc left "Account" left (maybe "" show . keyAccount . fst)
     , ColDesc left "Amount" right (format . snd)
     , ColDesc left "Commodity" left (show . keyCommodity . fst)
     , ColDesc left "Lot" left (show . keyLot . fst)
@@ -23,7 +21,7 @@ printAccounts accounts =
   where
     format = formatStandard
     items = M.toList accounts
-    totals = M.toList . eraseLots . eraseAccounts "Total" $ accounts
+    totals = M.toList . eraseLots . eraseAccounts $ accounts
 
 formatStandard :: Scientific -> String
 formatStandard = formatScientific Fixed (Just 2)
@@ -34,12 +32,15 @@ formatStandard = formatScientific Fixed (Just 2)
 summarize :: Int -> Accounts -> Accounts
 summarize d = M.mapKeysWith (+) m
   where
-    m Key {..} = Key {keyAccount = AccountName $ take d (_unAccountName keyAccount), ..}
+    m Key {..} = Key {keyAccount = shorten d <$> keyAccount, ..}
+
+shorten :: Int -> AccountName -> AccountName
+shorten d a = a {_unAccountName = take d (_unAccountName a)}
 
 eraseLots :: Accounts -> Accounts
 eraseLots = M.mapKeysWith (+) (\k -> k {keyLot = NoLot})
 
-eraseAccounts :: Text -> Accounts -> Accounts
-eraseAccounts label = M.mapKeysWith (+) m
+eraseAccounts ::  Accounts -> Accounts
+eraseAccounts = M.mapKeysWith (+) m
   where
-    m k = k { keyAccount = AccountName [label, pack $ show (keyCommodity k)] }
+    m k = k { keyAccount = Nothing }

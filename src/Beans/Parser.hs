@@ -1,12 +1,13 @@
 module Beans.Parser where
 
-import           Beans.AST                  (AccountName (..), Balance (..),
-                                             Close (..), CommodityName (..),
-                                             Directive (..), Flag (..),
-                                             Include (..), Lot (..), Open (..),
-                                             Option (..), Posting (..),
-                                             Price (..), Restriction (..),
-                                             Tag (..), Transaction (..))
+import           Beans.AST                  (AccountName (..), AccountType (..),
+                                             Balance (..), Close (..),
+                                             CommodityName (..), Directive (..),
+                                             Flag (..), Include (..), Lot (..),
+                                             Open (..), Option (..),
+                                             Posting (..), Price (..),
+                                             Restriction (..), Tag (..),
+                                             Transaction (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO)
@@ -75,8 +76,12 @@ date =
 identifier :: Parser Text
 identifier = cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
 
+accountType :: Parser AccountType
+accountType = read . unpack <$> identifier
+
 account :: Parser AccountName
-account = lexeme $ AccountName <$> identifier `sepBy` colon
+account =
+  lexeme $ AccountName <$> accountType <* colon <*> identifier `sepBy` colon
   where
     colon = symbol ":"
 

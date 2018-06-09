@@ -17,7 +17,7 @@ data Directive
   | Prc Price
   | Opt Option
   | Inc Include
-  deriving (Eq, Show)
+  deriving (Show)
 
 data Balance = Balance
   { _pos       :: Maybe P.SourcePos
@@ -25,19 +25,19 @@ data Balance = Balance
   , _account   :: AccountName
   , _amount    :: Scientific
   , _commodity :: CommodityName
-  } deriving (Eq, Show)
+  } deriving (Show)
 
 data Open = Open
   { _pos         :: Maybe P.SourcePos
   , _date        :: Day
   , _account     :: AccountName
   , _restriction :: Restriction
-  } deriving (Show, Eq)
+  } deriving (Show)
 
 data Restriction
   = NoRestriction
   | RestrictedTo [CommodityName]
-  deriving (Show, Eq)
+  deriving (Show)
 
 instance Monoid Restriction where
   mempty = RestrictedTo []
@@ -52,7 +52,7 @@ data Close = Close
   { _pos     :: Maybe P.SourcePos
   , _date    :: Day
   , _account :: AccountName
-  } deriving (Show, Eq)
+  } deriving (Show)
 
 data Price = Price
   { _pos             :: P.SourcePos
@@ -60,7 +60,7 @@ data Price = Price
   , _commodity       :: CommodityName
   , _price           :: Scientific
   , _targetCommodity :: CommodityName
-  } deriving (Show, Eq)
+  } deriving (Show)
 
 data Transaction = Transaction
   { _pos         :: Maybe P.SourcePos
@@ -69,7 +69,7 @@ data Transaction = Transaction
   , _description :: Text
   , _tags        :: [Tag]
   , _postings    :: [Posting]
-  } deriving (Eq, Show)
+  } deriving (Show)
 
 data Posting = Posting
   { _pos       :: Maybe P.SourcePos
@@ -77,16 +77,16 @@ data Posting = Posting
   , _amount    :: Scientific
   , _commodity :: CommodityName
   , _lot       :: Maybe Lot
-  } deriving (Show, Eq)
+  } deriving (Show)
 
 data Flag
   = Complete
   | Incomplete
-  deriving (Eq, Show)
+  deriving (Show)
 
 newtype Tag =
   Tag Text
-  deriving (Show, Eq)
+  deriving (Show)
 
 data Lot
   = Lot { _price           :: Scientific
@@ -105,13 +105,13 @@ data Include = Include
   {
     _pos      :: P.SourcePos,
     _filePath :: FilePath
-  } deriving (Show, Eq)
+  } deriving (Show)
 
 data Option =
   Option P.SourcePos
          Text
          Text
-  deriving (Show, Eq)
+  deriving (Show)
 
 data AccountType
   = Assets

@@ -9,6 +9,22 @@ Beans is a [plain text accounting](http://plaintextaccounting.org/) tool in the 
 
 Accounting with Beans is based on text files, and adopts a subset of the beancount syntax, which I found the easiest to parse.
 
+## Compiling
+
+### Stack
+
+```bash
+stack build
+```
+
+### Nix / NixOS
+
+```bash
+nix-shell
+cabal configure
+cabal build
+```
+
 ## Project ideas
 
 * Use QuickCheck for testing

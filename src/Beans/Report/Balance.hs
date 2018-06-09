@@ -14,7 +14,7 @@ printAccounts accounts =
     [ ColDesc left "Account" left (maybe "" show . keyAccount . fst)
     , ColDesc left "Amount" right (format . snd)
     , ColDesc left "Commodity" left (show . keyCommodity . fst)
-    , ColDesc left "Lot" left (show . keyLot . fst)
+    , ColDesc left "Lot" left (maybe "" show . keyLot . fst)
     ]
     items
     totals

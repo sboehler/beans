@@ -5,7 +5,7 @@ module Data.Map.Strict.Extended
   , toListWith
   ) where
 
-import Data.Map.Strict
+import           Data.Map.Strict
 
 lookupLessThan :: (Monoid v, Ord k) => k -> Map k v -> v
 lookupLessThan k m = maybe mempty snd (lookupLT k m)

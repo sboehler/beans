@@ -1,5 +1,12 @@
 module Beans.Parser where
 
+import           Beans.AST                  (AccountName (..), Balance (..),
+                                             Close (..), CommodityName (..),
+                                             Directive (..), Flag (..),
+                                             Include (..), Lot (..), Open (..),
+                                             Option (..), Posting (..),
+                                             Price (..), Restriction (..),
+                                             Tag (..), Transaction (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO)
@@ -12,13 +19,6 @@ import qualified Data.Set                   as S
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Text.Lazy.IO          (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
-import           Beans.AST                (AccountName (..), Balance (..),
-                                             Close (..), CommodityName (..),
-                                             Directive (..), Flag (..),
-                                             Include (..), Lot (..), Open (..),
-                                             Option (..), Posting (..),
-                                             Price (..), Restriction (..),
-                                             Tag (..), Transaction (..))
 import           Prelude                    hiding (readFile)
 import           System.FilePath.Posix      (combine, takeDirectory)
 import           Text.Megaparsec            (ErrorFancy (..), Parsec,

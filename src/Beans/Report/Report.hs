@@ -2,12 +2,12 @@ module Beans.Report.Report
   (Section(..), createReport)
 where
 
+import           Beans.AST                (CommodityName (..), Lot (..))
 import           Data.Bifunctor           (second)
+import qualified Data.List                as L
 import qualified Data.Map.Strict.Extended as M
-import qualified Data.List as L
 import           Data.Scientific.Extended (Scientific)
 import           Data.Text                (Text)
-import           Beans.AST              (CommodityName (..), Lot (..))
 
 data Section =
   Section Text

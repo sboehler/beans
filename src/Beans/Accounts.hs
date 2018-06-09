@@ -10,6 +10,12 @@ module Beans.Accounts
   , diffAccounts
   ) where
 
+import           Beans.AST             (AccountName (..), Balance (..),
+                                        Close (..), CommodityName (..),
+                                        Lot (..), Open (..), Posting (..),
+                                        Restriction (..), Transaction (..),
+                                        compatibleWith)
+import           Beans.Ledger          (Timestep (..))
 import           Control.Monad         (unless, when)
 import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
 import           Control.Monad.State   (MonadState, evalStateT, get, gets, put)
@@ -17,12 +23,6 @@ import qualified Data.Map.Merge.Strict as MM
 import qualified Data.Map.Strict       as M
 import           Data.Scientific       (Scientific)
 import           Data.Time.Calendar    (Day)
-import           Beans.AST           (AccountName (..), Balance (..),
-                                        Close (..), CommodityName (..),
-                                        Lot (..), Open (..), Posting (..),
-                                        Restriction (..), Transaction (..),
-                                        compatibleWith)
-import           Beans.Ledger        (Timestep (..))
 
 type AccountsHistory = M.Map Day Accounts
 

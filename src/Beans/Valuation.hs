@@ -1,5 +1,15 @@
 module Beans.Valuation where
 
+import           Beans.Accounts           (Accounts, Key (..),
+                                           RestrictedAccounts (..),
+                                           Restrictions, updateAccounts)
+import           Beans.AST                (AccountName (..), Balance (..),
+                                           CommodityName (..), Flag (..),
+                                           Lot (..), Open (..), Posting (..),
+                                           Restriction (..), Transaction (..))
+import           Beans.Ledger             (Ledger, Timestep (..))
+import           Beans.Prices             (NormalizedPrices, Prices,
+                                           lookupPrice, normalize, updatePrices)
 import           Control.Monad.Catch      (MonadThrow)
 import           Control.Monad.State      (MonadState, evalStateT, execStateT,
                                            get, gets, put)
@@ -7,16 +17,6 @@ import qualified Data.Map.Strict.Extended as M
 import           Data.Maybe               (catMaybes)
 import           Data.Scientific          (Scientific)
 import           Data.Time.Calendar       (Day, fromGregorian)
-import           Beans.Accounts         (Accounts, Key (..),
-                                           RestrictedAccounts (..),
-                                           Restrictions, updateAccounts)
-import           Beans.AST              (AccountName (..), Balance (..),
-                                           CommodityName (..), Flag (..),
-                                           Lot (..), Open (..), Posting (..),
-                                           Restriction (..), Transaction (..))
-import           Beans.Ledger           (Ledger, Timestep (..))
-import           Beans.Prices           (NormalizedPrices, Prices,
-                                           lookupPrice, normalize, updatePrices)
 
 data ValuationState = ValuationState
   { _prices               :: Prices

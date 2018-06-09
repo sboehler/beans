@@ -4,6 +4,13 @@ module Beans.Lib
   , Command(..)
   ) where
 
+import           Beans.Accounts           (Accounts, AccountsHistory,
+                                           calculateAccounts, diffAccounts)
+import           Beans.AST                (AccountName (..), CommodityName (..))
+import           Beans.Ledger             (Ledger, buildLedger)
+import           Beans.Parser             (parseFile)
+import           Beans.Report.Balance     (eraseLots, printAccounts, summarize)
+import           Beans.Valuation          (calculateValuation)
 import           Control.Monad.Catch      (MonadThrow)
 import           Control.Monad.IO.Class   (MonadIO)
 import           Control.Monad.Reader     (MonadReader, asks, runReaderT)
@@ -13,13 +20,6 @@ import qualified Data.Map.Strict.Extended as M
 import           Data.Time.Calendar       (Day)
 import           Data.Time.LocalTime      (getZonedTime, localDay,
                                            zonedTimeToLocalTime)
-import           Beans.Accounts         (Accounts, AccountsHistory,
-                                           calculateAccounts, diffAccounts)
-import           Beans.AST              (AccountName (..), CommodityName (..))
-import           Beans.Ledger           (Ledger, buildLedger)
-import           Beans.Parser           (parseFile)
-import           Beans.Report.Balance   (eraseLots, printAccounts, summarize)
-import           Beans.Valuation        (calculateValuation)
 
 data Options = Options
   { optJournal :: FilePath
@@ -40,7 +40,7 @@ runBeans :: (MonadIO m, MonadThrow m) => Options -> m ()
 runBeans = runReaderT run
 
 run :: (MonadIO m, MonadThrow m, MonadReader Options m) =>  m ()
-run = do
+run =
   parseStage >>= valuationStage >>= accountsStage >>= reportStage >>=
     aggregationStage >>=
     liftIO . printAccounts

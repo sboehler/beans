@@ -5,11 +5,7 @@ module Beans.Pretty
   , prettyPrintLedger
   ) where
 
-import qualified Data.Map.Strict           as M
-import           Data.Scientific           (Scientific)
-import           Data.Text.Prettyprint.Doc
-import           Data.Time.Calendar        (Day)
-import           Beans.AST               (AccountName (..), Balance (..),
+import           Beans.AST                 (AccountName (..), Balance (..),
                                             Close (..), CommodityName (..),
                                             Directive (..), Flag (..),
                                             Include (..), Lot (..), Open (..),
@@ -17,6 +13,10 @@ import           Beans.AST               (AccountName (..), Balance (..),
                                             Price (..), Restriction (..),
                                             Tag (..), Transaction (..))
 import           Beans.Ledger
+import qualified Data.Map.Strict           as M
+import           Data.Scientific           (Scientific)
+import           Data.Text.Prettyprint.Doc
+import           Data.Time.Calendar        (Day)
 
 instance Pretty Scientific where
   pretty = pretty . show

@@ -1,7 +1,7 @@
 module Beans.Report.Table where
 
-
 import           Data.List (intercalate, transpose)
+
 -- a type for fill functions
 type Filler = Int -> String -> String
 

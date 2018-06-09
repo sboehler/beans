@@ -144,9 +144,13 @@ adjustValuationForAccount Key {..} s = do
                  } <- get
   v0 <- lookupPrice keyCommodity _prevNormalizedPrices
   v1 <- lookupPrice keyCommodity _normalizedPrices
-  if v0 == v1
+  if v0 == v1 || not (isALAccount keyAccount)
     then return Nothing
     else Just <$> createValuationTransaction keyAccount keyLot (s * (v1 - v0))
+
+isALAccount :: AccountName -> Bool
+isALAccount (AccountName (n:_)) = n == "Assets" || n == "Liabilities"
+isALAccount (AccountName _) = error "Invalid account"
 
 createValuationTransaction ::
      MonadState ValuationState m

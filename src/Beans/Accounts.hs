@@ -27,7 +27,7 @@ import           Data.Time.Calendar    (Day)
 type AccountsHistory = M.Map Day Accounts
 
 data Key = Key
-  { keyAccount   :: AccountName
+  { keyAccount   :: Maybe AccountName
   , keyCommodity :: CommodityName
   , keyLot       :: Lot
   } deriving (Ord, Eq)
@@ -84,7 +84,7 @@ closeAccount closing@Close {..} = do
         M.partitionWithKey (const . (== _account)) _restrictions
   when (M.null r) (throwM $ AccountIsNotOpen closing)
   let (a, accounts) =
-        M.partitionWithKey (const . (== _account) . keyAccount) _accounts
+        M.partitionWithKey (const . (== Just _account) . keyAccount) _accounts
   unless (all (== 0) a) (throwM $ BalanceIsNotZero closing)
   put RestrictedAccounts {_restrictions = restrictions, _accounts = accounts}
 
@@ -96,7 +96,7 @@ checkBalance bal@Balance {_account, _amount, _commodity} = do
         sum
           (M.filterWithKey
              (\Key {keyAccount, keyCommodity} ->
-                const $ keyAccount == _account && keyCommodity == _commodity)
+                const $ keyAccount == Just _account && keyCommodity == _commodity)
              _accounts)
   unless (s == _amount) (throwM $ BalanceDoesNotMatch bal s)
 
@@ -115,6 +115,6 @@ bookPosting p@Posting {_account, _commodity, _amount, _lot} = do
       put
         RestrictedAccounts
           { _accounts =
-              M.insertWith (+) (Key _account _commodity _lot) _amount _accounts
+              M.insertWith (+) (Key (Just _account) _commodity _lot) _amount _accounts
           , ..
           }

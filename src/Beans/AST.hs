@@ -115,13 +115,12 @@ data Option =
          Text
   deriving (Show, Eq)
 
-newtype AccountName = AccountName
-  { _unAccountName :: [Text]
-  } deriving (Eq, Ord)
+data AccountType = Assets | Liabilities | Equity | Income | Expenses deriving (Eq, Ord, Read)
 
-instance Monoid AccountName where
-  mempty = AccountName []
-  (AccountName n1) `mappend` (AccountName n2) = AccountName (n1 `mappend` n2)
+data AccountName = AccountName
+  { _unAccountType :: AccountType
+  , _unAccountName :: [Text]
+  } deriving (Eq, Ord)
 
 instance Show AccountName where
   show = unpack . intercalate ":" . _unAccountName

@@ -3,10 +3,11 @@ module Beans.Valuation where
 import           Beans.Accounts           (Accounts, Key (..),
                                            RestrictedAccounts (..),
                                            Restrictions, updateAccounts)
-import           Beans.AST                (AccountName (..), Balance (..),
-                                           CommodityName (..), Flag (..),
-                                           Lot (..), Open (..), Posting (..),
-                                           Restriction (..), Transaction (..))
+import           Beans.AST                (AccountName (..), AccountType (..),
+                                           Balance (..), CommodityName (..),
+                                           Flag (..), Lot (..), Open (..),
+                                           Posting (..), Restriction (..),
+                                           Transaction (..))
 import           Beans.Ledger             (Ledger, Timestep (..))
 import           Beans.Prices             (NormalizedPrices, Prices,
                                            lookupPrice, normalize, updatePrices)
@@ -144,13 +145,14 @@ adjustValuationForAccount Key {..} s = do
                  } <- get
   v0 <- lookupPrice keyCommodity _prevNormalizedPrices
   v1 <- lookupPrice keyCommodity _normalizedPrices
-  if v0 == v1 || not (isALAccount keyAccount)
+  if v0 == v1
     then return Nothing
-    else Just <$> createValuationTransaction keyAccount keyLot (s * (v1 - v0))
-
-isALAccount :: AccountName -> Bool
-isALAccount (AccountName (n:_)) = n == "Assets" || n == "Liabilities"
-isALAccount (AccountName _) = error "Invalid account"
+    else case keyAccount of
+           Just account@(AccountName t _)
+             | t == Assets || t == Liabilities ->
+               Just <$>
+               createValuationTransaction account keyLot (s * (v1 - v0))
+           _ -> return Nothing
 
 createValuationTransaction ::
      MonadState ValuationState m

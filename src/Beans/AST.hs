@@ -5,7 +5,7 @@ module Beans.AST
 import qualified Data.List           as L
 import           Data.Maybe          (catMaybes)
 import           Data.Scientific     (Scientific)
-import           Data.Text.Lazy      (Text, intercalate, unpack)
+import           Data.Text.Lazy      (Text, unpack)
 import           Data.Time.Calendar  (Day)
 import qualified Text.Megaparsec.Pos as P
 
@@ -113,7 +113,13 @@ data Option =
          Text
   deriving (Show, Eq)
 
-data AccountType = Assets | Liabilities | Equity | Income | Expenses deriving (Eq, Ord, Read)
+data AccountType
+  = Assets
+  | Liabilities
+  | Equity
+  | Income
+  | Expenses
+  deriving (Eq, Ord, Read, Show)
 
 data AccountName = AccountName
   { _unAccountType :: AccountType
@@ -121,7 +127,7 @@ data AccountName = AccountName
   } deriving (Eq, Ord)
 
 instance Show AccountName where
-  show = unpack . intercalate ":" . _unAccountName
+  show (AccountName t n) = L.intercalate ":" (show t : (unpack <$> n))
 
 newtype CommodityName = CommodityName
   { _unCommodityName :: Text

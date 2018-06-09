@@ -50,7 +50,6 @@ instance Pretty Lot where
     case _label of
       Nothing -> []
       _       -> [pretty _label]
-  pretty NoLot = ""
 
 instance Pretty Posting where
   pretty Posting {_account, _amount, _commodity, _lot} =

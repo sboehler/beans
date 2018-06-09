@@ -101,7 +101,7 @@ convertTransaction Transaction {..} = do
   return Transaction {_postings = postings ++ balancePostings, ..}
   where
     f _account (_commodity, amount) =
-      Posting {_pos = Nothing, _amount = negate amount, _lot = NoLot, ..}
+      Posting {_pos = Nothing, _amount = negate amount, _lot = Nothing, ..}
 
 
 calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
@@ -157,7 +157,7 @@ adjustValuationForAccount Key {..} s = do
 createValuationTransaction ::
      MonadState ValuationState m
   => AccountName
-  -> Lot
+  -> Maybe Lot
   -> Scientific
   -> m Transaction
 createValuationTransaction _account _lot _amount = do
@@ -177,7 +177,7 @@ createValuationTransaction _account _lot _amount = do
               , _account = _valuationAccount
               , _commodity = _target
               , _amount = -_amount
-              , _lot = NoLot
+              , _lot = Nothing
               }
           ]
       }

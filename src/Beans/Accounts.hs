@@ -29,7 +29,7 @@ type AccountsHistory = M.Map Day Accounts
 data Key = Key
   { keyAccount   :: Maybe AccountName
   , keyCommodity :: CommodityName
-  , keyLot       :: Lot
+  , keyLot       :: Maybe Lot
   } deriving (Ord, Eq)
 
 type Accounts = M.Map Key Scientific

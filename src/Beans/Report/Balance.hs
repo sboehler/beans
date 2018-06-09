@@ -1,7 +1,7 @@
 module Beans.Report.Balance where
 
 import           Beans.Accounts           (Accounts, Key (..))
-import           Beans.AST                (AccountName (..), Lot (NoLot))
+import           Beans.AST                (AccountName (..))
 import           Beans.Report.Table       (ColDesc (..), left, right, showTable)
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
@@ -38,7 +38,7 @@ shorten :: Int -> AccountName -> AccountName
 shorten d a = a {_unAccountName = take d (_unAccountName a)}
 
 eraseLots :: Accounts -> Accounts
-eraseLots = M.mapKeysWith (+) (\k -> k {keyLot = NoLot})
+eraseLots = M.mapKeysWith (+) (\k -> k {keyLot = Nothing})
 
 eraseAccounts ::  Accounts -> Accounts
 eraseAccounts = M.mapKeysWith (+) m

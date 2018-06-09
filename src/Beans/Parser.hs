@@ -102,7 +102,7 @@ quotedString =
     quote = char '"'
 
 lot :: Day -> Parser Lot
-lot d = braces (Lot <$> number <*> commodity <*> lotDate <*> lotLabel) <|> return NoLot
+lot d = braces (Lot <$> number <*> commodity <*> lotDate <*> lotLabel)
   where
     comma = symbol ","
     lotDate = (comma >> date) <|> pure d
@@ -121,7 +121,7 @@ data WildcardPosting = WildcardPosting P.SourcePos AccountName deriving (Show, E
 
 posting :: Day -> P.SourcePos -> AccountName -> Parser Posting
 posting d p a =
-  Posting (Just p) a <$> number <*> commodity <*> lot d <*
+  Posting (Just p) a <$> number <*> commodity <*> optional (lot d) <*
   optional postingPrice
 
 wildcardPosting :: P.SourcePos -> AccountName -> Parser WildcardPosting
@@ -225,7 +225,7 @@ completePostings pos p =
 balanceImbalance :: WildcardPosting -> (CommodityName, Scientific) -> Posting
 balanceImbalance (WildcardPosting _pos _account) (c, a) =
   Posting
-    {_pos = Just _pos, _amount = negate a, _commodity = c, _lot = NoLot, ..}
+    {_pos = Just _pos, _amount = negate a, _commodity = c, _lot = Nothing, ..}
 
 calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
 calculateImbalances =
@@ -234,6 +234,5 @@ calculateImbalances =
 weight :: Posting  -> (CommodityName, Scientific)
 weight Posting {..} =
   case _lot of
-    Lot {_price, _targetCommodity} ->
-      (_targetCommodity, _amount * _price)
-    NoLot -> (_commodity, _amount)
+    Just Lot {_price, _targetCommodity} -> (_targetCommodity, _amount * _price)
+    Nothing -> (_commodity, _amount)

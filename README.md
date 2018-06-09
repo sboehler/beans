@@ -25,6 +25,21 @@ cabal configure
 cabal build
 ```
 
+## Running the example
+
+```bash
+
+# Show the help text
+cabal run
+
+# Show the holdings
+cabal run beans -- -j examples/example1.bean balance 
+
+# Valuate in your preferred currency
+cabal run beans -- -j examples/example1.bean balance --at-value CHF 
+
+```
+
 ## Project ideas
 
 * Use QuickCheck for testing

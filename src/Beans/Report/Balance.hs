@@ -41,6 +41,4 @@ eraseLots :: Accounts -> Accounts
 eraseLots = M.mapKeysWith (+) (\k -> k {keyLot = Nothing})
 
 eraseAccounts ::  Accounts -> Accounts
-eraseAccounts = M.mapKeysWith (+) m
-  where
-    m k = k { keyAccount = Nothing }
+eraseAccounts = M.mapKeysWith (+) (\k -> k {keyAccount = Nothing})

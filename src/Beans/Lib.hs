@@ -4,7 +4,8 @@ module Beans.Lib
   , Command(..)
   ) where
 
-import           Beans.Accounts           (Accounts, AccountsHistory, calculateAccounts, diffAccounts)
+import           Beans.Accounts           (Accounts, AccountsHistory,
+                                           calculateAccounts, diffAccounts)
 import           Beans.AST                (AccountName (..), AccountType (..),
                                            CommodityName (..))
 import           Beans.Ledger             (Ledger, buildLedger)
@@ -49,9 +50,10 @@ parseStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => m Ledger
 parseStage = buildLedger <$> (asks optJournal >>= parseFile)
 
 valuationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Ledger -> m Ledger
-valuationStage ledger = do
-    let account = AccountName Equity ["Valuation"]
-    asks optMarket >>= \m -> maybe pure (`calculateValuation` account) m ledger
+valuationStage ledger = valuate ledger =<< asks optMarket
+  where
+    valuate l (Just m) = calculateValuation m (AccountName Equity ["Valuation"]) l
+    valuate l Nothing = pure l
 
 accountsStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Ledger -> m AccountsHistory
 accountsStage = calculateAccounts
@@ -61,16 +63,18 @@ reportStage h = asks optCommand >>= \case
   Balance -> balanceReport h
 
 balanceReport :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> m Accounts
-balanceReport  accountsHistory = do
-  a1 <- asks optTo >>= liftIO . maybe getDate pure >>= \to -> pure $ M.lookupLessEqual to accountsHistory
-  a0 <- asks optFrom >>= \from -> pure $ maybe mempty (`M.lookupLessEqual` accountsHistory) from
+balanceReport accountsHistory = do
+  to <- maybe (liftIO getDate) pure =<< asks optTo
+  from <- asks optFrom
+  let a1 = M.lookupLessEqual to accountsHistory
+      a0 = maybe mempty (`M.lookupLessEqual` accountsHistory) from
   return $ a1 `diffAccounts` a0
 
 aggregationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Accounts -> m Accounts
-aggregationStage a = do
-  f1 <- bool eraseLots id <$> asks optLots
-  s <- maybe id summarize <$> asks optDepth
-  return $ (f1 . s) a
+aggregationStage accounts = do
+  eraseStage <- bool eraseLots id <$> asks optLots
+  summarizeStage <- maybe id summarize <$> asks optDepth
+  return $ (eraseStage . summarizeStage) accounts
 
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime

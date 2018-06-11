@@ -30,7 +30,7 @@ data Position = Position CommodityName (Maybe Lot) Scientific
 
 formatReport :: Accounts -> String
 formatReport accounts = let
-  d = (format . createReport . toItems) accounts
+  d = (format . createReport) accounts
   desc = showTable
     [ ColDesc left "Account" left (!!0)
     , ColDesc left "Amount" right (!!3)
@@ -40,17 +40,13 @@ formatReport accounts = let
  in
   desc d []
 
-toItems :: Accounts -> [Item]
-toItems = fmap f . M.toList
+createReport :: Accounts -> Section
+createReport = groupItems "Report" . toItems
   where
-    f (Key {..}, amount) =
+    toItems = fmap toItem . M.toList
+    toItem (Key {..}, amount) =
       Item (maybe [] toLabel keyAccount) [Position keyCommodity keyLot amount]
-
-toLabel :: AccountName -> [Text]
-toLabel (AccountName t ns) = pack (show t) : ns
-
-createReport :: [Item] -> Section
-createReport = groupItems "Report"
+    toLabel (AccountName t ns) = pack (show t) : ns
 
 groupItems :: Text -> [Item] -> Section
 groupItems title items =
@@ -77,9 +73,6 @@ format (Section title positions subsections) =
    in cols ++ subs
 
 indentFirst :: Int -> [String] -> [String]
-indentFirst n (l:ll) = indent n l: ll
+indentFirst 0 s      = s
+indentFirst n (l:ll) = indentFirst (n - 1) ((' ':l): ll)
 indentFirst _ []     = []
-
-indent :: Int -> String -> String
-indent 0 s = s
-indent n s = ' ' : indent (n - 1) s

@@ -1,6 +1,6 @@
 .stack-work/
-beans.cabal
 TAGS
-dist 
+dist
 dist-newstyle
 result
+*.cabal

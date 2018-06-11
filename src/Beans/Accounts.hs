@@ -8,6 +8,9 @@ module Beans.Accounts
   , calculateAccounts
   , updateAccounts
   , diffAccounts
+  , summarize
+  , eraseAccounts
+  , eraseLots
   ) where
 
 import           Beans.AST             (AccountName (..), Balance (..),
@@ -44,6 +47,22 @@ diffAccounts :: Accounts -> Accounts -> Accounts
 diffAccounts = MM.merge MM.preserveMissing
   (MM.mapMissing $ const negate)
   (MM.zipWithMatched $ const (-))
+
+summarize :: Int -> Accounts -> Accounts
+summarize d = M.mapKeysWith (+) m
+  where
+    m Key {..} = Key {keyAccount = shorten d <$> keyAccount, ..}
+
+shorten :: Int -> AccountName -> AccountName
+shorten d a = a {_unAccountName = take d (_unAccountName a)}
+
+
+eraseLots :: Accounts -> Accounts
+eraseLots = M.mapKeysWith (+) (\k -> k {keyLot = Nothing})
+
+eraseAccounts ::  Accounts -> Accounts
+eraseAccounts = M.mapKeysWith (+) (\k -> k {keyAccount = Nothing})
+
 
 data AccountsException
   = AccountIsNotOpen Close

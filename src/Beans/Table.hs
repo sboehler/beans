@@ -1,6 +1,8 @@
-module Beans.Report.Table where
+module Beans.Table where
 
-import           Data.List (intercalate, transpose)
+import           Data.List                (intercalate, transpose)
+import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
+                                           formatScientific)
 
 -- a type for fill functions
 type Filler = Int -> String -> String
@@ -54,3 +56,6 @@ showTable coldefs items totals =
       (fillColumns colValueFill <$> rows) ++
       pure separator ++
       (fillColumns colValueFill <$> totalRows) ++ pure separator
+
+formatStandard :: Scientific -> String
+formatStandard = formatScientific Fixed (Just 2)

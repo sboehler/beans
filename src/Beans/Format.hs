@@ -30,12 +30,15 @@ data Position = Position CommodityName (Maybe Lot) Scientific
   deriving (Show)
 
 formatReport :: Report -> String
-formatReport (Report pos sec) = showTable
-    [ ColDesc left "Account" left (!!0)
-    , ColDesc left "Amount" right (!!3)
-    , ColDesc left "Commodity" left (!!1)
-    , ColDesc left "Lot" left (!!2)
-    ] (formatPositions "" pos ++ concatMap format sec) []
+formatReport (Report positions sections) =
+  showTable
+    [ ColDesc left "Account" left (!! 0)
+    , ColDesc left "Amount" right (!! 3)
+    , ColDesc left "Commodity" left (!! 1)
+    , ColDesc left "Lot" left (!! 2)
+    ]
+    (formatPositions "" positions ++ formatSection `concatMap` sections)
+    []
 
 createReport :: Accounts -> Report
 createReport = toReport . groupItems "" . toItems
@@ -60,21 +63,26 @@ splitItem (Item [] positions)     = (mempty, Item [] positions)
 groupWith :: (Ord k) => (a -> (k, v)) -> [a] -> M.Map k [v]
 groupWith f l = M.fromListWith (++) (second pure . f <$> l)
 
-format :: Section -> [[String]]
-format (Section title positions subsections) =
-  let
+formatSection :: Section -> [[String]]
+formatSection (Section title [] [subsection]) =
+  let subs = formatSection subsection
+   in case subs of
+        (s:ss) -> prependFirst (unpack title ++ ":") s : ss
+        [] -> []
+formatSection (Section title positions subsections) = let
     pos = formatPositions title positions
-    subs = indentFirst 2 <$> concat (format <$> subsections)
+    subs = indentFirst 2 <$> (formatSection `concatMap` subsections)
   in pos ++ subs
 
 formatPositions :: Text -> [Position] -> [[String]]
 formatPositions title (Position c l s:ps) = [unpack title, show c, maybe "" show l, formatStandard s] : formatPositions "" ps
-formatPositions title []
-  | title == "" = []
-  | otherwise = [[unpack title, "", "", ""]]
+formatPositions "" [] = []
+formatPositions title [] = [[unpack title, "", "", ""]]
 
 
 indentFirst :: Int -> [String] -> [String]
-indentFirst 0 s      = s
-indentFirst n (l:ll) = indentFirst (n - 1) ((' ':l): ll)
-indentFirst _ []     = []
+indentFirst n = prependFirst (replicate n ' ')
+
+prependFirst :: String -> [String] -> [String]
+prependFirst p (s:ss) = (p++s):ss
+prependFirst _ []     = []

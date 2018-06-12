@@ -1,5 +1,5 @@
 module Beans.Format
-  (Section(..), formatReport, createReport)
+  (Section(..), formatTable, reportToTable, createReport)
 where
 
 import           Beans.Accounts           (Accounts, Key (..))
@@ -29,15 +29,15 @@ data Item = Item
 data Position = Position CommodityName (Maybe Lot) Scientific
   deriving (Show)
 
-formatReport :: Report -> String
-formatReport (Report positions sections) =
+formatTable :: [[String]] -> String
+formatTable t =
   showTable
     [ ColDesc left "Account" left (!! 0)
     , ColDesc left "Amount" right (!! 3)
     , ColDesc left "Commodity" left (!! 1)
     , ColDesc left "Lot" left (!! 2)
     ]
-    (formatPositions "" positions ++ formatSection `concatMap` sections)
+    t
     []
 
 createReport :: Accounts -> Report
@@ -48,6 +48,12 @@ createReport = toReport . groupItems "" . toItems
       Item (maybe [] toLabel keyAccount) [Position keyCommodity keyLot amount]
     toLabel (AccountName t ns) = pack (show t) : ns
     toReport (Section _ pos sec) = Report pos sec
+
+reportToTable :: Report -> [[String]]
+reportToTable (Report p s) = positions ++ sections
+  where
+    positions = formatPositions "" p
+    sections = formatSection `concatMap` s
 
 groupItems :: Text -> [Item] -> Section
 groupItems title items =
@@ -78,7 +84,6 @@ formatPositions :: Text -> [Position] -> [[String]]
 formatPositions title (Position c l s:ps) = [unpack title, show c, maybe "" show l, formatStandard s] : formatPositions "" ps
 formatPositions "" [] = []
 formatPositions title [] = [[unpack title, "", "", ""]]
-
 
 indentFirst :: Int -> [String] -> [String]
 indentFirst n = prependFirst (replicate n ' ')

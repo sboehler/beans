@@ -64,7 +64,9 @@ groupWith f l = M.fromListWith (++) (second pure . f <$> l)
 
 format :: Section -> [[String]]
 format (Section title positions subsections) =
-  let col123 = (\(Position c l s) -> [show c, show l, formatStandard s]) <$> positions
+  let col123 =
+        (\(Position c l s) -> [show c, maybe "" show l, formatStandard s]) <$>
+        positions
       cols =
         case col123 of
           [] -> [unpack title : replicate 3 ""]

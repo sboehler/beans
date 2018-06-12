@@ -68,11 +68,11 @@ formatSection (Section title [] [subsection]) =
   let subs = formatSection subsection
    in case subs of
         (s:ss) -> prependFirst (unpack title ++ ":") s : ss
-        [] -> []
-formatSection (Section title positions subsections) = let
+        []     -> []
+formatSection (Section title positions subsections) = pos ++ subs
+  where
     pos = formatPositions title positions
     subs = indentFirst 2 <$> (formatSection `concatMap` subsections)
-  in pos ++ subs
 
 formatPositions :: Text -> [Position] -> [[String]]
 formatPositions title (Position c l s:ps) = [unpack title, show c, maybe "" show l, formatStandard s] : formatPositions "" ps

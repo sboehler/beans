@@ -1,5 +1,5 @@
 module Beans.Format
-  (Section(..), formatReport )
+  (Section(..), formatReport, createReport)
 where
 
 import           Beans.Accounts           (Accounts, Key (..))
@@ -13,6 +13,7 @@ import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (Scientific)
 import           Data.Text.Lazy           (Text, pack, unpack)
 
+data Report = Report [Position] [Section] deriving (Show)
 
 data Section =
   Section Text
@@ -28,25 +29,22 @@ data Item = Item
 data Position = Position CommodityName (Maybe Lot) Scientific
   deriving (Show)
 
-formatReport :: Accounts -> String
-formatReport accounts = let
-  d = (format . createReport) accounts
-  desc = showTable
+formatReport :: Report -> String
+formatReport (Report pos sec) = showTable
     [ ColDesc left "Account" left (!!0)
     , ColDesc left "Amount" right (!!3)
     , ColDesc left "Commodity" left (!!1)
     , ColDesc left "Lot" left (!!2)
-    ]
- in
-  desc d []
+    ] (formatPositions "" pos ++ concatMap format sec) []
 
-createReport :: Accounts -> Section
-createReport = groupItems "Report" . toItems
+createReport :: Accounts -> Report
+createReport = toReport . groupItems "" . toItems
   where
     toItems = fmap toItem . M.toList
     toItem (Key {..}, amount) =
       Item (maybe [] toLabel keyAccount) [Position keyCommodity keyLot amount]
     toLabel (AccountName t ns) = pack (show t) : ns
+    toReport (Section _ pos sec) = Report pos sec
 
 groupItems :: Text -> [Item] -> Section
 groupItems title items =
@@ -64,15 +62,17 @@ groupWith f l = M.fromListWith (++) (second pure . f <$> l)
 
 format :: Section -> [[String]]
 format (Section title positions subsections) =
-  let col123 =
-        (\(Position c l s) -> [show c, maybe "" show l, formatStandard s]) <$>
-        positions
-      cols =
-        case col123 of
-          [] -> [unpack title : replicate 3 ""]
-          l  -> zipWith (:) (unpack title : repeat "") l
-      subs = indentFirst 2 <$> concat (format <$> subsections)
-   in cols ++ subs
+  let
+    pos = formatPositions title positions
+    subs = indentFirst 2 <$> concat (format <$> subsections)
+  in pos ++ subs
+
+formatPositions :: Text -> [Position] -> [[String]]
+formatPositions title (Position c l s:ps) = [unpack title, show c, maybe "" show l, formatStandard s] : formatPositions "" ps
+formatPositions title []
+  | title == "" = []
+  | otherwise = [[unpack title, "", "", ""]]
+
 
 indentFirst :: Int -> [String] -> [String]
 indentFirst 0 s      = s

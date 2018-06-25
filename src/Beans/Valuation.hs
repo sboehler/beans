@@ -4,10 +4,9 @@ import           Beans.Accounts           (Accounts, Key (..),
                                            RestrictedAccounts (..),
                                            Restrictions, updateAccounts)
 import           Beans.AST                (AccountName (..), AccountType (..),
-                                           Balance (..), CommodityName (..),
-                                           Flag (..), Lot (..), Open (..),
-                                           Posting (..), Restriction (..),
-                                           Transaction (..))
+                                           CommodityName (..), Flag (..),
+                                           Lot (..), Open (..), Posting (..),
+                                           Restriction (..), Transaction (..))
 import           Beans.Ledger             (Ledger, Timestep (..))
 import           Beans.Prices             (NormalizedPrices, Prices,
                                            lookupPrice, normalize, updatePrices)
@@ -68,12 +67,11 @@ convertTimestep timestep@Timestep {..} = do
       , ..
       }
   convertedOpenings <- mapM convertOpening _openings
-  convertedBalances <- mapM convertBalance _balances
   convertedTransactions <- mapM convertTransaction _transactions
   valuationTransactions <- adjustValuationForAccounts
   return $
     timestep
-      { _balances = convertedBalances
+      { _balances = []
       , _transactions = convertedTransactions ++ valuationTransactions
       , _openings = convertedOpenings
       }
@@ -82,13 +80,6 @@ convertOpening :: MonadState ValuationState m => Open -> m Open
 convertOpening o = do
   t <- gets _target
   return $ o {_restriction = RestrictedTo [t]}
-
-convertBalance ::
-     (MonadThrow m, MonadState ValuationState m) => Balance -> m Balance
-convertBalance Balance {..} = do
-  ValuationState {_target, _prevNormalizedPrices} <- get
-  price <- lookupPrice _commodity _prevNormalizedPrices
-  return Balance {_amount = _amount * price, _commodity = _target, ..}
 
 convertTransaction ::
      (MonadThrow m, MonadState ValuationState m)

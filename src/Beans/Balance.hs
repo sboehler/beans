@@ -17,7 +17,7 @@ balanceReport accountsHistory = do
   from <- asks optFrom
   let a1 = M.lookupLessEqual to accountsHistory
       a0 = maybe mempty (`M.lookupLessEqual` accountsHistory) from
-  return $ a1 `diffAccounts` a0
+  return $ M.filter (/= 0) $ a1 `diffAccounts` a0
 
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime

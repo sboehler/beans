@@ -1,5 +1,5 @@
 module Beans.Format
-  (Section(..), formatTable, reportToTable, createReport)
+  (Section(..), formatTable, reportToRows, createReport)
 where
 
 import           Beans.Accounts           (Accounts, Key (..))
@@ -7,7 +7,6 @@ import           Beans.AST                (AccountName (..), CommodityName (..),
                                            Lot (..))
 import           Beans.Table              (ColDesc (..), formatStandard, left,
                                            right, showTable)
-import           Data.Bifunctor           (second)
 import qualified Data.List                as L
 import qualified Data.Map.Strict.Extended as M
 import           Data.Scientific.Extended (Scientific)
@@ -24,16 +23,8 @@ data Section = Section
 data Position = Position CommodityName (Maybe Lot) Scientific
   deriving (Show)
 
-formatTable :: [[String]] -> String
-formatTable t =
-  showTable
-    [ ColDesc left "Account" left (!! 0)
-    , ColDesc left "Amount" right (!! 3)
-    , ColDesc left "Commodity" left (!! 1)
-    , ColDesc left "Lot" left (!! 2)
-    ]
-    t
-    []
+
+-- Creating a report 
 
 createReport :: Accounts -> Report
 createReport = toReport . groupSections "" . toSections
@@ -44,47 +35,57 @@ createReport = toReport . groupSections "" . toSections
     toLabel (AccountName t ns) = pack (show t) : ns
     toReport (Section _ pos sec) = Report pos sec
 
-reportToTable :: Report -> [[String]]
-reportToTable (Report p s) = positions ++ sections
-  where
-    positions = formatPositions [] p
-    sections = formatSection `concatMap` s
-
 groupSections :: Text -> [Section] -> Section
 groupSections title sections =
   let (rootSections, childSections) = L.partition (null . _labels) sections
       positions = concatMap _positions rootSections
-      subs = concatMap _sections rootSections
-      subsections = M.elems . M.mapWithKey groupSections . groupWith splitSection $ childSections
-   in Section [title] positions (subsections ++ subs)
+      subsections = group (splitSection <$> childSections)
+   in Section [title] positions subsections
 
-splitSection :: Section -> (Text, Section)
-splitSection (Section (n:ns) positions subsections) = (n, Section ns positions subsections)
-splitSection (Section [] positions subsections) =
-  (mempty, Section [] positions subsections)
+group :: [(Text, [Section])] -> [Section]
+group = M.elems . M.mapWithKey groupSections . M.fromListWith (++)
 
-groupWith :: (Ord k) => (a -> (k, v)) -> [a] -> M.Map k [v]
-groupWith f l = M.fromListWith (++) (second pure . f <$> l)
+splitSection :: Section -> (Text, [Section])
+splitSection (Section (n:ns) ps ss) = (n, [Section ns ps ss])
+splitSection (Section [] ps ss) = (mempty, [Section [] ps ss])
 
-formatSection :: Section -> [[String]]
-formatSection (Section title [] [subsection]) =
-  let subs = formatSection subsection
-   in case subs of
-        (s:ss) -> prependFirst (unpack (intercalate ":" title) ++ ":") s : ss
-        []     -> []
-formatSection (Section title positions subsections) = pos ++ subs
+
+-- Formatting a report into rows
+
+reportToRows :: Report -> [[String]]
+reportToRows (Report p s) = positions ++ sections
   where
-    pos = formatPositions title positions
-    subs = indentFirst 2 <$> (formatSection `concatMap` subsections)
+    positions = positionsToRows "" p
+    sections = concatMap sectionToRows s
 
-formatPositions :: [Text] -> [Position] -> [[String]]
-formatPositions title (Position c l s:ps) = [unpack (intercalate ":" title), show c, maybe "" show l, formatStandard s] : formatPositions [] ps
-formatPositions [] [] = []
-formatPositions title [] = [[unpack (intercalate ":" title), "", "", ""]]
+sectionToRows :: Section -> [[String]]
+sectionToRows (Section t ps ss) =
+  positions ++ (indentFirstColumn 2 <$> subsections)
+  where
+    title = intercalate ":" t
+    positions = positionsToRows title ps
+    subsections = concatMap sectionToRows ss
 
-indentFirst :: Int -> [String] -> [String]
-indentFirst n = prependFirst (replicate n ' ')
+positionsToRows :: Text -> [Position] -> [[String]]
+positionsToRows title (Position c l s:ps) = line : positionsToRows "" ps
+  where
+      line = [unpack title, show c, maybe "" show l, formatStandard s]
+positionsToRows "" [] = []
+positionsToRows title [] = [[unpack title, "", "", ""]]
 
-prependFirst :: String -> [String] -> [String]
-prependFirst p (s:ss) = (p++s):ss
-prependFirst _ []     = []
+indentFirstColumn :: Int -> [String] -> [String]
+indentFirstColumn n (s:ss) = (replicate n ' '++s):ss
+indentFirstColumn _ [] = []
+
+
+-- formatting rows into a table
+formatTable :: [[String]] -> String
+formatTable t =
+  showTable
+    [ ColDesc left "Account" left (!! 0)
+    , ColDesc left "Amount" right (!! 3)
+    , ColDesc left "Commodity" left (!! 1)
+    , ColDesc left "Lot" left (!! 2)
+    ]
+    t
+    []

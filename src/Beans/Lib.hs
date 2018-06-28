@@ -27,8 +27,7 @@ runBeans = runReaderT run
 run :: (MonadIO m, MonadThrow m, MonadReader Options m) =>  m ()
 run =
   parseStage >>= valuationStage >>= accountsStage >>= reportStage >>=
-  aggregationStage >>=
-  liftIO . putStrLn . formatTable . reportToRows . createReport
+  aggregationStage >>= printStage
 
 parseStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => m Ledger
 parseStage = buildLedger <$> (asks optJournal >>= parseFile)
@@ -52,3 +51,5 @@ aggregationStage accounts = do
   summarizeStage <- maybe id summarize <$> asks optDepth
   return $ (eraseStage . summarizeStage) accounts
 
+printStage :: (MonadIO m) => Accounts -> m ()
+printStage = liftIO . putStrLn . formatTable . reportToRows . createReport

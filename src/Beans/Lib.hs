@@ -10,7 +10,7 @@ import           Beans.Accounts         (Accounts, AccountsHistory,
 import           Beans.AST              (AccountName (..), AccountType (..))
 import           Beans.Balance          (balanceReport)
 import           Beans.Format           (createReport, formatTable,
-                                         reportToTable)
+                                         reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger)
 import           Beans.Options          (Command (..), Options (..))
 import           Beans.Parser           (parseFile)
@@ -28,7 +28,7 @@ run :: (MonadIO m, MonadThrow m, MonadReader Options m) =>  m ()
 run =
   parseStage >>= valuationStage >>= accountsStage >>= reportStage >>=
   aggregationStage >>=
-  liftIO . putStrLn . formatTable . reportToTable . createReport
+  liftIO . putStrLn . formatTable . reportToRows . createReport
 
 parseStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => m Ledger
 parseStage = buildLedger <$> (asks optJournal >>= parseFile)

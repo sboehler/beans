@@ -3,6 +3,7 @@ module Data.Map.Strict.Extended
   , lookupLessThan
   , lookupLessEqual
   , toListWith
+  , mapMonoid
   ) where
 
 import           Data.Map.Strict
@@ -15,3 +16,8 @@ lookupLessEqual k m = maybe mempty snd (lookupLE k m)
 
 toListWith :: (Ord k) => ((k, v) -> a) -> Map k v -> [a]
 toListWith f = fmap f . toList
+
+mapMonoid :: (Ord k, Monoid m) => k -> (m -> m) -> Map k m -> Map k m
+mapMonoid k f m =
+  let m1 = findWithDefault mempty k m
+   in insert k (f m1) m

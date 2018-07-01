@@ -8,7 +8,8 @@ module Beans.Prices
   , lookupPrice
   ) where
 
-import           Beans.AST                (CommodityName (..), Price (..))
+import           Beans.Data.Accounts      (CommodityName (..))
+import           Beans.Data.Ledger        (Price (..))
 import           Beans.Ledger             (Timestep (..))
 import           Control.Monad.Catch      (Exception, MonadThrow, throwM)
 import           Control.Monad.State      (evalState, get, modify)

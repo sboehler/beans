@@ -1,7 +1,7 @@
 module Beans.Options where
 
-import           Beans.AST          (CommodityName (..))
-import           Data.Time.Calendar (Day)
+import           Beans.Data.Accounts (CommodityName (..))
+import           Data.Time.Calendar  (Day)
 
 data Options = Options
   { optJournal :: FilePath

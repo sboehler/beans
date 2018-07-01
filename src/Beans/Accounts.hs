@@ -2,7 +2,6 @@ module Beans.Accounts
   ( AccountsException(..)
   , AccountsHistory
   , Accounts
-  , Restrictions
   , RestrictedAccounts(..)
   , calculateAccounts
   , updateAccounts
@@ -10,23 +9,22 @@ module Beans.Accounts
   , eraseLots
   ) where
 
-import           Beans.AST           (AccountName (..), Balance (..),
-                                      Close (..), Open (..), Posting (..),
-                                      Restriction (..), Transaction (..),
-                                      compatibleWith)
-import           Beans.Data.Accounts (Accounts, add, balance, mapAccounts,
-                                      mapLots, split)
-import           Beans.Ledger        (Timestep (..))
-import           Control.Monad       (unless, when)
-import           Control.Monad.Catch (Exception, MonadThrow, throwM)
-import           Control.Monad.State (MonadState, evalStateT, get, gets, put)
-import qualified Data.Map.Strict     as M
-import           Data.Scientific     (Scientific)
-import           Data.Time.Calendar  (Day)
+import           Beans.Data.Accounts     (AccountName (..), Accounts, add,
+                                          balance, mapAccounts, mapLots, split)
+import           Beans.Data.Ledger       (Balance (..), Close (..), Open (..),
+                                          Posting (..), Transaction (..))
+import           Beans.Data.Restrictions (Restriction, Restrictions)
+import qualified Beans.Data.Restrictions as R
+import           Beans.Ledger            (Timestep (..))
+import           Control.Monad           (unless, when)
+import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
+import           Control.Monad.State     (MonadState, evalStateT, get, gets,
+                                          put)
+import qualified Data.Map.Strict         as M
+import           Data.Scientific         (Scientific)
+import           Data.Time.Calendar      (Day)
 
 type AccountsHistory = M.Map Day Accounts
-
-type Restrictions = M.Map AccountName Restriction
 
 data RestrictedAccounts = RestrictedAccounts
   { _accounts     :: Accounts
@@ -69,25 +67,24 @@ updateAccounts Timestep {..} =
 openAccount :: (MonadThrow m, MonadState RestrictedAccounts m) => Open -> m ()
 openAccount open@Open {_account, _restriction} = do
   RestrictedAccounts {..} <- get
-  when (_account `M.member` _restrictions) (throwM $ AccountIsAlreadyOpen open)
+  when (_account `R.isOpen` _restrictions) (throwM $ AccountIsAlreadyOpen open)
   put
     RestrictedAccounts
-      {_restrictions = M.insert _account _restriction _restrictions, ..}
+      {_restrictions = R.add _account _restriction _restrictions, ..}
 
 closeAccount :: (MonadThrow m, MonadState RestrictedAccounts m) => Close -> m ()
 closeAccount closing@Close {..} = do
   RestrictedAccounts {..} <- get
-  let (r, restrictions) =
-        M.partitionWithKey (const . (== _account)) _restrictions
-  when (M.null r) (throwM $ AccountIsNotOpen closing)
+  let (r, rs) = R.split _account _restrictions
+  when (R.empty r) (throwM $ AccountIsNotOpen closing)
   let (deleted, remaining) = split _account _accounts
   unless (all (== 0) deleted) (throwM $ BalanceIsNotZero closing)
-  put RestrictedAccounts {_restrictions = restrictions, _accounts = remaining}
+  put RestrictedAccounts {_restrictions = rs, _accounts = remaining}
 
 checkBalance :: (MonadThrow m, MonadState RestrictedAccounts m) => Balance -> m ()
 checkBalance bal@Balance {_account, _amount, _commodity} = do
   RestrictedAccounts {..} <- get
-  unless (M.member _account _restrictions) (throwM $ AccountDoesNotExist bal)
+  unless (R.isOpen _account _restrictions) (throwM $ AccountDoesNotExist bal)
   let s = balance _account _commodity _accounts
   unless (s == _amount) (throwM $ BalanceDoesNotMatch bal s)
 
@@ -97,11 +94,11 @@ bookTransaction Transaction {_postings} = mapM_ bookPosting _postings
 bookPosting :: (MonadThrow m, MonadState RestrictedAccounts m) => Posting -> m ()
 bookPosting p@Posting {_account, _commodity, _amount, _lot} = do
   RestrictedAccounts {..} <- get
-  case M.lookup _account _restrictions of
+  case R.find _account _restrictions of
     Nothing -> throwM $ BookingErrorAccountNotOpen p
     Just r -> do
       unless
-        (_commodity `compatibleWith` r)
+        (R.isCompatible r _commodity)
         (throwM $ BookingErrorCommodityIncompatible p r)
       put
         RestrictedAccounts

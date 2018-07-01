@@ -1,6 +1,6 @@
 module Beans.Ledger where
 
-import           Beans.AST          (Balance (..), Close (..), Directive (..),
+import           Beans.Data.Ledger  (Balance (..), Close (..), Directive (..),
                                      Open (..), Price (..), Transaction (..))
 import qualified Data.Map.Strict    as M
 import           Data.Time.Calendar (Day)

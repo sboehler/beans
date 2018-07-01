@@ -7,8 +7,8 @@ module Beans.Lib
 import           Beans.Accounts         (Accounts, AccountsHistory,
                                          calculateAccounts, eraseLots,
                                          summarize)
-import           Beans.AST              (AccountName (..), AccountType (..))
 import           Beans.Balance          (balanceReport)
+import           Beans.Data.Accounts    (AccountName (..), AccountType (..))
 import           Beans.Format           (createReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger)

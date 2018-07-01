@@ -1,22 +1,27 @@
 module Beans.Data.Map
   ( Map
   , insert
+  , insert'
   , empty
+  , isEmpty
   , find
   , findWithDefault
+  , findWithDefault'
   , mapKeys
   , filter
+  , lookupLE
+  , lookupLT
   , filterByKey
   , member
   , toList
   , split
   ) where
 
-import Prelude hiding (filter)
 import           Data.Foldable    (Foldable)
 import           Data.Group       (Group (..))
 import qualified Data.Map.Strict  as M
 import           Data.Traversable (Traversable (..))
+import           Prelude          hiding (filter)
 
 newtype Map k v = Map {
   _unmap :: M.Map k v
@@ -39,10 +44,13 @@ instance Traversable (Map k) where
   traverse f (Map m) = Map <$> traverse f m
 
 
-insert :: (Ord k,Monoid v) => k -> (v -> v) -> Map k v -> Map k v
+insert :: (Ord k, Monoid v) => k -> (v -> v) -> Map k v -> Map k v
 insert k f (Map m) =
   let v = M.findWithDefault mempty k m
    in Map $ M.insert k (f v) m
+
+insert' :: Ord k => k -> v -> Map k v -> Map k v
+insert' k v (Map m) = Map $ M.insert k v m
 
 mapKeys :: (Ord k, Monoid v) => (k -> k) -> Map k v -> Map k v
 mapKeys f (Map m) = Map $ M.mapKeysWith mappend f m
@@ -70,5 +78,17 @@ find k (Map m) = M.lookup k m
 findWithDefault :: (Ord k, Monoid a) => k -> Map k a -> a
 findWithDefault k (Map m) = M.findWithDefault mempty k m
 
-empty :: Map k v -> Bool
-empty (Map m) = null m
+findWithDefault' :: (Ord k) => a -> k -> Map k a -> a
+findWithDefault' d k (Map m) = M.findWithDefault d k m
+
+isEmpty :: Map k v -> Bool
+isEmpty (Map m) = null m
+
+lookupLT :: (Monoid v, Ord k) => k -> Map k v -> v
+lookupLT k (Map m) = maybe mempty snd (M.lookupLT k m)
+
+lookupLE :: (Monoid v, Ord k) => k -> Map k v -> v
+lookupLE k (Map m) = maybe mempty snd (M.lookupLE k m)
+
+empty :: Map k v
+empty = Map M.empty

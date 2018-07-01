@@ -35,5 +35,5 @@ isCompatible r c =
 add :: AccountName -> Restriction -> Restrictions -> Restrictions
 add a r = M.insert a (const r)
 
-empty :: Restrictions -> Bool
-empty = M.empty
+isEmpty :: Restrictions -> Bool
+isEmpty = M.isEmpty

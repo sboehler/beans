@@ -1,6 +1,5 @@
 module Beans.Accounts
   ( AccountsException(..)
-  , AccountsHistory
   , Accounts
   , RestrictedAccounts(..)
   , calculateAccounts
@@ -20,11 +19,8 @@ import           Control.Monad           (unless, when)
 import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
 import           Control.Monad.State     (MonadState, evalStateT, get, gets,
                                           put)
-import qualified Data.Map.Strict         as M
 import           Data.Scientific         (Scientific)
-import           Data.Time.Calendar      (Day)
 
-type AccountsHistory = M.Map Day Accounts
 
 data RestrictedAccounts = RestrictedAccounts
   { _accounts     :: Accounts
@@ -76,7 +72,7 @@ closeAccount :: (MonadThrow m, MonadState RestrictedAccounts m) => Close -> m ()
 closeAccount closing@Close {..} = do
   RestrictedAccounts {..} <- get
   let (r, rs) = R.split _account _restrictions
-  when (R.empty r) (throwM $ AccountIsNotOpen closing)
+  when (R.isEmpty r) (throwM $ AccountIsNotOpen closing)
   let (deleted, remaining) = split _account _accounts
   unless (all (== 0) deleted) (throwM $ BalanceIsNotZero closing)
   put RestrictedAccounts {_restrictions = rs, _accounts = remaining}

@@ -12,6 +12,8 @@ import           Data.Time.Calendar (Day)
 
 type Accounts = M.Map (AccountName, CommodityName, Maybe Lot) (Sum Scientific)
 
+type AccountsHistory = M.Map Day Accounts
+
 data AccountType
   = Assets
   | Liabilities
@@ -75,3 +77,10 @@ split a = M.split (\(a', _, _) -> (a == a'))
 toList ::
      Accounts -> [((AccountName, CommodityName, Maybe Lot), Scientific)]
 toList = M.toList . fmap getSum
+
+
+lookupLE :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
+lookupLE = M.lookupLE
+
+lookupLT :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
+lookupLT = M.lookupLT

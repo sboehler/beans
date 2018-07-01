@@ -3,7 +3,7 @@ module Beans.Ledger where
 import           Beans.Data.Directives (Balance (..), Close (..),
                                         Directive (..), Open (..), Price (..),
                                         Transaction (..))
-import qualified Data.Map.Strict       as M
+import qualified Beans.Data.Map        as M
 import           Data.Time.Calendar    (Day)
 
 
@@ -25,9 +25,8 @@ updateLedger :: Directive  -> Ledger -> Ledger
 updateLedger directive ledger =
   case date directive of
     Just day ->
-      let t = M.findWithDefault (Timestep day [] [] [] [] []) day ledger
-          t' = updateTimestep directive t
-       in M.insert day t' ledger
+      let t = M.findWithDefault' (Timestep day [] [] [] [] []) day ledger
+       in M.insert' day (updateTimestep directive t) ledger
     Nothing -> ledger
 
 updateTimestep :: Directive  -> Timestep -> Timestep

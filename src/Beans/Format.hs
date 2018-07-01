@@ -2,9 +2,8 @@ module Beans.Format
   (Section(..), formatTable, reportToRows, createReport)
 where
 
-import           Beans.AST                (AccountName (..), CommodityName (..),
-                                           Lot (..))
-import           Beans.Data.Accounts      (Accounts, toList)
+import           Beans.Data.Accounts      (AccountName (..), Accounts,
+                                           CommodityName (..), Lot (..), toList)
 import           Beans.Table              (ColDesc (..), formatStandard, left,
                                            right, showTable)
 import qualified Data.List                as L

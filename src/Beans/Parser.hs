@@ -1,13 +1,14 @@
 module Beans.Parser where
 
-import           Beans.AST                  (AccountName (..), AccountType (..),
-                                             Balance (..), Close (..),
-                                             CommodityName (..), Directive (..),
-                                             Flag (..), Include (..), Lot (..),
-                                             Open (..), Option (..),
-                                             Posting (..), Price (..),
-                                             Restriction (..), Tag (..),
+import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
+                                             CommodityName (..), Lot (..))
+import           Beans.Data.Ledger          (Balance (..), Close (..),
+                                             Directive (..), Flag (..),
+                                             Include (..), Open (..),
+                                             Option (..), Posting (..),
+                                             Price (..), Tag (..),
                                              Transaction (..))
+import           Beans.Data.Restrictions    (Restriction (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO)

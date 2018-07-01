@@ -5,13 +5,15 @@ module Beans.Pretty
   , prettyPrintLedger
   ) where
 
-import           Beans.AST                 (AccountName (..), Balance (..),
-                                            Close (..), CommodityName (..),
+import           Beans.Data.Accounts       (AccountName (..),
+                                            CommodityName (..), Lot (..))
+import           Beans.Data.Ledger         (Balance (..), Close (..),
                                             Directive (..), Flag (..),
-                                            Include (..), Lot (..), Open (..),
+                                            Include (..), Open (..),
                                             Option (..), Posting (..),
-                                            Price (..), Restriction (..),
-                                            Tag (..), Transaction (..))
+                                            Price (..), Tag (..),
+                                            Transaction (..))
+import           Beans.Data.Restrictions   (Restriction (..))
 import           Beans.Ledger
 import qualified Data.Map.Strict           as M
 import           Data.Scientific           (Scientific)

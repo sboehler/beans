@@ -1,13 +1,13 @@
 module Main where
 
+import           Beans.Lib           (Command (..), Options (..), runBeans)
 import           Data.Semigroup      ((<>))
-import Beans.Lib (Command(..), Options(..), runBeans)
 import           Options.Applicative
 
+import           Beans.Data.Accounts (CommodityName)
+import qualified Beans.Parser        as P
 import qualified Data.Text.Lazy      as T
 import           Data.Time.Calendar  (Day)
-import           Beans.AST         (CommodityName)
-import qualified Beans.Parser      as P
 import           Text.Megaparsec     (parseMaybe)
 
 

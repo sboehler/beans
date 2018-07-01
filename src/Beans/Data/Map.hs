@@ -1,9 +1,13 @@
 module Beans.Data.Map
   ( Map
   , insert
+  , empty
+  , find
+  , findWithDefault
   , mapKeys
   , filter
   , filterByKey
+  , member
   , toList
   , split
   ) where
@@ -56,3 +60,15 @@ split f (Map m) =
 
 toList :: Map k v -> [(k, v)]
 toList (Map m) = M.toList m
+
+member :: Ord k => k -> Map k v -> Bool
+member k (Map m) = k `M.member` m
+
+find :: Ord k => k -> Map k a -> Maybe a
+find k (Map m) = M.lookup k m
+
+findWithDefault :: (Ord k, Monoid a) => k -> Map k a -> a
+findWithDefault k (Map m) = M.findWithDefault mempty k m
+
+empty :: Map k v -> Bool
+empty (Map m) = null m

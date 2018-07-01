@@ -8,7 +8,7 @@ module Beans.Accounts
   , eraseLots
   ) where
 
-import           Beans.Data.Accounts     (AccountName (..), Accounts, add,
+import           Beans.Data.Accounts     (AccountName (..), Accounts, Amount, add,
                                           balance, mapAccounts, mapLots, split)
 import           Beans.Data.Directives   (Balance (..), Close (..), Open (..),
                                           Posting (..), Transaction (..))
@@ -19,7 +19,6 @@ import           Control.Monad           (unless, when)
 import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
 import           Control.Monad.State     (MonadState, evalStateT, get, gets,
                                           put)
-import           Data.Scientific         (Scientific)
 
 
 data RestrictedAccounts = RestrictedAccounts
@@ -44,7 +43,7 @@ data AccountsException
   | BalanceIsNotZero Close
   | AccountDoesNotExist Balance
   | BalanceDoesNotMatch Balance
-                        Scientific
+                        Amount
   deriving (Show)
 
 instance Exception AccountsException

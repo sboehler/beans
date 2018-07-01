@@ -1,6 +1,7 @@
 module Beans.Table where
 
 import           Data.List                (intercalate, transpose)
+import           Data.Monoid              (Sum, getSum)
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
                                            formatScientific)
 
@@ -57,5 +58,5 @@ showTable coldefs items totals =
       pure separator ++
       (fillColumns colValueFill <$> totalRows) ++ pure separator
 
-formatStandard :: Scientific -> String
-formatStandard = formatScientific Fixed (Just 2)
+formatStandard :: Sum Scientific -> String
+formatStandard = formatScientific Fixed (Just 2) . getSum

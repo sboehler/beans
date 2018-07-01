@@ -1,7 +1,8 @@
 module Beans.Data.Directives
    where
 
-import           Beans.Data.Accounts     (AccountName, CommodityName, Lot)
+import           Beans.Data.Accounts     (AccountName, Amount, CommodityName,
+                                          Lot)
 import           Beans.Data.Restrictions (Restriction)
 import           Data.Scientific         (Scientific)
 import           Data.Text.Lazy          (Text)
@@ -22,7 +23,7 @@ data Balance = Balance
   { _pos       :: Maybe P.SourcePos
   , _date      :: Day
   , _account   :: AccountName
-  , _amount    :: Scientific
+  , _amount    :: Amount
   , _commodity :: CommodityName
   } deriving (Show)
 
@@ -60,7 +61,7 @@ data Transaction = Transaction
 data Posting = Posting
   { _pos       :: Maybe P.SourcePos
   , _account   :: AccountName
-  , _amount    :: Scientific
+  , _amount    :: Amount
   , _commodity :: CommodityName
   , _lot       :: Maybe Lot
   } deriving (Show)

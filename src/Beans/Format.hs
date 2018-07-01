@@ -2,13 +2,12 @@ module Beans.Format
   (Section(..), formatTable, reportToRows, createReport)
 where
 
-import           Beans.Data.Accounts      (AccountName (..), Accounts,
+import           Beans.Data.Accounts      (AccountName (..), Accounts, Amount,
                                            CommodityName (..), Lot (..), toList)
+import qualified Beans.Data.Map           as M
 import           Beans.Table              (ColDesc (..), formatStandard, left,
                                            right, showTable)
 import qualified Data.List                as L
-import qualified Data.Map.Strict.Extended as M
-import           Data.Scientific.Extended (Scientific)
 import           Data.Text.Lazy           (Text, intercalate, pack, unpack)
 
 data Report = Report [Position] [Section] deriving (Show)
@@ -19,7 +18,7 @@ data Section = Section
   , _sections  :: [Section]
   } deriving (Show)
 
-data Position = Position CommodityName (Maybe Lot) Scientific
+data Position = Position CommodityName (Maybe Lot) Amount
   deriving (Show)
 
 
@@ -41,7 +40,7 @@ groupSections title sections =
    in Section [title] positions subsections
 
 group :: [(Text, [Section])] -> [Section]
-group = M.elems . M.mapWithKey groupSections . M.fromListWith (++)
+group = fmap (uncurry groupSections) . M.toList . M.fromList
 
 splitSection :: Section -> (Text, [Section])
 splitSection (Section (n:ns) ps ss) = (n, [Section ns ps ss])

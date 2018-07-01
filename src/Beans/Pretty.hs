@@ -5,7 +5,7 @@ module Beans.Pretty
   , prettyPrintLedger
   ) where
 
-import           Beans.Data.Accounts       (AccountName (..),
+import           Beans.Data.Accounts       (AccountName (..), Amount,
                                             CommodityName (..), Lot (..))
 import           Beans.Data.Directives     (Balance (..), Close (..),
                                             Directive (..), Flag (..),
@@ -19,6 +19,9 @@ import           Beans.Ledger
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)
+
+instance Pretty Amount where
+  pretty = pretty . show
 
 instance Pretty Scientific where
   pretty = pretty . show

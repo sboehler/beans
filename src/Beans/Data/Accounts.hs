@@ -5,12 +5,14 @@ import           Data.Foldable      (fold)
 import           Data.Group         (invert)
 import qualified Data.List          as L
 import           Data.Maybe         (catMaybes)
-import           Data.Monoid        (Sum (Sum), getSum)
+import           Data.Monoid        (Sum)
 import           Data.Scientific    (Scientific)
 import           Data.Text.Lazy     (Text, unpack)
 import           Data.Time.Calendar (Day)
 
-type Accounts = M.Map (AccountName, CommodityName, Maybe Lot) (Sum Scientific)
+type Amount = Sum Scientific
+
+type Accounts = M.Map (AccountName, CommodityName, Maybe Lot) Amount
 
 type AccountsHistory = M.Map Day Accounts
 
@@ -38,7 +40,7 @@ instance Show CommodityName where
   show (CommodityName n) = unpack n
 
 data Lot
-  = Lot { _price           :: Scientific
+  = Lot { _price           :: Amount
         , _targetCommodity :: CommodityName
         , _date            :: Day
         , _label           :: Maybe Text }
@@ -51,8 +53,8 @@ instance Show Lot where
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
 
-add :: AccountName -> CommodityName -> Maybe Lot -> Scientific -> Accounts -> Accounts
-add a c l s = M.insert (a, c, l) (mappend (Sum s))
+add :: AccountName -> CommodityName -> Maybe Lot -> Amount -> Accounts -> Accounts
+add a c l s = M.insert (a, c, l) (mappend s)
 
 minus :: Accounts -> Accounts -> Accounts
 minus a1 a2 = a1 `mappend` invert a2
@@ -63,21 +65,20 @@ mapAccounts f = M.mapKeys (\(a, c, l) -> (f a, c, l))
 mapLots :: (Maybe Lot -> Maybe Lot) -> Accounts -> Accounts
 mapLots f = M.mapKeys (\(a, c, l) -> (a, c, f l))
 
-balance :: AccountName -> CommodityName -> Accounts -> Scientific
-balance a c = getSum . fold . filter'
+balance :: AccountName -> CommodityName -> Accounts -> Amount
+balance a c = fold . filter'
   where
     filter' = M.filterByKey (\(a', c', _) -> a' == a && c' == c)
 
-filter :: (Scientific -> Bool) -> Accounts -> Accounts
-filter f = M.filter (f . getSum)
+filter :: (Amount -> Bool) -> Accounts -> Accounts
+filter = M.filter 
 
 split :: AccountName -> Accounts -> (Accounts, Accounts)
 split a = M.split (\(a', _, _) -> (a == a'))
 
 toList ::
-     Accounts -> [((AccountName, CommodityName, Maybe Lot), Scientific)]
-toList = M.toList . fmap getSum
-
+     Accounts -> [((AccountName, CommodityName, Maybe Lot), Amount)]
+toList = M.toList 
 
 lookupLE :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
 lookupLE = M.lookupLE

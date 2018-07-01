@@ -7,6 +7,7 @@ module Beans.Data.Map
   , find
   , findWithDefault
   , findWithDefault'
+  , fromList
   , mapKeys
   , filter
   , lookupLE
@@ -68,6 +69,9 @@ split f (Map m) =
 
 toList :: Map k v -> [(k, v)]
 toList (Map m) = M.toList m
+
+fromList :: (Monoid v, Ord k) => [(k, v)] -> Map k v
+fromList l = Map $ M.fromListWith mappend l
 
 member :: Ord k => k -> Map k v -> Bool
 member k (Map m) = k `M.member` m

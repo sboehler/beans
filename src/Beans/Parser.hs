@@ -1,13 +1,14 @@
 module Beans.Parser where
 
-import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
+import           Beans.Data.Accounts        (AccountName (..), AccountType (..), Amount,
                                              CommodityName (..), Lot (..))
-import           Beans.Data.Directives      (Balance (..), Close (..),
-                                             Directive (..), Flag (..),
-                                             Include (..), Open (..),
+import           Beans.Data.Directives      (Balance (..),
+                                             Close (..), Directive (..),
+                                             Flag (..), Include (..), Open (..),
                                              Option (..), Posting (..),
                                              Price (..), Tag (..),
                                              Transaction (..))
+import qualified Beans.Data.Map             as M
 import           Beans.Data.Restrictions    (Restriction (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
@@ -15,8 +16,7 @@ import           Control.Monad.IO.Class     (MonadIO)
 import           Control.Monad.Trans        (liftIO)
 import           Data.Char                  (isAlphaNum)
 import           Data.Functor               (($>))
-import qualified Data.Map.Strict            as M
-import           Data.Scientific            (Scientific)
+import           Data.Monoid                (Sum (Sum))
 import qualified Data.Set                   as S
 import           Data.Text.Lazy             (Text, cons, unpack)
 import           Data.Text.Lazy.IO          (readFile)
@@ -90,8 +90,8 @@ commodity :: Parser CommodityName
 commodity =
   lexeme $ CommodityName <$> identifier
 
-number :: Parser Scientific
-number = lexeme $ L.signed sc L.scientific
+amount :: Parser Amount
+amount = lexeme $ Sum <$> L.signed sc L.scientific
 
 braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
@@ -103,14 +103,14 @@ quotedString =
     quote = char '"'
 
 lot :: Day -> Parser Lot
-lot d = braces (Lot <$> number <*> commodity <*> lotDate <*> lotLabel)
+lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)
   where
     comma = symbol ","
     lotDate = (comma >> date) <|> pure d
     lotLabel = optional (comma >> quotedString)
 
 postingPrice :: Parser ()
-postingPrice = (at *> optional at *> number *> commodity) $> ()
+postingPrice = (at *> optional at *> amount *> commodity) $> ()
   where
     at = symbol "@"
 
@@ -122,7 +122,7 @@ data WildcardPosting = WildcardPosting P.SourcePos AccountName deriving (Show, E
 
 posting :: Day -> P.SourcePos -> AccountName -> Parser Posting
 posting d p a =
-  Posting (Just p) a <$> number <*> commodity <*> optional (lot d) <*
+  Posting (Just p) a <$> amount <*> commodity <*> optional (lot d) <*
   optional postingPrice
 
 wildcardPosting :: P.SourcePos -> AccountName -> Parser WildcardPosting
@@ -167,11 +167,14 @@ close pos d = Close (Just pos) d <$ symbol "close" <*> account
 
 balance :: P.SourcePos -> Day -> Parser Balance
 balance pos d =
-  Balance (Just pos) d <$ symbol "balance" <*> account <*> number <*> commodity
+  Balance (Just pos) d <$ symbol "balance" <*> account <*> amount <*> commodity
 
 price :: P.SourcePos -> Day -> Parser Price
 price pos d =
-  Price pos d <$ symbol "price" <*> commodity <*> number <*> commodity
+  Price pos d <$ symbol "price" <*> commodity <*> p <*> commodity
+   where 
+    p = lexeme $ L.signed sc L.scientific
+
 
 event :: Parser Directive
 event = do
@@ -223,16 +226,16 @@ completePostings pos p =
             [w] -> return $ postings ++ map (balanceImbalance w) imbalances
             _   -> throwM $ UnbalancedTransaction pos
 
-balanceImbalance :: WildcardPosting -> (CommodityName, Scientific) -> Posting
+balanceImbalance :: WildcardPosting -> (CommodityName, Amount) -> Posting
 balanceImbalance (WildcardPosting _pos _account) (c, a) =
   Posting
     {_pos = Just _pos, _amount = negate a, _commodity = c, _lot = Nothing, ..}
 
-calculateImbalances :: [Posting] -> [(CommodityName, Scientific)]
+calculateImbalances :: [Posting] -> [(CommodityName, Amount)]
 calculateImbalances =
-  M.toList . M.filter ((> 0.005) . abs) . M.fromListWith (+) . fmap weight
+  M.toList . M.filter ((> Sum 0.005) . abs) . M.fromList . fmap weight
 
-weight :: Posting  -> (CommodityName, Scientific)
+weight :: Posting  -> (CommodityName, Amount)
 weight Posting {..} =
   case _lot of
     Just Lot {_price, _targetCommodity} -> (_targetCommodity, _amount * _price)

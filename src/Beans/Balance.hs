@@ -1,7 +1,8 @@
 module Beans.Balance where
 
-import           Beans.Accounts           (Accounts, AccountsHistory,
-                                           diffAccounts)
+import Prelude hiding (filter)
+import           Beans.Accounts           (AccountsHistory)
+import           Beans.Data.Accounts      (Accounts, minus, filter)
 import           Beans.Options            (Options (..))
 import           Control.Monad.Catch      (MonadThrow)
 import           Control.Monad.IO.Class   (MonadIO, liftIO)
@@ -17,7 +18,7 @@ balanceReport accountsHistory = do
   from <- asks optFrom
   let a1 = M.lookupLessEqual to accountsHistory
       a0 = maybe mempty (`M.lookupLessEqual` accountsHistory) from
-  return $ M.filter (/= 0) $ a1 `diffAccounts` a0
+  return $ filter (/= 0) $ a1 `minus` a0
 
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime

@@ -2,9 +2,9 @@ module Beans.Format
   (Section(..), formatTable, reportToRows, createReport)
 where
 
-import           Beans.Accounts           (Accounts, Key (..))
 import           Beans.AST                (AccountName (..), CommodityName (..),
                                            Lot (..))
+import           Beans.Data.Accounts      (Accounts, toList)
 import           Beans.Table              (ColDesc (..), formatStandard, left,
                                            right, showTable)
 import qualified Data.List                as L
@@ -24,14 +24,13 @@ data Position = Position CommodityName (Maybe Lot) Scientific
   deriving (Show)
 
 
--- Creating a report 
+-- Creating a report
 
 createReport :: Accounts -> Report
 createReport = toReport . groupSections "" . toSections
   where
-    toSections = M.elems . M.mapWithKey toSection
-    toSection Key {..} amount =
-      Section (maybe [] toLabel keyAccount) [Position keyCommodity keyLot amount] []
+    toSections = fmap toSection . toList
+    toSection ((a, c, l), s) = Section (toLabel a) [Position c l s] []
     toLabel (AccountName t ns) = pack (show t) : ns
     toReport (Section _ pos sec) = Report pos sec
 
@@ -47,7 +46,7 @@ group = M.elems . M.mapWithKey groupSections . M.fromListWith (++)
 
 splitSection :: Section -> (Text, [Section])
 splitSection (Section (n:ns) ps ss) = (n, [Section ns ps ss])
-splitSection (Section [] ps ss) = (mempty, [Section [] ps ss])
+splitSection (Section [] ps ss)     = (mempty, [Section [] ps ss])
 
 
 -- Formatting a report into rows
@@ -75,7 +74,7 @@ positionsToRows title [] = [[unpack title, "", "", ""]]
 
 indentFirstColumn :: Int -> [String] -> [String]
 indentFirstColumn n (s:ss) = (replicate n ' '++s):ss
-indentFirstColumn _ [] = []
+indentFirstColumn _ []     = []
 
 
 -- formatting rows into a table

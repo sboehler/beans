@@ -7,25 +7,23 @@ module Beans.Accounts
   , RestrictedAccounts(..)
   , calculateAccounts
   , updateAccounts
-  , diffAccounts
   , summarize
-  , eraseAccounts
   , eraseLots
   ) where
 
-import           Beans.AST             (AccountName (..), Balance (..),
-                                        Close (..), CommodityName (..),
-                                        Lot (..), Open (..), Posting (..),
-                                        Restriction (..), Transaction (..),
-                                        compatibleWith)
-import           Beans.Ledger          (Timestep (..))
-import           Control.Monad         (unless, when)
-import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
-import           Control.Monad.State   (MonadState, evalStateT, get, gets, put)
-import qualified Data.Map.Merge.Strict as MM
-import qualified Data.Map.Strict       as M
-import           Data.Scientific       (Scientific)
-import           Data.Time.Calendar    (Day)
+import           Beans.AST           (AccountName (..), Balance (..),
+                                      Close (..), CommodityName (..), Lot (..),
+                                      Open (..), Posting (..), Restriction (..),
+                                      Transaction (..), compatibleWith)
+import           Beans.Data.Accounts (Accounts, add, balance, mapAccounts,
+                                      mapLots, split)
+import           Beans.Ledger        (Timestep (..))
+import           Control.Monad       (unless, when)
+import           Control.Monad.Catch (Exception, MonadThrow, throwM)
+import           Control.Monad.State (MonadState, evalStateT, get, gets, put)
+import qualified Data.Map.Strict     as M
+import           Data.Scientific     (Scientific)
+import           Data.Time.Calendar  (Day)
 
 type AccountsHistory = M.Map Day Accounts
 
@@ -35,7 +33,6 @@ data Key = Key
   , keyLot       :: Maybe Lot
   } deriving (Ord, Eq)
 
-type Accounts = M.Map Key Scientific
 type Restrictions = M.Map AccountName Restriction
 
 data RestrictedAccounts = RestrictedAccounts
@@ -43,26 +40,14 @@ data RestrictedAccounts = RestrictedAccounts
   , _restrictions :: Restrictions
   }
 
-diffAccounts :: Accounts -> Accounts -> Accounts
-diffAccounts = MM.merge MM.preserveMissing
-  (MM.mapMissing $ const negate)
-  (MM.zipWithMatched $ const (-))
-
 summarize :: Int -> Accounts -> Accounts
-summarize d = M.mapKeysWith (+) m
-  where
-    m Key {..} = Key {keyAccount = shorten d <$> keyAccount, ..}
+summarize d = mapAccounts (shorten d)
 
 shorten :: Int -> AccountName -> AccountName
 shorten d a = a {_unAccountName = take d (_unAccountName a)}
 
-
 eraseLots :: Accounts -> Accounts
-eraseLots = M.mapKeysWith (+) (\k -> k {keyLot = Nothing})
-
-eraseAccounts ::  Accounts -> Accounts
-eraseAccounts = M.mapKeysWith (+) (\k -> k {keyAccount = Nothing})
-
+eraseLots = mapLots (const Nothing)
 
 data AccountsException
   = AccountIsNotOpen Close
@@ -102,21 +87,15 @@ closeAccount closing@Close {..} = do
   let (r, restrictions) =
         M.partitionWithKey (const . (== _account)) _restrictions
   when (M.null r) (throwM $ AccountIsNotOpen closing)
-  let (a, accounts) =
-        M.partitionWithKey (const . (== Just _account) . keyAccount) _accounts
-  unless (all (== 0) a) (throwM $ BalanceIsNotZero closing)
-  put RestrictedAccounts {_restrictions = restrictions, _accounts = accounts}
+  let (deleted, remaining) = split _account _accounts
+  unless (all (== 0) deleted) (throwM $ BalanceIsNotZero closing)
+  put RestrictedAccounts {_restrictions = restrictions, _accounts = remaining}
 
 checkBalance :: (MonadThrow m, MonadState RestrictedAccounts m) => Balance -> m ()
 checkBalance bal@Balance {_account, _amount, _commodity} = do
   RestrictedAccounts {..} <- get
   unless (M.member _account _restrictions) (throwM $ AccountDoesNotExist bal)
-  let s =
-        sum
-          (M.filterWithKey
-             (\Key {keyAccount, keyCommodity} ->
-                const $ keyAccount == Just _account && keyCommodity == _commodity)
-             _accounts)
+  let s = balance _account _commodity _accounts
   unless (s == _amount) (throwM $ BalanceDoesNotMatch bal s)
 
 bookTransaction :: (MonadThrow m, MonadState RestrictedAccounts m) =>  Transaction -> m ()
@@ -133,7 +112,4 @@ bookPosting p@Posting {_account, _commodity, _amount, _lot} = do
         (throwM $ BookingErrorCommodityIncompatible p r)
       put
         RestrictedAccounts
-          { _accounts =
-              M.insertWith (+) (Key (Just _account) _commodity _lot) _amount _accounts
-          , ..
-          }
+          {_accounts = add _account _commodity _lot _amount _accounts, ..}

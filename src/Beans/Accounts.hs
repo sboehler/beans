@@ -2,7 +2,6 @@ module Beans.Accounts
   ( AccountsException(..)
   , AccountsHistory
   , Accounts
-  , Key(..)
   , Restrictions
   , RestrictedAccounts(..)
   , calculateAccounts
@@ -12,9 +11,9 @@ module Beans.Accounts
   ) where
 
 import           Beans.AST           (AccountName (..), Balance (..),
-                                      Close (..), CommodityName (..), Lot (..),
-                                      Open (..), Posting (..), Restriction (..),
-                                      Transaction (..), compatibleWith)
+                                      Close (..), Open (..), Posting (..),
+                                      Restriction (..), Transaction (..),
+                                      compatibleWith)
 import           Beans.Data.Accounts (Accounts, add, balance, mapAccounts,
                                       mapLots, split)
 import           Beans.Ledger        (Timestep (..))
@@ -26,12 +25,6 @@ import           Data.Scientific     (Scientific)
 import           Data.Time.Calendar  (Day)
 
 type AccountsHistory = M.Map Day Accounts
-
-data Key = Key
-  { keyAccount   :: Maybe AccountName
-  , keyCommodity :: CommodityName
-  , keyLot       :: Maybe Lot
-  } deriving (Ord, Eq)
 
 type Restrictions = M.Map AccountName Restriction
 

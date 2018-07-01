@@ -7,7 +7,7 @@ module Beans.Pretty
 
 import           Beans.Data.Accounts       (AccountName (..),
                                             CommodityName (..), Lot (..))
-import           Beans.Data.Ledger         (Balance (..), Close (..),
+import           Beans.Data.Directives     (Balance (..), Close (..),
                                             Directive (..), Flag (..),
                                             Include (..), Open (..),
                                             Option (..), Posting (..),

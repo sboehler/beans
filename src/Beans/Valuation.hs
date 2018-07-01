@@ -5,7 +5,7 @@ import           Beans.Accounts           (RestrictedAccounts (..),
 import           Beans.Data.Accounts      (AccountName (..), AccountType (..),
                                            Accounts, CommodityName (..),
                                            Lot (..), toList)
-import           Beans.Data.Ledger        (Flag (..), Open (..), Posting (..),
+import           Beans.Data.Directives    (Flag (..), Open (..), Posting (..),
                                            Transaction (..))
 import           Beans.Data.Restrictions  (Restriction (..), Restrictions)
 import           Beans.Ledger             (Ledger, Timestep (..))

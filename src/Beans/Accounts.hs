@@ -11,7 +11,7 @@ module Beans.Accounts
 
 import           Beans.Data.Accounts     (AccountName (..), Accounts, add,
                                           balance, mapAccounts, mapLots, split)
-import           Beans.Data.Ledger       (Balance (..), Close (..), Open (..),
+import           Beans.Data.Directives   (Balance (..), Close (..), Open (..),
                                           Posting (..), Transaction (..))
 import           Beans.Data.Restrictions (Restriction, Restrictions)
 import qualified Beans.Data.Restrictions as R

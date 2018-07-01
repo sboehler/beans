@@ -1,4 +1,4 @@
-module Beans.Data.Ledger
+module Beans.Data.Directives
    where
 
 import           Beans.Data.Accounts     (AccountName, CommodityName, Lot)

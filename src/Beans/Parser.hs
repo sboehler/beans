@@ -2,7 +2,7 @@ module Beans.Parser where
 
 import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
                                              CommodityName (..), Lot (..))
-import           Beans.Data.Ledger          (Balance (..), Close (..),
+import           Beans.Data.Directives      (Balance (..), Close (..),
                                              Directive (..), Flag (..),
                                              Include (..), Open (..),
                                              Option (..), Posting (..),

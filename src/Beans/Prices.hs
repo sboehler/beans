@@ -9,7 +9,7 @@ module Beans.Prices
   ) where
 
 import           Beans.Data.Accounts      (CommodityName (..))
-import           Beans.Data.Ledger        (Price (..))
+import           Beans.Data.Directives    (Price (..))
 import           Beans.Ledger             (Timestep (..))
 import           Control.Monad.Catch      (Exception, MonadThrow, throwM)
 import           Control.Monad.State      (evalState, get, modify)

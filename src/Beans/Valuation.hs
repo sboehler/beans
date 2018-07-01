@@ -1,12 +1,12 @@
 module Beans.Valuation where
 
-import           Beans.Accounts           (Accounts, Key (..),
-                                           RestrictedAccounts (..),
+import           Beans.Accounts           (RestrictedAccounts (..),
                                            Restrictions, updateAccounts)
 import           Beans.AST                (AccountName (..), AccountType (..),
                                            CommodityName (..), Flag (..),
                                            Lot (..), Open (..), Posting (..),
                                            Restriction (..), Transaction (..))
+import           Beans.Data.Accounts      (Accounts, toList)
 import           Beans.Ledger             (Ledger, Timestep (..))
 import           Beans.Prices             (NormalizedPrices, Prices,
                                            lookupPrice, normalize, updatePrices)
@@ -117,33 +117,27 @@ convertPosting prices Posting {..} = do
 adjustValuationForAccounts ::
      (MonadThrow m, MonadState ValuationState m)
   => m [Transaction]
-adjustValuationForAccounts  = do
-  ValuationState { _prevAccounts, _date } <- get
-  s <- sequence $ M.mapWithKey adjustValuationForAccount _prevAccounts
-  return $ catMaybes $ M.toListWith snd s
+adjustValuationForAccounts = do
+  ValuationState {_prevAccounts, _date} <- get
+  s <- sequence $ adjustValuationForAccount <$> toList _prevAccounts
+  return $ catMaybes s
 
 adjustValuationForAccount ::
      (MonadThrow m, MonadState ValuationState m)
-  => Key
-  -> Scientific
+  => ((AccountName, CommodityName, Maybe Lot), Scientific)
   -> m (Maybe Transaction)
-adjustValuationForAccount Key {..} s = do
+adjustValuationForAccount ((a@(AccountName t _), c, l), s) = do
   ValuationState { _target
                  , _date
                  , _valuationAccount
                  , _prevNormalizedPrices
                  , _normalizedPrices
                  } <- get
-  v0 <- lookupPrice keyCommodity _prevNormalizedPrices
-  v1 <- lookupPrice keyCommodity _normalizedPrices
-  if v0 == v1
-    then return Nothing
-    else case keyAccount of
-           Just account@(AccountName t _)
-             | t == Assets || t == Liabilities ->
-               Just <$>
-               createValuationTransaction account keyLot (s * (v1 - v0))
-           _ -> return Nothing
+  v0 <- lookupPrice c _prevNormalizedPrices
+  v1 <- lookupPrice c _normalizedPrices
+  if v0 /= v1 && t `elem` [Assets, Liabilities]
+    then Just <$> createValuationTransaction a l (s * (v1 - v0))
+    else return Nothing
 
 createValuationTransaction ::
      MonadState ValuationState m

@@ -13,9 +13,9 @@ import           Beans.Data.Directives     (Balance (..), Close (..),
                                             Option (..), Posting (..),
                                             Price (..), Tag (..),
                                             Transaction (..))
+import qualified Beans.Data.Map            as M
 import           Beans.Data.Restrictions   (Restriction (..))
 import           Beans.Ledger
-import qualified Data.Map.Strict           as M
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)

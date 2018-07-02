@@ -102,8 +102,7 @@ prettyPrintLedger :: Ledger -> IO()
 prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty . snd) . M.toList
 
 instance Pretty Timestep where
-  pretty Timestep{_date, _openings, _closings, _balances, _transactions} =
-    pretty _date <> hardline <>
+  pretty Timestep{ _openings, _closings, _balances, _transactions} =
       vsep (map pretty _openings) <> hardline <>
       vsep (map pretty _closings) <> hardline <>
       vsep (map pretty _transactions)

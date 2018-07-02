@@ -4,11 +4,11 @@ module Beans.Lib
   , Command(..)
   ) where
 
-import           Beans.Accounts         (calculateAccounts, eraseLots,
-                                         summarize)
+import           Beans.Accounts         (calculateAccounts)
 import           Beans.Balance          (balanceReport)
 import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
-                                         Accounts, AccountsHistory)
+                                         Accounts, AccountsHistory, eraseLots,
+                                         summarize)
 import           Beans.Format           (createReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger)

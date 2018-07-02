@@ -4,12 +4,9 @@ module Beans.Accounts
   , RestrictedAccounts(..)
   , calculateAccounts
   , updateAccounts
-  , summarize
-  , eraseLots
   ) where
 
-import           Beans.Data.Accounts     (AccountName (..), Accounts, Amount, add,
-                                          balance, mapAccounts, mapLots, split)
+import           Beans.Data.Accounts     (Accounts, Amount, add, balance, split)
 import           Beans.Data.Directives   (Balance (..), Close (..), Open (..),
                                           Posting (..), Transaction (..))
 import           Beans.Data.Restrictions (Restriction, Restrictions)
@@ -25,15 +22,6 @@ data RestrictedAccounts = RestrictedAccounts
   { _accounts     :: Accounts
   , _restrictions :: Restrictions
   }
-
-summarize :: Int -> Accounts -> Accounts
-summarize d = mapAccounts (shorten d)
-
-shorten :: Int -> AccountName -> AccountName
-shorten d a = a {_unAccountName = take d (_unAccountName a)}
-
-eraseLots :: Accounts -> Accounts
-eraseLots = mapLots (const Nothing)
 
 data AccountsException
   = AccountIsNotOpen Close

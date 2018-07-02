@@ -8,7 +8,7 @@ import           Data.Time.Calendar    (Day)
 
 
 data Timestep = Timestep
-  { _date         :: Day,
+  {
     _openings     :: [Open]
   , _closings     :: [Close]
   , _balances     :: [Balance]
@@ -16,18 +16,26 @@ data Timestep = Timestep
   , _prices       :: [Price]
   } deriving (Show)
 
+instance Monoid Timestep where
+  mempty = Timestep [] [] [] [] []
+  (Timestep o c b t p) `mappend` (Timestep o' c' b' t' p') =
+    Timestep
+      (o `mappend` o')
+      (c `mappend` c')
+      (b `mappend` b')
+      (t `mappend` t')
+      (p `mappend` p')
+
 type Ledger = M.Map Day Timestep
 
 buildLedger :: [Directive] -> Ledger
 buildLedger = foldr updateLedger M.empty
 
-updateLedger :: Directive  -> Ledger -> Ledger
-updateLedger directive ledger =
-  case date directive of
-    Just day ->
-      let t = M.findWithDefault' (Timestep day [] [] [] [] []) day ledger
-       in M.insert' day (updateTimestep directive t) ledger
-    Nothing -> ledger
+updateLedger :: Directive -> Ledger -> Ledger
+updateLedger d l =
+  case date d of
+    Just day -> M.insert day (updateTimestep d) l
+    Nothing  -> l
 
 updateTimestep :: Directive  -> Timestep -> Timestep
 updateTimestep directive ts@Timestep{..} = case directive of

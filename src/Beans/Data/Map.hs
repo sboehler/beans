@@ -13,6 +13,7 @@ module Beans.Data.Map
   , lookupLE
   , lookupLT
   , filterByKey
+  , singleton
   , member
   , toList
   , split
@@ -44,6 +45,8 @@ instance Foldable (Map k) where
 instance Traversable (Map k) where
   traverse f (Map m) = Map <$> traverse f m
 
+instance (Show k, Show v) => Show (Map k v) where
+  show (Map m) = show m
 
 insert :: (Ord k, Monoid v) => k -> (v -> v) -> Map k v -> Map k v
 insert k f (Map m) =
@@ -96,3 +99,6 @@ lookupLE k (Map m) = maybe mempty snd (M.lookupLE k m)
 
 empty :: Map k v
 empty = Map M.empty
+
+singleton :: k -> v -> Map k v
+singleton k v = Map $ M.singleton k v

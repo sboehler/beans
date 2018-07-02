@@ -2,24 +2,25 @@ module Beans.Format
   (Section(..), formatTable, reportToRows, createReport)
 where
 
-import           Beans.Data.Accounts      (AccountName (..), Accounts, Amount,
-                                           CommodityName (..), Lot (..), toList)
-import qualified Beans.Data.Map           as M
-import           Beans.Table              (ColDesc (..), formatStandard, left,
-                                           right, showTable)
-import qualified Data.List                as L
-import           Data.Text.Lazy           (Text, intercalate, pack, unpack)
+import           Beans.Data.Accounts (AccountName (..), Accounts, Amount,
+                                      CommodityName (..), Lot (..), toList)
+import qualified Beans.Data.Map      as M
+import Data.Monoid ((<>))
+import           Beans.Table         (ColDesc (..), formatStandard, left, right,
+                                      showTable)
+import qualified Data.List           as L
+import           Data.Text.Lazy      (Text, intercalate, pack, unpack)
 
-data Report = Report [Position] [Section] deriving (Show)
+data Report = Report Positions [Section] Positions deriving (Show)
+
+type Positions = M.Map (CommodityName, Maybe Lot) Amount
 
 data Section = Section
   { _labels    :: [Text]
-  , _positions :: [Position]
+  , _positions :: Positions
   , _sections  :: [Section]
+  , _subtotals :: Positions
   } deriving (Show)
-
-data Position = Position CommodityName (Maybe Lot) Amount
-  deriving (Show)
 
 
 -- Creating a report
@@ -28,47 +29,57 @@ createReport :: Accounts -> Report
 createReport = toReport . groupSections "" . toSections
   where
     toSections = fmap toSection . toList
-    toSection ((a, c, l), s) = Section (toLabel a) [Position c l s] []
+    toSection ((a, c, l), s) =
+      let pos = M.singleton (c, l) s
+       in Section (toLabel a) pos [] mempty
     toLabel (AccountName t ns) = pack (show t) : ns
-    toReport (Section _ pos sec) = Report pos sec
+    toReport (Section _ pos sec sub) = Report pos sec sub
 
 groupSections :: Text -> [Section] -> Section
 groupSections title sections =
   let (rootSections, childSections) = L.partition (null . _labels) sections
-      positions = concatMap _positions rootSections
+      positions = mconcat $ _positions <$> rootSections
       subsections = group (splitSection <$> childSections)
-   in Section [title] positions subsections
+      subtotals = positions <> mconcat (_subtotals <$> subsections)
+   in Section [title] positions subsections subtotals
 
 group :: [(Text, [Section])] -> [Section]
 group = fmap (uncurry groupSections) . M.toList . M.fromList
 
 splitSection :: Section -> (Text, [Section])
-splitSection (Section (n:ns) ps ss) = (n, [Section ns ps ss])
-splitSection (Section [] ps ss)     = (mempty, [Section [] ps ss])
+splitSection (Section (n:ns) ps ss st) = (n, [Section ns ps ss st])
+splitSection (Section [] ps ss st)     = (mempty, [Section [] ps ss st])
 
 
 -- Formatting a report into rows
 
 reportToRows :: Report -> [[String]]
-reportToRows (Report p s) = positions ++ sections
+reportToRows (Report p s st) = positions ++ sections ++ subtotals
   where
     positions = positionsToRows "" p
     sections = concatMap sectionToRows s
+    subtotals = positionsToRows "Total:" st
 
 sectionToRows :: Section -> [[String]]
-sectionToRows (Section t ps ss) =
-  positions ++ (indentFirstColumn 2 <$> subsections)
+sectionToRows (Section t ps ss st) =
+  positions ++ (indentFirstColumn 2 <$> subsections) ++ subtotals
   where
     title = intercalate ":" t
     positions = positionsToRows title ps
     subsections = concatMap sectionToRows ss
+    subtotals =
+      if null ss
+        then []
+        else positionsToRows (title <> ":Total") st
 
-positionsToRows :: Text -> [Position] -> [[String]]
-positionsToRows title (Position c l s:ps) = line : positionsToRows "" ps
+positionsToRows :: Text -> Positions -> [[String]]
+positionsToRows title ps =
+  case ls of
+    [] -> [[unpack title, "", "", ""]]
+    _  -> zipWith (:) (unpack title : repeat "") ls
   where
-      line = [unpack title, show c, maybe "" show l, formatStandard s]
-positionsToRows "" [] = []
-positionsToRows title [] = [[unpack title, "", "", ""]]
+    ls = line <$> M.toList ps
+    line ((c, l), s) = [show c, maybe "" show l, formatStandard s]
 
 indentFirstColumn :: Int -> [String] -> [String]
 indentFirstColumn n (s:ss) = (replicate n ' '++s):ss

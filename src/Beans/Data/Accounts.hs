@@ -85,3 +85,12 @@ lookupLE = M.lookupLE
 
 lookupLT :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
 lookupLT = M.lookupLT
+
+summarize :: Int -> Accounts -> Accounts
+summarize d = mapAccounts (shorten d)
+
+shorten :: Int -> AccountName -> AccountName
+shorten d a = a {_unAccountName = take d (_unAccountName a)}
+
+eraseLots :: Accounts -> Accounts
+eraseLots = mapLots (const Nothing)

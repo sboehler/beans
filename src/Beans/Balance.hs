@@ -11,7 +11,10 @@ import           Data.Time.LocalTime    (getZonedTime, localDay,
                                          zonedTimeToLocalTime)
 import           Prelude                hiding (filter)
 
-balanceReport :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> m Accounts
+balanceReport ::
+     (MonadIO m, MonadThrow m, MonadReader Options m)
+  => AccountsHistory
+  -> m Accounts
 balanceReport accountsHistory = do
   to <- maybe (liftIO getDate) pure =<< asks optTo
   from <- asks optFrom

@@ -51,24 +51,25 @@ reportToRows t =  sectionToRows ("", t)
 
 sectionToRows :: (Text, Section) -> [[String]]
 sectionToRows (t, Section ps ss st) =
-  positions ++ (indentFirstColumn 2 <$> subsections) ++ subtotals
+  positions ++ (indentFirstColumn 2 <$> subsections)
   where
-    positions = positionsToRows t ps
     subsections = concatMap sectionToRows (M.toList ss)
-    subtotals =
-      if null ss
-        then []
-        else positionsToRows label st
-    label = (if t == "" then "" else t <> ":") <> "Total"
+    st' =
+      if null subsections
+        then mempty
+        else st
+    positions = positionsToRows t ps st'
 
-positionsToRows :: Text -> Positions -> [[String]]
-positionsToRows title ps =
-  case ls of
-    [] -> [[unpack title, "", "", ""]]
-    _  -> zipWith (:) (unpack title : repeat "") ls
+positionsToRows :: Text -> Positions -> Positions -> [[String]]
+positionsToRows title ps st =
+  case combined of
+    [] -> [[unpack title, "", "", "", ""]]
+    _ -> zipWith (:) (unpack title : repeat "") combined
   where
-    ls = line <$> M.toList ps
-    line ((c, l), s) = [show c, maybe "" show l, formatStandard s]
+    combined =
+      line <$>
+      M.toList (M.accumulate (formatStandard <$> st) (formatStandard <$> ps))
+    line ((c, l), s) = s ++ [show c, maybe "" show l]
 
 indentFirstColumn :: Int -> [String] -> [String]
 indentFirstColumn n (s:ss) = (replicate n ' '++s):ss
@@ -80,9 +81,10 @@ formatTable :: [[String]] -> String
 formatTable t =
   showTable
     [ ColDesc left "Account" left (!! 0)
-    , ColDesc left "Amount" right (!! 3)
-    , ColDesc left "Commodity" left (!! 1)
-    , ColDesc left "Lot" left (!! 2)
+    , ColDesc left "Total" right (!! 1)
+    , ColDesc left "Amount" right (!! 2)
+    , ColDesc left "Commodity" left (!! 3)
+    , ColDesc left "Lot" left (!! 4)
     ]
     t
     []

@@ -17,7 +17,6 @@ import           Control.Monad.State     (MonadState, evalStateT, execStateT,
                                           get, gets, put)
 import           Data.Maybe              (catMaybes)
 import           Data.Monoid             (Sum (Sum))
-import           Data.Scientific         (Scientific)
 import           Data.Time.Calendar      (Day, fromGregorian)
 
 data ValuationState = ValuationState
@@ -126,7 +125,7 @@ adjustValuationForAccounts = do
 
 adjustValuationForAccount ::
      (MonadThrow m, MonadState ValuationState m)
-  => ((AccountName, CommodityName, Maybe Lot), Sum Scientific)
+  => ((AccountName, CommodityName, Maybe Lot), Amount)
   -> m (Maybe Transaction)
 adjustValuationForAccount ((a@(AccountName t _), c, l), s) = do
   ValuationState { _target

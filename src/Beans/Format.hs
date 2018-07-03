@@ -9,68 +9,57 @@ import Data.Monoid ((<>))
 import           Beans.Table         (ColDesc (..), formatStandard, left, right,
                                       showTable)
 import qualified Data.List           as L
-import           Data.Text.Lazy      (Text, intercalate, pack, unpack)
-
-data Report = Report Positions [Section] Positions deriving (Show)
+import           Data.Text.Lazy      (Text, pack, unpack)
 
 type Positions = M.Map (CommodityName, Maybe Lot) Amount
 
 data Section = Section
-  { _labels    :: [Text]
-  , _positions :: Positions
-  , _sections  :: [Section]
+  { 
+   _positions :: Positions
+  , _sections  :: M.Map Text Section
   , _subtotals :: Positions
   } deriving (Show)
 
 
 -- Creating a report
 
-createReport :: Accounts -> Report
-createReport = toReport . groupSections "" . toSections
+createReport :: Accounts -> Section
+createReport = groupSections . fmap toItem . toList
   where
-    toSections = fmap toSection . toList
-    toSection ((a, c, l), s) =
+    toItem ((a, c, l), s) =
       let pos = M.singleton (c, l) s
-       in Section (toLabel a) pos [] mempty
+       in (toLabel a, pos)
     toLabel (AccountName t ns) = pack (show t) : ns
-    toReport (Section _ pos sec sub) = Report pos sec sub
 
-groupSections :: Text -> [Section] -> Section
-groupSections title sections =
-  let (rootSections, childSections) = L.partition (null . _labels) sections
-      positions = mconcat $ _positions <$> rootSections
-      subsections = group (splitSection <$> childSections)
-      subtotals = positions <> mconcat (_subtotals <$> subsections)
-   in Section [title] positions subsections subtotals
+groupSections :: [([Text], Positions)] -> Section
+groupSections items =
+  let (rootSections, childSections) = L.partition (null . fst) items
+      positions = mconcat $ snd <$> rootSections
+      subsections = groupSections <$> M.fromList (splitSection <$> childSections)
+      subtotals = positions <> mconcat (_subtotals . snd <$> M.toList subsections)
+   in Section  positions subsections subtotals
 
-group :: [(Text, [Section])] -> [Section]
-group = fmap (uncurry groupSections) . M.toList . M.fromList
-
-splitSection :: Section -> (Text, [Section])
-splitSection (Section (n:ns) ps ss st) = (n, [Section ns ps ss st])
-splitSection (Section [] ps ss st)     = (mempty, [Section [] ps ss st])
+splitSection :: ([Text], Positions) -> (Text, [([Text], Positions)])
+splitSection (n:ns, ps) = (n, [(ns, ps)])
+splitSection ([], ps) = (mempty, [([], ps)])
 
 
 -- Formatting a report into rows
 
-reportToRows :: Report -> [[String]]
-reportToRows (Report p s st) = positions ++ sections ++ subtotals
-  where
-    positions = positionsToRows "" p
-    sections = concatMap sectionToRows s
-    subtotals = positionsToRows "Total:" st
+reportToRows :: Section -> [[String]]
+reportToRows t =  sectionToRows ("", t)
 
-sectionToRows :: Section -> [[String]]
-sectionToRows (Section t ps ss st) =
+sectionToRows :: (Text, Section) -> [[String]]
+sectionToRows (t, Section ps ss st) =
   positions ++ (indentFirstColumn 2 <$> subsections) ++ subtotals
   where
-    title = intercalate ":" t
-    positions = positionsToRows title ps
-    subsections = concatMap sectionToRows ss
+    positions = positionsToRows t ps
+    subsections = concatMap sectionToRows (M.toList ss)
     subtotals =
       if null ss
         then []
-        else positionsToRows (title <> ":Total") st
+        else positionsToRows label st
+    label = (if t == "" then "" else t <> ":") <> "Total"
 
 positionsToRows :: Text -> Positions -> [[String]]
 positionsToRows title ps =

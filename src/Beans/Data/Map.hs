@@ -1,6 +1,6 @@
 module Beans.Data.Map
   ( Map
-  , accumulate
+  , combine
   , insert
   , insert'
   , empty
@@ -22,7 +22,7 @@ module Beans.Data.Map
 
 import           Data.Foldable         (Foldable)
 import           Data.Group            (Group (..))
-import qualified Data.Map.Merge.Strict as MM
+import qualified Data.Set as S
 import qualified Data.Map.Strict       as M
 import           Data.Traversable      (Traversable (..))
 import           Prelude               hiding (filter)
@@ -105,12 +105,8 @@ empty = Map M.empty
 singleton :: k -> v -> Map k v
 singleton k v = Map $ M.singleton k v
 
-accumulate :: (Monoid v, Ord k) => Map k v -> Map k v -> Map k [v]
-accumulate (Map m1) (Map m2) =
-  Map $
-  MM.merge
-    (MM.mapMissing (\_ a -> [a, mempty]))
-    (MM.mapMissing (\_ a -> [mempty, a]))
-    (MM.zipWithMatched (\_ x y -> [x, y]))
-    m1
-    m2
+combine :: (Monoid v, Ord k) => [Map k v] -> Map k [v]
+combine maps =
+  let k = S.toList $ mconcat (M.keysSet . _unmap <$> maps)
+      m = [(account, findWithDefault account <$> maps) | account <- k]
+   in Map $ M.fromList m

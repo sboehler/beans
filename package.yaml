@@ -40,6 +40,7 @@ default-extensions:
 - OverloadedStrings
 - RecordWildCards
 - DeriveFunctor
+- ApplicativeDo
 - LambdaCase
 - FlexibleContexts
 - TypeFamilies

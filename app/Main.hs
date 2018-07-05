@@ -6,7 +6,7 @@ import           Options.Applicative
 
 import           Beans.Data.Accounts (CommodityName)
 import qualified Beans.Parser        as P
-import qualified Data.Text.Lazy      as T
+import qualified Data.Text           as T
 import           Data.Time.Calendar  (Day)
 import           Text.Megaparsec     (parseMaybe)
 
@@ -23,8 +23,7 @@ lots =
   switch (long "lots" <> short 'l')
 
 dateparser :: String -> Parser (Maybe Day)
-dateparser l =
-  optional $ option (toReadM P.date) (long l)
+dateparser l = optional $ option (toReadM P.date) (long l)
 
 journal :: Parser FilePath
 journal =

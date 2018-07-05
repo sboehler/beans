@@ -10,8 +10,9 @@ import           Beans.Table         (ColDesc (..), formatStandard, left, right,
 import           Control.Applicative (ZipList (..))
 import qualified Data.List           as L
 import           Data.Monoid         ((<>))
-import           Data.Text.Lazy      (Text)
-import qualified Data.Text.Lazy      as T
+import           Data.Maybe         (fromMaybe)
+import           Data.Text           (Text)
+import qualified Data.Text           as T
 
 type Positions = M.Map (CommodityName, Maybe Lot) Amount
 
@@ -90,14 +91,14 @@ indent n (Row first a b c d) = Row (indent' <$> first) a b c d
 
 
 -- formatting rows into a table
-formatTable :: [Row] -> String
+formatTable :: [Row] -> Text
 formatTable t =
   showTable
-    [ ColDesc left "Account" left (maybe "" T.unpack . _account)
+    [ ColDesc left "Account" left (fromMaybe "" . _account)
     , ColDesc left "Total" right (maybe "" formatStandard . _total)
     , ColDesc left "Amount" right (maybe "" formatStandard . _amount)
-    , ColDesc left "Commodity" left (maybe "" show . _commodity)
-    , ColDesc left "Lot" left (maybe "" show . _lot)
+    , ColDesc left "Commodity" left (T.pack . maybe "" show . _commodity)
+    , ColDesc left "Lot" left (T.pack . maybe "" show . _lot)
     ]
     t
     []

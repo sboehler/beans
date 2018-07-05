@@ -20,6 +20,7 @@ import           Control.Monad.IO.Class (MonadIO)
 import           Control.Monad.Reader   (MonadReader, asks, runReaderT)
 import           Control.Monad.Trans    (liftIO)
 import           Data.Bool              (bool)
+import qualified Data.Text.IO           as TIO
 
 runBeans :: (MonadIO m, MonadThrow m) => Options -> m ()
 runBeans = runReaderT run
@@ -52,4 +53,4 @@ aggregationStage accounts = do
   return $ (eraseStage . summarizeStage) accounts
 
 printStage :: (MonadIO m) => Accounts -> m ()
-printStage = liftIO . putStrLn . formatTable . reportToRows . createReport
+printStage = liftIO . TIO.putStrLn . formatTable . reportToRows . createReport

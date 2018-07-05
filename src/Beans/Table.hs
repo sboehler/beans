@@ -7,53 +7,43 @@ import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
 import           Data.Text                (Text)
 import qualified Data.Text                as T
 
--- a type for fill functions
+-- a type for align functions
 type Filler = Int -> Text -> Text
 
 -- a type for describing table columns
-data ColDesc t = ColDesc
-  { colTitleFill :: Filler
-  , colTitle     :: Text
-  , colValueFill :: Filler
+data Column t = Column
+  { colAlignHeader :: Filler
+  , colHeader     :: Text
+  , colAlignValue :: Filler
   , colValue     :: t -> Text
   }
 
 -- Table formatting inspired by:
 -- https://stackoverflow.com/questions/5929377/format-list-output-in-haskell
 
-fillLeft, fillRight, fillCenter :: Char -> Int -> Text -> Text
-fillLeft  = flip T.justifyLeft
-fillRight = flip T.justifyRight
-fillCenter = flip T.center
-
 left, right, center :: Int -> Text -> Text
-left = fillLeft ' '
-right = fillRight ' '
-center = fillCenter ' '
+left = flip T.justifyLeft ' '
+right = flip T.justifyRight ' '
+center = flip T.center ' '
 
-showTable :: [ColDesc item] -> [item] -> [item] -> Text
-showTable coldefs items totals =
-  let header = colTitle <$> coldefs
-      rows = [[colValue coldef item | coldef <- coldefs] | item <- items]
-      totalRows =
-        [[colValue coldef footer | coldef <- coldefs] | footer <- totals]
+showTable :: [Column item] -> [item] -> Text
+showTable coldefs rows =
+  let header = colHeader <$> coldefs
+      body = [[colValue coldef row | coldef <- coldefs] | row <- rows]
       widths =
-        [ maximum $ T.length <$> column
-        | column <- transpose $ header : rows ++ totalRows
-        ]
+        [maximum $ T.length <$> column | column <- transpose $ header : body]
       separator = T.intercalate "-+-" [T.replicate width "-" | width <- widths]
-      fillColumns fill columns =
+      alignColumns align columns =
         T.intercalate
           " | "
-          [ fill c width column
-          | (c, width, column) <- zip3 coldefs widths columns
+          [ align c width column
+          | c <- coldefs
+          | width <- widths
+          | column <- columns
           ]
    in T.unlines $
-      fillColumns colTitleFill header :
-      separator :
-      (fillColumns colValueFill <$> rows) <> pure separator <>
-      (fillColumns colValueFill <$> totalRows) <>
-      pure separator
+      alignColumns colAlignHeader header :
+      separator : (alignColumns colAlignValue <$> body) <> pure separator
 
 
 formatStandard :: Sum Scientific -> Text

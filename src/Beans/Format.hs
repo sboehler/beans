@@ -5,12 +5,12 @@ where
 import           Beans.Data.Accounts (AccountName (..), Accounts, Amount,
                                       CommodityName (..), Lot (..), toList)
 import qualified Beans.Data.Map      as M
-import           Beans.Table         (ColDesc (..), formatStandard, left, right,
+import           Beans.Table         (Column (..), formatStandard, left, right,
                                       showTable)
 import           Control.Applicative (ZipList (..))
 import qualified Data.List           as L
+import           Data.Maybe          (fromMaybe)
 import           Data.Monoid         ((<>))
-import           Data.Maybe         (fromMaybe)
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 
@@ -92,13 +92,11 @@ indent n (Row first a b c d) = Row (indent' <$> first) a b c d
 
 -- formatting rows into a table
 formatTable :: [Row] -> Text
-formatTable t =
+formatTable =
   showTable
-    [ ColDesc left "Account" left (fromMaybe "" . _account)
-    , ColDesc left "Total" right (maybe "" formatStandard . _total)
-    , ColDesc left "Amount" right (maybe "" formatStandard . _amount)
-    , ColDesc left "Commodity" left (T.pack . maybe "" show . _commodity)
-    , ColDesc left "Lot" left (T.pack . maybe "" show . _lot)
+    [ Column left "Account" left (fromMaybe "" . _account)
+    , Column left "Total" right (maybe "" formatStandard . _total)
+    , Column left "Amount" right (maybe "" formatStandard . _amount)
+    , Column left "Commodity" left (T.pack . maybe "" show . _commodity)
+    , Column left "Lot" left (T.pack . maybe "" show . _lot)
     ]
-    t
-    []

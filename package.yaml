@@ -39,6 +39,7 @@ default-extensions:
 - NamedFieldPuns
 - OverloadedStrings
 - RecordWildCards
+- ParallelListComp
 - DeriveFunctor
 - ApplicativeDo
 - LambdaCase

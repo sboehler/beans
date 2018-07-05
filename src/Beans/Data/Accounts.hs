@@ -7,7 +7,7 @@ import qualified Data.List          as L
 import           Data.Maybe         (catMaybes)
 import           Data.Monoid        (Sum)
 import           Data.Scientific    (Scientific)
-import           Data.Text.Lazy     (Text, unpack)
+import           Data.Text          (Text, unpack)
 import           Data.Time.Calendar (Day)
 
 type Amount = Sum Scientific

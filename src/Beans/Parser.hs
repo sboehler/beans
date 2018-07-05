@@ -1,10 +1,11 @@
 module Beans.Parser where
 
-import           Beans.Data.Accounts        (AccountName (..), AccountType (..), Amount,
-                                             CommodityName (..), Lot (..))
-import           Beans.Data.Directives      (Balance (..),
-                                             Close (..), Directive (..),
-                                             Flag (..), Include (..), Open (..),
+import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
+                                             Amount, CommodityName (..),
+                                             Lot (..))
+import           Beans.Data.Directives      (Balance (..), Close (..),
+                                             Directive (..), Flag (..),
+                                             Include (..), Open (..),
                                              Option (..), Posting (..),
                                              Price (..), Tag (..),
                                              Transaction (..))
@@ -18,8 +19,8 @@ import           Data.Char                  (isAlphaNum)
 import           Data.Functor               (($>))
 import           Data.Monoid                (Sum (Sum))
 import qualified Data.Set                   as S
-import           Data.Text.Lazy             (Text, cons, unpack)
-import           Data.Text.Lazy.IO          (readFile)
+import           Data.Text                  (Text, cons, unpack)
+import           Data.Text.IO               (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Prelude                    hiding (readFile)
 import           System.FilePath.Posix      (combine, takeDirectory)

@@ -5,7 +5,7 @@ import           Beans.Data.Accounts     (AccountName, Amount, CommodityName,
                                           Lot)
 import           Beans.Data.Restrictions (Restriction)
 import           Data.Scientific         (Scientific)
-import           Data.Text.Lazy          (Text)
+import           Data.Text               (Text)
 import           Data.Time.Calendar      (Day)
 import qualified Text.Megaparsec.Pos     as P
 

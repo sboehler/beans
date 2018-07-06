@@ -1,5 +1,6 @@
 module Beans.Table where
 
+import           Control.Applicative      (ZipList (ZipList), getZipList)
 import           Data.List                (transpose)
 import           Data.Monoid              (Sum, getSum, (<>))
 import           Data.Scientific.Extended (FPFormat (Fixed), Scientific,
@@ -11,11 +12,11 @@ import qualified Data.Text                as T
 type Filler = Int -> Text -> Text
 
 -- a type for describing table columns
-data Column t = Column
+data Column row = Column
   { colAlignHeader :: Filler
-  , colHeader     :: Text
-  , colAlignValue :: Filler
-  , colValue     :: t -> Text
+  , colHeader      :: Text
+  , colAlignValue  :: Filler
+  , colValue       :: row -> Text
   }
 
 -- Table formatting inspired by:
@@ -26,7 +27,7 @@ left = flip T.justifyLeft ' '
 right = flip T.justifyRight ' '
 center = flip T.center ' '
 
-showTable :: [Column item] -> [item] -> Text
+showTable :: [Column row] -> [row] -> Text
 showTable coldefs rows =
   let header = colHeader <$> coldefs
       body = [[colValue coldef row | coldef <- coldefs] | row <- rows]
@@ -36,11 +37,8 @@ showTable coldefs rows =
       alignColumns align columns =
         T.intercalate
           " | "
-          [ align c width column
-          | c <- coldefs
-          | width <- widths
-          | column <- columns
-          ]
+          (getZipList $
+           align <$> ZipList coldefs <*> ZipList widths <*> ZipList columns)
    in T.unlines $
       alignColumns colAlignHeader header :
       separator : (alignColumns colAlignValue <$> body) <> pure separator

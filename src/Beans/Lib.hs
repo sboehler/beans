@@ -9,10 +9,11 @@ import           Beans.Balance          (balanceReport)
 import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
                                          Accounts, AccountsHistory, eraseLots,
                                          summarize)
-import           Beans.Format           (createReport, formatTable,
+import           Beans.Format           (createFlatReport,
+                                         createHierarchicalReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
-import           Beans.Options          (Command (..), Options (..))
+import           Beans.Options          (Command (..), Options (..), ReportType(..))
 import           Beans.Parser           (parseFile)
 import           Beans.Valuation        (calculateValuation)
 import           Control.Monad.Catch    (MonadThrow)
@@ -65,5 +66,11 @@ aggregationStage accounts = do
   summarizeStage <- maybe id summarize <$> asks optDepth
   return $ (eraseStage . summarizeStage) accounts
 
-printStage :: (MonadIO m) => Accounts -> m ()
-printStage = liftIO . TIO.putStrLn . formatTable . reportToRows . createReport
+printStage :: (MonadReader Options m, MonadIO m) => Accounts -> m ()
+printStage accounts = do
+  reportType <- asks optReportType
+  let createReport =
+        case reportType of
+          Hierarchical -> createHierarchicalReport
+          Flat -> createFlatReport
+  (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport) accounts

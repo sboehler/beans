@@ -1,6 +1,8 @@
 module Main where
 
-import           Beans.Lib           (Command (..), Options (..), runBeans)
+import           Beans.Lib           (runBeans)
+import           Beans.Options       (Command (..), Options (..),
+                                      ReportType (..))
 import           Data.Semigroup      ((<>))
 import           Options.Applicative
 import           Prelude             hiding (filter)
@@ -26,6 +28,22 @@ lots =
 dateparser :: String -> Parser (Maybe Day)
 dateparser l = optional $ option (toReadM P.date) (long l)
 
+parseReportType :: ReadM ReportType
+parseReportType =
+  eitherReader $ \case
+    "hierarchical" -> Right Hierarchical
+    "flat" -> Right Flat
+    s -> Left $ "Invalid report type: " <> s
+
+
+reportType :: Parser ReportType
+reportType =
+  option
+    parseReportType
+    (value Hierarchical <> help "The type of the report" <> long "report-type" <>
+     short 'r')
+
+
 journal :: Parser FilePath
 journal =
   option
@@ -49,7 +67,7 @@ strictFilter =
   switch
     (long "strict-filter" <> short 's' <>
      help "A regular expression to filter the accounts")
-  
+
 
 depth :: Parser (Maybe Int)
 depth =
@@ -71,6 +89,7 @@ config =
   depth <*>
   filter <*>
   strictFilter <*>
+  reportType <*>
   cmd
 
 parserConfig :: ParserInfo Options

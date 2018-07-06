@@ -37,13 +37,13 @@ data AccountsException
 instance Exception AccountsException
 
 calculateAccounts ::
-     (MonadThrow m, Traversable t) => t Timestep -> m (t Accounts)
-calculateAccounts l = evalStateT (mapM updateAccounts l) (RestrictedAccounts mempty mempty)
+     (MonadThrow m, Traversable t) => Bool -> t Timestep -> m (t Accounts)
+calculateAccounts check l = evalStateT (mapM (updateAccounts check) l) (RestrictedAccounts mempty mempty)
 
-updateAccounts :: (MonadThrow m, MonadState RestrictedAccounts m) => Timestep -> m Accounts
-updateAccounts Timestep {..} =
+updateAccounts :: (MonadThrow m, MonadState RestrictedAccounts m) => Bool -> Timestep -> m Accounts
+updateAccounts check Timestep {..} =
   mapM_ openAccount _openings >> mapM_ closeAccount _closings >>
-  mapM_ checkBalance _balances >>
+  when check (mapM_ checkBalance _balances) >>
   mapM_ bookTransaction _transactions >>
   gets _accounts
 

@@ -10,6 +10,7 @@ data Options = Options
   , optFrom    :: Maybe Day
   , optTo      :: Maybe Day
   , optDepth   :: Maybe Int
+  , optFilter  :: Maybe String
   , optCommand :: Command
   } deriving (Show)
 

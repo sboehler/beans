@@ -1,6 +1,6 @@
 { mkDerivation, base, bifunctors, containers, exceptions, filepath
 , groups, megaparsec, mtl, optparse-applicative, prettyprinter
-, scientific, stdenv, text, time
+, regex-pcre, scientific, stdenv, text, time
 }:
 mkDerivation {
   pname = "beans";
@@ -10,7 +10,8 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     base bifunctors containers exceptions filepath groups megaparsec
-    mtl optparse-applicative prettyprinter scientific text time
+    mtl optparse-applicative prettyprinter regex-pcre scientific text
+    time
   ];
   homepage = "https://github.com/sboehler/beans#readme";
   description = "A plain text accounting tool";

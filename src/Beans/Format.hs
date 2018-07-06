@@ -1,5 +1,5 @@
 module Beans.Format
-  (Section(..), formatTable, reportToRows, createReport)
+  (Section(..), formatTable, reportToRows, createHierarchicalReport, createFlatReport)
 where
 
 import           Beans.Data.Accounts (AccountName (..), Accounts, Amount,
@@ -26,8 +26,8 @@ data Section = Section
 
 -- Creating a report
 
-createReport :: Accounts -> Section
-createReport = groupSections . fmap toItem . toList
+createHierarchicalReport :: Accounts -> Section
+createHierarchicalReport = groupSections . fmap toItem . toList
   where
     toItem ((a, c, l), s) =
       let pos = M.singleton (c, l) s
@@ -46,6 +46,21 @@ splitSection :: ([Text], Positions) -> (Text, [([Text], Positions)])
 splitSection (n:ns, ps) = (n, [(ns, ps)])
 splitSection ([], ps)   = (mempty, [([], ps)])
 
+
+createFlatReport :: Accounts -> Section
+createFlatReport = groupSections2 . fmap toItem . toList
+  where
+    toItem ((a, c, l), s) =
+      let pos = M.singleton (c, l) s
+       in (toLabel a, pos)
+    toLabel = T.pack . show
+
+groupSections2 :: [(Text, Positions)] -> Section
+groupSections2 items =
+  let groupedItems = M.fromList items
+      subsections = (\p -> Section p M.empty p) <$> groupedItems
+      subtotals = mconcat (_subtotals . snd <$> M.toList subsections)
+   in Section mempty subsections subtotals
 
 -- Formatting a report into rows
 

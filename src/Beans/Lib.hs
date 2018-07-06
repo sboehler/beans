@@ -40,9 +40,10 @@ parseStage = buildLedger <$> (asks optJournal >>= parseFile)
 filterStage :: (MonadReader Options m) => Ledger -> m Ledger
 filterStage l = do
   f <- asks optFilter
+  s <- asks optStrictFilter
   return $
     case f of
-      Just f' -> filterLedger f' l
+      Just f' -> filterLedger s f' l
       Nothing -> l
 
 valuationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> Ledger -> m Ledger

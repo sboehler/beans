@@ -3,6 +3,7 @@ module Main where
 import           Beans.Lib           (Command (..), Options (..), runBeans)
 import           Data.Semigroup      ((<>))
 import           Options.Applicative
+import           Prelude             hiding (filter)
 
 import           Beans.Data.Accounts (CommodityName)
 import qualified Beans.Parser        as P
@@ -34,6 +35,15 @@ journal =
      long "journal" <>
      short 'j')
 
+filter :: Parser (Maybe String)
+filter =
+  optional $
+  option
+    str
+    (metavar "REGEX" <> help "A regular expression to filter the accounts" <>
+     long "filter" <>
+     short 'f')
+
 depth :: Parser (Maybe Int)
 depth =
   optional $
@@ -50,7 +60,7 @@ cmd =
 config :: Parser Options
 config =
   Options <$> journal <*> market <*> lots <*> dateparser "from" <*>
-  dateparser "to" <*> depth <*>
+  dateparser "to" <*> depth <*> filter <*>
   cmd
 
 parserConfig :: ParserInfo Options

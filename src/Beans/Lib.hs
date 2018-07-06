@@ -11,7 +11,7 @@ import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
                                          summarize)
 import           Beans.Format           (createReport, formatTable,
                                          reportToRows)
-import           Beans.Ledger           (Ledger, buildLedger)
+import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
 import           Beans.Options          (Command (..), Options (..))
 import           Beans.Parser           (parseFile)
 import           Beans.Valuation        (calculateValuation)
@@ -26,20 +26,32 @@ runBeans :: (MonadIO m, MonadThrow m) => Options -> m ()
 runBeans = runReaderT run
 
 run :: (MonadIO m, MonadThrow m, MonadReader Options m) =>  m ()
-run =
-  parseStage >>= valuationStage >>= accountsStage >>= reportStage >>=
-  aggregationStage >>= printStage
+run = do
+  ledger <- parseStage
+  accountsHistory <- accountsStage True ledger
+  valuationStage accountsHistory ledger >>= filterStage >>= accountsStage False >>=
+    reportStage >>=
+    aggregationStage >>=
+    printStage
 
 parseStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => m Ledger
 parseStage = buildLedger <$> (asks optJournal >>= parseFile)
 
-valuationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Ledger -> m Ledger
-valuationStage ledger = valuate ledger =<< asks optMarket
-  where
-    valuate l (Just m) = calculateValuation m (AccountName Equity ["Valuation"]) l
-    valuate l Nothing = pure l
+filterStage :: (MonadReader Options m) => Ledger -> m Ledger
+filterStage l = do
+  f <- asks optFilter
+  return $
+    case f of
+      Just f' -> filterLedger f' l
+      Nothing -> l
 
-accountsStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Ledger -> m AccountsHistory
+valuationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> Ledger -> m Ledger
+valuationStage accountsHistory ledger = valuate =<< asks optMarket
+  where
+    valuate (Just m) = calculateValuation accountsHistory m (AccountName Equity ["Valuation"]) ledger
+    valuate Nothing = pure ledger
+
+accountsStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Bool -> Ledger -> m AccountsHistory
 accountsStage = calculateAccounts
 
 reportStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> m Accounts

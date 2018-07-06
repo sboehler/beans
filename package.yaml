@@ -30,6 +30,7 @@ dependencies:
 - mtl
 - optparse-applicative
 - prettyprinter
+- regex-pcre
 - scientific
 - text
 - time

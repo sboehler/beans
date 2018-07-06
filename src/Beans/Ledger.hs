@@ -1,10 +1,12 @@
 module Beans.Ledger where
 
 import           Beans.Data.Directives (Balance (..), Close (..),
-                                        Directive (..), Open (..), Price (..),
-                                        Transaction (..))
+                                        Directive (..), Open (..), Posting (..),
+                                        Price (..), Transaction (..))
 import qualified Beans.Data.Map        as M
+import qualified Data.List             as L
 import           Data.Time.Calendar    (Day)
+import           Text.Regex.PCRE       ((=~))
 
 
 data Timestep = Timestep
@@ -55,3 +57,9 @@ date d =
     Trn Transaction {_date} -> Just _date
     Prc Price {_date}       -> Just _date
     _                       -> Nothing
+
+filterLedger :: String -> Ledger -> Ledger
+filterLedger s = fmap f
+  where
+    f t@Timestep {_transactions} = t {_transactions = L.filter g _transactions}
+    g Transaction {_postings} = any (=~ s) ((\Posting {_account} -> show _account) <$> _postings)

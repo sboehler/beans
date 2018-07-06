@@ -1,20 +1,18 @@
 module Beans.Valuation where
 
-import           Beans.Accounts          (RestrictedAccounts (..),
-                                          updateAccounts)
 import           Beans.Data.Accounts     (AccountName (..), AccountType (..),
-                                          Accounts, Amount, CommodityName (..),
-                                          Lot (..), toList)
+                                          Accounts, AccountsHistory, Amount,
+                                          CommodityName (..), Lot (..), toList)
 import           Beans.Data.Directives   (Flag (..), Open (..), Posting (..),
                                           Transaction (..))
 import qualified Beans.Data.Map          as M
-import           Beans.Data.Restrictions (Restriction (..), Restrictions)
+import           Beans.Data.Restrictions (Restriction (..))
 import           Beans.Ledger            (Ledger, Timestep (..))
 import           Beans.Prices            (NormalizedPrices, Prices, lookupPrice,
                                           normalize, updatePrices)
 import           Control.Monad.Catch     (MonadThrow)
-import           Control.Monad.State     (MonadState, evalStateT, execStateT,
-                                          get, gets, put)
+import           Control.Monad.State     (MonadState, evalStateT, get, gets,
+                                          put)
 import           Data.Maybe              (catMaybes)
 import           Data.Monoid             (Sum (Sum))
 import           Data.Time.Calendar      (Day, fromGregorian)
@@ -24,27 +22,25 @@ data ValuationState = ValuationState
   , _prevNormalizedPrices :: NormalizedPrices
   , _normalizedPrices     :: NormalizedPrices
   , _prevAccounts         :: Accounts
-  , _accounts             :: Accounts
-  , _restrictions         :: Restrictions
+  , _accounts             :: AccountsHistory
   , _target               :: CommodityName
   , _valuationAccount     :: AccountName
   , _date                 :: Day
   }
 
-calculateValuation :: MonadThrow m => CommodityName -> AccountName -> Ledger -> m Ledger
-calculateValuation _target _valuationAccount ledger =
+calculateValuation :: MonadThrow m => AccountsHistory -> CommodityName -> AccountName -> Ledger -> m Ledger
+calculateValuation accounts _target _valuationAccount ledger =
   evalStateT
-     (mapM convertTimestep ledger)
-     ValuationState
-        { _prices = mempty
-        , _prevNormalizedPrices = mempty
-        , _normalizedPrices = mempty
-        , _prevAccounts = mempty
-        , _accounts = mempty
-        , _restrictions = mempty
-        , _date = fromGregorian 1900 1 1
-        , ..
-        }
+    (mapM convertTimestep ledger)
+    ValuationState
+      { _prices = mempty
+      , _prevNormalizedPrices = mempty
+      , _normalizedPrices = mempty
+      , _prevAccounts = mempty
+      , _accounts = accounts
+      , _date = fromGregorian 1900 1 1
+      , ..
+      }
 
 convertTimestep ::
      (MonadThrow m, MonadState ValuationState m)
@@ -52,19 +48,14 @@ convertTimestep ::
   -> m Timestep
 convertTimestep timestep@Timestep {..} = do
   ValuationState {..} <- get
-  RestrictedAccounts _accounts' _restrictions' <-
-    execStateT
-      (updateAccounts timestep)
-      (RestrictedAccounts _accounts _restrictions)
+  let accounts = M.lookupLE _date _accounts
   let _prices' = updatePrices timestep _prices
   put
     ValuationState
       { _prices = _prices'
       , _prevNormalizedPrices = _normalizedPrices
       , _normalizedPrices = normalize _prices' _target
-      , _prevAccounts = _accounts
-      , _accounts = _accounts'
-      , _restrictions = _restrictions'
+      , _prevAccounts = accounts
       , ..
       }
   convertedOpenings <- mapM convertOpening _openings

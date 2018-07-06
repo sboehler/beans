@@ -4,14 +4,15 @@ import           Beans.Data.Accounts (CommodityName (..))
 import           Data.Time.Calendar  (Day)
 
 data Options = Options
-  { optJournal :: FilePath
-  , optMarket  :: Maybe CommodityName
-  , optLots    :: Bool
-  , optFrom    :: Maybe Day
-  , optTo      :: Maybe Day
-  , optDepth   :: Maybe Int
-  , optFilter  :: Maybe String
-  , optCommand :: Command
+  { optJournal      :: FilePath
+  , optMarket       :: Maybe CommodityName
+  , optLots         :: Bool
+  , optFrom         :: Maybe Day
+  , optTo           :: Maybe Day
+  , optDepth        :: Maybe Int
+  , optFilter       :: Maybe String
+  , optStrictFilter :: Bool
+  , optCommand      :: Command
   } deriving (Show)
 
 data Command =

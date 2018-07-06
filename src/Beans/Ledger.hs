@@ -58,8 +58,32 @@ date d =
     Prc Price {_date}       -> Just _date
     _                       -> Nothing
 
-filterLedger :: String -> Ledger -> Ledger
-filterLedger s = fmap f
+
+-- filter a ledger 
+
+filterLedger :: Bool -> String -> Ledger -> Ledger
+filterLedger strict regex ledger =
+  if strict
+    then strictFilter <$> ledger
+    else nonstrictFilter <$> ledger
   where
-    f t@Timestep {_transactions} = t {_transactions = L.filter g _transactions}
-    g Transaction {_postings} = any (=~ s) ((\Posting {_account} -> show _account) <$> _postings)
+    nonstrictFilter t@Timestep {_transactions} =
+      t {_transactions = L.filter (matchTransaction regex) _transactions}
+    strictFilter t@Timestep {_transactions} =
+      t
+        { _transactions =
+            filterPostings regex <$>
+            L.filter (matchTransaction regex) _transactions
+        }
+
+filterPostings :: String -> Transaction -> Transaction
+filterPostings regex trx@Transaction {_postings} =
+  trx {_postings = L.filter (matchPosting regex) _postings}
+
+matchTransaction :: String -> Transaction -> Bool
+matchTransaction regex Transaction {_postings} =
+  any (matchPosting regex) _postings
+  
+
+matchPosting :: String -> Posting -> Bool
+matchPosting regex Posting {_account} = show _account =~ regex 

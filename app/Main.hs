@@ -44,6 +44,13 @@ filter =
      long "filter" <>
      short 'f')
 
+strictFilter :: Parser Bool
+strictFilter =
+  switch
+    (long "strict-filter" <> short 's' <>
+     help "A regular expression to filter the accounts")
+  
+
 depth :: Parser (Maybe Int)
 depth =
   optional $
@@ -60,7 +67,10 @@ cmd =
 config :: Parser Options
 config =
   Options <$> journal <*> market <*> lots <*> dateparser "from" <*>
-  dateparser "to" <*> depth <*> filter <*>
+  dateparser "to" <*>
+  depth <*>
+  filter <*>
+  strictFilter <*>
   cmd
 
 parserConfig :: ParserInfo Options

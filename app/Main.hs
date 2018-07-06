@@ -40,7 +40,10 @@ reportType :: Parser ReportType
 reportType =
   option
     parseReportType
-    (value Hierarchical <> help "The type of the report" <> long "report-type" <>
+    (value Hierarchical <>
+     help "The type of the report, either 'flat' or 'hierarchical' (default)" <>
+     long "report-type" <>
+     metavar "REPORT_TYPE" <>
      short 'r')
 
 
@@ -66,7 +69,8 @@ strictFilter :: Parser Bool
 strictFilter =
   switch
     (long "strict-filter" <> short 's' <>
-     help "A regular expression to filter the accounts")
+     help
+       "If enabled, strict filtering will filter all postings which don't match. If disabled (default), only transactions are filtered.")
 
 
 depth :: Parser (Maybe Int)

@@ -3,7 +3,12 @@ module Beans.Options where
 import           Beans.Data.Accounts (CommodityName (..))
 import           Data.Time.Calendar  (Day)
 
-data Options = Options
+newtype Command =
+  Balance BalanceOptions
+  deriving (Show)
+
+
+data BalanceOptions = BalanceOptions
   { optJournal :: FilePath
   , optMarket :: Maybe CommodityName
   , optLots :: Bool
@@ -13,7 +18,6 @@ data Options = Options
   , optFilter :: Maybe String
   , optStrictFilter :: Bool
   , optReportType :: ReportType
-  , optCommand :: Command
   } deriving (Show)
 
 
@@ -21,7 +25,3 @@ data ReportType
   = Hierarchical
   | Flat
   deriving (Eq, Show)
-
-data Command =
-  Balance
-  deriving (Show)

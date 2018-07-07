@@ -5,15 +5,11 @@ import           Data.Semigroup      ((<>))
 import           Options.Applicative
 import           Prelude             hiding (filter)
 
+import           Beans.CLI.Common    (toReadM)
 import           Beans.Data.Accounts (CommodityName)
 import qualified Beans.Parser        as P
-import qualified Data.Text           as T
 import           Data.Time.Calendar  (Day)
-import           Text.Megaparsec     (parseMaybe)
 
-
-toReadM :: P.Parser a -> ReadM a
-toReadM p = maybeReader $ parseMaybe p . T.pack
 
 convert :: Parser (Maybe CommodityName)
 convert =

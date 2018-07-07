@@ -4,6 +4,7 @@ module Beans.Lib
   ) where
 
 import           Beans.Balance          (balanceCommand)
+import           Beans.Import          (importCommand)
 import           Beans.Options          ( Command (..),
                                          Command (..) )
 import           Control.Monad.Catch    (MonadThrow)
@@ -18,5 +19,6 @@ run = do
   command <- ask
   case command of
     Balance options -> runReaderT balanceCommand options
+    Import options -> runReaderT importCommand options
 
 

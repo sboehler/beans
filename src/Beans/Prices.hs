@@ -8,16 +8,17 @@ module Beans.Prices
   , lookupPrice
   ) where
 
-import           Beans.Data.Accounts      (CommodityName (..))
-import           Beans.Data.Directives    (Price (..))
-import           Beans.Ledger             (Timestep (..))
-import           Control.Monad.Catch      (Exception, MonadThrow, throwM)
-import           Control.Monad.State      (evalState, get, modify)
-import           Data.Foldable            (foldl')
-import qualified Data.List                as L
-import qualified Data.Map.Strict          as M
-import           Data.Scientific.Extended (Scientific, sdiv)
-import           Data.Time.Calendar       (Day)
+import           Beans.Data.Accounts   (CommodityName (..))
+import           Beans.Data.Directives (Price (..))
+import           Beans.Ledger          (Timestep (..))
+import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
+import           Control.Monad.State   (evalState, get, modify)
+import           Data.Foldable         (foldl')
+import qualified Data.List             as L
+import qualified Data.Map.Strict       as M
+import           Data.Scientific       (Scientific, fromFloatDigits,
+                                        toRealFloat)
+import           Data.Time.Calendar    (Day)
 
 type PricesHistory = M.Map Day Prices
 
@@ -86,3 +87,6 @@ lookupPrice commodityName prices =
   case M.lookup commodityName prices of
     Just p -> return $ 1 `sdiv` p
     _      -> throwM $ NoNormalizedPriceFound prices commodityName
+
+sdiv :: Scientific -> Scientific -> Scientific
+sdiv x y = fromFloatDigits (toRealFloat x / toRealFloat y :: Double)

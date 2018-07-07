@@ -1,7 +1,6 @@
 module Beans.CLI.Balance (balanceOptions) where
 
-import           Beans.Options       (BalanceOptions (..), 
-                                      ReportType (..))
+import           Beans.Options       (BalanceOptions (..), ReportType (..))
 import           Data.Semigroup      ((<>))
 import           Options.Applicative
 import           Prelude             hiding (filter)
@@ -24,8 +23,10 @@ lots :: Parser Bool
 lots =
   switch (long "lots" <> short 'l')
 
-dateparser :: String -> Parser (Maybe Day)
-dateparser l = optional $ option (toReadM P.date) (long l)
+dateparser :: String -> String -> Parser (Maybe Day)
+dateparser optionStr helpStr =
+  optional $
+  option (toReadM P.date) (long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
 
 parseReportType :: ReadM ReportType
 parseReportType =
@@ -39,27 +40,25 @@ reportType =
   option
     parseReportType
     (value Hierarchical <>
-     help "The type of the report, either 'flat' or 'hierarchical' (default)" <>
+     help "The type of the report" <>
      long "report-type" <>
-     metavar "REPORT_TYPE" <>
+     metavar "(flat|hierarchical)" <>
      short 'r')
 
 
 journal :: Parser FilePath
 journal =
-  option
+  argument
     str
-    (value "journal.bean" <> metavar "JOURNAL" <>
-     help "The journal file to parse" <>
-     long "journal" <>
-     short 'j')
+    (value "journal.bean" <> metavar "<path>" <>
+     help "The journal file to parse")
 
 filter :: Parser (Maybe String)
 filter =
   optional $
   option
     str
-    (metavar "REGEX" <> help "A regular expression to filter the accounts" <>
+    (metavar "<regex>" <> help "A regular expression to filter the accounts" <>
      long "filter" <>
      short 'f')
 
@@ -76,13 +75,14 @@ depth =
   optional $
   option
     auto
-    (metavar "DEPTH" <> help "summarize accounts at level DEPTH" <> long "depth" <>
+    (metavar "<int>" <> help "summarize accounts at this level" <> long "depth" <>
      short 'd')
 
 balanceOptions :: Parser BalanceOptions
 balanceOptions =
-  BalanceOptions <$> journal <*> convert <*> lots <*> dateparser "from" <*>
-  dateparser "to" <*>
+  BalanceOptions <$> journal <*> convert <*> lots <*>
+  dateparser "from" "Consider only transactions at or after this date" <*>
+  dateparser "to" "Consider only transaction before or at this date"<*>
   depth <*>
   filter <*>
   strictFilter <*>

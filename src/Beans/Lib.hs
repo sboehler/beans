@@ -13,15 +13,16 @@ import           Beans.Format           (createFlatReport,
                                          createHierarchicalReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
-import           Beans.Options          (Command (..), Options (..), ReportType(..))
+import           Beans.Options          (Command (..), Options (..),
+                                         ReportType (..))
 import           Beans.Parser           (parseFile)
 import           Beans.Valuation        (calculateValuation)
 import           Control.Monad.Catch    (MonadThrow)
 import           Control.Monad.IO.Class (MonadIO)
 import           Control.Monad.Reader   (MonadReader, asks, runReaderT)
 import           Control.Monad.Trans    (liftIO)
-import           Data.Bool              (bool)
 import qualified Data.Text.IO           as TIO
+import           Prelude                hiding (filter)
 
 runBeans :: (MonadIO m, MonadThrow m) => Options -> m ()
 runBeans = runReaderT run
@@ -36,35 +37,53 @@ run = do
     printStage
 
 parseStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => m Ledger
-parseStage = buildLedger <$> (asks optJournal >>= parseFile)
+parseStage = do
+  journal <- asks optJournal
+  buildLedger <$> parseFile journal
 
 filterStage :: (MonadReader Options m) => Ledger -> m Ledger
 filterStage l = do
-  f <- asks optFilter
-  s <- asks optStrictFilter
+  filter <- asks optFilter
+  strict <- asks optStrictFilter
   return $
-    case f of
-      Just f' -> filterLedger s f' l
-      Nothing -> l
+    case filter of
+      Just regex -> filterLedger strict regex l
+      Nothing    -> l
 
 valuationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> Ledger -> m Ledger
-valuationStage accountsHistory ledger = valuate =<< asks optMarket
-  where
-    valuate (Just m) = calculateValuation accountsHistory m (AccountName Equity ["Valuation"]) ledger
-    valuate Nothing = pure ledger
+valuationStage accountsHistory ledger = do
+  target <- asks optMarket
+  case target of
+    Just commodity ->
+      calculateValuation
+        accountsHistory
+        commodity
+        (AccountName Equity ["Valuation"])
+        ledger
+    Nothing -> pure ledger
 
 accountsStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Bool -> Ledger -> m AccountsHistory
 accountsStage = calculateAccounts
 
 reportStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => AccountsHistory -> m Accounts
-reportStage h = asks optCommand >>= \case
-  Balance -> balanceReport h
+reportStage h = do
+  command <- asks optCommand
+  case command of
+    Balance -> balanceReport h
 
 aggregationStage :: (MonadIO m, MonadThrow m, MonadReader Options m) => Accounts -> m Accounts
 aggregationStage accounts = do
-  eraseStage <- bool eraseLots id <$> asks optLots
-  summarizeStage <- maybe id summarize <$> asks optDepth
-  return $ (eraseStage . summarizeStage) accounts
+  showLots <- asks optLots
+  depth <- asks optDepth
+  let eraseStage =
+        if showLots
+          then id
+          else eraseLots
+  let summarize' =
+        case depth of
+          Just d  -> summarize d
+          Nothing -> id
+  return $ (eraseStage . summarize') accounts
 
 printStage :: (MonadReader Options m, MonadIO m) => Accounts -> m ()
 printStage accounts = do
@@ -72,5 +91,5 @@ printStage accounts = do
   let createReport =
         case reportType of
           Hierarchical -> createHierarchicalReport
-          Flat -> createFlatReport
+          Flat         -> createFlatReport
   (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport) accounts

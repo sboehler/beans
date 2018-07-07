@@ -1,6 +1,7 @@
 module Main where
 
 import           Beans.CLI.Balance   (balanceOptions)
+import           Beans.CLI.Import    (importOptions)
 import           Beans.Lib           (runBeans)
 import           Beans.Options       (Command (..))
 import           Data.Semigroup      ((<>))
@@ -12,7 +13,8 @@ cmd =
   hsubparser $
   command
     "balance"
-    (info (Balance <$> balanceOptions) (progDesc "Print a balance sheet"))
+    (info (Balance <$> balanceOptions) (progDesc "Print a balance sheet")) <>
+  command "import" (info (Import <$> importOptions) (progDesc "Import data"))
 
 parserConfig :: ParserInfo Command
 parserConfig =

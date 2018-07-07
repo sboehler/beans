@@ -3,8 +3,9 @@ module Beans.Options where
 import           Beans.Data.Accounts (CommodityName (..))
 import           Data.Time.Calendar  (Day)
 
-newtype Command =
-  Balance BalanceOptions
+data Command
+  = Balance BalanceOptions
+  | Import ()
   deriving (Show)
 
 

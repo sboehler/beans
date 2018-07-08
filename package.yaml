@@ -22,6 +22,7 @@ description:         Please see the README on Github at <https://github.com/sboe
 dependencies:
 - base >= 4.7 && < 5
 - bifunctors
+- bytestring
 - containers
 - exceptions
 - filepath

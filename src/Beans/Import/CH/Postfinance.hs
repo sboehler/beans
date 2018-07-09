@@ -25,11 +25,11 @@ data PostfinanceData = PostfinanceData
   } deriving (Eq, Show)
 
 data Entry = Entry
-  { _buchungsdatum   :: Day
-  , _avisierungstext :: Text
-  , _amount          :: Amount
-  , _valuta          :: Day
-  , _Saldo           :: Maybe Amount
+  { _bookingDate :: Day
+  , _description :: Text
+  , _amount      :: Amount
+  , _valueDate   :: Day
+  , _balance     :: Maybe Amount
   } deriving (Eq, Show)
 
 readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m PostfinanceData

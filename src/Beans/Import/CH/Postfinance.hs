@@ -4,11 +4,11 @@ import           Beans.Data.Accounts        (Amount, CommodityName (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
-import qualified Data.ByteString.Lazy       as BL
+import qualified Data.ByteString            as BS
 import           Data.Monoid                (Sum (Sum))
-import           Data.Text.Lazy             (Text)
-import qualified Data.Text.Lazy             as T
-import           Data.Text.Lazy.Encoding    (decodeLatin1)
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import           Data.Text.Encoding         (decodeLatin1)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Data.Void                  (Void)
 
@@ -34,7 +34,7 @@ data Entry = Entry
 
 readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m PostfinanceData
 readCSV f = do
-  source <- liftIO $ decodeLatin1 <$> BL.readFile f
+  source <- liftIO $ decodeLatin1 <$> BS.readFile f
   case parse postfinanceData mempty source of
     Left e  -> throwM e
     Right d -> return d
@@ -60,7 +60,7 @@ entryAmount = field $ credit <|> debit
       credit = separator *> amount
 
 currency :: Parser CommodityName
-currency = field $ CommodityName . T.toStrict . T.pack <$> some alphaNumChar
+currency = field $ CommodityName . T.pack <$> some alphaNumChar
 
 date :: Parser Day
 date = field $ fromGregorian <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2)

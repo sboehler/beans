@@ -1,6 +1,7 @@
 module Beans.Import.CH.Postfinance where
 
-import           Beans.Data.Accounts        (Amount, CommodityName (..))
+import           Beans.Data.Accounts        (Amount,
+                                             CommodityName (CommodityName))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO, liftIO)

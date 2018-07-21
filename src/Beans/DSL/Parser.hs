@@ -54,7 +54,7 @@ sym a b = a <$ symbol b
 a <& b = a <$ symbol b
 
 (&>) :: Text -> a -> Parser a
-a &> b = b <$ symbol a
+(&>) = flip (<&)
 
 rules :: Parser Rules
 rules = between sc eof (many rule)

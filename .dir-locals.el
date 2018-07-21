@@ -1,1 +1,1 @@
-((nil . ((dante-target . "beans"))))
+((nil . ((dante-target . "lib:beans"))))

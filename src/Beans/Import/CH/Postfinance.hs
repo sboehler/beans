@@ -1,4 +1,8 @@
-module Beans.Import.CH.Postfinance where
+module Beans.Import.CH.Postfinance
+  ( Entry(..)
+  , PostfinanceData(..)
+  , readCSV
+  ) where
 
 import           Beans.Data.Accounts        (Amount,
                                              CommodityName (CommodityName))
@@ -47,9 +51,6 @@ postfinanceData =
   PostfinanceData <$> (count 4 ignoreLine >> ignoreField >> currency) <*>
   (ignoreLine >> some entry) <*
   (eol >> ignoreLine >> ignoreLine >> eof)
-
-symbol :: Text -> Parser Text
-symbol = L.symbol separator
 
 entry :: Parser Entry
 entry = Entry <$> date <*> description <*> entryAmount <*> date <*> balance

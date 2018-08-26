@@ -23,8 +23,13 @@ let
         else haskellPackages
     );
 
+
   drv = hspkgs.callPackage f {};
+
+  drvWithTools = pkgs.haskell.lib.addBuildDepends drv [
+    hspkgs.ghcid
+  ];
 
 in
 
-  if pkgs.lib.inNixShell then drv.env else drv
+  if pkgs.lib.inNixShell then drvWithTools.env else drvWithTools

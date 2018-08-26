@@ -71,14 +71,14 @@ balance a c = fold . filter'
     filter' = M.filterByKey (\(a', c', _) -> a' == a && c' == c)
 
 filter :: (Amount -> Bool) -> Accounts -> Accounts
-filter = M.filter 
+filter = M.filter
 
 split :: AccountName -> Accounts -> (Accounts, Accounts)
 split a = M.split (\(a', _, _) -> (a == a'))
 
 toList ::
      Accounts -> [((AccountName, CommodityName, Maybe Lot), Amount)]
-toList = M.toList 
+toList = M.toList
 
 lookupLE :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
 lookupLE = M.lookupLE

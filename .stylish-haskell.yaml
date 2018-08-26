@@ -225,3 +225,4 @@ language_extensions:
   - LambdaCase
   - MultiParamTypeClasses
   - FlexibleContexts
+  - TemplateHaskell

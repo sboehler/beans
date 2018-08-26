@@ -17,7 +17,6 @@ import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
 import           Control.Monad.State     (MonadState, evalStateT, get, gets,
                                           put)
 
-
 data RestrictedAccounts = RestrictedAccounts
   { _accounts     :: Accounts
   , _restrictions :: Restrictions

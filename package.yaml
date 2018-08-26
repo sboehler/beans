@@ -68,15 +68,19 @@ library:
   - time
 
 tests:
-  test: 
+  test:
     main: test.hs
     source-dirs:
-      - test
+      - tests
     dependencies:
       - base >= 4.7 && < 5
       - beans
       - tasty
+      - bytestring
+      - filepath
       - tasty-smallcheck
       - tasty-quickcheck
       - tasty-hunit
-
+      - tasty-golden
+      - text
+      - megaparsec

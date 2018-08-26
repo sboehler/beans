@@ -18,6 +18,7 @@ type Rules = [Rule]
 data Rule =
   Rule (E Bool)
        AccountName
+  deriving (Show)
 
 
 data E a where
@@ -63,4 +64,3 @@ instance Show a => Show (E a) where
   show (EGT a b)       = show a <> ">" <> show b
   show (ENE a b)       = show a <> "<>" <> show b
   show (EMatch a b)    = show a <> "=~" <> show b
-

@@ -40,9 +40,9 @@ accountType = read . unpack <$> identifier
 
 account :: Parser AccountName
 account =
-  lexeme $ AccountName <$> accountType <* colon <*> identifier `sepBy` colon
+  lexeme $ AccountName <$> accountType <* colon <*> (identifier `sepBy` colon)
   where
-    colon = symbol ":"
+    colon = char ':'
 
 symbolOf :: (Functor t, Foldable t) => t (Text, a) -> Parser a
 symbolOf = msum . fmap (uncurry (&>))
@@ -60,7 +60,7 @@ rules :: Parser Rules
 rules = between sc eof (many rule)
 
 rule :: Parser Rule
-rule = Rule <$> boolExpr <* symbol "->" <*> account <* eol
+rule = Rule <$> boolExpr <* symbol "->" <*> account <* symbol ";"
 
 amountLiteral :: Parser (E Amount)
 amountLiteral = EAmount <$> lexeme amount
@@ -113,7 +113,12 @@ boolExpr = makeExprParser boolTerm boolOperators
     dateRelExpr = comparison dateExpr relation
 
 comparison :: (Applicative f) => f a -> f (a -> a -> b) -> f b
-comparison expr rel = flip <$> rel <*> expr <*> expr
+comparison expr rel = do
+  e1 <- expr
+  r <- rel
+  e2 <- expr
+  return $ e1 `r` e2
+
 
 relation :: (Show a, Ord a) => Parser (E a -> E a -> E Bool)
 relation =

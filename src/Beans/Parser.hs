@@ -173,7 +173,7 @@ balance pos d =
 price :: P.SourcePos -> Day -> Parser Price
 price pos d =
   Price pos d <$ symbol "price" <*> commodity <*> p <*> commodity
-   where 
+   where
     p = lexeme $ L.signed sc L.scientific
 
 

@@ -45,7 +45,12 @@ amountExprTests =
   mkGroup
     "amountExpr"
     amountExpr
-    [(1, "amount"), (2, "4"), (3, "(4.0)"), (4, "((amount + 4) - 4.0)")]
+    [ (1, "amount")
+    , (2, "4")
+    , (3, "(4.0)")
+    , (4, "((amount + 4) - 4.0)")
+    , (5, "(amount - amount + amount)")
+    ]
 
 rulesTests :: TestTree
 rulesTests =

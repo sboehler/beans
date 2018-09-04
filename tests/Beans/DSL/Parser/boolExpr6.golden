@@ -1,0 +1,3 @@
+boolExpr6:1:13:
+unexpected "~="
+expecting "!=", "==", or "=~"

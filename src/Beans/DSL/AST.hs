@@ -52,15 +52,15 @@ instance Show a => Show (E a) where
   show EVarDescription = "description"
   show EVarBookingDate = "bookingDate"
   show EVarValueDate   = "valueDate"
-  show (EAnd a b)      = show a <> "&&" <> show b
-  show (EOr a b)       = show a <> "||" <> show b
+  show (EAnd a b)      = "(" <> show a <> " && " <> show b <> ")"
+  show (EOr a b)       = "(" <> show a <> " || " <> show b <> ")"
   show (ENot a)        = "!" <> show a
-  show (EPlus x y)     = show x <> "+" <> show y
-  show (EMinus x y)    = show x <> "-" <> show y
-  show (ELT a b)       = show a <> "<" <> show b
-  show (ELE a b)       = show a <> "<=" <> show b
-  show (EEQ a b)       = show a <> "==" <> show b
-  show (EGE a b)       = show a <> ">=" <> show b
-  show (EGT a b)       = show a <> ">" <> show b
-  show (ENE a b)       = show a <> "<>" <> show b
-  show (EMatch a b)    = show a <> "=~" <> show b
+  show (EPlus x y)     = "(" <> show x <> " + " <> show y <> ")"
+  show (EMinus x y)    = "(" <> show x <> " - " <> show y <> ")"
+  show (ELT a b)       = "(" <> show a <> " < " <> show b <> ")"
+  show (ELE a b)       = "(" <> show a <> " <= " <> show b <> ")"
+  show (EEQ a b)       = "(" <> show a <> " == " <> show b <> ")"
+  show (EGE a b)       = "(" <> show a <> " >= " <> show b <> ")"
+  show (EGT a b)       = "(" <> show a <> " > " <> show b <> ")"
+  show (ENE a b)       = "(" <> show a <> " <> " <> show b <> ")"
+  show (EMatch a b)    = "(" <> show a <> " =~ " <> show b <> ")"

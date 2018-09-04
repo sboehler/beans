@@ -1,0 +1,1 @@
+(((amount <= Sum {getSum = 4.0}) && (amount >= Sum {getSum = 2.0})) || (Sum {getSum = 40.0} < Sum {getSum = 50.0}))

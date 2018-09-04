@@ -104,7 +104,7 @@ boolExpr :: Parser (E Bool)
 boolExpr = makeExprParser boolTerm boolOperators
   where
     boolTerm =
-      parens boolExpr <|> boolLiteral <|> dateRelExpr <|> amountRelExpr <|>
+      parens boolExpr <|> boolLiteral <|> try dateRelExpr <|> amountRelExpr <|>
       textRelExpr
     boolOperators =
       [[Prefix ("not" &> ENot)], [InfixL ("and" &> EAnd), InfixL ("or" &> EOr)]]

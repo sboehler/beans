@@ -28,6 +28,10 @@ let
 
   drvWithTools = pkgs.haskell.lib.addBuildDepends drv [
     hspkgs.ghcid
+    hspkgs.cabal-install
+    hspkgs.brittany
+    hspkgs.hlint
+    hspkgs.stylish-haskell
   ];
 
 in

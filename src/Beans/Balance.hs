@@ -1,4 +1,6 @@
-module Beans.Balance (balanceCommand) where
+module Beans.Balance
+  ( balanceCommand
+  ) where
 
 import           Beans.Accounts         (calculateAccounts)
 import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
@@ -37,15 +39,15 @@ getDate = localDay . zonedTimeToLocalTime <$> getZonedTime
 balanceCommand ::
      (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
 balanceCommand = do
-        ledger <- parseStage
-        accountsHistory <- accountsStage True ledger
-        valuationStage accountsHistory ledger >>= filterStage >>=
-          accountsStage False >>=
-          reportStage >>=
-          aggregationStage >>=
-          printStage
+  ledger <- parseStage
+  accountsHistory <- accountsStage True ledger
+  valuationStage accountsHistory ledger >>= filterStage >>= accountsStage False >>=
+    reportStage >>=
+    aggregationStage >>=
+    printStage
 
-parseStage :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
+parseStage ::
+     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
 parseStage = do
   journal <- asks optJournal
   buildLedger <$> parseFile journal
@@ -59,7 +61,11 @@ filterStage l = do
       Just regex -> filterLedger strict regex l
       Nothing    -> l
 
-valuationStage :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => AccountsHistory -> Ledger -> m Ledger
+valuationStage ::
+     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+  => AccountsHistory
+  -> Ledger
+  -> m Ledger
 valuationStage accountsHistory ledger = do
   target <- asks optMarket
   case target of
@@ -71,10 +77,17 @@ valuationStage accountsHistory ledger = do
         ledger
     Nothing -> pure ledger
 
-accountsStage :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => Bool -> Ledger -> m AccountsHistory
+accountsStage ::
+     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+  => Bool
+  -> Ledger
+  -> m AccountsHistory
 accountsStage = calculateAccounts
 
-aggregationStage :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => Accounts -> m Accounts
+aggregationStage ::
+     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+  => Accounts
+  -> m Accounts
 aggregationStage accounts = do
   showLots <- asks optLots
   depth <- asks optDepth

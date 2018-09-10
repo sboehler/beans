@@ -12,7 +12,6 @@ import           Data.Time.Calendar  (Day)
 -- description = /^Postfinance/ && amount == 40 -> Accounts:Konti:Postfinance
 -- True -> Accounts:Expenses:Sonstige
 
-
 type Rules = [Rule]
 
 data Rule =

@@ -1,11 +1,10 @@
 module Beans.Import.CH.Postfinance
-  ( Entry(..)
-  , PostfinanceData(..)
-  , readCSV
+  ( readCSV
   ) where
 
 import           Beans.Data.Accounts        (Amount,
                                              CommodityName (CommodityName))
+import           Beans.Import.Common        (Entry (..), TransactionData (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
@@ -24,20 +23,7 @@ import           Text.Megaparsec.Char       (alphaNumChar, anyChar, char,
                                              digitChar, eol)
 import qualified Text.Megaparsec.Char.Lexer as L
 
-data PostfinanceData = PostfinanceData
-  { _currency :: CommodityName
-  , _entries  :: [Entry]
-  } deriving (Eq, Show)
-
-data Entry = Entry
-  { _bookingDate :: Day
-  , _description :: Text
-  , _amount      :: Amount
-  , _valueDate   :: Day
-  , _balance     :: Maybe Amount
-  } deriving (Eq, Show)
-
-readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m PostfinanceData
+readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m TransactionData
 readCSV f = do
   source <- liftIO $ decodeLatin1 <$> BS.readFile f
   case parse postfinanceData mempty source of
@@ -46,9 +32,9 @@ readCSV f = do
 
 type Parser = Parsec Void Text
 
-postfinanceData :: Parser PostfinanceData
+postfinanceData :: Parser TransactionData
 postfinanceData =
-  PostfinanceData <$> (count 4 ignoreLine >> ignoreField >> currency) <*>
+  TransactionData <$> (count 4 ignoreLine >> ignoreField >> currency) <*>
   (ignoreLine >> some entry) <*
   (eol >> ignoreLine >> ignoreLine >> eof)
 
@@ -57,9 +43,9 @@ entry = Entry <$> date <*> description <*> entryAmount <*> date <*> balance
 
 entryAmount :: Parser Amount
 entryAmount = field $ credit <|> debit
-    where
-      debit = amount <* separator
-      credit = separator *> amount
+  where
+    debit = amount <* separator
+    credit = separator *> amount
 
 currency :: Parser CommodityName
 currency = field $ CommodityName . T.pack <$> some alphaNumChar

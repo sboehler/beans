@@ -2,10 +2,9 @@ module Beans.Import
   ( importCommand
   ) where
 
-import           Beans.DSL.Interpreter       (evalRules)
-import           Beans.DSL.Parser            (parseFile)
 import           Beans.Import.CH.Postfinance
 import           Beans.Import.Common         (TransactionData (..))
+import           Beans.Import.DSL            (evalRules, parseFile)
 import           Beans.Options               (ImportOptions (..), Importer (..))
 import           Control.Monad.Catch         (MonadThrow)
 import           Control.Monad.IO.Class      (MonadIO, liftIO)

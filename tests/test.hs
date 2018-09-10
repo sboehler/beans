@@ -1,4 +1,4 @@
-import qualified Beans.DSL.Parser.Tests
+import qualified Beans.Import.DSL.Tests
 import qualified Test.Tasty               as T
 import           Test.Tasty.Golden.Manage (acceptingTests)
 
@@ -10,5 +10,5 @@ main = T.defaultMainWithIngredients ingredients tests
 
 tests :: T.TestTree
 tests = T.testGroup "Tests" [
-  Beans.DSL.Parser.Tests.tests
+  Beans.Import.DSL.Tests.tests
   ]

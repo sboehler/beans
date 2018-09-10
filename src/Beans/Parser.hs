@@ -24,13 +24,13 @@ import           Data.Text.IO               (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Prelude                    hiding (readFile)
 import           System.FilePath.Posix      (combine, takeDirectory)
-import           Text.Megaparsec            (ErrorFancy (..), ParseError,
-                                             Parsec, ShowErrorComponent (..),
-                                             between, count, empty, eof,
-                                             fancyFailure, getPosition, many,
-                                             optional, parse, parseErrorPretty,
-                                             sepBy, sepBy1, some, takeWhile1P,
-                                             takeWhileP, try, (<|>))
+import           Text.Megaparsec            (ErrorFancy (..), Parsec,
+                                             ShowErrorComponent (..), between,
+                                             count, empty, eof, fancyFailure,
+                                             getPosition, many, optional, parse,
+                                             parseErrorPretty, sepBy, sepBy1,
+                                             some, takeWhile1P, takeWhileP, try,
+                                             (<|>))
 import           Text.Megaparsec.Char       (char, digitChar, letterChar,
                                              space1)
 import qualified Text.Megaparsec.Char.Lexer as L

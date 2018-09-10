@@ -52,8 +52,7 @@ instance (Show k, Show v) => Show (Map k v) where
 
 insert :: (Ord k, Monoid v) => k -> (v -> v) -> Map k v -> Map k v
 insert k f (Map m) =
-  let v = M.findWithDefault mempty k m
-   in Map $ M.insert k (f v) m
+  let v = M.findWithDefault mempty k m in Map $ M.insert k (f v) m
 
 insert' :: Ord k => k -> v -> Map k v -> Map k v
 insert' k v (Map m) = Map $ M.insert k v m
@@ -65,12 +64,11 @@ filterByKey :: (k -> Bool) -> Map k v -> Map k v
 filterByKey f (Map m) = Map $ M.filterWithKey (const . f) m
 
 filter :: (a -> Bool) -> Map k a -> Map k a
-filter f (Map m)= Map $ M.filter f m
+filter f (Map m) = Map $ M.filter f m
 
 split :: (k -> Bool) -> Map k v -> (Map k v, Map k v)
 split f (Map m) =
-  let (m1, m2) = M.partitionWithKey (const . f) m
-   in (Map m1, Map m2)
+  let (m1, m2) = M.partitionWithKey (const . f) m in (Map m1, Map m2)
 
 toList :: Map k v -> [(k, v)]
 toList (Map m) = M.toList m
@@ -108,5 +106,5 @@ singleton k v = Map $ M.singleton k v
 combine :: (Monoid v, Ord k) => [Map k v] -> Map k [v]
 combine maps =
   let k = S.toList $ mconcat (M.keysSet . _unmap <$> maps)
-      m = [(account, findWithDefault account <$> maps) | account <- k]
-   in Map $ M.fromList m
+      m = [ (account, findWithDefault account <$> maps) | account <- k ]
+  in  Map $ M.fromList m

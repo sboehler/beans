@@ -81,9 +81,7 @@ convertTransaction ::
 convertTransaction Transaction {..} = do
   ValuationState { _valuationAccount, _normalizedPrices } <- get
   postings <- mapM (convertPosting _normalizedPrices) _postings
-  case mkBalancedTransaction _pos _date _flag _description _tags postings (Just _valuationAccount) of
-    Left _  -> error "Unbalanced transaction"
-    Right t -> return t
+  mkBalancedTransaction _pos _date _flag _description _tags postings (Just _valuationAccount)
 
 convertPosting ::
      (MonadThrow m, MonadState ValuationState m)

@@ -130,7 +130,8 @@ postingPrice = (at *> optional at *> amount *> commodity) $> ()
 
 posting :: Day -> Parser Posting
 posting d =
-  Posting <$> (Just <$> getPosition) <*> account <*> amount <*> commodity <*> optional (lot d) <*
+  Posting <$> (Just <$> getPosition) <*> account <*> amount <*> commodity <*>
+  optional (lot d) <*
   optional postingPrice
 
 flag :: Parser Flag
@@ -151,8 +152,8 @@ transaction pos d = do
   p <- some $ try (L.indentGuard scn EQ indent *> posting d)
   w <- optional $ try (L.indentGuard scn EQ indent *> account)
   case mkBalancedTransaction (Just pos) d f desc t p w of
-    Right t' -> return t'
-    Left _   -> verifyError pos
+    Just t' -> return t'
+    Nothing -> verifyError pos
 
 open :: P.SourcePos -> Day -> Parser Open
 open pos d = Open (Just pos) d <$ symbol "open" <*> account <*> restriction

@@ -4,6 +4,7 @@ import           Beans.Data.Accounts     (AccountName, Amount, CommodityName,
                                           Lot (..))
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction)
+import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
 import           Data.Monoid             (Sum (Sum))
 import           Data.Scientific         (Scientific)
 import           Data.Text               (Text)
@@ -90,7 +91,9 @@ data UnbalancedTransaction =
   UnbalancedTransaction
   deriving (Eq, Show)
 
-mkBalancedTransaction ::
+instance Exception UnbalancedTransaction
+
+mkBalancedTransaction :: MonadThrow m =>
      Maybe P.SourcePos
   -> Day
   -> Flag
@@ -98,20 +101,20 @@ mkBalancedTransaction ::
   -> [Tag]
   -> [Posting]
   -> Maybe AccountName
-  -> Either UnbalancedTransaction Transaction
+  -> m Transaction
 mkBalancedTransaction pos day flag desc tags ps wildcard =
   Transaction pos day flag desc tags <$> completePostings ps wildcard
 
-completePostings ::
-     [Posting] -> Maybe AccountName -> Either UnbalancedTransaction [Posting]
-completePostings postings wildcard =
+completePostings :: MonadThrow m =>
+     [Posting] -> Maybe AccountName -> m [Posting]
+completePostings postings wildcard = do
   let imbalances = calculateImbalances postings
-      fixes = fixImbalances wildcard imbalances
-   in (postings ++) <$> fixes
-  where
-    fixImbalances _ []       = Right []
-    fixImbalances (Just a) i = Right $ balanceImbalance a <$> i
-    fixImbalances _ _        = Left UnbalancedTransaction
+  fixes <- fixImbalances wildcard imbalances
+  return $ postings ++ fixes
+   where
+    fixImbalances _ []       = return []
+    fixImbalances (Just a) i = return $ balanceImbalance a <$> i
+    fixImbalances _ _        = throwM UnbalancedTransaction
 
 balanceImbalance :: AccountName -> (CommodityName, Amount) -> Posting
 balanceImbalance _account (c, a) =

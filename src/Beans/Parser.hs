@@ -8,8 +8,8 @@ import           Beans.Data.Directives      (Balance (..), Close (..),
                                              Include (..), Open (..),
                                              Option (..), Posting (..),
                                              Price (..), Tag (..),
-                                             Transaction (..))
-import qualified Beans.Data.Map             as M
+                                             Transaction (..),
+                                             mkBalancedTransaction)
 import           Beans.Data.Restrictions    (Restriction (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
@@ -128,28 +128,10 @@ postingPrice = (at *> optional at *> amount *> commodity) $> ()
   where
     at = symbol "@"
 
-data PostingDirective
-  = CP Posting
-  | WP WildcardPosting
-
-data WildcardPosting =
-  WildcardPosting P.SourcePos
-                  AccountName
-  deriving (Show, Eq)
-
-posting :: Day -> P.SourcePos -> AccountName -> Parser Posting
-posting d p a =
-  Posting (Just p) a <$> amount <*> commodity <*> optional (lot d) <*
+posting :: Day -> Parser Posting
+posting d =
+  Posting <$> (Just <$> getPosition) <*> account <*> amount <*> commodity <*> optional (lot d) <*
   optional postingPrice
-
-wildcardPosting :: P.SourcePos -> AccountName -> Parser WildcardPosting
-wildcardPosting p a = return $ WildcardPosting p a
-
-postingDirective :: Day -> Parser PostingDirective
-postingDirective d = do
-  pos <- getPosition
-  a <- account
-  CP <$> posting d pos a <|> WP <$> wildcardPosting pos a
 
 flag :: Parser Flag
 flag = complete <|> incomplete
@@ -166,11 +148,11 @@ transaction pos d = do
   desc <- quotedString
   t <- many tag
   indent <- L.indentGuard scn GT P.pos1
-  p <- some $ try (L.indentGuard scn EQ indent *> postingDirective d)
-  let postings = completePostings p
-  case postings of
-    Nothing -> verifyError pos
-    Just p' -> return $ Transaction (Just pos) d f desc t p'
+  p <- some $ try (L.indentGuard scn EQ indent *> posting d)
+  w <- optional $ try (L.indentGuard scn EQ indent *> account)
+  case mkBalancedTransaction (Just pos) d f desc t p w of
+    Right t' -> return t'
+    Left _   -> verifyError pos
 
 open :: P.SourcePos -> Day -> Parser Open
 open pos d = Open (Just pos) d <$ symbol "open" <*> account <*> restriction
@@ -230,29 +212,3 @@ parseFile filePath = do
   ast <- parseSource filePath source
   asts <- concat <$> traverse parseFile (getIncludedFiles filePath ast)
   return $ ast ++ asts
-
-completePostings :: [PostingDirective] -> Maybe [Posting]
-completePostings p =
-  let wildcards = [w | WP w <- p]
-      postings = [c | CP c <- p]
-   in case calculateImbalances postings of
-        [] -> return postings
-        imbalances ->
-          case wildcards of
-            [w] -> return $ postings ++ map (balanceImbalance w) imbalances
-            _   -> Nothing
-
-balanceImbalance :: WildcardPosting -> (CommodityName, Amount) -> Posting
-balanceImbalance (WildcardPosting _pos _account) (c, a) =
-  Posting
-    {_pos = Just _pos, _amount = negate a, _commodity = c, _lot = Nothing, ..}
-
-calculateImbalances :: [Posting] -> [(CommodityName, Amount)]
-calculateImbalances =
-  M.toList . M.filter ((> Sum 0.005) . abs) . M.fromList . fmap weight
-
-weight :: Posting -> (CommodityName, Amount)
-weight Posting {..} =
-  case _lot of
-    Just Lot {_price, _targetCommodity} -> (_targetCommodity, _amount * _price)
-    Nothing -> (_commodity, _amount)

@@ -1,8 +1,8 @@
 module Beans.Data.Restrictions where
 
-import Beans.Data.Accounts (AccountName, CommodityName)
-import qualified Beans.Data.Map as M
-import Data.List (union)
+import           Beans.Data.Accounts (AccountName, CommodityName)
+import qualified Beans.Data.Map      as M
+import           Data.List           (union)
 
 type Restrictions = M.Map AccountName Restriction
 

@@ -1,9 +1,10 @@
-module Beans.Data.Directives
-   where
+module Beans.Data.Directives where
 
 import           Beans.Data.Accounts     (AccountName, Amount, CommodityName,
-                                          Lot)
+                                          Lot (..))
+import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction)
+import           Data.Monoid             (Sum (Sum))
 import           Data.Scientific         (Scientific)
 import           Data.Text               (Text)
 import           Data.Time.Calendar      (Day)
@@ -33,7 +34,6 @@ data Open = Open
   , _account     :: AccountName
   , _restriction :: Restriction
   } deriving (Show)
-
 
 data Close = Close
   { _pos     :: Maybe P.SourcePos
@@ -76,9 +76,8 @@ newtype Tag =
   deriving (Show)
 
 data Include = Include
-  {
-    _pos      :: P.SourcePos,
-    _filePath :: FilePath
+  { _pos      :: P.SourcePos
+  , _filePath :: FilePath
   } deriving (Show)
 
 data Option =
@@ -86,3 +85,45 @@ data Option =
          Text
          Text
   deriving (Show)
+
+data UnbalancedTransaction =
+  UnbalancedTransaction
+  deriving (Eq, Show)
+
+mkBalancedTransaction ::
+     Maybe P.SourcePos
+  -> Day
+  -> Flag
+  -> Text
+  -> [Tag]
+  -> [Posting]
+  -> Maybe AccountName
+  -> Either UnbalancedTransaction Transaction
+mkBalancedTransaction pos day flag desc tags ps wildcard =
+  Transaction pos day flag desc tags <$> completePostings ps wildcard
+
+completePostings ::
+     [Posting] -> Maybe AccountName -> Either UnbalancedTransaction [Posting]
+completePostings postings wildcard =
+  let imbalances = calculateImbalances postings
+      fixes = fixImbalances wildcard imbalances
+   in (postings ++) <$> fixes
+  where
+    fixImbalances _ []       = Right []
+    fixImbalances (Just a) i = Right $ balanceImbalance a <$> i
+    fixImbalances _ _        = Left UnbalancedTransaction
+
+balanceImbalance :: AccountName -> (CommodityName, Amount) -> Posting
+balanceImbalance _account (c, a) =
+  Posting
+    {_pos = Nothing, _amount = negate a, _commodity = c, _lot = Nothing, ..}
+
+calculateImbalances :: [Posting] -> [(CommodityName, Amount)]
+calculateImbalances =
+  M.toList . M.filter ((> Sum 0.005) . abs) . M.fromList . fmap weight
+
+weight :: Posting -> (CommodityName, Amount)
+weight Posting {..} =
+  case _lot of
+    Just Lot {_price, _targetCommodity} -> (_targetCommodity, _amount * _price)
+    Nothing -> (_commodity, _amount)

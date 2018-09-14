@@ -4,7 +4,8 @@ import           Beans.Data.Accounts     (AccountName (..), AccountType (..),
                                           Accounts, AccountsHistory, Amount,
                                           CommodityName (..), Lot (..), toList)
 import           Beans.Data.Directives   (Flag (..), Open (..), Posting (..),
-                                          Transaction (..))
+                                          Transaction (..),
+                                          mkBalancedTransaction)
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction (..))
 import           Beans.Ledger            (Ledger, Timestep (..))
@@ -80,18 +81,9 @@ convertTransaction ::
 convertTransaction Transaction {..} = do
   ValuationState { _valuationAccount, _normalizedPrices } <- get
   postings <- mapM (convertPosting _normalizedPrices) _postings
-  let balancePostings = map (f _valuationAccount) (calculateImbalances postings)
-  return Transaction {_postings = postings ++ balancePostings, ..}
-  where
-    f _account (_commodity, amount) =
-      Posting {_pos = Nothing, _amount = negate amount, _lot = Nothing, ..}
-
-
-calculateImbalances :: [Posting] -> [(CommodityName, Amount)]
-calculateImbalances =
-  M.toList . M.filter ((> Sum 0.005) . abs) . M.fromList . fmap weight
-  where
-    weight Posting {..} = (_commodity, _amount)
+  case mkBalancedTransaction _pos _date _flag _description _tags postings (Just _valuationAccount) of
+    Left _  -> error "Unbalanced transaction"
+    Right t -> return t
 
 convertPosting ::
      (MonadThrow m, MonadState ValuationState m)

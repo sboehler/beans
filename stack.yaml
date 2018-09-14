@@ -37,6 +37,11 @@ resolver: lts-11.9
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - .
+
+nix:
+  enable: true
+  packages: [pcre]
+
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 # extra-deps: []

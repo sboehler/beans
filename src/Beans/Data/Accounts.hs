@@ -39,12 +39,12 @@ newtype CommodityName = CommodityName
 instance Show CommodityName where
   show (CommodityName n) = unpack n
 
-data Lot
-  = Lot { _price           :: Amount
-        , _targetCommodity :: CommodityName
-        , _date            :: Day
-        , _label           :: Maybe Text }
-  deriving (Eq, Ord)
+data Lot = Lot
+  { lPrice           :: Amount
+  , lTargetCommodity :: CommodityName
+  , lDate            :: Day
+  , lLabel           :: Maybe Text
+  } deriving (Eq, Ord)
 
 instance Show Lot where
   show (Lot p t d l) =
@@ -52,9 +52,16 @@ instance Show Lot where
         elems = catMaybes [Just price, Just $ show d, show <$> l]
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
+data Posting = Posting
+  { pAccount   :: AccountName
+  , pAmount    :: Amount
+  , pCommodity :: CommodityName
+  , pLot       :: Maybe Lot
+  } deriving (Eq, Ord, Show)
 
-add :: AccountName -> CommodityName -> Maybe Lot -> Amount -> Accounts -> Accounts
-add a c l s = M.insert (a, c, l) (mappend s)
+book :: Posting -> Accounts -> Accounts
+book Posting {pAccount, pAmount, pCommodity, pLot} =
+  M.insert (pAccount, pCommodity, pLot) (mappend pAmount)
 
 minus :: Accounts -> Accounts -> Accounts
 minus a1 a2 = a1 `mappend` invert a2
@@ -76,14 +83,21 @@ filter = M.filter
 split :: AccountName -> Accounts -> (Accounts, Accounts)
 split a = M.split (\(a', _, _) -> (a == a'))
 
-toList ::
-     Accounts -> [((AccountName, CommodityName, Maybe Lot), Amount)]
+toList :: Accounts -> [((AccountName, CommodityName, Maybe Lot), Amount)]
 toList = M.toList
 
-lookupLE :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
+lookupLE ::
+     forall v k. (Ord k, Monoid v)
+  => k
+  -> M.Map k v
+  -> v
 lookupLE = M.lookupLE
 
-lookupLT :: forall v k. (Ord k, Monoid v) => k -> M.Map k v -> v
+lookupLT ::
+     forall v k. (Ord k, Monoid v)
+  => k
+  -> M.Map k v
+  -> v
 lookupLT = M.lookupLT
 
 summarize :: Int -> Accounts -> Accounts

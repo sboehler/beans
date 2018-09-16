@@ -8,14 +8,14 @@ module Beans.Pretty
 import           Beans.Data.Accounts       (AccountName (..), Amount,
                                             CommodityName (..), Lot (..))
 import           Beans.Data.Directives     (Balance (..), Close (..),
+                                            Command (..), DatedCommand (..),
                                             Directive (..), Flag (..),
                                             Include (..), Open (..),
                                             Option (..), Posting (..),
                                             Price (..), Tag (..),
                                             Transaction (..))
-import qualified Beans.Data.Map            as M
 import           Beans.Data.Restrictions   (Restriction (..))
-import           Beans.Ledger
+import           Beans.Ledger              (Ledger, Timestep (Timestep), toList)
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)
@@ -37,9 +37,9 @@ instance Pretty Day where
 
 instance Pretty Transaction where
   pretty Transaction {..} =
-    pretty _flag <+>
-    dquotes (pretty _description) <+>
-    cat (map pretty _tags) <> line <> (indent 2 . vcat) (fmap pretty _postings)
+    pretty tFlag <+>
+    dquotes (pretty tDescription) <+>
+    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (pretty <$> tPostings)
 
 instance Pretty Flag where
   pretty Complete   = "*"
@@ -49,45 +49,49 @@ instance Pretty Tag where
   pretty (Tag t) = pretty t
 
 instance Pretty Lot where
-  pretty Lot {_label, _price, _targetCommodity, _date} =
+  pretty Lot {lLabel, lPrice, lTargetCommodity, lDate} =
     encloseSep "{" "}" "," $
-    [pretty _price, pretty _targetCommodity, pretty _date] ++
-    case _label of
+    [pretty lPrice, pretty lTargetCommodity, pretty lDate] ++
+    case lLabel of
       Nothing -> []
-      _       -> [pretty _label]
+      Just l  -> [pretty l]
 
 instance Pretty Posting where
-  pretty Posting {_account, _amount, _commodity, _lot} =
-    pretty _account <+>
-    (pretty . show) _amount <+> pretty _commodity <+> pretty _lot
+  pretty Posting {pAccount, pAmount, pCommodity, pLot} =
+    pretty pAccount <+>
+    (pretty . show) pAmount <+> pretty pCommodity <+> pretty pLot
 
 instance Pretty Directive where
-  pretty (Opt x) = pretty x
-  pretty (Inc x) = pretty x
-  pretty (Bal b) = pretty b
-  pretty (Opn o) = pretty o
-  pretty (Cls c) = pretty c
-  pretty (Trn t) = pretty t
-  pretty (Prc p) = pretty p
+  pretty (DatedCommandDirective (DatedCommand day command)) =
+    pretty day <+> pretty command
+  pretty (OptionDirective o) = pretty o
+  pretty (IncludeDirective i) = pretty i
+
+instance Pretty Command where
+  pretty (BalanceCommand b)     = pretty b
+  pretty (OpenCommand o)        = pretty o
+  pretty (CloseCommand c)       = pretty c
+  pretty (TransactionCommand t) = pretty t
+  pretty (PriceCommand p)       = pretty p
 
 instance Pretty Balance where
-  pretty Balance {_account, _amount, _commodity} =
-    "balance" <+> pretty _account <+> pretty _amount <+> pretty _commodity
+  pretty Balance {bAccount, bAmount, bCommodity} =
+    "balance" <+> pretty bAccount <+> pretty bAmount <+> pretty bCommodity
 
 instance Pretty Open where
-  pretty Open {_account, _restriction} =
-    "open" <+> pretty _account <+> pretty _restriction
+  pretty Open {oAccount, oRestriction} =
+    "open" <+> pretty oAccount <+> pretty oRestriction
 
 instance Pretty Restriction where
   pretty NoRestriction    = mempty
   pretty (RestrictedTo c) = hsep (map pretty c)
 
 instance Pretty Close where
-  pretty Close {_account} = "close" <+> pretty _account
+  pretty Close {cAccount} = "close" <+> pretty cAccount
 
 instance Pretty Price where
-  pretty Price {_commodity, _price, _targetCommodity} =
-    "price" <+> pretty _commodity <+> pretty _price <+> pretty _targetCommodity
+  pretty Price {pCommodity, pPrice, pTargetCommodity} =
+    "price" <+> pretty pCommodity <+> pretty pPrice <+> pretty pTargetCommodity
 
 instance Pretty Include where
   pretty (Include _ filePath) = "include" <+> pretty filePath
@@ -98,11 +102,10 @@ instance Pretty Option where
 prettyPrint :: [Directive] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
-prettyPrintLedger :: Ledger -> IO()
-prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty . snd) . M.toList
+prettyPrintLedger :: Ledger -> IO ()
+prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty) . toList
 
 instance Pretty Timestep where
-  pretty Timestep{ _openings, _closings, _balances, _transactions} =
-      vsep (map pretty _openings) <> hardline <>
-      vsep (map pretty _closings) <> hardline <>
-      vsep (map pretty _transactions)
+  pretty (Timestep day commands) = vsep (map pretty' commands) <> hardline
+    where
+      pretty' command = pretty day <+> pretty command

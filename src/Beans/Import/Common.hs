@@ -5,14 +5,14 @@ import           Data.Text           (Text)
 import           Data.Time.Calendar  (Day)
 
 data TransactionData = TransactionData
-  { _currency :: CommodityName
-  , _entries  :: [Entry]
+  { tdCurrency :: CommodityName
+  , tdEntries  :: [Entry]
   } deriving (Eq, Show)
 
 data Entry = Entry
-  { _bookingDate :: Day
-  , _description :: Text
-  , _amount      :: Amount
-  , _valueDate   :: Day
-  , _balance     :: Maybe Amount
+  { eBookingDate :: Day
+  , eDescription :: Text
+  , eAmount      :: Amount
+  , eValueDate   :: Day
+  , eBalance     :: Maybe Amount
   } deriving (Eq, Show)

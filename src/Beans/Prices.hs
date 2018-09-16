@@ -9,7 +9,7 @@ module Beans.Prices
   ) where
 
 import           Beans.Data.Accounts   (CommodityName (..))
-import           Beans.Data.Directives (Price (..))
+import           Beans.Data.Directives (Command (..), Price (..))
 import           Beans.Ledger          (Timestep (..))
 import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
 import           Control.Monad.State   (evalState, get, modify)
@@ -42,22 +42,24 @@ calculatePrices l = evalState (mapM f l) mempty
     f timestep = modify (updatePrices timestep) >> get
 
 updatePrices :: Timestep -> Prices -> Prices
-updatePrices Timestep {_prices} prices =
-  let prices' = foldl' addPrice prices _prices
-   in foldl' (\p -> addPrice p . invert) prices' _prices
+updatePrices (Timestep _ commands) prices =
+  let prices' = foldl' addPrice prices commands
+   in foldl' (\p -> addPrice p . invert) prices' commands
 
-addPrice :: Prices -> Price -> Prices
-addPrice prices Price {..} =
-  let p = M.findWithDefault mempty _commodity prices
-   in M.insert _commodity (M.insert _targetCommodity _price p) prices
+addPrice :: Prices -> Command -> Prices
+addPrice prices (PriceCommand Price {pCommodity, pPrice, pTargetCommodity}) =
+  let p = M.findWithDefault mempty pCommodity prices
+   in M.insert pCommodity (M.insert pTargetCommodity pPrice p) prices
+addPrice prices _ = prices
 
-invert :: Price -> Price
-invert p@Price {..} =
-  p
-    { _commodity = _targetCommodity
-    , _targetCommodity = _commodity
-    , _price = 1 `sdiv` _price
+invert :: Command -> Command
+invert (PriceCommand p@Price {..}) =
+  PriceCommand $ p
+    { pCommodity = pTargetCommodity
+    , pTargetCommodity = pCommodity
+    , pPrice = 1 `sdiv` pPrice
     }
+invert c = c
 
 normalize :: Prices -> CommodityName -> NormalizedPrices
 normalize prices current =

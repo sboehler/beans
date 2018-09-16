@@ -4,6 +4,7 @@ import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
                                              Amount, CommodityName (..),
                                              Lot (..))
 import           Beans.Data.Directives      (Balance (..), Close (..),
+                                             Command (..), DatedCommand (..),
                                              Directive (..), Flag (..),
                                              Include (..), Open (..),
                                              Option (..), Posting (..),
@@ -130,8 +131,7 @@ postingPrice = (at *> optional at *> amount *> commodity) $> ()
 
 posting :: Day -> Parser Posting
 posting d =
-  Posting <$> (Just <$> getPosition) <*> account <*> amount <*> commodity <*>
-  optional (lot d) <*
+  Posting <$> account <*> amount <*> commodity <*> optional (lot d) <*
   optional postingPrice
 
 flag :: Parser Flag
@@ -143,44 +143,44 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: P.SourcePos -> Day -> Parser Transaction
-transaction pos d = do
+transaction :: Day -> Parser Transaction
+transaction d = do
   f <- flag
   desc <- quotedString
   t <- many tag
   indent <- L.indentGuard scn GT P.pos1
   p <- some $ try (L.indentGuard scn EQ indent *> posting d)
   w <- optional $ try (L.indentGuard scn EQ indent *> account)
-  case mkBalancedTransaction (Just pos) d f desc t p w of
+  case mkBalancedTransaction f desc t p w of
     Just t' -> return t'
-    Nothing -> verifyError pos
+    Nothing -> do
+      pos <- getPosition
+      verifyError pos
 
-open :: P.SourcePos -> Day -> Parser Open
-open pos d = Open (Just pos) d <$ symbol "open" <*> account <*> restriction
+open :: Parser Open
+open = Open <$ symbol "open" <*> account <*> restriction
 
 restriction :: Parser Restriction
 restriction =
   RestrictedTo <$> (commodity `sepBy1` symbol ",") <|> return NoRestriction
 
-close :: P.SourcePos -> Day -> Parser Close
-close pos d = Close (Just pos) d <$ symbol "close" <*> account
+close :: Parser Close
+close = Close <$ symbol "close" <*> account
 
-balance :: P.SourcePos -> Day -> Parser Balance
-balance pos d =
-  Balance (Just pos) d <$ symbol "balance" <*> account <*> amount <*> commodity
+balance :: Parser Balance
+balance = Balance <$ symbol "balance" <*> account <*> amount <*> commodity
 
-price :: P.SourcePos -> Day -> Parser Price
-price pos d = Price pos d <$ symbol "price" <*> commodity <*> p <*> commodity
+price :: Parser Price
+price = Price <$ symbol "price" <*> commodity <*> p <*> commodity
   where
     p = lexeme $ L.signed sc L.scientific
 
-event :: Parser Directive
-event = do
-  pos <- getPosition
-  d <- date
-  Trn <$> transaction pos d <|> Opn <$> open pos d <|> Cls <$> close pos d <|>
-    Bal <$> balance pos d <|>
-    Prc <$> price pos d
+command :: Day -> Parser Command
+command d =
+  TransactionCommand <$> transaction d <|> OpenCommand <$> open <|>
+  CloseCommand <$> close <|>
+  BalanceCommand <$> balance <|>
+  PriceCommand <$> price
 
 include :: Parser Include
 include =
@@ -190,12 +190,18 @@ config :: Parser Option
 config =
   symbol "option" >> Option <$> getPosition <*> quotedString <*> quotedString
 
+commandDirective :: Parser Directive
+commandDirective = do
+  d <- try date
+  DatedCommandDirective . DatedCommand d <$> command d
+
 directive :: Parser Directive
 directive =
-  L.nonIndented scn $ (event <|> Inc <$> include <|> Opt <$> config) <* scn
+  L.nonIndented scn $ (IncludeDirective <$> include <|>
+  OptionDirective <$> config <|> commandDirective) <* scn
 
 directives :: Parser [Directive]
-directives = some directive <* eof
+directives =  some directive <* try (scn >> eof)
 
 parseSource :: (MonadThrow m) => FilePath -> Text -> m [Directive]
 parseSource f t =
@@ -205,7 +211,7 @@ parseSource f t =
 
 getIncludedFiles :: FilePath -> [Directive] -> [FilePath]
 getIncludedFiles fp ast =
-  [combine (takeDirectory fp) path | (Inc (Include _ path)) <- ast]
+  [combine (takeDirectory fp) path | (IncludeDirective (Include _ path)) <- ast]
 
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
 parseFile filePath = do

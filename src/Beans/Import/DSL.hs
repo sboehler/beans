@@ -89,10 +89,10 @@ evalE (EBool   a)     = return a
 evalE (EText   a)     = return a
 evalE (EDate   a)     = return a
 evalE (EAmount a)     = return a
-evalE EVarAmount      = asks _amount
-evalE EVarDescription = asks _description
-evalE EVarBookingDate = asks _bookingDate
-evalE EVarValueDate   = asks _valueDate
+evalE EVarAmount      = asks eAmount
+evalE EVarDescription = asks eDescription
+evalE EVarBookingDate = asks eBookingDate
+evalE EVarValueDate   = asks eValueDate
 evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
 evalE (EOr  a b  )    = (||) <$> evalE a <*> evalE b
 evalE (ENot a    )    = not <$> evalE a
@@ -161,7 +161,7 @@ sym a b = a <$ symbol b
 (<&) :: a -> Text -> Parser a
 a <& b = a <$ symbol b
 
-(&>) :: Text -> a -> Parser a
+(&>)  :: Text -> a -> Parser a
 (&>) = flip (<&)
 
 rules :: Parser Rules

@@ -8,19 +8,15 @@ import           Beans.Import.DSL            (evalRules, parseFile)
 import           Beans.Options               (ImportOptions (..), Importer (..))
 import           Control.Monad.Catch         (MonadThrow)
 import           Control.Monad.IO.Class      (MonadIO, liftIO)
-import           Control.Monad.Reader        (MonadReader, ask, asks,
-                                              runReaderT)
+import           Control.Monad.Reader        (MonadReader, asks, runReaderT)
 
 importCommand :: (MonadReader ImportOptions m, MonadThrow m, MonadIO m) => m ()
 importCommand = do
-  ImportOptions { optConfig, optAccount, optData } <- ask
   parse <- getParser
-  TransactionData { _currency, _entries } <- parse optData
-  rules <- parseFile optConfig
-  let e        = evalRules optAccount rules
-  let accounts = runReaderT e <$> _entries
+  entries <- tdEntries <$> ( asks optData >>= parse)
+  evaluator <- evalRules <$> asks optAccount <*> (asks optConfig >>= parseFile)
+  let accounts = runReaderT evaluator <$> entries
   liftIO $ print accounts
-
 
 getParser
   :: (MonadThrow m, MonadIO m, MonadReader ImportOptions m)

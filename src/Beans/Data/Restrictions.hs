@@ -1,4 +1,13 @@
-module Beans.Data.Restrictions where
+module Beans.Data.Restrictions
+  ( Restrictions
+  , Restriction(..)
+  , isOpen
+  , find
+  , split
+  , isCompatible
+  , add
+  , isEmpty
+  ) where
 
 import           Beans.Data.Accounts (AccountName, CommodityName)
 import qualified Beans.Data.Map      as M
@@ -9,7 +18,7 @@ type Restrictions = M.Map AccountName Restriction
 data Restriction
   = NoRestriction
   | RestrictedTo [CommodityName]
-  deriving (Show)
+  deriving (Eq, Ord, Show)
 
 instance Monoid Restriction where
   mempty = RestrictedTo []

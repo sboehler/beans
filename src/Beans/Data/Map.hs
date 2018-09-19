@@ -20,16 +20,17 @@ module Beans.Data.Map
   , split
   ) where
 
-import           Data.Foldable         (Foldable)
-import           Data.Group            (Group (..))
-import qualified Data.Set as S
-import qualified Data.Map.Strict       as M
-import           Data.Traversable      (Traversable (..))
-import           Prelude               hiding (filter)
+import           Data.Foldable    (Foldable)
+import           Data.Group       (Group (..))
+import qualified Data.Map.Strict  as M
+import qualified Data.Set         as S
+import           Data.Traversable (Traversable (..))
+import           Prelude          hiding (filter)
 
-newtype Map k v = Map {
-  _unmap :: M.Map k v
-}
+newtype Map k v = Map (M.Map k v)
+
+unmap :: Map k v -> M.Map k v
+unmap (Map m) = m
 
 instance (Monoid v, Ord k) => Monoid (Map k v) where
   mempty = Map mempty
@@ -105,6 +106,6 @@ singleton k v = Map $ M.singleton k v
 
 combine :: (Monoid v, Ord k) => [Map k v] -> Map k [v]
 combine maps =
-  let k = S.toList $ mconcat (M.keysSet . _unmap <$> maps)
+  let k = S.toList $ mconcat (M.keysSet . unmap <$> maps)
       m = [ (account, findWithDefault account <$> maps) | account <- k ]
   in  Map $ M.fromList m

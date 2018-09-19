@@ -30,7 +30,7 @@ instance Pretty AccountName where
   pretty = pretty . show
 
 instance Pretty CommodityName where
-  pretty = pretty . _unCommodityName
+  pretty (CommodityName c) = pretty c
 
 instance Pretty Day where
   pretty = pretty . show

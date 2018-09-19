@@ -24,17 +24,17 @@ data AccountType
   | Expenses
   deriving (Eq, Ord, Read, Show)
 
-data AccountName = AccountName
-  { _unAccountType :: AccountType
-  , _unAccountName :: [Text]
-  } deriving (Eq, Ord)
+data AccountName =
+  AccountName AccountType
+              [Text]
+  deriving (Eq, Ord)
 
 instance Show AccountName where
   show (AccountName t n) = L.intercalate ":" (show t : (unpack <$> n))
 
-newtype CommodityName = CommodityName
-  { _unCommodityName :: Text
-  } deriving (Eq, Ord)
+newtype CommodityName =
+  CommodityName Text
+  deriving (Eq, Ord)
 
 instance Show CommodityName where
   show (CommodityName n) = unpack n
@@ -47,9 +47,9 @@ data Lot = Lot
   } deriving (Eq, Ord)
 
 instance Show Lot where
-  show (Lot p t d l) =
-    let price = show p ++ " " ++ show t
-        elems = catMaybes [Just price, Just $ show d, show <$> l]
+  show Lot {lPrice, lTargetCommodity, lDate, lLabel} =
+    let price = show lPrice ++ " " ++ show lTargetCommodity
+        elems = catMaybes [Just price, Just $ show lDate, show <$> lLabel]
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
 data Posting = Posting
@@ -67,15 +67,19 @@ minus :: Accounts -> Accounts -> Accounts
 minus a1 a2 = a1 `mappend` invert a2
 
 mapAccounts :: (AccountName -> AccountName) -> Accounts -> Accounts
-mapAccounts f = M.mapKeys (\(a, c, l) -> (f a, c, l))
+mapAccounts f = M.mapKeys g
+  where
+    g (a, c, l) = (f a, c, l)
 
 mapLots :: (Maybe Lot -> Maybe Lot) -> Accounts -> Accounts
-mapLots f = M.mapKeys (\(a, c, l) -> (a, c, f l))
+mapLots f = M.mapKeys g
+  where
+    g (a, c, l) = (a, c, f l)
 
 balance :: AccountName -> CommodityName -> Accounts -> Amount
-balance a c = fold . filter'
+balance accountName commodityName = fold . M.filterByKey f
   where
-    filter' = M.filterByKey (\(a', c', _) -> a' == a && c' == c)
+    f (a, c, _) = accountName == a && commodityName == c
 
 filter :: (Amount -> Bool) -> Accounts -> Accounts
 filter = M.filter
@@ -104,7 +108,7 @@ summarize :: Int -> Accounts -> Accounts
 summarize d = mapAccounts (shorten d)
 
 shorten :: Int -> AccountName -> AccountName
-shorten d a = a {_unAccountName = take d (_unAccountName a)}
+shorten d (AccountName t a) = AccountName t (take d a)
 
 eraseLots :: Accounts -> Accounts
 eraseLots = mapLots (const Nothing)

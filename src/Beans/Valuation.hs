@@ -2,9 +2,9 @@ module Beans.Valuation where
 
 import           Beans.Data.Accounts     (AccountName (..), AccountType (..),
                                           Accounts, AccountsHistory, Amount,
-                                          CommodityName (..), Lot (..), toList)
+                                          CommodityName (..), Lot (..))
 import           Beans.Data.Directives   (Command (..), Flag (..), Open (..),
-                                          Posting (..), Transaction (..),
+                                          Posting, Transaction (..),
                                           mkBalancedTransaction)
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction (..))
@@ -55,7 +55,7 @@ convertTimestep ::
      (MonadThrow m, MonadState ValuationState m) => Timestep -> m Timestep
 convertTimestep timestep@(Timestep day commands) = do
   ValuationState {..} <- get
-  let accounts = M.lookupLE day vsAccounts
+  let accounts = M.lookupLEM day vsAccounts
       vsPrices' = updatePrices timestep vsPrices
   put
     ValuationState
@@ -75,7 +75,7 @@ process (OpenCommand o) = do
   return [OpenCommand $ o {oRestriction = RestrictedTo [t]}]
 process (TransactionCommand Transaction {..}) = do
   ValuationState {vsValuationAccount} <- get
-  postings <- mapM convertPosting tPostings
+  postings <- M.fromListM <$> mapM convertPosting (M.toList tPostings)
   t <-
     mkBalancedTransaction
       tFlag
@@ -89,46 +89,43 @@ process c = pure [c]
 
 convertPosting ::
      (MonadThrow m, MonadState ValuationState m) => Posting -> m Posting
-convertPosting p@Posting {pCommodity, pAmount} = do
+convertPosting p@((account, commodity, _), amount) = do
   tc <- gets vsTarget
-  if tc == pCommodity
+  if tc == commodity
     then return p
     else do
-      price <- gets vsNormalizedPrices >>= lookupPrice pCommodity
-      return $ p {pAmount = pAmount * Sum price, pCommodity = tc}
+      price <- gets vsNormalizedPrices >>= lookupPrice commodity
+      return ((account, tc, Nothing), amount * Sum price)
 
 adjustValuationForAccounts ::
      (MonadThrow m, MonadState ValuationState m) => m [Command]
 adjustValuationForAccounts = do
   ValuationState {vsPrevAccounts} <- get
-  s <- sequence $ adjustValuationForAccount <$> toList vsPrevAccounts
+  s <- sequence $ adjustValuationForAccount <$> M.toList vsPrevAccounts
   return $ catMaybes s
 
 adjustValuationForAccount ::
      (MonadThrow m, MonadState ValuationState m)
   => ((AccountName, CommodityName, Maybe Lot), Amount)
   -> m (Maybe Command)
-adjustValuationForAccount ((a@(AccountName t _), c, l), s) = do
+adjustValuationForAccount ((a@(AccountName t _), c, _), s) = do
   v0 <- gets vsPrevNormalizedPrices >>= lookupPrice c
   v1 <- gets vsNormalizedPrices >>= lookupPrice c
   if v0 /= v1 && t `elem` [Assets, Liabilities]
-    then Just <$> createValuationTransaction a l (s * Sum (v1 - v0))
+    then Just <$> createValuationTransaction a (s * Sum (v1 - v0))
     else return Nothing
 
 createValuationTransaction ::
      (MonadState ValuationState m, MonadThrow m)
   => AccountName
-  -> Maybe Lot
   -> Amount
   -> m Command
-createValuationTransaction account lot amount = do
+createValuationTransaction account amount = do
   ValuationState {vsTarget, vsValuationAccount} <- get
+  let postings =
+        M.fromListM
+          [ ((account, vsTarget, Nothing), amount)
+          , ((vsValuationAccount, vsTarget, Nothing), -amount)
+          ]
   TransactionCommand <$>
-    mkBalancedTransaction
-      Complete
-      "valuation"
-      []
-      [ Posting account amount vsTarget lot
-      , Posting vsValuationAccount (-amount) vsTarget Nothing
-      ]
-      Nothing
+    mkBalancedTransaction Complete "valuation" [] postings Nothing

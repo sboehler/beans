@@ -5,23 +5,24 @@ module Beans.Pretty
   , prettyPrintLedger
   ) where
 
-import           Beans.Data.Accounts       (AccountName (..), Amount,
+import           Beans.Data.Accounts       (AccountName (..), Accounts, Amount,
                                             CommodityName (..), Lot (..))
 import           Beans.Data.Directives     (Balance (..), Close (..),
                                             Command (..), DatedCommand (..),
                                             Directive (..), Flag (..),
                                             Include (..), Open (..),
-                                            Option (..), Posting (..),
-                                            Price (..), Tag (..),
+                                            Option (..), Price (..), Tag (..),
                                             Transaction (..))
+import qualified Beans.Data.Map            as M
 import           Beans.Data.Restrictions   (Restriction (..))
 import           Beans.Ledger              (Ledger, Timestep (Timestep), toList)
+import           Data.Monoid               (Sum (..))
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
 import           Data.Time.Calendar        (Day)
 
 instance Pretty Amount where
-  pretty = pretty . show
+  pretty (Sum a) = pretty $ show a
 
 instance Pretty Scientific where
   pretty = pretty . show
@@ -39,7 +40,12 @@ instance Pretty Transaction where
   pretty Transaction {..} =
     pretty tFlag <+>
     dquotes (pretty tDescription) <+>
-    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (pretty <$> tPostings)
+    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings)
+
+prettyAccounts :: Accounts -> [Doc a]
+prettyAccounts accounts = fmap p (M.toList accounts)
+  where
+    p ((a, c, l), s) = pretty a <+> pretty s <+> pretty c <+> pretty l <+> hardline
 
 instance Pretty Flag where
   pretty Complete   = "*"
@@ -55,11 +61,6 @@ instance Pretty Lot where
     case lLabel of
       Nothing -> []
       Just l  -> [pretty l]
-
-instance Pretty Posting where
-  pretty Posting {pAccount, pAmount, pCommodity, pLot} =
-    pretty pAccount <+>
-    (pretty . show) pAmount <+> pretty pCommodity <+> pretty pLot
 
 instance Pretty Directive where
   pretty (DatedCommandDirective (DatedCommand day command)) =

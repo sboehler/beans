@@ -6,10 +6,11 @@ module Beans.Accounts
   , updateAccounts
   ) where
 
-import           Beans.Data.Accounts     (Accounts, Amount, Posting (..))
+import           Beans.Data.Accounts     (AccountName, Accounts, Amount,
+                                          CommodityName)
 import qualified Beans.Data.Accounts     as A
 import           Beans.Data.Directives   (Balance (..), Close (..),
-                                          Command (..), Open (..),
+                                          Command (..), Open (..), Posting,
                                           Transaction (..))
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction, Restrictions)
@@ -29,9 +30,8 @@ data State = S
 
 data AccountsException
   = AccountIsNotOpen Close
-  | BookingErrorAccountNotOpen Posting
-  | BookingErrorCommodityIncompatible Posting
-                                      Restriction
+  | BookingErrorAccountNotOpen AccountName
+  | BookingErrorCommodityIncompatible AccountName CommodityName Amount Restriction
   | AccountIsAlreadyOpen Open
   | BalanceIsNotZero Close
   | AccountDoesNotExist Balance
@@ -43,7 +43,7 @@ instance Exception AccountsException
 
 calculateAccounts :: (MonadThrow m) => Bool -> Ledger -> m (M.Map Day Accounts)
 calculateAccounts check l =
-  let computation = M.fromList <$> mapM updateAccounts (toList l)
+  let computation = M.fromListM <$> mapM updateAccounts (toList l)
    in evalStateT computation (S mempty mempty check)
 
 updateAccounts ::
@@ -55,36 +55,37 @@ updateAccounts (Timestep day commands) = do
 process :: (MonadThrow m, MonadState State m) => Command -> m ()
 process (OpenCommand open@Open {oAccount, oRestriction}) = do
   S {sRestrictions} <- get
-  when (R.isOpen oAccount sRestrictions) (throwM $ AccountIsAlreadyOpen open)
-  modify (\s -> s {sRestrictions = R.add oAccount oRestriction sRestrictions})
+  when (oAccount `M.member` sRestrictions) (throwM $ AccountIsAlreadyOpen open)
+  modify (\s -> s {sRestrictions = M.insert oAccount oRestriction sRestrictions})
 process (CloseCommand closing@Close {cAccount}) = do
-  (restriction, remainingRestrictions) <-
-    R.split cAccount <$> gets sRestrictions
-  when (R.isEmpty restriction) (throwM $ AccountIsNotOpen closing)
-  (deletedAccount, remainingAccounts) <- A.split cAccount <$> gets sAccounts
+  (restriction, remainingRestrictions) <- M.partitionWithKey (const . (==  cAccount)) <$> gets sRestrictions
+  when (null restriction) (throwM $ AccountIsNotOpen closing)
+  (deletedAccount, remainingAccounts) <- M.partitionWithKey g <$> gets sAccounts
   unless (all (== 0) deletedAccount) (throwM $ BalanceIsNotZero closing)
   modify
     (\s ->
        s {sRestrictions = remainingRestrictions, sAccounts = remainingAccounts})
+    where
+      g (a, _, _) _ = a == cAccount
 process (BalanceCommand bal@Balance {bAccount, bAmount, bCommodity}) = do
   check <- gets sCheck
   when check $ do
     r <- gets sRestrictions
-    unless (R.isOpen bAccount r) (throwM $ AccountDoesNotExist bal)
+    unless (bAccount `M.member` r) (throwM $ AccountDoesNotExist bal)
     s <- A.balance bAccount bCommodity <$> gets sAccounts
     unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
 process (TransactionCommand Transaction {tPostings}) =
-  mapM_ bookPosting tPostings
+  mapM_ bookPosting $ M.toList tPostings
 process _ = pure ()
 
 bookPosting :: (MonadThrow m, MonadState State m) => Posting -> m ()
-bookPosting p@Posting {pAccount, pCommodity} = do
+bookPosting ((account, commodity, lot), amount) = do
   S {sRestrictions, sAccounts} <- get
-  case R.find pAccount sRestrictions of
-    Nothing -> throwM $ BookingErrorAccountNotOpen p
+  case M.lookup account sRestrictions of
+    Nothing -> throwM $ BookingErrorAccountNotOpen account
     Just r -> do
       unless
-        (R.isCompatible r pCommodity)
-        (throwM $ BookingErrorCommodityIncompatible p r)
+        (R.isCompatible r commodity)
+        (throwM $ BookingErrorCommodityIncompatible account commodity amount r)
       modify
-        (\s -> s {sAccounts = A.book p sAccounts})
+        (\s -> s {sAccounts = M.insertM (account, commodity, lot) amount sAccounts})

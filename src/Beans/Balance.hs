@@ -6,7 +6,7 @@ import           Beans.Accounts         (calculateAccounts)
 import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
                                          Accounts, AccountsHistory, eraseLots,
                                          summarize)
-import qualified Beans.Data.Accounts    as A
+import qualified Beans.Data.Map         as M
 import           Beans.Format           (createFlatReport,
                                          createHierarchicalReport, formatTable,
                                          reportToRows)
@@ -29,9 +29,9 @@ reportStage ::
 reportStage accountsHistory = do
   to <- maybe (liftIO getDate) pure =<< asks optTo
   from <- asks optFrom
-  let a1 = A.lookupLE to accountsHistory
-      a0 = maybe mempty (`A.lookupLE` accountsHistory) from
-  return $ A.filter (/= 0) $ a1 `A.minus` a0
+  let a1 = M.lookupLEM to accountsHistory
+      a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
+  return $ M.filter (/= 0) $ a1 `M.minus` a0
 
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime

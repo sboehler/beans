@@ -1,8 +1,18 @@
-module Beans.Data.Accounts where
+module Beans.Data.Accounts
+  ( Accounts
+  , Amount
+  , AccountsHistory
+  , AccountType(..)
+  , CommodityName(..)
+  , Lot(..)
+  , balance
+  , summarize
+  , eraseLots
+  , AccountName(..)
+  ) where
 
 import qualified Beans.Data.Map     as M
 import           Data.Foldable      (fold)
-import           Data.Group         (invert)
 import qualified Data.List          as L
 import           Data.Maybe         (catMaybes)
 import           Data.Monoid        (Sum)
@@ -52,63 +62,20 @@ instance Show Lot where
         elems = catMaybes [Just price, Just $ show lDate, show <$> lLabel]
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
-data Posting = Posting
-  { pAccount   :: AccountName
-  , pAmount    :: Amount
-  , pCommodity :: CommodityName
-  , pLot       :: Maybe Lot
-  } deriving (Eq, Ord, Show)
-
-book :: Posting -> Accounts -> Accounts
-book Posting {pAccount, pAmount, pCommodity, pLot} =
-  M.insert (pAccount, pCommodity, pLot) (mappend pAmount)
-
-minus :: Accounts -> Accounts -> Accounts
-minus a1 a2 = a1 `mappend` invert a2
-
-mapAccounts :: (AccountName -> AccountName) -> Accounts -> Accounts
-mapAccounts f = M.mapKeys g
-  where
-    g (a, c, l) = (f a, c, l)
-
-mapLots :: (Maybe Lot -> Maybe Lot) -> Accounts -> Accounts
-mapLots f = M.mapKeys g
-  where
-    g (a, c, l) = (a, c, f l)
-
 balance :: AccountName -> CommodityName -> Accounts -> Amount
-balance accountName commodityName = fold . M.filterByKey f
+balance accountName commodityName = fold . M.filterWithKey f
   where
-    f (a, c, _) = accountName == a && commodityName == c
-
-filter :: (Amount -> Bool) -> Accounts -> Accounts
-filter = M.filter
-
-split :: AccountName -> Accounts -> (Accounts, Accounts)
-split a = M.split (\(a', _, _) -> (a == a'))
-
-toList :: Accounts -> [((AccountName, CommodityName, Maybe Lot), Amount)]
-toList = M.toList
-
-lookupLE ::
-     forall v k. (Ord k, Monoid v)
-  => k
-  -> M.Map k v
-  -> v
-lookupLE = M.lookupLE
-
-lookupLT ::
-     forall v k. (Ord k, Monoid v)
-  => k
-  -> M.Map k v
-  -> v
-lookupLT = M.lookupLT
+    f (a, c, _) _ = accountName == a && commodityName == c
 
 summarize :: Int -> Accounts -> Accounts
-summarize d = mapAccounts (shorten d)
+summarize d = M.mapKeysM g
+  where
+    g (a, c, l) = (shorten d a, c, l)
 
 shorten :: Int -> AccountName -> AccountName
 shorten d (AccountName t a) = AccountName t (take d a)
 
 eraseLots :: Accounts -> Accounts
-eraseLots = mapLots (const Nothing)
+eraseLots = M.mapKeysM g
+  where
+    g (a, c, _) = (a, c, Nothing)

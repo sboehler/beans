@@ -7,10 +7,10 @@ import           Beans.Data.Directives      (Balance (..), Close (..),
                                              Command (..), DatedCommand (..),
                                              Directive (..), Flag (..),
                                              Include (..), Open (..),
-                                             Option (..), Posting (..),
-                                             Price (..), Tag (..),
+                                             Option (..), Price (..), Tag (..),
                                              Transaction (..),
                                              mkBalancedTransaction)
+import qualified Beans.Data.Map             as M
 import           Beans.Data.Restrictions    (Restriction (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
@@ -129,10 +129,15 @@ postingPrice = (at *> optional at *> amount *> commodity) $> ()
   where
     at = symbol "@"
 
-posting :: Day -> Parser Posting
-posting d =
-  Posting <$> account <*> amount <*> commodity <*> optional (lot d) <*
-  optional postingPrice
+posting :: Day -> Parser ((AccountName, CommodityName, Maybe Lot), Amount)
+posting d = do
+  a <- account
+  s <- amount
+  c <- commodity
+  l <- optional (lot d)
+  _ <- optional postingPrice
+  return ((a, c, l), s)
+
 
 flag :: Parser Flag
 flag = complete <|> incomplete
@@ -151,7 +156,7 @@ transaction d = do
   indent <- L.indentGuard scn GT P.pos1
   p <- some $ try (L.indentGuard scn EQ indent *> posting d)
   w <- optional $ try (L.indentGuard scn EQ indent *> account)
-  case mkBalancedTransaction f desc t p w of
+  case mkBalancedTransaction f desc t (M.fromListM p) w of
     Just t' -> return t'
     Nothing -> do
       pos <- getPosition

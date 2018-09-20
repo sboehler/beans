@@ -7,8 +7,8 @@ module Beans.Ledger
   ) where
 
 import           Beans.Data.Directives (Command (..), DatedCommand (..),
-                                        Directive (..), Posting (..),
-                                        Transaction (..))
+                                        Directive (..), Transaction (..))
+import qualified Beans.Data.Map        as M
 import qualified Data.List             as L
 import           Data.Time.Calendar    (Day)
 import           Prelude               hiding (filter)
@@ -52,13 +52,14 @@ filterLedger strict regex ledger =
 
 filterPostings :: String -> Command -> Command
 filterPostings regex (TransactionCommand trx@Transaction {tPostings}) =
-  TransactionCommand $ trx {tPostings = L.filter (matchPosting regex) tPostings}
+  TransactionCommand $ trx {tPostings = M.filterWithKey matchPosting tPostings}
+    where
+      matchPosting  (a, _, _) _ = show a =~ regex
 filterPostings _ command = command
 
 matchTransaction :: String -> Command -> Bool
 matchTransaction regex (TransactionCommand Transaction {tPostings}) =
-  any (matchPosting regex) tPostings
+  M.foldlWithKey g False tPostings
+    where
+      g b (a, _, _) _ = b || show a =~ regex
 matchTransaction _ _ = True
-
-matchPosting :: String -> Posting -> Bool
-matchPosting regex Posting {pAccount} = show pAccount =~ regex

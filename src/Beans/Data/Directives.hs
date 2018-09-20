@@ -2,10 +2,10 @@ module Beans.Data.Directives
   ( Command(..)
   , DatedCommand(..)
   , Directive(..)
-  , Posting(..)
   , Transaction(..)
   , mkBalancedTransaction
   , Balance(..)
+  , Posting
   , Open(..)
   , Close(..)
   , Include(..)
@@ -15,8 +15,8 @@ module Beans.Data.Directives
   , Flag(..)
   ) where
 
-import           Beans.Data.Accounts     (AccountName, Amount, CommodityName,
-                                          Lot (..), Posting (..))
+import           Beans.Data.Accounts     (AccountName, Accounts, Amount,
+                                          CommodityName, Lot (..))
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction)
 import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
@@ -70,8 +70,11 @@ data Transaction = Transaction
   { tFlag        :: Flag
   , tDescription :: Text
   , tTags        :: [Tag]
-  , tPostings    :: [Posting]
-  } deriving (Eq, Ord, Show)
+  , tPostings    :: Accounts
+  } deriving (Eq, Show)
+
+instance Ord Transaction where
+  _ `compare` _ = EQ
 
 data Flag
   = Complete
@@ -94,8 +97,11 @@ data Option =
   deriving (Eq, Ord, Show)
 
 data UnbalancedTransaction =
-  UnbalancedTransaction
+  UnbalancedTransaction Accounts
+                        (M.Map CommodityName Amount)
   deriving (Eq, Show)
+
+type Posting = ((AccountName, CommodityName, Maybe Lot), Amount)
 
 instance Exception UnbalancedTransaction
 
@@ -104,33 +110,32 @@ mkBalancedTransaction ::
   => Flag
   -> Text
   -> [Tag]
-  -> [Posting]
+  -> Accounts
   -> Maybe AccountName
   -> m Transaction
-mkBalancedTransaction flag desc tags ps wildcard =
-  Transaction flag desc tags <$> completePostings ps wildcard
+mkBalancedTransaction flag desc tags postings wildcard =
+  Transaction flag desc tags <$> completePostings wildcard postings
 
-completePostings ::
-     MonadThrow m => [Posting] -> Maybe AccountName -> m [Posting]
-completePostings postings wildcard = do
+completePostings :: MonadThrow m => Maybe AccountName -> Accounts -> m Accounts
+completePostings wildcard postings =
   let imbalances = calculateImbalances postings
-  fixes <- fixImbalances wildcard imbalances
-  return $ postings ++ fixes
+   in mappend postings <$> fixImbalances wildcard imbalances
   where
-    fixImbalances _ []       = return []
-    fixImbalances (Just a) i = return $ balanceImbalance a <$> i
-    fixImbalances _ _        = throwM UnbalancedTransaction
+    fixImbalances w i
+      | null i = return mempty
+      | otherwise =
+        case w of
+          Just account -> return $ balanceImbalances account i
+          Nothing      -> throwM $ UnbalancedTransaction postings i
 
-balanceImbalance :: AccountName -> (CommodityName, Amount) -> Posting
-balanceImbalance pAccount (c, a) =
-  Posting {pAmount = negate a, pCommodity = c, pLot = Nothing, pAccount}
+balanceImbalances :: AccountName -> M.Map CommodityName Amount -> Accounts
+balanceImbalances account = M.mapKeysM g . fmap negate
+  where
+    g c = (account, c, Nothing)
 
-calculateImbalances :: [Posting] -> [(CommodityName, Amount)]
-calculateImbalances =
-  M.toList . M.filter ((> Sum 0.005) . abs) . M.fromList . fmap weight
-
-weight :: Posting -> (CommodityName, Amount)
-weight Posting {..} =
-  case pLot of
-    Just Lot {lPrice, lTargetCommodity} -> (lTargetCommodity, pAmount * lPrice)
-    Nothing -> (pCommodity, pAmount)
+calculateImbalances :: Accounts -> M.Map CommodityName Amount
+calculateImbalances = M.filter ((> Sum 0.005) . abs) . M.mapEntries f
+  where
+    f ((_, _, Just Lot {.. }), amount) =
+      (lTargetCommodity, amount * lPrice)
+    f ((_, commodity, Nothing), amount) = (commodity, amount)

@@ -6,17 +6,19 @@ module Beans.Format
   , createFlatReport
   ) where
 
-import           Beans.Data.Accounts (AccountName (..), Accounts, Amount,
-                                      CommodityName (..), Lot (..), toList)
-import qualified Beans.Data.Map      as M
-import           Beans.Table         (Column (..), formatStandard, left, right,
-                                      showTable)
-import           Control.Applicative (ZipList (..))
-import qualified Data.List           as L
-import           Data.Maybe          (fromMaybe)
-import           Data.Monoid         ((<>))
-import           Data.Text           (Text)
-import qualified Data.Text           as T
+import           Beans.Data.Accounts       (AccountName (..), Accounts, Amount,
+                                            CommodityName (..), Lot (..))
+import qualified Beans.Data.Map            as M
+import           Beans.Pretty              ()
+import           Beans.Table               (Column (..), formatStandard, left,
+                                            right, showTable)
+import           Control.Applicative       (ZipList (..))
+import qualified Data.List                 as L
+import           Data.Maybe                (fromMaybe)
+import           Data.Monoid               ((<>))
+import           Data.Text                 (Text)
+import qualified Data.Text                 as T
+import           Data.Text.Prettyprint.Doc (pretty)
 
 type Positions = M.Map (CommodityName, Maybe Lot) Amount
 
@@ -28,7 +30,7 @@ data Section = Section
 
 -- Creating a report
 createHierarchicalReport :: Accounts -> Section
-createHierarchicalReport = groupSections . fmap toItem . toList
+createHierarchicalReport = groupSections . fmap toItem . M.toList
   where
     toItem ((a, c, l), s) =
       let pos = M.singleton (c, l) s
@@ -40,7 +42,7 @@ groupSections items =
   let (rootSections, childSections) = L.partition (null . fst) items
       positions = mconcat $ snd <$> rootSections
       subsections =
-        groupSections <$> M.fromList (splitSection <$> childSections)
+        groupSections <$> M.fromListM (splitSection <$> childSections)
       subtotals =
         positions <> mconcat (sSubtotals . snd <$> M.toList subsections)
    in Section positions subsections subtotals
@@ -50,7 +52,7 @@ splitSection (n:ns, ps) = (n, [(ns, ps)])
 splitSection ([], ps)   = (mempty, [([], ps)])
 
 createFlatReport :: Accounts -> Section
-createFlatReport = groupSections2 . fmap toItem . toList
+createFlatReport = groupSections2 . fmap toItem . M.toList
   where
     toItem ((a, c, l), s) =
       let pos = M.singleton (c, l) s
@@ -59,7 +61,7 @@ createFlatReport = groupSections2 . fmap toItem . toList
 
 groupSections2 :: [(Text, Positions)] -> Section
 groupSections2 items =
-  let groupedItems = M.fromList items
+  let groupedItems = M.fromListM items
       subsections = (\p -> Section p M.empty p) <$> groupedItems
       subtotals = mconcat (sSubtotals . snd <$> M.toList subsections)
    in Section mempty subsections subtotals
@@ -88,7 +90,7 @@ sectionToRows (t, Section ps ss st) = positions ++ subsections
 
 positionsToRows :: Text -> Positions -> Positions -> [Row]
 positionsToRows title positions subtotals =
-  case M.toList (M.combine [subtotals, positions]) of
+  case M.toList (M.combineM [subtotals, positions]) of
     [] -> [Row (Just title) Nothing Nothing Nothing Nothing]
     c ->
       getZipList $ do
@@ -112,5 +114,5 @@ formatTable =
     , Column left "Total" right (maybe "" formatStandard . rTotal)
     , Column left "Amount" right (maybe "" formatStandard . rAmount)
     , Column left "Commodity" left (T.pack . maybe "" show . rCommodity)
-    , Column left "Lot" left (T.pack . maybe "" show . rLot)
+    , Column left "Lot" left (T.pack . maybe "" (show . pretty) . rLot)
     ]

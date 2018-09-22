@@ -40,8 +40,8 @@ balanceCommand ::
      (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
 balanceCommand = do
   ledger <- parseStage
-  accountsHistory <- accountsStage True ledger
-  valuationStage accountsHistory ledger >>= filterStage >>= accountsStage False >>=
+  accountsHistory <- accountsStage ledger
+  valuationStage accountsHistory ledger >>= filterStage >>= accountsStage >>=
     reportStage >>=
     aggregationStage >>=
     printStage
@@ -79,8 +79,7 @@ valuationStage accountsHistory ledger = do
 
 accountsStage ::
      (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => Bool
-  -> Ledger
+  => Ledger
   -> m AccountsHistory
 accountsStage = calculateAccounts
 

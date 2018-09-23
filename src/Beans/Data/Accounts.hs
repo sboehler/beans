@@ -1,6 +1,7 @@
 module Beans.Data.Accounts
   ( Accounts
   , Amount
+  , Amounts
   , AccountsHistory
   , AccountType(..)
   , CommodityName(..)
@@ -22,7 +23,9 @@ import           Data.Time.Calendar (Day)
 
 type Amount = Sum Scientific
 
-type Accounts = M.Map (AccountName, CommodityName, Maybe Lot) Amount
+type Amounts = M.Map CommodityName Amount
+
+type Accounts = M.Map (AccountName, CommodityName, Maybe Lot) Amounts
 
 type AccountsHistory = M.Map Day Accounts
 
@@ -63,7 +66,7 @@ instance Show Lot where
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
 balance :: AccountName -> CommodityName -> Accounts -> Amount
-balance accountName commodityName = fold . M.filterWithKey f
+balance accountName commodityName = M.findWithDefaultM commodityName . fold . M.filterWithKey f
   where
     f (a, c, _) _ = accountName == a && commodityName == c
 

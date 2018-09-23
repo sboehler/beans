@@ -22,12 +22,14 @@ option "operating_currency" "USD"
 
 2018-01-25 * "Salary January 2018"
   Assets:Accounts:Checking 4000 USD
-  Income:Salary 
+  Income:Salary
 
 2018-02-25 * "Salary February 2018"
   Assets:Accounts:Checking 4000 USD
-  Income:Salary 
+  Income:Salary
 
 2018-03-25 * "Salary March 2018"
   Assets:Accounts:Checking 4000 USD
-  Income:Salary 
+  Income:Salary
+
+2018-03-26 balance Assets:Accounts:Checking 12000 USD

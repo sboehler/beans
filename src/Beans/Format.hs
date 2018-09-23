@@ -7,20 +7,19 @@ module Beans.Format
   ) where
 
 import           Beans.Data.Accounts       (AccountName (..), Accounts, Amount,
-                                            CommodityName (..), Lot (..))
+                                            Amounts, CommodityName (..),
+                                            Lot (..))
 import qualified Beans.Data.Map            as M
 import           Beans.Pretty              ()
 import           Beans.Table               (Column (..), formatStandard, left,
                                             right, showTable)
-import           Control.Applicative       (ZipList (..))
 import qualified Data.List                 as L
-import           Data.Maybe                (fromMaybe)
 import           Data.Monoid               ((<>))
 import           Data.Text                 (Text)
 import qualified Data.Text                 as T
 import           Data.Text.Prettyprint.Doc (pretty)
 
-type Positions = M.Map (CommodityName, Maybe Lot) Amount
+type Positions = M.Map (CommodityName, Maybe Lot) Amounts
 
 data Section = Section
   { sPositions :: Positions
@@ -68,11 +67,11 @@ groupSections2 items =
 
 -- Formatting a report into rows
 data Row = Row
-  { rAccount   :: Maybe Text
-  , rTotal     :: Maybe Amount
-  , rAmount    :: Maybe Amount
-  , rCommodity :: Maybe CommodityName
-  , rLot       :: Maybe Lot
+  { rAccount        :: Text
+  , rTotal          :: Text
+  , rTotalCommodity :: Text
+  , rAmount         :: Text
+  , rCommodity      :: Text
   }
 
 reportToRows :: Section -> [Row]
@@ -90,19 +89,37 @@ sectionToRows (t, Section ps ss st) = positions ++ subsections
 
 positionsToRows :: Text -> Positions -> Positions -> [Row]
 positionsToRows title positions subtotals =
-  case M.toList (M.combineM [subtotals, positions]) of
-    [] -> [Row (Just title) Nothing Nothing Nothing Nothing]
-    c ->
-      getZipList $ do
-        rAccount <- ZipList (Just title : repeat Nothing)
-        rTotal <- Just . (!! 0) . snd <$> ZipList c
-        rAmount <- Just . (!! 1) . snd <$> ZipList c
-        rCommodity <- Just . fst . fst <$> ZipList c
-        rLot <- snd . fst <$> ZipList c
-        pure Row {..}
+  let nbrSubtotals = M.size subtotals
+      nbrPositions = M.size positions
+      nbrRows = maximum [1, nbrSubtotals, nbrPositions]
+      st =
+        flattenPositions subtotals ++
+        replicate (nbrRows - nbrSubtotals) (Nothing, Nothing, Nothing)
+      ps =
+        flattenPositions positions ++
+        replicate (nbrRows - nbrPositions) (Nothing, Nothing, Nothing)
+   in do (rAccount, (_, rTotalCommodity, rTotalAmount), (lot, commodity, rAmount)) <-
+           L.zip3 (title : repeat "") st ps
+         pure
+           Row
+             { rAccount
+             , rTotal = maybe "" formatStandard rTotalAmount
+             , rTotalCommodity = T.pack $ maybe "" show rTotalCommodity
+             , rAmount = maybe "" formatStandard rAmount
+             , rCommodity =
+                 T.pack (maybe "" show commodity) <>
+                 T.pack (maybe "" (show . pretty) lot)
+             }
+
+flattenPositions ::
+     Positions -> [(Maybe Lot, Maybe CommodityName, Maybe Amount)]
+flattenPositions positions = do
+  (lot, amounts) <- (M.toList . M.mapKeysM snd) positions
+  (commodity, amount) <- M.toList amounts
+  return (lot, Just commodity, Just amount)
 
 indent :: Int -> Row -> Row
-indent n (Row first a b c d) = Row (indent' <$> first) a b c d
+indent n (Row first a b c d) = Row (indent' first) a b c d
   where
     indent' t = T.replicate (fromIntegral n) " " <> t
 
@@ -110,9 +127,9 @@ indent n (Row first a b c d) = Row (indent' <$> first) a b c d
 formatTable :: [Row] -> Text
 formatTable =
   showTable
-    [ Column left "Account" left (fromMaybe "" . rAccount)
-    , Column left "Total" right (maybe "" formatStandard . rTotal)
-    , Column left "Amount" right (maybe "" formatStandard . rAmount)
-    , Column left "Commodity" left (T.pack . maybe "" show . rCommodity)
-    , Column left "Lot" left (T.pack . maybe "" (show . pretty) . rLot)
+    [ Column left "Account" left rAccount
+    , Column left "Total" right rTotal
+    , Column left "Commodity" left rTotalCommodity
+    , Column left "Amount" right rAmount
+    , Column left "Commodity" left rCommodity
     ]

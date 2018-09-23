@@ -31,7 +31,7 @@ reportStage accountsHistory = do
   from <- asks optFrom
   let a1 = M.lookupLEM to accountsHistory
       a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
-  return $ M.filter (/= 0) $ a1 `M.minus` a0
+  return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
 
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime

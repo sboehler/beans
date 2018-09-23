@@ -16,11 +16,10 @@ module Beans.Data.Directives
   ) where
 
 import           Beans.Data.Accounts     (AccountName, Accounts, Amount,
-                                          CommodityName, Lot (..))
+                                          Amounts, CommodityName, Lot (..))
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction)
 import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
-import           Data.Monoid             (Sum (Sum))
 import           Data.Scientific         (Scientific)
 import           Data.Text               (Text)
 import           Data.Time.Calendar      (Day)
@@ -101,7 +100,7 @@ data UnbalancedTransaction =
                         (M.Map CommodityName Amount)
   deriving (Eq, Show)
 
-type Posting = ((AccountName, CommodityName, Maybe Lot), Amount)
+type Posting = ((AccountName, CommodityName, Maybe Lot), Amounts)
 
 instance Exception UnbalancedTransaction
 
@@ -123,19 +122,15 @@ completePostings wildcard postings =
   where
     fixImbalances w i
       | null i = return mempty
-      | otherwise =
-        case w of
+      | M.size i == 1 = case w of
           Just account -> return $ balanceImbalances account i
           Nothing      -> throwM $ UnbalancedTransaction postings i
-
-balanceImbalances :: AccountName -> M.Map CommodityName Amount -> Accounts
-balanceImbalances account = M.mapKeysM g . fmap negate
-  where
-    g c = (account, c, Nothing)
+      | otherwise      = return mempty
 
 calculateImbalances :: Accounts -> M.Map CommodityName Amount
-calculateImbalances = M.filter ((> Sum 0.005) . abs) . M.mapEntries f
+calculateImbalances = mconcat . fmap snd . M.toList
+
+balanceImbalances :: AccountName -> M.Map CommodityName Amount -> Accounts
+balanceImbalances account = M.mapEntries g . fmap negate
   where
-    f ((_, _, Just Lot {.. }), amount) =
-      (lTargetCommodity, amount * lPrice)
-    f ((_, commodity, Nothing), amount) = (commodity, amount)
+    g (c, s) = ((account, c, Nothing), M.singleton c s)

@@ -62,4 +62,5 @@ matchTransaction regex (TransactionCommand Transaction {tPostings}) =
   M.foldlWithKey g False tPostings
     where
       g b (a, _, _) _ = b || show a =~ regex
+matchTransaction _ (BalanceCommand _) = False
 matchTransaction _ _ = True

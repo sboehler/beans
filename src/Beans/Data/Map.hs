@@ -19,6 +19,7 @@ module Beans.Data.Map
   , lookupLEM
   , filterWithKey
   , singleton
+  , size
   , member
   , toList
   , partitionWithKey
@@ -94,6 +95,9 @@ lookupLEM k (Map m) = maybe mempty snd (M.lookupLE k m)
 
 empty :: Map k v
 empty = Map M.empty
+
+size :: Map k a -> Int
+size = M.size . unmap
 
 singleton :: k -> v -> Map k v
 singleton k v = Map $ M.singleton k v

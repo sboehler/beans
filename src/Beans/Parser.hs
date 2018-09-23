@@ -1,8 +1,8 @@
 module Beans.Parser where
 
 import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
-                                             Amount, CommodityName (..),
-                                             Lot (..))
+                                             Amount, Amounts,
+                                             CommodityName (..), Lot (..))
 import           Beans.Data.Directives      (Balance (..), Close (..),
                                              Command (..), DatedCommand (..),
                                              Directive (..), Flag (..),
@@ -129,14 +129,15 @@ postingPrice = (at *> optional at *> amount *> commodity) $> ()
   where
     at = symbol "@"
 
-posting :: Day -> Parser ((AccountName, CommodityName, Maybe Lot), Amount)
+posting :: Day -> Parser ((AccountName, CommodityName, Maybe Lot), Amounts)
 posting d = do
   a <- account
   s <- amount
   c <- commodity
   l <- optional (lot d)
   _ <- optional postingPrice
-  return ((a, c, l), s)
+  let s' = M.singleton c s
+  return ((a, c, l), s')
 
 
 flag :: Parser Flag

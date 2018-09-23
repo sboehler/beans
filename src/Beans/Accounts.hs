@@ -75,18 +75,16 @@ check (TransactionCommand Transaction {tPostings}) = do
         Just r  ->
           unless
             (R.isCompatible r c)
-            (throwM $ BookingErrorCommodityIncompatible a c s r)
+            (throwM $ BookingErrorCommodityIncompatible a c (M.findWithDefaultM c s) r)
 check (BalanceCommand bal@Balance {bAccount}) = do
   r <- get
   unless (bAccount `M.member` r) (throwM $ AccountDoesNotExist bal)
 check _ = pure ()
 
-
-
 process :: (MonadThrow m, MonadState Accounts m) => Command -> m ()
 process (CloseCommand closing@Close {cAccount}) = do
   (deletedAccount, remainingAccounts) <- M.partitionWithKey g <$> get
-  unless (all (== 0) deletedAccount) (throwM $ BalanceIsNotZero closing)
+  unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero closing)
   put remainingAccounts
    where
     g (a, _, _) _ = a == cAccount

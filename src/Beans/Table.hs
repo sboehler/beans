@@ -33,10 +33,10 @@ showTable coldefs rows =
       body = [[colValue coldef row | coldef <- coldefs] | row <- rows]
       widths =
         [maximum $ T.length <$> column | column <- transpose $ header : body]
-      separator = T.intercalate "-+-" [T.replicate width "-" | width <- widths]
+      separator = T.intercalate " " [T.replicate width "-" | width <- widths]
       alignColumns align columns =
         T.intercalate
-          " | "
+          " "
           (getZipList $
            align <$> ZipList coldefs <*> ZipList widths <*> ZipList columns)
    in T.unlines $

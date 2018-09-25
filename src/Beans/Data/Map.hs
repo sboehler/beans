@@ -6,6 +6,7 @@ module Beans.Data.Map
   , insertM
   , combineM
   , insert
+  , delete
   , empty
   , lookup
   , minus
@@ -110,3 +111,6 @@ combineM maps =
 
 foldlWithKey :: (c -> k -> b -> c) -> c -> Map k b -> c
 foldlWithKey f z = M.foldlWithKey f z . unmap
+
+delete :: Ord k => k -> Map k v -> Map k v
+delete k (Map m) = Map $ M.delete k m

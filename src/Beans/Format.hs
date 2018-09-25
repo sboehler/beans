@@ -2,8 +2,7 @@ module Beans.Format
   ( Section(..)
   , formatTable
   , reportToRows
-  , createHierarchicalReport
-  , createFlatReport
+  , createReport
   ) where
 
 import           Beans.Data.Accounts       (AccountName (..), Accounts, Amount,
@@ -13,7 +12,7 @@ import qualified Beans.Data.Map            as M
 import           Beans.Pretty              ()
 import           Beans.Table               (Column (..), formatStandard, left,
                                             right, showTable)
-import qualified Data.List                 as L
+import           Data.Foldable             (fold)
 import           Data.Monoid               ((<>))
 import           Data.Text                 (Text)
 import qualified Data.Text                 as T
@@ -28,40 +27,26 @@ data Section = Section
   } deriving (Show)
 
 -- Creating a report
-createHierarchicalReport :: Accounts -> Section
-createHierarchicalReport = groupSections . fmap toItem . M.toList
+createReport ::
+     ((AccountName, CommodityName, Maybe Lot) -> [Text]) -> Accounts -> Section
+createReport label = groupLabeledPositions . M.mapEntries f
   where
-    toItem ((a, c, l), s) = (toLabel a, M.singleton (c, l) s)
-    toLabel (AccountName t ns) = T.pack (show t) : ns
+    f (k@(_, c, l), s) = (label k, M.singleton (c, l) s)
 
-groupSections :: [([Text], Positions)] -> Section
-groupSections items =
-  let (rootSections, childSections) = L.partition (null . fst) items
-      positions = mconcat $ snd <$> rootSections
-      subsections =
-        groupSections <$> M.fromListM (splitSection <$> childSections)
-      subtotals =
-        positions <> mconcat (sSubtotals . snd <$> M.toList subsections)
-   in Section positions subsections subtotals
-
-splitSection :: ([Text], Positions) -> (Text, [([Text], Positions)])
-splitSection (n:ns, ps) = (n, [(ns, ps)])
-splitSection ([], ps)   = (mempty, [([], ps)])
-
-createFlatReport :: Accounts -> Section
-createFlatReport = groupSections2 . fmap toItem . M.toList
+groupLabeledPositions :: M.Map [Text] Positions -> Section
+groupLabeledPositions labeledPositions =
+  Section positions subsections (positions <> subtotals)
   where
-    toItem ((a, c, l), s) =
-      let pos = M.singleton (c, l) s
-       in (toLabel a, pos)
-    toLabel = T.pack . show
+    positions = M.findWithDefaultM mempty labeledPositions
+    subsections =
+      groupLabeledPositions <$> splitSection (M.delete mempty labeledPositions)
+    subtotals = fold (sSubtotals <$> subsections)
 
-groupSections2 :: [(Text, Positions)] -> Section
-groupSections2 items =
-  let groupedItems = M.fromListM items
-      subsections = (\p -> Section p M.empty p) <$> groupedItems
-      subtotals = mconcat (sSubtotals . snd <$> M.toList subsections)
-   in Section mempty subsections subtotals
+splitSection :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
+splitSection = M.mapEntries f
+  where
+    f (n:ns, ps) = (n, M.singleton ns ps)
+    f ([], ps)   = (mempty, M.singleton [] ps)
 
 -- Formatting a report into rows
 data Row = Row

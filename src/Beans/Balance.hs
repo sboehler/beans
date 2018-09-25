@@ -7,8 +7,7 @@ import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
                                          Accounts, AccountsHistory, eraseLots,
                                          summarize)
 import qualified Beans.Data.Map         as M
-import           Beans.Format           (createFlatReport,
-                                         createHierarchicalReport, formatTable,
+import           Beans.Format           (createReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
 import           Beans.Options          (BalanceOptions (..), ReportType (..))
@@ -17,6 +16,7 @@ import           Beans.Valuation        (calculateValuation)
 import           Control.Monad.Catch    (MonadThrow)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 import           Control.Monad.Reader   (MonadReader, asks)
+import qualified Data.Text              as T
 import qualified Data.Text.IO           as TIO
 import           Data.Time.Calendar     (Day)
 import           Data.Time.LocalTime    (getZonedTime, localDay,
@@ -103,8 +103,11 @@ aggregationStage accounts = do
 printStage :: (MonadReader BalanceOptions m, MonadIO m) => Accounts -> m ()
 printStage accounts = do
   reportType <- asks optReportType
-  let createReport =
+  let f =
         case reportType of
-          Hierarchical -> createHierarchicalReport
-          Flat         -> createFlatReport
-  (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport) accounts
+          Hierarchical -> hierarchical
+          Flat         -> flat
+  (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport f) accounts
+  where
+    hierarchical (AccountName t ns, _, _) = T.pack (show t) : ns
+    flat (a, _, _) = [T.pack $ show a]

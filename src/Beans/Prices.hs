@@ -14,7 +14,6 @@ import           Beans.Ledger          (Timestep (..))
 import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
 import           Control.Monad.State   (evalState, get, modify)
 import           Data.Foldable         (foldl')
-import qualified Data.List             as L
 import qualified Data.Map.Strict       as M
 import           Data.Scientific       (Scientific, fromFloatDigits,
                                         toRealFloat)
@@ -25,7 +24,6 @@ type PricesHistory = M.Map Day Prices
 type NormalizedPrices = M.Map CommodityName Scientific
 
 type Prices = M.Map CommodityName (M.Map CommodityName Scientific)
-
 
 data PriceException
   = NoPriceFound CommodityName
@@ -54,7 +52,8 @@ addPrice prices _ = prices
 
 invert :: Command -> Command
 invert (PriceCommand p@Price {..}) =
-  PriceCommand $ p
+  PriceCommand $
+  p
     { pCommodity = pTargetCommodity
     , pTargetCommodity = pCommodity
     , pPrice = 1 `sdiv` pPrice
@@ -62,26 +61,20 @@ invert (PriceCommand p@Price {..}) =
 invert c = c
 
 normalize :: Prices -> CommodityName -> NormalizedPrices
-normalize prices current =
-  normalize' prices current (M.fromList [(current, 1.0)]) []
+normalize prices current = normalize' prices mempty (M.singleton current 1.0)
 
-normalize' ::
-     Prices
-  -> CommodityName
-  -> NormalizedPrices
-  -> [CommodityName]
-  -> NormalizedPrices
-normalize' prices current visited queue =
-  case M.lookup current prices of
-    Just m ->
-      let p = M.findWithDefault 1 current visited
-          neighbors = fmap (* p) (m `M.difference` visited)
-          visited' = visited `M.union` neighbors
-          queue' = queue `L.union` M.keys neighbors
-       in case queue' of
-            (current':qs) -> normalize' prices current' visited' qs
-            []            -> visited
-    Nothing -> visited
+normalize' :: Prices -> NormalizedPrices -> NormalizedPrices -> NormalizedPrices
+normalize' prices done todo =
+  case M.lookupMin todo of
+    Nothing -> done
+    Just (commodity, price) ->
+      let done' = M.insert commodity price done
+       in case M.lookup commodity prices of
+            Nothing -> done'
+            Just neighbors ->
+              let neighbors' = (* price) <$> (neighbors `M.difference` done')
+                  todo' = M.delete commodity todo `M.union` neighbors'
+               in normalize' prices done' todo'
 
 lookupPrice ::
      (MonadThrow m) => CommodityName -> NormalizedPrices -> m Scientific

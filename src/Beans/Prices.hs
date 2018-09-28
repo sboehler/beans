@@ -8,7 +8,7 @@ module Beans.Prices
   , lookupPrice
   ) where
 
-import           Beans.Data.Accounts   (CommodityName (..))
+import           Beans.Data.Accounts   (Commodity (..))
 import           Beans.Data.Directives (Command (..), Price (..))
 import           Beans.Ledger          (Timestep (..))
 import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
@@ -21,15 +21,15 @@ import           Data.Time.Calendar    (Day)
 
 type PricesHistory = M.Map Day Prices
 
-type NormalizedPrices = M.Map CommodityName Scientific
+type NormalizedPrices = M.Map Commodity Scientific
 
-type Prices = M.Map CommodityName (M.Map CommodityName Scientific)
+type Prices = M.Map Commodity (M.Map Commodity Scientific)
 
 data PriceException
-  = NoPriceFound CommodityName
-                 CommodityName
+  = NoPriceFound Commodity
+                 Commodity
   | NoNormalizedPriceFound NormalizedPrices
-                           CommodityName
+                           Commodity
   deriving (Show)
 
 instance Exception PriceException
@@ -57,7 +57,7 @@ invert (PriceCommand p@Price {..}) = PriceCommand $ p
   }
 invert c = c
 
-normalize :: Prices -> CommodityName -> NormalizedPrices
+normalize :: Prices -> Commodity -> NormalizedPrices
 normalize prices current = normalize' prices mempty (M.singleton current 1.0)
 
 normalize' :: Prices -> NormalizedPrices -> NormalizedPrices -> NormalizedPrices
@@ -72,8 +72,7 @@ normalize' prices done todo = case M.lookupMin todo of
                 todo'      = M.delete commodity todo `M.union` neighbors'
             in  normalize' prices done' todo'
 
-lookupPrice
-  :: (MonadThrow m) => CommodityName -> NormalizedPrices -> m Scientific
+lookupPrice :: (MonadThrow m) => Commodity -> NormalizedPrices -> m Scientific
 lookupPrice commodityName prices = case M.lookup commodityName prices of
   Just p -> return $ 1 `sdiv` p
   _      -> throwM $ NoNormalizedPriceFound prices commodityName

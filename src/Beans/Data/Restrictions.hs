@@ -4,15 +4,15 @@ module Beans.Data.Restrictions
   , isCompatible
   ) where
 
-import           Beans.Data.Accounts (AccountName, CommodityName)
+import           Beans.Data.Accounts (Account, Commodity)
 import qualified Beans.Data.Map      as M
 import           Data.List           (union)
 
-type Restrictions = M.Map AccountName Restriction
+type Restrictions = M.Map Account Restriction
 
 data Restriction
   = NoRestriction
-  | RestrictedTo [CommodityName]
+  | RestrictedTo [Commodity]
   deriving (Eq, Ord, Show)
 
 instance Monoid Restriction where
@@ -20,7 +20,7 @@ instance Monoid Restriction where
   RestrictedTo x `mappend` RestrictedTo y = RestrictedTo (x `union` y)
   _ `mappend` _ = NoRestriction
 
-isCompatible :: Restriction -> CommodityName -> Bool
+isCompatible :: Restriction -> Commodity -> Bool
 isCompatible r c = case r of
   NoRestriction     -> True
   (RestrictedTo cs) -> c `elem` cs

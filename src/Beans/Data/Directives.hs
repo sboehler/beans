@@ -15,8 +15,8 @@ module Beans.Data.Directives
   , Flag(..)
   ) where
 
-import           Beans.Data.Accounts     (AccountName, Accounts, Amount,
-                                          Amounts, CommodityName, Lot (..))
+import           Beans.Data.Accounts     (Account, Accounts, Amount,
+                                          Amounts, Commodity, Lot (..))
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction)
 import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
@@ -45,24 +45,24 @@ data Command
   deriving (Eq, Ord, Show)
 
 data Balance = Balance
-  { bAccount   :: AccountName
+  { bAccount   :: Account
   , bAmount    :: Amount
-  , bCommodity :: CommodityName
+  , bCommodity :: Commodity
   } deriving (Eq, Ord, Show)
 
 data Open = Open
-  { oAccount     :: AccountName
+  { oAccount     :: Account
   , oRestriction :: Restriction
   } deriving (Eq, Ord, Show)
 
 newtype Close = Close
-  { cAccount :: AccountName
+  { cAccount :: Account
   } deriving (Eq, Ord, Show)
 
 data Price = Price
-  { pCommodity       :: CommodityName
+  { pCommodity       :: Commodity
   , pPrice           :: Scientific
-  , pTargetCommodity :: CommodityName
+  , pTargetCommodity :: Commodity
   } deriving (Eq, Ord, Show)
 
 data Transaction = Transaction
@@ -97,10 +97,10 @@ data Option =
 
 data UnbalancedTransaction =
   UnbalancedTransaction Accounts
-                        (M.Map CommodityName Amount)
+                        (M.Map Commodity Amount)
   deriving (Eq, Show)
 
-type Posting = ((AccountName, CommodityName, Maybe Lot), Amounts)
+type Posting = ((Account, Commodity, Maybe Lot), Amounts)
 
 instance Exception UnbalancedTransaction
 
@@ -110,12 +110,12 @@ mkBalancedTransaction
   -> Text
   -> [Tag]
   -> Accounts
-  -> Maybe AccountName
+  -> Maybe Account
   -> m Transaction
 mkBalancedTransaction flag desc tags postings wildcard =
   Transaction flag desc tags <$> completePostings wildcard postings
 
-completePostings :: MonadThrow m => Maybe AccountName -> Accounts -> m Accounts
+completePostings :: MonadThrow m => Maybe Account -> Accounts -> m Accounts
 completePostings wildcard postings =
   let imbalances = calculateImbalances postings
   in  mappend postings <$> fixImbalances wildcard imbalances
@@ -127,9 +127,9 @@ completePostings wildcard postings =
       Nothing      -> throwM $ UnbalancedTransaction postings i
     | otherwise = return mempty
 
-calculateImbalances :: Accounts -> M.Map CommodityName Amount
+calculateImbalances :: Accounts -> M.Map Commodity Amount
 calculateImbalances = mconcat . fmap snd . M.toList
 
-balanceImbalances :: AccountName -> M.Map CommodityName Amount -> Accounts
+balanceImbalances :: Account -> M.Map Commodity Amount -> Accounts
 balanceImbalances account = M.mapEntries g . fmap negate
   where g (c, s) = ((account, c, Nothing), M.singleton c s)

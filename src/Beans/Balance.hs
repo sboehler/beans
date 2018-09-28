@@ -3,7 +3,7 @@ module Beans.Balance
   ) where
 
 import           Beans.Accounts         (calculateAccounts)
-import           Beans.Data.Accounts    (AccountName (..), AccountType (..),
+import           Beans.Data.Accounts    (Account (..), AccountType (..),
                                          Accounts, AccountsHistory, eraseLots,
                                          summarize)
 import qualified Beans.Data.Map         as M
@@ -72,7 +72,7 @@ valuationStage accountsHistory ledger = do
   case target of
     Just commodity -> calculateValuation accountsHistory
                                          commodity
-                                         (AccountName Equity ["Valuation"])
+                                         (Account Equity ["Valuation"])
                                          ledger
     Nothing -> pure ledger
 
@@ -103,5 +103,5 @@ printStage accounts = do
         Flat         -> flat
   (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport f) accounts
  where
-  hierarchical (AccountName t ns, _, _) = T.pack (show t) : ns
+  hierarchical (Account t ns, _, _) = T.pack (show t) : ns
   flat (a, _, _) = [T.pack $ show a]

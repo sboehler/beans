@@ -5,8 +5,8 @@ module Beans.Accounts
   , processTimestep
   ) where
 
-import           Beans.Data.Accounts     (AccountName, Accounts, Amount,
-                                          CommodityName)
+import           Beans.Data.Accounts     (Account, Accounts, Amount,
+                                          Commodity)
 import qualified Beans.Data.Accounts     as A
 import           Beans.Data.Directives   (Balance (..), Close (..),
                                           Command (..), Open (..),
@@ -23,9 +23,9 @@ import           Data.Time.Calendar      (Day)
 
 data AccountsException
   = AccountIsNotOpen Close
-  | BookingErrorAccountNotOpen AccountName
-  | BookingErrorCommodityIncompatible AccountName
-                                      CommodityName
+  | BookingErrorAccountNotOpen Account
+  | BookingErrorCommodityIncompatible Account
+                                      Commodity
                                       Amount
                                       Restriction
   | AccountIsAlreadyOpen Open

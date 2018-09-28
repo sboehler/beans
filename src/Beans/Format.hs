@@ -5,8 +5,8 @@ module Beans.Format
   , createReport
   ) where
 
-import           Beans.Data.Accounts       (AccountName (..), Accounts, Amount,
-                                            Amounts, CommodityName (..),
+import           Beans.Data.Accounts       (Account (..), Accounts, Amount,
+                                            Amounts, Commodity (..),
                                             Lot (..))
 import qualified Beans.Data.Map            as M
 import           Beans.Pretty              ()
@@ -18,7 +18,7 @@ import           Data.Text                 (Text)
 import qualified Data.Text                 as T
 import           Data.Text.Prettyprint.Doc (pretty)
 
-type Positions = M.Map (CommodityName, Maybe Lot) Amounts
+type Positions = M.Map (Commodity, Maybe Lot) Amounts
 
 data Section = Section
   { sPositions :: Positions
@@ -28,7 +28,7 @@ data Section = Section
 
 -- Creating a report
 createReport
-  :: ((AccountName, CommodityName, Maybe Lot) -> [Text]) -> Accounts -> Section
+  :: ((Account, Commodity, Maybe Lot) -> [Text]) -> Accounts -> Section
 createReport label = groupLabeledPositions . M.mapEntries f
   where f (k@(_, c, l), s) = (label k, M.singleton (c, l) s)
 
@@ -82,8 +82,7 @@ positionsToRows title subtotals =
           $ unwords [maybe "" show commodity, maybe "" (show . pretty) lot]
         }
 
-flattenPositions
-  :: Positions -> [(Maybe Lot, Maybe CommodityName, Maybe Amount)]
+flattenPositions :: Positions -> [(Maybe Lot, Maybe Commodity, Maybe Amount)]
 flattenPositions positions = do
   (lot      , amounts) <- (M.toList . M.mapKeysM snd) positions
   (commodity, amount ) <- M.toList amounts

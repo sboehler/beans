@@ -15,15 +15,11 @@ instance Show ImporterException where
 
 instance Exception ImporterException
 
-data TransactionData = TransactionData
-  { tdCurrency :: Commodity
-  , tdEntries  :: [Entry]
-  } deriving (Eq, Show)
-
 data Entry = Entry
   { eBookingDate :: Day
   , eDescription :: Text
   , eAmount      :: Amount
+  , eCommodity   :: Commodity
   , eValueDate   :: Day
   , eBalance     :: Maybe Amount
   } deriving (Eq, Show)

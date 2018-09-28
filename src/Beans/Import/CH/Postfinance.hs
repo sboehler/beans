@@ -2,10 +2,8 @@ module Beans.Import.CH.Postfinance
   ( readCSV
   ) where
 
-import           Beans.Data.Accounts        (Amount,
-                                             Commodity (Commodity))
-import           Beans.Import.Common        (Entry (..), ImporterException (..),
-                                             TransactionData (..))
+import           Beans.Data.Accounts        (Amount, Commodity (Commodity))
+import           Beans.Import.Common        (Entry (..), ImporterException (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
@@ -24,7 +22,7 @@ import           Text.Megaparsec.Char       (alphaNumChar, anyChar, char,
                                              digitChar, eol)
 import qualified Text.Megaparsec.Char.Lexer as L
 
-readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m TransactionData
+readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m [Entry]
 readCSV f = do
   source <- liftIO $ decodeLatin1 <$> BS.readFile f
   case parse postfinanceData mempty source of
@@ -33,15 +31,22 @@ readCSV f = do
 
 type Parser = Parsec Void Text
 
-postfinanceData :: Parser TransactionData
-postfinanceData =
-  TransactionData
-    <$> (count 4 ignoreLine >> ignoreField >> currency)
-    <*> (ignoreLine >> some entry)
-    <*  (eol >> ignoreLine >> ignoreLine)
+postfinanceData :: Parser [Entry]
+postfinanceData = do
+  commodity <- count 3 ignoreLine >> ignoreField >> currency
+  entries   <- ignoreLine >> some (entry commodity)
+  _         <- eol >> ignoreLine >> ignoreLine
+  return entries
 
-entry :: Parser Entry
-entry = Entry <$> date <*> description <*> entryAmount <*> date <*> balance
+entry :: Commodity -> Parser Entry
+entry commodity =
+  Entry
+    <$> date
+    <*> description
+    <*> entryAmount
+    <*> pure commodity
+    <*> date
+    <*> balance
 
 entryAmount :: Parser Amount
 entryAmount = field $ credit <|> debit

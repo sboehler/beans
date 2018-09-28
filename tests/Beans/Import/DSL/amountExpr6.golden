@@ -1,0 +1,1 @@
+(abs(amount) + Sum {getSum = 100.0})

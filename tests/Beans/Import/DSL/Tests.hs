@@ -1,6 +1,6 @@
 module Beans.Import.DSL.Tests where
 
-import           Beans.Data.Accounts        (AccountName (..), AccountType (..))
+import           Beans.Data.Accounts        (Account (..), AccountType (..))
 import           Beans.Import.Common        (Entry (..))
 import           Beans.Import.DSL
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -74,9 +74,9 @@ evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
                 (-100)
                 (fromGregorian 2018 1 1)
                 (Just 500)
-  account1 = AccountName Expenses ["Shopping"]
-  account2 = AccountName Assets ["Bankaccount"]
-  account3 = AccountName Liabilities ["Creditcard"]
+  account1 = Account Expenses ["Shopping"]
+  account2 = Account Assets ["Bankaccount"]
+  account3 = Account Liabilities ["Creditcard"]
   mkTest (rs, e) = testCase (show rs)
     $ assertEqual (" should evaluate to " <> show e) e (evaluate rs entry)
   evaluationTestCases =

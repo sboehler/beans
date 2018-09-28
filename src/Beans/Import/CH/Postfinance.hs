@@ -3,7 +3,7 @@ module Beans.Import.CH.Postfinance
   ) where
 
 import           Beans.Data.Accounts        (Amount,
-                                             CommodityName (CommodityName))
+                                             Commodity (Commodity))
 import           Beans.Import.Common        (Entry (..), ImporterException (..),
                                              TransactionData (..))
 import           Control.Monad              (void)
@@ -49,8 +49,8 @@ entryAmount = field $ credit <|> debit
   debit  = amount <* separator
   credit = separator *> amount
 
-currency :: Parser CommodityName
-currency = field $ CommodityName . T.pack <$> some alphaNumChar
+currency :: Parser Commodity
+currency = field $ Commodity . T.pack <$> some alphaNumChar
 
 date :: Parser Day
 date = field $ fromGregorian <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2)

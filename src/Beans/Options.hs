@@ -1,6 +1,6 @@
 module Beans.Options where
 
-import           Beans.Data.Accounts (AccountName, CommodityName (..))
+import           Beans.Data.Accounts (Account, Commodity (..))
 import           Data.Time.Calendar  (Day)
 
 data Command
@@ -10,7 +10,7 @@ data Command
 
 data BalanceOptions = BalanceOptions
   { optJournal      :: FilePath
-  , optMarket       :: Maybe CommodityName
+  , optMarket       :: Maybe Commodity
   , optLots         :: Bool
   , optFrom         :: Maybe Day
   , optTo           :: Maybe Day
@@ -29,7 +29,7 @@ data ImportOptions = ImportOptions
   {
     optImporter :: Importer
   , optConfig   :: FilePath
-  , optAccount  :: AccountName
+  , optAccount  :: Account
   , optData     :: FilePath
   } deriving (Show)
 

@@ -1,8 +1,8 @@
 module Beans.Parser where
 
-import           Beans.Data.Accounts        (AccountName (..), AccountType (..),
+import           Beans.Data.Accounts        (Account (..), AccountType (..),
                                              Amount, Amounts,
-                                             CommodityName (..), Lot (..))
+                                             Commodity (..), Lot (..))
 import           Beans.Data.Directives      (Balance (..), Close (..),
                                              Command (..), DatedCommand (..),
                                              Directive (..), Flag (..),
@@ -96,13 +96,13 @@ identifier =
 accountType :: Parser AccountType
 accountType = read . unpack <$> identifier
 
-account :: Parser AccountName
+account :: Parser Account
 account =
-  lexeme $ AccountName <$> accountType <* colon <*> identifier `sepBy` colon
+  lexeme $ Account <$> accountType <* colon <*> identifier `sepBy` colon
   where colon = symbol ":"
 
-commodity :: Parser CommodityName
-commodity = lexeme $ CommodityName <$> identifier
+commodity :: Parser Commodity
+commodity = lexeme $ Commodity <$> identifier
 
 amount :: Parser Amount
 amount = lexeme $ Sum <$> L.signed sc L.scientific
@@ -126,7 +126,7 @@ postingPrice :: Parser ()
 postingPrice = (at *> optional at *> amount *> commodity) $> ()
   where at = symbol "@"
 
-posting :: Day -> Parser ((AccountName, CommodityName, Maybe Lot), Amounts)
+posting :: Day -> Parser ((Account, Commodity, Maybe Lot), Amounts)
 posting d = do
   a <- account
   s <- amount

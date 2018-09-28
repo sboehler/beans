@@ -4,12 +4,12 @@ module Beans.Data.Accounts
   , Amounts
   , AccountsHistory
   , AccountType(..)
-  , CommodityName(..)
+  , Commodity(..)
   , Lot(..)
   , balance
   , summarize
   , eraseLots
-  , AccountName(..)
+  , Account(..)
   ) where
 
 import qualified Beans.Data.Map     as M
@@ -23,9 +23,9 @@ import           Data.Time.Calendar (Day)
 
 type Amount = Sum Scientific
 
-type Amounts = M.Map CommodityName Amount
+type Amounts = M.Map Commodity Amount
 
-type Accounts = M.Map (AccountName, CommodityName, Maybe Lot) Amounts
+type Accounts = M.Map (Account, Commodity, Maybe Lot) Amounts
 
 type AccountsHistory = M.Map Day Accounts
 
@@ -37,24 +37,24 @@ data AccountType
   | Expenses
   deriving (Eq, Ord, Read, Show)
 
-data AccountName =
-  AccountName AccountType
+data Account =
+  Account AccountType
               [Text]
   deriving (Eq, Ord)
 
-instance Show AccountName where
-  show (AccountName t n) = L.intercalate ":" (show t : (unpack <$> n))
+instance Show Account where
+  show (Account t n) = L.intercalate ":" (show t : (unpack <$> n))
 
-newtype CommodityName =
-  CommodityName Text
+newtype Commodity =
+  Commodity Text
   deriving (Eq, Ord)
 
-instance Show CommodityName where
-  show (CommodityName n) = unpack n
+instance Show Commodity where
+  show (Commodity n) = unpack n
 
 data Lot = Lot
   { lPrice           :: Amount
-  , lTargetCommodity :: CommodityName
+  , lTargetCommodity :: Commodity
   , lDate            :: Day
   , lLabel           :: Maybe Text
   } deriving (Eq, Ord)
@@ -65,7 +65,7 @@ instance Show Lot where
         elems = catMaybes [Just price, Just $ show lDate, show <$> lLabel]
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
-balance :: AccountName -> CommodityName -> Accounts -> Amount
+balance :: Account -> Commodity -> Accounts -> Amount
 balance accountName commodityName =
   M.findWithDefaultM commodityName . fold . M.filterWithKey f
   where f (a, c, _) _ = accountName == a && commodityName == c
@@ -73,8 +73,8 @@ balance accountName commodityName =
 summarize :: Int -> Accounts -> Accounts
 summarize d = M.mapKeysM g where g (a, c, l) = (shorten d a, c, l)
 
-shorten :: Int -> AccountName -> AccountName
-shorten d (AccountName t a) = AccountName t (take d a)
+shorten :: Int -> Account -> Account
+shorten d (Account t a) = Account t (take d a)
 
 eraseLots :: Accounts -> Accounts
 eraseLots = M.mapKeysM g where g (a, c, _) = (a, c, Nothing)

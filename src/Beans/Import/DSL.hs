@@ -2,7 +2,7 @@
 
 module Beans.Import.DSL where
 
-import           Beans.Data.Accounts        (AccountName (..), AccountType,
+import           Beans.Data.Accounts        (Account (..), AccountType,
                                              Amount)
 import           Beans.Import.Common        (Entry (..))
 import           Control.Exception          (Exception)
@@ -35,7 +35,7 @@ type Rules = [Rule]
 
 data Rule =
   Rule (E Bool)
-       AccountName
+       Account
   deriving (Show)
 
 data E a where
@@ -84,13 +84,13 @@ instance Show a => Show (E a) where
 
 -- Evaluation
 
-evaluate :: Traversable t => t Rule -> Entry -> Maybe AccountName
+evaluate :: Traversable t => t Rule -> Entry -> Maybe Account
 evaluate r = runIdentity . runReaderT (evalRules r)
 
-evalRules :: Traversable t => t Rule -> Reader Entry (Maybe AccountName)
+evalRules :: Traversable t => t Rule -> Reader Entry (Maybe Account)
 evalRules rs = msum <$> sequence (evalRule <$> rs)
 
-evalRule :: Rule -> Reader Entry (Maybe AccountName)
+evalRule :: Rule -> Reader Entry (Maybe Account)
 evalRule (Rule e c) = bool Nothing (Just c) <$> evalE e
 
 evalE :: E a -> Reader Entry a
@@ -162,9 +162,9 @@ accountType = read . unpack <$> choice
   , string "Equity"
   ]
 
-account :: Parser AccountName
+account :: Parser Account
 account =
-  lexeme $ AccountName <$> accountType <* colon <*> (identifier `sepBy` colon)
+  lexeme $ Account <$> accountType <* colon <*> (identifier `sepBy` colon)
   where colon = char ':'
 
 symbolOf :: (Functor t, Foldable t) => t (Text, a) -> Parser a

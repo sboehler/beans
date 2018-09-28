@@ -6,12 +6,12 @@ import           Options.Applicative
 import           Prelude             hiding (filter)
 
 import           Beans.CLI.Common    (toReadM)
-import           Beans.Data.Accounts (CommodityName)
+import           Beans.Data.Accounts (Commodity)
 import qualified Beans.Parser        as P
 import           Data.Time.Calendar  (Day)
 
 
-convert :: Parser (Maybe CommodityName)
+convert :: Parser (Maybe Commodity)
 convert =
   optional $ option (toReadM P.commodity) (long "convert" <> short 'c')
 

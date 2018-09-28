@@ -1,8 +1,8 @@
 module Beans.Valuation where
 
-import           Beans.Data.Accounts   (AccountName (..), AccountType (..),
+import           Beans.Data.Accounts   (Account (..), AccountType (..),
                                         Accounts, AccountsHistory, Amount,
-                                        Amounts, CommodityName (..), Lot (..))
+                                        Amounts, Commodity (..), Lot (..))
 import           Beans.Data.Directives (Command (..), Flag (..), Posting,
                                         Transaction (..), mkBalancedTransaction)
 import qualified Beans.Data.Map        as M
@@ -21,16 +21,16 @@ data ValuationState = ValuationState
   , vsNormalizedPrices     :: NormalizedPrices
   , vsPrevAccounts         :: Accounts
   , vsAccounts             :: AccountsHistory
-  , vsTarget               :: CommodityName
-  , vsValuationAccount     :: AccountName
+  , vsTarget               :: Commodity
+  , vsValuationAccount     :: Account
   , vsDate                 :: Day
   }
 
 calculateValuation
   :: MonadThrow m
   => AccountsHistory
-  -> CommodityName
-  -> AccountName
+  -> Commodity
+  -> Account
   -> Ledger
   -> m Ledger
 calculateValuation accounts target valuationAccount ledger = evalStateT
@@ -84,8 +84,8 @@ convertPosting (k, amounts) = do
 
 convertAmount
   :: (MonadThrow m, MonadState ValuationState m)
-  => (CommodityName, Amount)
-  -> m (CommodityName, Amount)
+  => (Commodity, Amount)
+  -> m (Commodity, Amount)
 convertAmount a@(commodity, amount) = do
   tc <- gets vsTarget
   if tc == commodity
@@ -102,17 +102,17 @@ adjustValuationForAccounts = do
 
 adjustValuationForAccount
   :: (MonadThrow m, MonadState ValuationState m)
-  => ((AccountName, CommodityName, Maybe Lot), Amounts)
+  => ((Account, Commodity, Maybe Lot), Amounts)
   -> m [Command]
 adjustValuationForAccount (k, amounts) =
   concat <$> mapM (adjustValuationForAmount k) (M.toList amounts)
 
 adjustValuationForAmount
   :: (MonadThrow m, MonadState ValuationState m)
-  => (AccountName, CommodityName, Maybe Lot)
-  -> (CommodityName, Amount)
+  => (Account, Commodity, Maybe Lot)
+  -> (Commodity, Amount)
   -> m [Command]
-adjustValuationForAmount k@(AccountName t _, _, _) (commodity, amount) = do
+adjustValuationForAmount k@(Account t _, _, _) (commodity, amount) = do
   v0 <- gets vsPrevNormalizedPrices >>= lookupPrice commodity
   v1 <- gets vsNormalizedPrices >>= lookupPrice commodity
   if v0 /= v1 && t `elem` [Assets, Liabilities]
@@ -121,7 +121,7 @@ adjustValuationForAmount k@(AccountName t _, _, _) (commodity, amount) = do
 
 createValuationTransaction
   :: (MonadState ValuationState m)
-  => (AccountName, CommodityName, Maybe Lot)
+  => (Account, Commodity, Maybe Lot)
   -> Amount
   -> m Command
 createValuationTransaction (a, c, l) amount = do

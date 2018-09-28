@@ -1,6 +1,6 @@
 module Beans.Import.Common where
 
-import           Beans.Data.Accounts (Amount, CommodityName)
+import           Beans.Data.Accounts (Amount, Commodity)
 import           Control.Exception   (Exception)
 import           Data.Text           (Text)
 import           Data.Time.Calendar  (Day)
@@ -16,7 +16,7 @@ instance Show ImporterException where
 instance Exception ImporterException
 
 data TransactionData = TransactionData
-  { tdCurrency :: CommodityName
+  { tdCurrency :: Commodity
   , tdEntries  :: [Entry]
   } deriving (Eq, Show)
 

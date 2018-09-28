@@ -3,7 +3,7 @@ module Beans.CLI.Import
   ) where
 
 import           Beans.CLI.Common    (toReadM)
-import           Beans.Data.Accounts (AccountName)
+import           Beans.Data.Accounts (Account)
 import           Beans.Options       (ImportOptions (..), Importer (..))
 import qualified Beans.Parser        as P
 import           Data.Semigroup      ((<>))
@@ -29,7 +29,7 @@ importer =
         "postfinance" -> Right Postfinance
         s -> Left $ "Invalid importer: " <> s
 
-account :: Parser AccountName
+account :: Parser Account
 account =
   option
     (toReadM P.account)

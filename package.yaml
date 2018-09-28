@@ -79,9 +79,12 @@ tests:
       - tasty
       - bytestring
       - filepath
+      - regex-pcre
       - tasty-smallcheck
       - tasty-quickcheck
       - tasty-hunit
       - tasty-golden
       - text
       - megaparsec
+      - mtl
+      - time

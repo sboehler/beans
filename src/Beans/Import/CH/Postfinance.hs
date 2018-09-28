@@ -4,7 +4,8 @@ module Beans.Import.CH.Postfinance
 
 import           Beans.Data.Accounts        (Amount,
                                              CommodityName (CommodityName))
-import           Beans.Import.Common        (Entry (..), TransactionData (..))
+import           Beans.Import.Common        (Entry (..), ImporterException (..),
+                                             TransactionData (..))
 import           Control.Monad              (void)
 import           Control.Monad.Catch        (MonadThrow, throwM)
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
@@ -16,9 +17,9 @@ import           Data.Text.Encoding         (decodeLatin1)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Data.Void                  (Void)
 
-import           Text.Megaparsec            (Parsec, count, eof, manyTill,
-                                             optional, parse, skipManyTill,
-                                             some, (<|>))
+import           Text.Megaparsec            (Parsec, count, manyTill, optional,
+                                             parse, parseErrorPretty,
+                                             skipManyTill, some, (<|>))
 import           Text.Megaparsec.Char       (alphaNumChar, anyChar, char,
                                              digitChar, eol)
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -27,7 +28,7 @@ readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m TransactionData
 readCSV f = do
   source <- liftIO $ decodeLatin1 <$> BS.readFile f
   case parse postfinanceData mempty source of
-    Left e  -> throwM e
+    Left e  -> (throwM . ImporterException . parseErrorPretty)  e
     Right d -> return d
 
 type Parser = Parsec Void Text
@@ -36,7 +37,7 @@ postfinanceData :: Parser TransactionData
 postfinanceData =
   TransactionData <$> (count 4 ignoreLine >> ignoreField >> currency) <*>
   (ignoreLine >> some entry) <*
-  (eol >> ignoreLine >> ignoreLine >> eof)
+  (eol >> ignoreLine >> ignoreLine)
 
 entry :: Parser Entry
 entry = Entry <$> date <*> description <*> entryAmount <*> date <*> balance

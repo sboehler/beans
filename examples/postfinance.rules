@@ -1,0 +1,2 @@
+(description =~ ".*Acme.*") -> Expenses:CleaningCleaningCleaning;
+(true) -> Assets:Something;

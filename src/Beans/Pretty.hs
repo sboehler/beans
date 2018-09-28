@@ -40,14 +40,13 @@ instance Pretty Transaction where
   pretty Transaction {..} =
     pretty tFlag <+>
     dquotes (pretty tDescription) <+>
-    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings)
+    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings) <> hardline
 
 prettyAccounts :: Accounts -> [Doc a]
 prettyAccounts = concatMap p . M.toList
  where
   p ((a, _, l), v) = fmap g (M.toList v)
-   where
-    g (c, s) = pretty a <+> pretty s <+> pretty c <+> pretty l <+> hardline
+    where g (c, s) = pretty a <+> pretty s <+> pretty c <+> pretty l
 
 instance Pretty Flag where
   pretty Complete   = "*"
@@ -65,10 +64,12 @@ instance Pretty Lot where
       Just l  -> [pretty l]
 
 instance Pretty Directive where
-  pretty (DatedCommandDirective (DatedCommand day command)) =
-    pretty day <+> pretty command
-  pretty (OptionDirective o) = pretty o
-  pretty (IncludeDirective i) = pretty i
+  pretty (DatedCommandDirective d) = pretty d
+  pretty (OptionDirective o)       = pretty o
+  pretty (IncludeDirective i)      = pretty i
+
+instance Pretty DatedCommand where
+  pretty (DatedCommand day command) = pretty day <+> pretty command
 
 instance Pretty Command where
   pretty (BalanceCommand b)     = pretty b

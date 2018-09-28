@@ -36,5 +36,4 @@ account =
     (metavar "<account>" <> long "account" <> short 'a')
 
 importOptions :: Parser ImportOptions
-importOptions =
-  ImportOptions <$> importer <*> configFile <*> account <*> dataFile
+importOptions = ImportOptions <$> importer <*> configFile <*> account <*> dataFile

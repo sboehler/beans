@@ -1,6 +1,7 @@
 module Beans.Import.DSL.Tests where
 
-import           Beans.Data.Accounts        (Account (..), AccountType (..))
+import           Beans.Data.Accounts        (Account (..), AccountType (..),
+                                             Commodity (..))
 import           Beans.Import.Common        (Entry (..))
 import           Beans.Import.DSL
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -53,6 +54,7 @@ parserTests = testGroup
     , (3, "(4.0)")
     , (4, "((amount + 4) - 4.0)")
     , (5, "(amount - amount + amount)")
+    , (6, "(abs amount + 100)")
     ]
   textExprTests = mkParserTestGroup
     "textExpr"
@@ -72,6 +74,7 @@ evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
   entry = Entry (fromGregorian 2018 1 1)
                 "Purchasing Foos at Bar Inc"
                 (-100)
+                (Commodity "CHF")
                 (fromGregorian 2018 1 1)
                 (Just 500)
   account1 = Account Expenses ["Shopping"]

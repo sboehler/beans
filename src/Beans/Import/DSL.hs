@@ -87,35 +87,34 @@ instance Show a => Show (E a) where
 evaluate :: Traversable t => t Rule -> Entry -> Maybe AccountName
 evaluate r = runIdentity . runReaderT (evalRules r)
 
-evalRules :: Traversable t =>
-                   t Rule
-                   -> Reader Entry (Maybe AccountName)
+evalRules :: Traversable t => t Rule -> Reader Entry (Maybe AccountName)
 evalRules rs = msum <$> sequence (evalRule <$> rs)
 
 evalRule :: Rule -> Reader Entry (Maybe AccountName)
 evalRule (Rule e c) = bool Nothing (Just c) <$> evalE e
 
 evalE :: E a -> Reader Entry a
-evalE (EBool a)        = return a
-evalE (EText a)        = return a
-evalE (EDate a)        = return a
-evalE (EAmount a)      = return a
-evalE EVarAmount       = asks eAmount
-evalE EVarDescription  = asks eDescription
-evalE EVarBookingDate  = asks eBookingDate
-evalE EVarValueDate    = asks eValueDate
-evalE (EAnd a b)       = (&&) <$> evalE a <*> evalE b
-evalE (EOr a b)        = (||) <$> evalE a <*> evalE b
-evalE (ENot a)         = not <$> evalE a
-evalE (EPlus x y)      = (+) <$> evalE x <*> evalE y
-evalE (EMinus x y)     = (-) <$> evalE x <*> evalE y
-evalE (ELT a b)        = (<) <$> evalE a <*> evalE b
-evalE (ELE a b)        = (<=) <$> evalE a <*> evalE b
-evalE (EEQ a b)        = (==) <$> evalE a <*> evalE b
-evalE (EGE a b)        = (>=) <$> evalE a <*> evalE b
-evalE (EGT a b)        = (>) <$> evalE a <*> evalE b
-evalE (ENE a b)        = (/=) <$> evalE a <*> evalE b
-evalE (EMatch t regex) = (=~) <$> (unpack <$> evalE t) <*> (unpack <$> evalE regex)
+evalE (EBool   a)     = return a
+evalE (EText   a)     = return a
+evalE (EDate   a)     = return a
+evalE (EAmount a)     = return a
+evalE EVarAmount      = asks eAmount
+evalE EVarDescription = asks eDescription
+evalE EVarBookingDate = asks eBookingDate
+evalE EVarValueDate   = asks eValueDate
+evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
+evalE (EOr  a b  )    = (||) <$> evalE a <*> evalE b
+evalE (ENot a    )    = not <$> evalE a
+evalE (EPlus  x y)    = (+) <$> evalE x <*> evalE y
+evalE (EMinus x y)    = (-) <$> evalE x <*> evalE y
+evalE (ELT    a b)    = (<) <$> evalE a <*> evalE b
+evalE (ELE    a b)    = (<=) <$> evalE a <*> evalE b
+evalE (EEQ    a b)    = (==) <$> evalE a <*> evalE b
+evalE (EGE    a b)    = (>=) <$> evalE a <*> evalE b
+evalE (EGT    a b)    = (>) <$> evalE a <*> evalE b
+evalE (ENE    a b)    = (/=) <$> evalE a <*> evalE b
+evalE (EMatch t regex) =
+  (=~) <$> (unpack <$> evalE t) <*> (unpack <$> evalE regex)
 
 -- Parser
 type Parser = Parsec Void Text
@@ -133,12 +132,10 @@ instance Exception ParserException
 -- parse a file of rules
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m Rules
 parseFile filePath = (liftIO . readFile) filePath >>= parseSource
-  where
-    parseSource input =
-      either
-        (throwM . ParserException . parseErrorPretty)
-        return
-        (parse rules filePath input)
+ where
+  parseSource input = either (throwM . ParserException . parseErrorPretty)
+                             return
+                             (parse rules filePath input)
 
 sc :: Parser ()
 sc = L.space space1 empty empty
@@ -153,24 +150,22 @@ parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
 identifier :: Parser Text
-identifier = cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
+identifier =
+  cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
 
 accountType :: Parser AccountType
-accountType =
-  read . unpack <$>
-  choice
-    [ string "Assets"
-    , string "Liabilities"
-    , string "Expenses"
-    , string "Income"
-    , string "Equity"
-    ]
+accountType = read . unpack <$> choice
+  [ string "Assets"
+  , string "Liabilities"
+  , string "Expenses"
+  , string "Income"
+  , string "Equity"
+  ]
 
 account :: Parser AccountName
 account =
   lexeme $ AccountName <$> accountType <* colon <*> (identifier `sepBy` colon)
-  where
-    colon = char ':'
+  where colon = char ':'
 
 symbolOf :: (Functor t, Foldable t) => t (Text, a) -> Parser a
 symbolOf = msum . fmap (uncurry (&>))
@@ -192,21 +187,20 @@ rule = Rule <$> boolExpr <* symbol "->" <*> account <* symbol ";"
 
 amountLiteral :: Parser (E Amount)
 amountLiteral = EAmount <$> lexeme amount
-  where
-    amount = Sum <$> L.signed sc L.scientific
+  where amount = Sum <$> L.signed sc L.scientific
 
 textLiteral :: Parser (E Text)
 textLiteral = EText <$> lexeme quotedText
-  where
-    quotedText = between q q (takeWhileP (Just "no quote") (/= '"'))
-    q = symbol "\""
+ where
+  quotedText = between q q (takeWhileP (Just "no quote") (/= '"'))
+  q          = symbol "\""
 
 dateLiteral :: Parser (E Day)
 dateLiteral = EDate <$> lexeme date
-  where
-    date = fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
-    dash = symbol "-"
-    digits n = read <$> count n digitChar
+ where
+  date = fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
+  dash = symbol "-"
+  digits n = read <$> count n digitChar
 
 boolLiteral :: Parser (E Bool)
 boolLiteral = EBool <$> ("true" &> True <|> "false" &> False)
@@ -215,39 +209,45 @@ textExpr :: Parser (E Text)
 textExpr = parens textExpr <|> textLiteral <|> "description" &> EVarDescription
 
 textRelation :: Parser (E Text -> E Text -> E Bool)
-textRelation = symbolOf [ ("==", EEQ), ("!=", ENE), ("=~", EMatch)]
+textRelation = symbolOf [("==", EEQ), ("!=", ENE), ("=~", EMatch)]
 
 dateExpr :: Parser (E Day)
 dateExpr =
-  parens dateExpr <|> dateLiteral <|> "valueDate" &> EVarValueDate <|>
-  "bookingDate" &> EVarBookingDate
+  parens dateExpr
+    <|> dateLiteral
+    <|> "valueDate"
+    &>  EVarValueDate
+    <|> "bookingDate"
+    &>  EVarBookingDate
 
 amountExpr :: Parser (E Amount)
 amountExpr = makeExprParser amountTerm amountOperators
-  where
-    amountTerm = parens amountExpr <|> amountLiteral <|> "amount" &> EVarAmount
-    amountOperators = [[InfixL ("+" &> EPlus), InfixL ("-" &> EMinus)]]
+ where
+  amountTerm = parens amountExpr <|> amountLiteral <|> "amount" &> EVarAmount
+  amountOperators = [[InfixL ("+" &> EPlus), InfixL ("-" &> EMinus)]]
 
 boolExpr :: Parser (E Bool)
 boolExpr = makeExprParser boolTerm boolOperators
-  where
-    boolTerm =
-      parens boolExpr <|> boolLiteral <|> try dateRelExpr <|> amountRelExpr <|>
-      textRelExpr
-    boolOperators =
-      [[Prefix ("not" &> ENot)], [InfixL ("and" &> EAnd), InfixL ("or" &> EOr)]]
-    amountRelExpr = comparison amountExpr relation
-    textRelExpr = comparison textExpr textRelation
-    dateRelExpr = comparison dateExpr relation
+ where
+  boolTerm =
+    parens boolExpr
+      <|> boolLiteral
+      <|> try dateRelExpr
+      <|> amountRelExpr
+      <|> textRelExpr
+  boolOperators =
+    [[Prefix ("not" &> ENot)], [InfixL ("and" &> EAnd), InfixL ("or" &> EOr)]]
+  amountRelExpr = comparison amountExpr relation
+  textRelExpr   = comparison textExpr textRelation
+  dateRelExpr   = comparison dateExpr relation
 
 comparison :: (Applicative f) => f a -> f (a -> a -> b) -> f b
 comparison expr rel = do
   e1 <- expr
-  r <- rel
+  r  <- rel
   e2 <- expr
   return $ e1 `r` e2
 
 relation :: (Show a, Ord a) => Parser (E a -> E a -> E Bool)
-relation =
-  symbolOf
-    [("<=", ELE), (">=", EGE), (">", EGT), ("<", ELT), ("==", EEQ), ("!=", ENE)]
+relation = symbolOf
+  [("<=", ELE), (">=", EGE), (">", EGT), ("<", ELT), ("==", EEQ), ("!=", ENE)]

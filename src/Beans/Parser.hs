@@ -74,8 +74,7 @@ scn = L.space space1 lineComment empty
 
 sc :: Parser ()
 sc = L.space (void $ takeWhile1P Nothing f) empty empty
-  where
-    f x = x == ' ' || x == '\t'
+  where f x = x == ' ' || x == '\t'
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc
@@ -86,12 +85,13 @@ symbol = L.symbol sc
 date :: Parser Day
 date =
   lexeme $ fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
-  where
-    dash = symbol "-"
-    digits n = read <$> count n digitChar
+ where
+  dash = symbol "-"
+  digits n = read <$> count n digitChar
 
 identifier :: Parser Text
-identifier = cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
+identifier =
+  cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
 
 accountType :: Parser AccountType
 accountType = read . unpack <$> identifier
@@ -99,8 +99,7 @@ accountType = read . unpack <$> identifier
 account :: Parser AccountName
 account =
   lexeme $ AccountName <$> accountType <* colon <*> identifier `sepBy` colon
-  where
-    colon = symbol ":"
+  where colon = symbol ":"
 
 commodity :: Parser CommodityName
 commodity = lexeme $ CommodityName <$> identifier
@@ -112,22 +111,20 @@ braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
 
 quotedString :: Parser Text
-quotedString =
-  lexeme $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
-  where
-    quote = char '"'
+quotedString = lexeme
+  $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
+  where quote = char '"'
 
 lot :: Day -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)
-  where
-    comma = symbol ","
-    lotDate = (comma >> date) <|> pure d
-    lotLabel = optional (comma >> quotedString)
+ where
+  comma    = symbol ","
+  lotDate  = (comma >> date) <|> pure d
+  lotLabel = optional (comma >> quotedString)
 
 postingPrice :: Parser ()
 postingPrice = (at *> optional at *> amount *> commodity) $> ()
-  where
-    at = symbol "@"
+  where at = symbol "@"
 
 posting :: Day -> Parser ((AccountName, CommodityName, Maybe Lot), Amounts)
 posting d = do
@@ -142,21 +139,21 @@ posting d = do
 
 flag :: Parser Flag
 flag = complete <|> incomplete
-  where
-    complete = Complete <$ symbol "*"
-    incomplete = Incomplete <$ symbol "!"
+ where
+  complete   = Complete <$ symbol "*"
+  incomplete = Incomplete <$ symbol "!"
 
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
 transaction :: Day -> Parser Transaction
 transaction d = do
-  f <- flag
-  desc <- quotedString
-  t <- many tag
+  f      <- flag
+  desc   <- quotedString
+  t      <- many tag
   indent <- L.indentGuard scn GT P.pos1
-  p <- some $ try (L.indentGuard scn EQ indent *> posting d)
-  w <- optional $ try (L.indentGuard scn EQ indent *> account)
+  p      <- some $ try (L.indentGuard scn EQ indent *> posting d)
+  w      <- optional $ try (L.indentGuard scn EQ indent *> account)
   case mkBalancedTransaction f desc t (M.fromListM p) w of
     Just t' -> return t'
     Nothing -> do
@@ -178,15 +175,20 @@ balance = Balance <$ symbol "balance" <*> account <*> amount <*> commodity
 
 price :: Parser Price
 price = Price <$ symbol "price" <*> commodity <*> p <*> commodity
-  where
-    p = lexeme $ L.signed sc L.scientific
+  where p = lexeme $ L.signed sc L.scientific
 
 command :: Day -> Parser Command
 command d =
-  TransactionCommand <$> transaction d <|> OpenCommand <$> open <|>
-  CloseCommand <$> close <|>
-  BalanceCommand <$> balance <|>
-  PriceCommand <$> price
+  TransactionCommand
+    <$> transaction d
+    <|> OpenCommand
+    <$> open
+    <|> CloseCommand
+    <$> close
+    <|> BalanceCommand
+    <$> balance
+    <|> PriceCommand
+    <$> price
 
 include :: Parser Include
 include =
@@ -203,25 +205,32 @@ commandDirective = do
 
 directive :: Parser Directive
 directive =
-  L.nonIndented scn $ (IncludeDirective <$> include <|>
-  OptionDirective <$> config <|> commandDirective) <* scn
+  L.nonIndented scn
+    $  (   IncludeDirective
+       <$> include
+       <|> OptionDirective
+       <$> config
+       <|> commandDirective
+       )
+    <* scn
 
 directives :: Parser [Directive]
-directives =  some directive <* try (scn >> eof)
+directives = some directive <* try (scn >> eof)
 
 parseSource :: (MonadThrow m) => FilePath -> Text -> m [Directive]
-parseSource f t =
-  case parse directives f t of
-    Left e  -> (throwM . ParserException . parseErrorPretty) e
-    Right d -> return d
+parseSource f t = case parse directives f t of
+  Left  e -> (throwM . ParserException . parseErrorPretty) e
+  Right d -> return d
 
 getIncludedFiles :: FilePath -> [Directive] -> [FilePath]
 getIncludedFiles fp ast =
-  [combine (takeDirectory fp) path | (IncludeDirective (Include _ path)) <- ast]
+  [ combine (takeDirectory fp) path
+  | (IncludeDirective (Include _ path)) <- ast
+  ]
 
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
 parseFile filePath = do
   source <- liftIO $ readFile filePath
-  ast <- parseSource filePath source
-  asts <- concat <$> traverse parseFile (getIncludedFiles filePath ast)
+  ast    <- parseSource filePath source
+  asts   <- concat <$> traverse parseFile (getIncludedFiles filePath ast)
   return $ ast ++ asts

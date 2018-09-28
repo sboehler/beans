@@ -27,26 +27,26 @@ data Section = Section
   } deriving (Show)
 
 -- Creating a report
-createReport ::
-     ((AccountName, CommodityName, Maybe Lot) -> [Text]) -> Accounts -> Section
+createReport
+  :: ((AccountName, CommodityName, Maybe Lot) -> [Text]) -> Accounts -> Section
 createReport label = groupLabeledPositions . M.mapEntries f
-  where
-    f (k@(_, c, l), s) = (label k, M.singleton (c, l) s)
+  where f (k@(_, c, l), s) = (label k, M.singleton (c, l) s)
 
 groupLabeledPositions :: M.Map [Text] Positions -> Section
-groupLabeledPositions labeledPositions =
-  Section positions subsections (positions <> subtotals)
-  where
-    positions = M.findWithDefaultM mempty labeledPositions
-    subsections =
-      groupLabeledPositions <$> splitSection (M.delete mempty labeledPositions)
-    subtotals = fold (sSubtotals <$> subsections)
+groupLabeledPositions labeledPositions = Section positions
+                                                 subsections
+                                                 (positions <> subtotals)
+ where
+  positions = M.findWithDefaultM mempty labeledPositions
+  subsections =
+    groupLabeledPositions <$> splitSection (M.delete mempty labeledPositions)
+  subtotals = fold (sSubtotals <$> subsections)
 
 splitSection :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
 splitSection = M.mapEntries f
-  where
-    f (n:ns, ps) = (n, M.singleton ns ps)
-    f ([], ps)   = (mempty, M.singleton [] ps)
+ where
+  f (n:ns, ps) = (n, M.singleton ns ps)
+  f ([]  , ps) = (mempty, M.singleton [] ps)
 
 -- Formatting a report into rows
 data Row = Row
@@ -61,44 +61,42 @@ reportToRows t = sectionToRows ("", t)
 sectionToRows :: (Text, Section) -> [Row]
 sectionToRows (label, Section _ subsections subtotals) =
   positionRows ++ subsectionRows
-  where
-    subsectionRows = indent 2 <$> (sectionToRows =<< M.toList subsections)
-    positionRows = positionsToRows label subtotals
+ where
+  subsectionRows = indent 2 <$> (sectionToRows =<< M.toList subsections)
+  positionRows   = positionsToRows label subtotals
 
 positionsToRows :: Text -> Positions -> [Row]
 positionsToRows title subtotals =
-  let nbrSubtotals = M.size subtotals
-      nbrRows = maximum [1, nbrSubtotals]
-      st =
-        flattenPositions subtotals ++
-        replicate (nbrRows - nbrSubtotals) (Nothing, Nothing, Nothing)
-   in do (rAccount, (lot, commodity, amount)) <- zip (title : repeat "") st
-         pure
-           Row
-             { rAccount
-             , rAmount = maybe "" formatStandard amount
-             , rCommodity =
-                 T.pack $
-                 unwords [maybe "" show commodity, maybe "" (show . pretty) lot]
-             }
+  let
+    nbrSubtotals = M.size subtotals
+    nbrRows      = maximum [1, nbrSubtotals]
+    st           = flattenPositions subtotals
+      ++ replicate (nbrRows - nbrSubtotals) (Nothing, Nothing, Nothing)
+  in
+    do
+      (rAccount, (lot, commodity, amount)) <- zip (title : repeat "") st
+      pure Row
+        { rAccount
+        , rAmount    = maybe "" formatStandard amount
+        , rCommodity = T.pack
+          $ unwords [maybe "" show commodity, maybe "" (show . pretty) lot]
+        }
 
-flattenPositions ::
-     Positions -> [(Maybe Lot, Maybe CommodityName, Maybe Amount)]
+flattenPositions
+  :: Positions -> [(Maybe Lot, Maybe CommodityName, Maybe Amount)]
 flattenPositions positions = do
-  (lot, amounts) <- (M.toList . M.mapKeysM snd) positions
-  (commodity, amount) <- M.toList amounts
+  (lot      , amounts) <- (M.toList . M.mapKeysM snd) positions
+  (commodity, amount ) <- M.toList amounts
   return (lot, Just commodity, Just amount)
 
 indent :: Int -> Row -> Row
 indent n (Row first a b) = Row (indent' first) a b
-  where
-    indent' t = T.replicate (fromIntegral n) " " <> t
+  where indent' t = T.replicate (fromIntegral n) " " <> t
 
 -- formatting rows into a table
 formatTable :: [Row] -> Text
-formatTable =
-  showTable
-    [ Column left "Account" left rAccount
-    , Column left "Amount" right rAmount
-    , Column left "Commodity" left rCommodity
-    ]
+formatTable = showTable
+  [ Column left "Account"   left  rAccount
+  , Column left "Amount"    right rAmount
+  , Column left "Commodity" left  rCommodity
+  ]

@@ -104,8 +104,8 @@ type Posting = ((AccountName, CommodityName, Maybe Lot), Amounts)
 
 instance Exception UnbalancedTransaction
 
-mkBalancedTransaction ::
-     MonadThrow m
+mkBalancedTransaction
+  :: MonadThrow m
   => Flag
   -> Text
   -> [Tag]
@@ -118,19 +118,18 @@ mkBalancedTransaction flag desc tags postings wildcard =
 completePostings :: MonadThrow m => Maybe AccountName -> Accounts -> m Accounts
 completePostings wildcard postings =
   let imbalances = calculateImbalances postings
-   in mappend postings <$> fixImbalances wildcard imbalances
-  where
-    fixImbalances w i
-      | null i = return mempty
-      | M.size i == 1 = case w of
-          Just account -> return $ balanceImbalances account i
-          Nothing      -> throwM $ UnbalancedTransaction postings i
-      | otherwise      = return mempty
+  in  mappend postings <$> fixImbalances wildcard imbalances
+ where
+  fixImbalances w i
+    | null i = return mempty
+    | M.size i == 1 = case w of
+      Just account -> return $ balanceImbalances account i
+      Nothing      -> throwM $ UnbalancedTransaction postings i
+    | otherwise = return mempty
 
 calculateImbalances :: Accounts -> M.Map CommodityName Amount
 calculateImbalances = mconcat . fmap snd . M.toList
 
 balanceImbalances :: AccountName -> M.Map CommodityName Amount -> Accounts
 balanceImbalances account = M.mapEntries g . fmap negate
-  where
-    g (c, s) = ((account, c, Nothing), M.singleton c s)
+  where g (c, s) = ((account, c, Nothing), M.singleton c s)

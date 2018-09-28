@@ -36,52 +36,47 @@ instance Exception PriceException
 
 calculatePrices :: Traversable t => t Timestep -> t Prices
 calculatePrices l = evalState (mapM f l) mempty
-  where
-    f timestep = modify (updatePrices timestep) >> get
+  where f timestep = modify (updatePrices timestep) >> get
 
 updatePrices :: Timestep -> Prices -> Prices
 updatePrices (Timestep _ commands) prices =
   let prices' = foldl' addPrice prices commands
-   in foldl' (\p -> addPrice p . invert) prices' commands
+  in  foldl' (\p -> addPrice p . invert) prices' commands
 
 addPrice :: Prices -> Command -> Prices
-addPrice prices (PriceCommand Price {pCommodity, pPrice, pTargetCommodity}) =
+addPrice prices (PriceCommand Price { pCommodity, pPrice, pTargetCommodity }) =
   let p = M.findWithDefault mempty pCommodity prices
-   in M.insert pCommodity (M.insert pTargetCommodity pPrice p) prices
+  in  M.insert pCommodity (M.insert pTargetCommodity pPrice p) prices
 addPrice prices _ = prices
 
 invert :: Command -> Command
-invert (PriceCommand p@Price {..}) =
-  PriceCommand $
-  p
-    { pCommodity = pTargetCommodity
-    , pTargetCommodity = pCommodity
-    , pPrice = 1 `sdiv` pPrice
-    }
+invert (PriceCommand p@Price {..}) = PriceCommand $ p
+  { pCommodity       = pTargetCommodity
+  , pTargetCommodity = pCommodity
+  , pPrice           = 1 `sdiv` pPrice
+  }
 invert c = c
 
 normalize :: Prices -> CommodityName -> NormalizedPrices
 normalize prices current = normalize' prices mempty (M.singleton current 1.0)
 
 normalize' :: Prices -> NormalizedPrices -> NormalizedPrices -> NormalizedPrices
-normalize' prices done todo =
-  case M.lookupMin todo of
-    Nothing -> done
-    Just (commodity, price) ->
-      let done' = M.insert commodity price done
-       in case M.lookup commodity prices of
-            Nothing -> done'
-            Just neighbors ->
-              let neighbors' = (* price) <$> (neighbors `M.difference` done')
-                  todo' = M.delete commodity todo `M.union` neighbors'
-               in normalize' prices done' todo'
+normalize' prices done todo = case M.lookupMin todo of
+  Nothing -> done
+  Just (commodity, price) ->
+    let done' = M.insert commodity price done
+    in  case M.lookup commodity prices of
+          Nothing -> done'
+          Just neighbors ->
+            let neighbors' = (* price) <$> (neighbors `M.difference` done')
+                todo'      = M.delete commodity todo `M.union` neighbors'
+            in  normalize' prices done' todo'
 
-lookupPrice ::
-     (MonadThrow m) => CommodityName -> NormalizedPrices -> m Scientific
-lookupPrice commodityName prices =
-  case M.lookup commodityName prices of
-    Just p -> return $ 1 `sdiv` p
-    _      -> throwM $ NoNormalizedPriceFound prices commodityName
+lookupPrice
+  :: (MonadThrow m) => CommodityName -> NormalizedPrices -> m Scientific
+lookupPrice commodityName prices = case M.lookup commodityName prices of
+  Just p -> return $ 1 `sdiv` p
+  _      -> throwM $ NoNormalizedPriceFound prices commodityName
 
 sdiv :: Scientific -> Scientific -> Scientific
 sdiv x y = fromFloatDigits (toRealFloat x / toRealFloat y :: Double)

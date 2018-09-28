@@ -26,68 +26,64 @@ data ValuationState = ValuationState
   , vsDate                 :: Day
   }
 
-calculateValuation ::
-     MonadThrow m
+calculateValuation
+  :: MonadThrow m
   => AccountsHistory
   -> CommodityName
   -> AccountName
   -> Ledger
   -> m Ledger
-calculateValuation accounts target valuationAccount ledger =
-  evalStateT
-    (Ledger <$> mapM convertTimestep (L.toList ledger))
-    ValuationState
-      { vsPrices = mempty
-      , vsPrevNormalizedPrices = mempty
-      , vsNormalizedPrices = mempty
-      , vsPrevAccounts = mempty
-      , vsAccounts = accounts
-      , vsDate = fromGregorian 1900 1 1
-      , vsTarget = target
-      , vsValuationAccount = valuationAccount
-      }
+calculateValuation accounts target valuationAccount ledger = evalStateT
+  (Ledger <$> mapM convertTimestep (L.toList ledger))
+  ValuationState
+    { vsPrices               = mempty
+    , vsPrevNormalizedPrices = mempty
+    , vsNormalizedPrices     = mempty
+    , vsPrevAccounts         = mempty
+    , vsAccounts             = accounts
+    , vsDate                 = fromGregorian 1900 1 1
+    , vsTarget               = target
+    , vsValuationAccount     = valuationAccount
+    }
 
-convertTimestep ::
-     (MonadThrow m, MonadState ValuationState m) => Timestep -> m Timestep
+convertTimestep
+  :: (MonadThrow m, MonadState ValuationState m) => Timestep -> m Timestep
 convertTimestep timestep@(Timestep day commands) = do
   ValuationState {..} <- get
-  let accounts = M.lookupLEM day vsAccounts
+  let accounts  = M.lookupLEM day vsAccounts
       vsPrices' = updatePrices timestep vsPrices
-  put
-    ValuationState
-      { vsPrices = vsPrices'
-      , vsPrevNormalizedPrices = vsNormalizedPrices
-      , vsNormalizedPrices = normalize vsPrices' vsTarget
-      , vsPrevAccounts = accounts
-      , ..
-      }
+  put ValuationState
+    { vsPrices               = vsPrices'
+    , vsPrevNormalizedPrices = vsNormalizedPrices
+    , vsNormalizedPrices     = normalize vsPrices' vsTarget
+    , vsPrevAccounts         = accounts
+    , ..
+    }
   valuationTransactions <- adjustValuationForAccounts
-  commands' <- concat <$> mapM process commands
+  commands'             <- concat <$> mapM process commands
   return $ Timestep day (commands' ++ valuationTransactions)
 
 process :: (MonadThrow m, MonadState ValuationState m) => Command -> m [Command]
 process (TransactionCommand Transaction {..}) = do
-  ValuationState {vsValuationAccount} <- get
+  ValuationState { vsValuationAccount } <- get
   postings <- M.fromListM <$> mapM convertPosting (M.toList tPostings)
-  t <-
-    mkBalancedTransaction
-      tFlag
-      tDescription
-      tTags
-      postings
-      (Just vsValuationAccount)
+  t        <- mkBalancedTransaction tFlag
+                                    tDescription
+                                    tTags
+                                    postings
+                                    (Just vsValuationAccount)
   return [TransactionCommand t]
 process (BalanceCommand _) = pure []
-process c = pure [c]
+process c                  = pure [c]
 
-convertPosting ::
-     (MonadThrow m, MonadState ValuationState m) => Posting -> m Posting
+convertPosting
+  :: (MonadThrow m, MonadState ValuationState m) => Posting -> m Posting
 convertPosting (k, amounts) = do
   e <- mapM convertAmount $ M.toList amounts
   return (k, M.fromListM e)
 
-convertAmount ::
-     (MonadThrow m, MonadState ValuationState m)
+convertAmount
+  :: (MonadThrow m, MonadState ValuationState m)
   => (CommodityName, Amount)
   -> m (CommodityName, Amount)
 convertAmount a@(commodity, amount) = do
@@ -98,21 +94,21 @@ convertAmount a@(commodity, amount) = do
       price <- gets vsNormalizedPrices >>= lookupPrice commodity
       return (tc, amount * Sum price)
 
-adjustValuationForAccounts ::
-     (MonadThrow m, MonadState ValuationState m) => m [Command]
+adjustValuationForAccounts
+  :: (MonadThrow m, MonadState ValuationState m) => m [Command]
 adjustValuationForAccounts = do
   a <- M.toList <$> gets vsPrevAccounts
   concat <$> sequence (adjustValuationForAccount <$> a)
 
-adjustValuationForAccount ::
-     (MonadThrow m, MonadState ValuationState m)
+adjustValuationForAccount
+  :: (MonadThrow m, MonadState ValuationState m)
   => ((AccountName, CommodityName, Maybe Lot), Amounts)
   -> m [Command]
 adjustValuationForAccount (k, amounts) =
   concat <$> mapM (adjustValuationForAmount k) (M.toList amounts)
 
-adjustValuationForAmount ::
-     (MonadThrow m, MonadState ValuationState m)
+adjustValuationForAmount
+  :: (MonadThrow m, MonadState ValuationState m)
   => (AccountName, CommodityName, Maybe Lot)
   -> (CommodityName, Amount)
   -> m [Command]
@@ -123,17 +119,17 @@ adjustValuationForAmount k@(AccountName t _, _, _) (commodity, amount) = do
     then pure <$> createValuationTransaction k (amount * Sum (v1 - v0))
     else return []
 
-createValuationTransaction ::
-     (MonadState ValuationState m)
+createValuationTransaction
+  :: (MonadState ValuationState m)
   => (AccountName, CommodityName, Maybe Lot)
   -> Amount
   -> m Command
 createValuationTransaction (a, c, l) amount = do
-  ValuationState {vsTarget, vsValuationAccount} <- get
-  return $
-    TransactionCommand $
-    Transaction Complete "valuation" [] $
-    M.fromListM
-      [ ((a, c, l), M.singleton vsTarget amount)
-      , ((vsValuationAccount, c, l), M.singleton vsTarget (-amount))
-      ]
+  ValuationState { vsTarget, vsValuationAccount } <- get
+  return
+    $ TransactionCommand
+    $ Transaction Complete "valuation" []
+    $ M.fromListM
+        [ ((a, c, l)                 , M.singleton vsTarget amount)
+        , ((vsValuationAccount, c, l), M.singleton vsTarget (-amount))
+        ]

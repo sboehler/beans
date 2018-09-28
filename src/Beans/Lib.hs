@@ -18,4 +18,4 @@ run = do
   command <- ask
   case command of
     Balance options -> runReaderT balanceCommand options
-    Import options  -> runReaderT importCommand options
+    Import  options -> runReaderT importCommand options

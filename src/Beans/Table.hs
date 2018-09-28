@@ -29,19 +29,26 @@ center = flip T.center ' '
 
 showTable :: [Column row] -> [row] -> Text
 showTable coldefs rows =
-  let header = colHeader <$> coldefs
-      body = [[colValue coldef row | coldef <- coldefs] | row <- rows]
-      widths =
-        [maximum $ T.length <$> column | column <- transpose $ header : body]
-      separator = T.intercalate " " [T.replicate width "-" | width <- widths]
-      alignColumns align columns =
-        T.intercalate
-          " "
-          (getZipList $
-           align <$> ZipList coldefs <*> ZipList widths <*> ZipList columns)
-   in T.unlines $
-      alignColumns colAlignHeader header :
-      separator : (alignColumns colAlignValue <$> body) <> pure separator
+  let
+    header = colHeader <$> coldefs
+    body   = [ [ colValue coldef row | coldef <- coldefs ] | row <- rows ]
+    widths =
+      [ maximum $ T.length <$> column | column <- transpose $ header : body ]
+    separator = T.intercalate " " [ T.replicate width "-" | width <- widths ]
+    alignColumns align columns = T.intercalate
+      " "
+      (   getZipList
+      $   align
+      <$> ZipList coldefs
+      <*> ZipList widths
+      <*> ZipList columns
+      )
+  in
+    T.unlines
+    $  alignColumns colAlignHeader header
+    :  separator
+    :  (alignColumns colAlignValue <$> body)
+    <> pure separator
 
 
 formatStandard :: Sum Scientific -> Text

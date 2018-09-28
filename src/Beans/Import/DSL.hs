@@ -2,8 +2,7 @@
 
 module Beans.Import.DSL where
 
-import           Beans.Data.Accounts        (Account (..), AccountType,
-                                             Amount)
+import           Beans.Data.Accounts        (Account (..), AccountType, Amount)
 import           Beans.Import.Common        (Entry (..))
 import           Control.Exception          (Exception)
 import           Control.Monad              (msum)
@@ -52,6 +51,7 @@ data E a where
   ENot :: E Bool -> E Bool
   EPlus :: Num a => E a -> E a -> E a
   EMinus :: Num a => E a -> E a -> E a
+  EAbs :: Num a => E a -> E a
   ELT :: (Show a, Ord a) => E a -> E a -> E Bool
   ELE :: (Show a, Ord a) => E a -> E a -> E Bool
   EEQ :: (Show a, Eq a) => E a -> E a -> E Bool
@@ -69,6 +69,7 @@ instance Show a => Show (E a) where
   show EVarDescription = "description"
   show EVarBookingDate = "bookingDate"
   show EVarValueDate   = "valueDate"
+  show (EAbs a)        = "abs(" <> show a <> ")"
   show (EAnd a b)      = "(" <> show a <> " && " <> show b <> ")"
   show (EOr a b)       = "(" <> show a <> " || " <> show b <> ")"
   show (ENot a)        = "!" <> show a
@@ -102,6 +103,7 @@ evalE EVarAmount      = asks eAmount
 evalE EVarDescription = asks eDescription
 evalE EVarBookingDate = asks eBookingDate
 evalE EVarValueDate   = asks eValueDate
+evalE (EAbs a    )    = abs <$> evalE a
 evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
 evalE (EOr  a b  )    = (||) <$> evalE a <*> evalE b
 evalE (ENot a    )    = not <$> evalE a
@@ -224,7 +226,8 @@ amountExpr :: Parser (E Amount)
 amountExpr = makeExprParser amountTerm amountOperators
  where
   amountTerm = parens amountExpr <|> amountLiteral <|> "amount" &> EVarAmount
-  amountOperators = [[InfixL ("+" &> EPlus), InfixL ("-" &> EMinus)]]
+  amountOperators =
+    [[InfixL ("+" &> EPlus), InfixL ("-" &> EMinus), Prefix ("abs" &> EAbs)]]
 
 boolExpr :: Parser (E Bool)
 boolExpr = makeExprParser boolTerm boolOperators

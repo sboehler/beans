@@ -10,6 +10,6 @@ import           Text.Megaparsec     (parse, parseErrorPretty)
 toReadM :: P.Parser a -> ReadM a
 toReadM p = eitherReader $ parse' p "" . T.pack
  where
-   parse' parser input s = case parse parser input s of
-    Left e  -> Left $ parseErrorPretty e
+  parse' parser input s = case parse parser input s of
+    Left  e -> Left $ parseErrorPretty e
     Right d -> Right d

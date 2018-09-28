@@ -66,19 +66,15 @@ instance Show Lot where
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
 balance :: AccountName -> CommodityName -> Accounts -> Amount
-balance accountName commodityName = M.findWithDefaultM commodityName . fold . M.filterWithKey f
-  where
-    f (a, c, _) _ = accountName == a && commodityName == c
+balance accountName commodityName =
+  M.findWithDefaultM commodityName . fold . M.filterWithKey f
+  where f (a, c, _) _ = accountName == a && commodityName == c
 
 summarize :: Int -> Accounts -> Accounts
-summarize d = M.mapKeysM g
-  where
-    g (a, c, l) = (shorten d a, c, l)
+summarize d = M.mapKeysM g where g (a, c, l) = (shorten d a, c, l)
 
 shorten :: Int -> AccountName -> AccountName
 shorten d (AccountName t a) = AccountName t (take d a)
 
 eraseLots :: Accounts -> Accounts
-eraseLots = M.mapKeysM g
-  where
-    g (a, c, _) = (a, c, Nothing)
+eraseLots = M.mapKeysM g where g (a, c, _) = (a, c, Nothing)

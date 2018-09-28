@@ -22,12 +22,12 @@ import           Data.Time.Calendar     (Day)
 import           Data.Time.LocalTime    (getZonedTime, localDay,
                                          zonedTimeToLocalTime)
 
-reportStage ::
-     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+reportStage
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
   => AccountsHistory
   -> m Accounts
 reportStage accountsHistory = do
-  to <- maybe (liftIO getDate) pure =<< asks optTo
+  to   <- maybe (liftIO getDate) pure =<< asks optTo
   from <- asks optFrom
   let a1 = M.lookupLEM to accountsHistory
       a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
@@ -36,18 +36,20 @@ reportStage accountsHistory = do
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime
 
-balanceCommand ::
-     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
+balanceCommand
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
 balanceCommand = do
-  ledger <- parseStage
+  ledger          <- parseStage
   accountsHistory <- accountsStage ledger
-  valuationStage accountsHistory ledger >>= filterStage >>= accountsStage >>=
-    reportStage >>=
-    aggregationStage >>=
-    printStage
+  valuationStage accountsHistory ledger
+    >>= filterStage
+    >>= accountsStage
+    >>= reportStage
+    >>= aggregationStage
+    >>= printStage
 
-parseStage ::
-     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
+parseStage
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
 parseStage = do
   journal <- asks optJournal
   buildLedger <$> parseFile journal
@@ -55,59 +57,51 @@ parseStage = do
 filterStage :: (MonadReader BalanceOptions m) => Ledger -> m Ledger
 filterStage l = do
   filter' <- asks optFilter
-  strict <- asks optStrictFilter
-  return $
-    case filter' of
-      Just regex -> filterLedger strict regex l
-      Nothing    -> l
+  strict  <- asks optStrictFilter
+  return $ case filter' of
+    Just regex -> filterLedger strict regex l
+    Nothing    -> l
 
-valuationStage ::
-     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+valuationStage
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
   => AccountsHistory
   -> Ledger
   -> m Ledger
 valuationStage accountsHistory ledger = do
   target <- asks optMarket
   case target of
-    Just commodity ->
-      calculateValuation
-        accountsHistory
-        commodity
-        (AccountName Equity ["Valuation"])
-        ledger
+    Just commodity -> calculateValuation accountsHistory
+                                         commodity
+                                         (AccountName Equity ["Valuation"])
+                                         ledger
     Nothing -> pure ledger
 
-accountsStage ::
-     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+accountsStage
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
   => Ledger
   -> m AccountsHistory
 accountsStage = calculateAccounts
 
-aggregationStage ::
-     (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+aggregationStage
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
   => Accounts
   -> m Accounts
 aggregationStage accounts = do
   showLots <- asks optLots
-  depth <- asks optDepth
-  let eraseStage =
-        if showLots
-          then id
-          else eraseLots
-  let summarize' =
-        case depth of
-          Just d  -> summarize d
-          Nothing -> id
+  depth    <- asks optDepth
+  let eraseStage = if showLots then id else eraseLots
+  let summarize' = case depth of
+        Just d  -> summarize d
+        Nothing -> id
   return $ (eraseStage . summarize') accounts
 
 printStage :: (MonadReader BalanceOptions m, MonadIO m) => Accounts -> m ()
 printStage accounts = do
   reportType <- asks optReportType
-  let f =
-        case reportType of
-          Hierarchical -> hierarchical
-          Flat         -> flat
+  let f = case reportType of
+        Hierarchical -> hierarchical
+        Flat         -> flat
   (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport f) accounts
-  where
-    hierarchical (AccountName t ns, _, _) = T.pack (show t) : ns
-    flat (a, _, _) = [T.pack $ show a]
+ where
+  hierarchical (AccountName t ns, _, _) = T.pack (show t) : ns
+  flat (a, _, _) = [T.pack $ show a]

@@ -13,9 +13,9 @@ import           Data.Maybe                  (fromMaybe)
 
 importCommand :: (MonadReader ImportOptions m, MonadThrow m, MonadIO m) => m ()
 importCommand = do
-  parse <- getParser
-  entries <- tdEntries <$> (asks optData >>= parse)
-  rules <- asks optConfig >>= parseFile
+  parse          <- getParser
+  entries        <- tdEntries <$> (asks optData >>= parse)
+  rules          <- asks optConfig >>= parseFile
   defaultAccount <- asks optAccount
   let accounts = fromMaybe defaultAccount . evaluate rules <$> entries
   liftIO $ print entries

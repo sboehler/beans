@@ -62,8 +62,12 @@ mapKeysM f (Map m) = Map $ M.mapKeysWith mappend f m
 mapWithKey :: (k -> a -> v) -> Map k a -> Map k v
 mapWithKey f (Map m) = Map $ M.mapWithKey f m
 
-mapEntries :: (Ord k, Ord k', Monoid v, Monoid v') => ((k, v) -> (k', v')) -> Map k v -> Map k' v'
-mapEntries f =  fromListM . fmap f . toList
+mapEntries
+  :: (Ord k, Ord k', Monoid v, Monoid v')
+  => ((k, v) -> (k', v'))
+  -> Map k v
+  -> Map k' v'
+mapEntries f = fromListM . fmap f . toList
 
 filterWithKey :: (k -> v -> Bool) -> Map k v -> Map k v
 filterWithKey f (Map m) = Map $ M.filterWithKey f m
@@ -73,8 +77,7 @@ filter f (Map m) = Map $ M.filter f m
 
 partitionWithKey :: (k -> v -> Bool) -> Map k v -> (Map k v, Map k v)
 partitionWithKey f (Map m) =
-  let (m1, m2) = M.partitionWithKey f m
-   in (Map m1, Map m2)
+  let (m1, m2) = M.partitionWithKey f m in (Map m1, Map m2)
 
 toList :: Map k v -> [(k, v)]
 toList = M.toList . unmap
@@ -106,8 +109,8 @@ singleton k v = Map $ M.singleton k v
 combineM :: (Monoid v, Ord k) => [Map k v] -> Map k [v]
 combineM maps =
   let k = S.toList $ mconcat (M.keysSet . unmap <$> maps)
-      m = [(account, findWithDefaultM account <$> maps) | account <- k]
-   in Map $ M.fromList m
+      m = [ (account, findWithDefaultM account <$> maps) | account <- k ]
+  in  Map $ M.fromList m
 
 foldlWithKey :: (c -> k -> b -> c) -> c -> Map k b -> c
 foldlWithKey f z = M.foldlWithKey f z . unmap

@@ -43,11 +43,11 @@ instance Pretty Transaction where
     cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings)
 
 prettyAccounts :: Accounts -> [Doc a]
-prettyAccounts  = concatMap p . M.toList
-  where
-    p ((a, _, l), v) = fmap g (M.toList v)
-      where
-        g (c, s) = pretty a <+> pretty s <+> pretty c <+> pretty l <+> hardline
+prettyAccounts = concatMap p . M.toList
+ where
+  p ((a, _, l), v) = fmap g (M.toList v)
+   where
+    g (c, s) = pretty a <+> pretty s <+> pretty c <+> pretty l <+> hardline
 
 instance Pretty Flag where
   pretty Complete   = "*"

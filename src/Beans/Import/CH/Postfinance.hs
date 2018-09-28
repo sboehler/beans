@@ -28,39 +28,39 @@ readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m TransactionData
 readCSV f = do
   source <- liftIO $ decodeLatin1 <$> BS.readFile f
   case parse postfinanceData mempty source of
-    Left e  -> (throwM . ImporterException . parseErrorPretty)  e
+    Left  e -> (throwM . ImporterException . parseErrorPretty) e
     Right d -> return d
 
 type Parser = Parsec Void Text
 
 postfinanceData :: Parser TransactionData
 postfinanceData =
-  TransactionData <$> (count 4 ignoreLine >> ignoreField >> currency) <*>
-  (ignoreLine >> some entry) <*
-  (eol >> ignoreLine >> ignoreLine)
+  TransactionData
+    <$> (count 4 ignoreLine >> ignoreField >> currency)
+    <*> (ignoreLine >> some entry)
+    <*  (eol >> ignoreLine >> ignoreLine)
 
 entry :: Parser Entry
 entry = Entry <$> date <*> description <*> entryAmount <*> date <*> balance
 
 entryAmount :: Parser Amount
 entryAmount = field $ credit <|> debit
-  where
-    debit = amount <* separator
-    credit = separator *> amount
+ where
+  debit  = amount <* separator
+  credit = separator *> amount
 
 currency :: Parser CommodityName
 currency = field $ CommodityName . T.pack <$> some alphaNumChar
 
 date :: Parser Day
 date = field $ fromGregorian <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2)
-  where
-    dash = char '-'
-    int n = read <$> count n digitChar
+ where
+  dash = char '-'
+  int n = read <$> count n digitChar
 
 description :: Parser Text
 description = quote >> T.pack <$> manyTill anyChar (quote >> separator)
-  where
-    quote = char '"'
+  where quote = char '"'
 
 amount :: Parser Amount
 amount = Sum <$> L.signed mempty L.scientific
@@ -75,9 +75,7 @@ ignoreField :: Parser ()
 ignoreField = void $ skipManyTill anyChar separator
 
 separator :: Parser ()
-separator = void semicolon <|> void eol
-  where
-    semicolon = char ';'
+separator = void semicolon <|> void eol where semicolon = char ';'
 
 field :: Parser a -> Parser a
 field = L.lexeme separator

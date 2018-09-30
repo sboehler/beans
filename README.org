@@ -1,0 +1,506 @@
+# -*- org-confirm-babel-evaluate: nil -*-
+
+#+STARTUP: content
+#+OPTIONS: toc:nil
+
+* beans - A Plain-Text Accounting Tool
+
+** About beans
+
+beans is a [[https://plaintextaccounting][plain text accounting tool]] in the tradition of [[https://www.ledger-cli.org][ledger]],
+[[https://hledger.org][hledger]] and [[https://furius.ca/beancount/][beancount]]. I am writing it mostly for the fun of it, but I
+have some objectives in mind which distinguish beans from similar
+tools:
+
+- Importing data should be easy :: The greatest pain of plain text
+     accounting is to import financial statements from financial
+     service providers such as banks and credit cards. beans strives
+     to include importers for known formats.
+- Assigning accounts should be easy :: beans provides a
+     domain-specific language (DSL) to specify rules for assigning
+     accounts based on transaction features such as amount,
+     description or dates.
+- Proper multi-commodity and valuation :: beans wants to make it
+     simple to do both at-cost and at-market valuations of your
+     assets, while maintaining correctness of the balance. Instead of
+     converting aggregated account data and adding valuation as an
+     afterthought, beans applies valuation directly at the transaction
+     level. For example, if you choose to display a balance at market
+     prices, beans will transparently insert valuation transactions to
+     reflect gains and losses due to price changes.
+- Simple and elegant implementation :: beans is written in [[https://haskell-lang.org/][Haskell]], an
+     excellent language for concise and beautiful code. Also, while
+     beans adopts concepts from other tools, compatiblity is not an
+     objective.
+
+#+TOC: headlines 3
+
+** Getting beans
+
+For the moment, you have to build from source as I do not distribute any binaries. Make sure you have git installed and run:
+
+#+BEGIN_EXAMPLE sh
+  git clone https://github.com/sboehler/beans.git
+#+END_EXAMPLE
+
+
+** Installing beans
+
+*** Using Stack
+
+/(Probably the easiest option on most platforms)/
+
+First, follow the instructions [[https://docs.haskellstack.org/en/stable/README/][here]] to install stack for your
+platform. Then:
+
+#+BEGIN_SRC sh
+  cd beans
+  stack install
+#+END_SRC
+
+This will install the beans binary in ~$HOME/.local/bin/beans~. Add this
+directory to your path and you're good to go:
+
+#+BEGIN_EXAMPLE sh
+  export PATH=~/.local/bin:$PATH
+#+END_EXAMPLE
+
+Let me know if you encounter problems using stack, I do not use it much myself.
+
+*** Using Nix
+
+Make sure you have the [[https://nixos.org/nix/][nix package manager]] installed for your
+platform. Then:
+
+#+BEGIN_EXAMPLE sh
+  cd beans
+  nix-build release.nix
+#+END_EXAMPLE
+
+The beans binary will be made available locally in ~./result/bin/beans~
+and can be run from there.
+
+*** Using Cabal
+
+If you intend to develop beans or run the test suite. Make sure cabal
+and hpack are installed:
+
+#+BEGIN_EXAMPLE sh
+  cd beans
+  cabal configure --enable-tests
+  cabal build
+#+END_EXAMPLE
+
+The beans binary will be made available in ./dist/build/beans/beans
+and can be run from there.
+
+
+** Working with beans
+
+This is what you see when you call beans:
+
+#+NAME: beans-help
+#+BEGIN_SRC sh :exports both :results output
+  beans --help
+#+END_SRC
+
+#+RESULTS: beans-help
+#+begin_example
+beans
+
+Usage: beans COMMAND
+  A plain text accounting tool
+
+Available options:
+  -h,--help                Show this help text
+
+Available commands:
+  balance                  Print a balance sheet
+  import                   Import data
+#+end_example
+
+Use ~beans balance --help~ to get further help on available options.
+
+*** Importing data
+
+beans offers assistance both with importing bank account statements,
+the most tiring process in plain text accounting.
+
+In a first step, bank account statements need to be parsed. The
+following is what a statement from my bank might look like. Kind of a
+CSV format, but then not really.
+
+#+BEGIN_SRC sh :exports both :results output
+# those files are ISO-8859-15 encoded, we need to convert them:
+iconv -f ISO-8859-15 -t UTF-8 examples/postfinance.csv
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Datum von:;2017-05-23
+Buchungsart:;Alle Buchungen
+Konto:;CHXXXXXXXXXXXXXXXXXXX
+Währung:;CHF
+Buchungsdatum;Avisierungstext;Gutschrift;Lastschrift;Valuta;Saldo
+2017-06-01;"Acme Corp Three Monkeys";;-135.00;2017-06-01;
+2017-05-31;"FOOBAR COMMUNICATIONS INC";;-52.60;2017-05-31;
+2017-05-29;"Transfer 01-45-06 Bigbank";;-1040.00;2017-05-29;36096.54
+2017-05-26;"Cleaning XERDS";;-300.00;2017-05-24;37136.54
+2017-05-26;"Supermarket BarBaz";;-115.20;2017-05-26;
+2017-05-26;"Bank 2000";;-250.00;2017-05-26;
+2017-05-26;"Tire Car Sales";;-95.85;2017-05-26;
+
+Disclaimer:
+Dies ist kein durch PostFinance AG erstelltes Dokument. PostFinance AG ist nicht verantwortlich für den Inhalt.
+#+end_example
+
+As formats might vary wildly across institutions, a custom parser is
+needed. In the current version, only a 'postfinance' parser is
+available (written using [[http://hackage.haskell.org/package/megaparsec][Megaparsec)]], but hopefully we will have more in
+the future, so that manual transaction entry is limited.
+
+The first importing stage will create an internal representation of
+the transaction data:
+
+#+BEGIN_SRC haskell
+  data Entry = Entry
+    { eBookingDate :: Day
+    , eDescription :: Text
+    , eAmount      :: Amount
+    , eCommodity   :: Commodity
+    , eValueDate   :: Day
+    , eBalance     :: Maybe Amount
+    } deriving (Eq, Show)
+#+END_SRC
+
+The second step is equally tiring, even when transactions are
+autogenerated: assigning accounts to transactions. However, it is
+conceptually simple to automate. beans offers a very simple
+domain-specific language (DSL) to write rules for importing. It looks
+as follows:
+
+#+BEGIN_SRC sh :exports both :results output
+cat ./examples/postfinance.rules
+#+END_SRC
+
+#+RESULTS:
+: (description =~ "Acme") -> Expenses:Groceries;
+: (description =~ "FOOBAR") -> Expenses:MobilePhone;
+: (description =~ "(Bigbank|Bank 2000)") -> Assets:Investments;
+: (description =~ "XERDS") -> Expenses:Cleaning;
+: (description =~ "Supermarket") -> Expenses:Groceries;
+: (description =~ "Car Sales" and abs amount < 1000) -> Expenses:Car;
+: (description =~ "Car Sales" and abs amount >= 1000) -> Assets:Car;
+: (true) -> Expenses:ToBeEditedManually;
+
+
+All the fields from the Entry structure are available, as well as
+boolean ("not", "and", "or"), arithmetic ("+", "-", "abs") and string
+(most useful: the regex match (=~) operator) expressions. A rule
+should be wrapped in parentheses and, when matched, returns the
+account specified on the right hand side of the arrow (->). The rules
+file should be concluded with a catch-all, which can yield a TODO
+account for later manual editing. Rules files are independent of
+importers, thus one file can be used for various sources.
+
+Having both a parser and a rules file, converting the bank account
+statement to transactions is a simple command:
+
+#+NAME: beans-import
+#+BEGIN_SRC sh :exports both :results output
+beans import -i postfinance examples/postfinance.rules -a Assets:Checking examples/postfinance.csv
+#+END_SRC
+
+~import~ outputs a simple list of transactions to stdout, in a format
+parseable by beans and with correct accounts assigned. It is up to the
+user to pipe them into a journal or a temporary file for further,
+manual editing.
+
+#+RESULTS: beans-import
+#+begin_example
+2017-06-01 * "Acme Corp Three Monkeys"
+  Assets:Checking -135.0 CHF
+  Expenses:Groceries 135.0 CHF
+
+2017-05-31 * "FOOBAR COMMUNICATIONS INC"
+  Assets:Checking -52.6 CHF
+  Expenses:MobilePhone 52.6 CHF
+
+2017-05-29 * "Transfer 01-45-06 Bigbank"
+  Assets:Checking -1040.0 CHF
+  Assets:Investments 1040.0 CHF
+
+2017-05-26 * "Cleaning XERDS"
+  Assets:Checking -300.0 CHF
+  Expenses:Cleaning 300.0 CHF
+
+2017-05-26 * "Supermarket BarBaz"
+  Assets:Checking -115.2 CHF
+  Expenses:Groceries 115.2 CHF
+
+2017-05-26 * "Bank 2000"
+  Assets:Checking -250.0 CHF
+  Assets:Investments 250.0 CHF
+
+2017-05-26 * "Tire Car Sales"
+  Assets:Checking -95.85 CHF
+  Expenses:Car 95.85 CHF
+
+#+end_example
+
+The importing functionality of beans can of course also be used if you
+use another plain-text accounting tool. beancount's syntax is largely
+compatible with beans.
+
+*** Creating a journal
+
+Every balancing command in beans is based on a journal. beans journals
+uses a format largely similar to beancount:
+
+#+INCLUDE: "examples/example1.bean" example
+
+I am using Emacs with org-mode to manage my journal in one large file,
+however there is an ~include~ directive as well which allows for
+splitting a journal in different files.
+
+Some remarks:
+- Accounts must be opened (and closed, if so desired) explicitly. They
+  can be open for all commodities (default) or restricted to a list of
+  them
+- Account names must start with "Assets", "Liabilities", "Equity",
+  "Expenses" or "Income", depending on their type.
+- Transactions need not be ordered, beans automatically orders them by
+  date.
+- Transactions with only one commodity can have a 'wildcard' booking,
+  which is automatically assigned the total of the other bookings
+  (this is the same as in other plain-text accounting tools)
+- However, transactions with several commodities (e.g. the stock trade
+  in the example above) must not have wildcard bookings. The reason is
+  that beans cannot decide on a useful way to balance different
+  commodities. Depending on whether one wants to convert commodities
+  at cost or at market value, beans will add balancing accounts
+  automatically.
+
+*** Balancing accounts
+
+The simplest command is
+
+#+NAME: beans-balance
+#+BEGIN_SRC sh :exports both :results output
+  beans balance examples/example1.bean
+#+END_SRC
+
+This outputs a balance for all accounts without any currency conversions.
+
+#+RESULTS: beans-balance
+#+begin_example
+Account            Amount    Commodity
+------------------ --------- ----------
+                      100.00 SomeStock
+                    -1015.00 USD
+  Assets              100.00 SomeStock
+                    20985.00 USD
+    Checking        20985.00 USD
+    Portfolio         100.00 SomeStock
+  Equity           -10000.00 USD
+    OpeningBalance -10000.00 USD
+  Income           -12000.00 USD
+    Salary         -12000.00 USD
+------------------ --------- ----------
+
+#+end_example
+
+There are some formatting options available:
+
+#+NAME: beans-balance-with-options
+#+BEGIN_SRC sh :exports both :results output
+  beans balance examples/example1.bean --report-type flat --depth 0
+#+END_SRC
+
+#+RESULTS: beans-balance-with-options
+#+begin_example
+Account  Amount    Commodity
+-------- --------- ----------
+            100.00 SomeStock
+          -1015.00 USD
+  Assets    100.00 SomeStock
+          20985.00 USD
+  Equity -10000.00 USD
+  Income -12000.00 USD
+-------- --------- ----------
+
+#+end_example
+
+But how much is this worth in USD?
+
+#+NAME: beans-balance-market1
+#+BEGIN_SRC sh :exports both :results output
+  beans balance examples/example1.bean -c USD
+#+END_SRC
+
+#+RESULTS: beans-balance-market1
+#+begin_example
+Account            Amount    Commodity
+------------------ --------- ---------
+                        0.00 USD
+  Assets            22985.00 USD
+    Checking        20985.00 USD
+    Portfolio        2000.00 USD
+  Equity           -10985.00 USD
+    OpeningBalance -10000.00 USD
+    Valuation        -985.00 USD
+  Income           -12000.00 USD
+    Salary         -12000.00 USD
+------------------ --------- ---------
+
+#+end_example
+
+How about CHF?
+
+#+NAME: beans-balance-market-2
+#+BEGIN_SRC sh :exports both :results output
+  beans balance examples/example1.bean -c CHF
+#+END_SRC
+
+#+RESULTS: beans-balance-market-2
+#+begin_example
+Account            Amount    Commodity
+------------------ --------- ---------
+                        0.00 CHF
+  Assets            45970.00 CHF
+    Checking        41970.00 CHF
+    Portfolio        4000.00 CHF
+  Equity           -29970.00 CHF
+    OpeningBalance -10000.00 CHF
+    Valuation      -19970.00 CHF
+  Income           -16000.00 CHF
+    Salary         -16000.00 CHF
+------------------ --------- ---------
+
+#+end_example
+
+In CHF, we gained a lot of money due to valuation, as the USD's value
+in CHF doubled in the period (this is a contrived example...). Note
+that the salary ist recorded correctly at the prices which prevailed
+when it was earned. The value of the asset account is adjusted to
+reflected todays prices, while the Equity:Valuation account makes the
+difference explicit.
+
+beans derives arbitrary commodity conversions between all commodities,
+as long as there is at least one path (possibly over several links)
+from one commodity to another. For example, conversion from SomeStock
+in CHF is possible when prices of SomeStock in USD and CHF in USD is
+available. Inverted rates are derived automatically.
+
+How did our portfolio perform in February, in USD?
+
+#+NAME: beans-balance-market-3
+#+BEGIN_SRC sh :exports both :results output
+  beans balance examples/example1.bean -c USD -f Portfolio --from 2018-02-01 --to 2018-02-28
+#+END_SRC
+
+Note that when you specify the ~--from~ parameter, only transactions
+on or after that date will be considered. The resulting balance
+essentially shows the difference between the ~--from~ and ~--to~ dates
+(the default for the latter being today).
+
+#+RESULTS: beans-balance-market-3
+: Account       Amount  Commodity
+: ------------- ------- ---------
+:                  0.00 USD
+:   Assets       500.00 USD
+:     Portfolio  500.00 USD
+:   Equity      -500.00 USD
+:     Valuation -500.00 USD
+: ------------- ------- ---------
+:
+
+The portfolio gained 500 USD due to market price changes - the balance
+is booked in the Valuation account.
+
+At the moment, beans offers either no valuation or valuation at market
+prices. Valuation at cost is yet to be implemented.
+
+*** Transaction-level valuation
+
+beans applies valuation at the level of transactions, which seems
+unique amongst plain-text accounting tools. In the examples above, if
+a conversion to a common commodity is desired, beans will:
+
+- convert all bookings over the entire ledger to that commodity at
+  market value (given by the transitive & reflexive closure of price
+  directives at the transaction date),
+
+- insert valuation bookings for the accumulated positions of all asset
+  and liability accounts whenever prices change. These adjustment are
+  balanced against an Equity:Valuation account, which is hard-coded
+  for the moment.
+
+Every difference in value of an account over a period is explicitly
+modeled by corresponding valuation transactions. This greatly
+facilitates introspection and analysis, as every unit of the valuation
+commodity can be accounted for explicitly.
+
+** Developing beans
+
+Development is very much in progress and beans is not really stable
+yet. It seems though that the basic pipeline (importing -
+categorizing - balancing) is there, and I am using it to balance my
+own journal. beans development is at the moment entirely driven by my
+own needs. It has also been a playground for experiments and lots of
+refactoring for fun with Haskell.
+
+Use beans at your own risk - at the moment, it is certainly
+advantageous if you know some Haskell.
+
+*** Roadmap
+
+beans still has long way to go. I do this in my spare time and I do
+not have an explicit road map, but here are some ideas I'd like to be
+working on in the future:
+
+**** Shorter term
+- new command to print and filter the ledger (as-is or at market value)
+- multi-period reports (yearly, monthly, weekly, daily, ...)
+- colored output
+- friendlier command line
+- accounting at cost
+- more importers (I'll do those that I need personally, but I am happy
+  to receive contributions if they are provided with a sample file /
+  test)
+
+**** Longer term
+- general reporting infrastructure
+- more reports (income statement, cash flow statement)
+- plotting / graphs
+- portfolio performance calculation
+- export to other tools (beancount / hledger / ledger)
+- more UI options (web, terminal)
+
+*** Compatibility
+
+beans journals are in syntax and semantics largely similar to
+beancount journals. However, due to some differences in semantics
+(e.g. the treatment of mult-commodity transactions), there is no
+guarantee that a beans journal works in beancount. Furthermore, I do
+not want beans to be bound by restrictions and conventions other tools
+might impose.
+
+The best solution to facilitate use of multiple tools at some point
+would be an export commmand (like beancount provides), which
+translates the ledger into other formats.
+
+*** Dev setup
+
+I am using Emacs with the excellent [[https://github.com/jyp/dante][Dante]] mode under [[https://nixos.org/][Nixo]]s. Let me
+know your experience with building beans on other setups.
+
+*** Adding an importer
+
+See the example [[../src/Beans/Import/CH/Postfinance][here]]. The directory should match the country of the
+bank. Make a pull request if you want to have it included in beans
+(preferrably with a test case and an anonymized sample file).
+
+** License
+
+BSD-3

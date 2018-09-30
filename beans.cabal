@@ -1,0 +1,117 @@
+-- This file has been generated from package.yaml by hpack version 0.21.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 79f3ed370307a0482338799329b36cba22d5406e606d299891fb4fd8172f5a45
+
+name:           beans
+version:        0.1.0.0
+synopsis:       A plain text accounting tool
+description:    Please see the README on Github at <https://github.com/sboehler/beans#readme>
+category:       Finance
+homepage:       https://github.com/sboehler/beans#readme
+bug-reports:    https://github.com/sboehler/beans/issues
+author:         Silvio Böhler
+maintainer:     sboehler@gmail.com
+copyright:      2017 Silvio Böhler
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    ChangeLog.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/sboehler/beans
+
+library
+  exposed-modules:
+      Beans.Accounts
+      Beans.Balance
+      Beans.CLI.Balance
+      Beans.CLI.Common
+      Beans.CLI.Import
+      Beans.Data.Accounts
+      Beans.Data.Directives
+      Beans.Data.Map
+      Beans.Data.Restrictions
+      Beans.Format
+      Beans.Import
+      Beans.Import.CH.Postfinance
+      Beans.Import.Common
+      Beans.Import.DSL
+      Beans.Ledger
+      Beans.Lib
+      Beans.Options
+      Beans.Parser
+      Beans.Pretty
+      Beans.Prices
+      Beans.Table
+      Beans.Valuation
+  other-modules:
+      Paths_beans
+  hs-source-dirs:
+      src
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -fwarn-incomplete-record-updates
+  build-depends:
+      base >=4.7 && <5
+    , bifunctors
+    , bytestring
+    , containers
+    , exceptions
+    , filepath
+    , groups
+    , megaparsec
+    , mtl
+    , optparse-applicative
+    , prettyprinter
+    , regex-pcre
+    , scientific
+    , text
+    , time
+  default-language: Haskell2010
+
+executable beans
+  main-is: Main.hs
+  other-modules:
+      Paths_beans
+  hs-source-dirs:
+      app
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , beans
+    , optparse-applicative
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  other-modules:
+      Beans.Import.DSL.Tests
+      Paths_beans
+  hs-source-dirs:
+      tests
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -fwarn-incomplete-record-updates
+  build-depends:
+      base >=4.7 && <5
+    , beans
+    , bytestring
+    , filepath
+    , megaparsec
+    , mtl
+    , regex-pcre
+    , tasty
+    , tasty-golden
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
+    , text
+    , time
+  default-language: Haskell2010

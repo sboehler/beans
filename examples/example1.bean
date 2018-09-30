@@ -14,22 +14,40 @@ option "operating_currency" "USD"
 ** Accounts
 
 2018-01-01 open Equity:Valuation
+2018-01-01 open Equity:OpeningBalance
 2018-01-01 open Income:Salary USD
-2018-01-01 open Assets:Accounts:Checking USD
+2018-01-01 open Assets:Checking USD
 2018-01-01 open Assets:Portfolio SomeStock
 
 ** Some Transactions
 
+*** Initial balances
+
+2018-01-01 * "Opening balance"
+  Assets:Checking 10000 USD
+  Equity:OpeningBalance
+
+*** Money inflows
+
 2018-01-25 * "Salary January 2018"
-  Assets:Accounts:Checking 4000 USD
+  Assets:Checking 4000 USD
   Income:Salary
 
 2018-02-25 * "Salary February 2018"
-  Assets:Accounts:Checking 4000 USD
+  Assets:Checking 4000 USD
   Income:Salary
 
 2018-03-25 * "Salary March 2018"
-  Assets:Accounts:Checking 4000 USD
+  Assets:Checking 4000 USD
   Income:Salary
 
-2018-03-26 balance Assets:Accounts:Checking 12000 USD
+*** Investments
+
+; we're purchasing slightly over market value
+2018-01-10 * "Investing in stock"
+  Assets:Portfolio +100 SomeStock
+  Assets:Checking -1015 USD
+
+
+2018-04-01 balance Assets:Checking 20985 USD
+2018-04-01 balance Assets:Portfolio 100 SomeStock

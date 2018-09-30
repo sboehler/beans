@@ -21,7 +21,7 @@ parserConfig =
   info
     (helper <*> cmd)
     (fullDesc <> progDesc "A plain text accounting tool" <>
-     header "Beans")
+     header "beans")
 
 main :: IO ()
 main = execParser parserConfig >>= runBeans

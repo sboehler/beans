@@ -22,7 +22,7 @@ importer :: Parser Importer
 importer =
   option
     parseImporter
-    (metavar "<importer>" <> short 'i' <> help "The importer to use")
+    (metavar "<importer>" <> short 'i' <> help "Currently: only postfinance")
   where
     parseImporter =
       eitherReader $ \case

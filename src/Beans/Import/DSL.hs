@@ -13,7 +13,7 @@ import           Data.Bool                  (bool)
 import           Data.Char                  (isAlphaNum)
 import           Data.Functor.Identity      (runIdentity)
 import           Data.Monoid                (Sum (Sum), (<>))
-import           Data.Text                  (Text, cons, unpack)
+import           Data.Text                  (Text, cons, pack, unpack)
 import           Data.Text.IO               (readFile)
 import           Data.Time.Calendar         (Day, fromGregorian)
 import           Data.Void                  (Void)
@@ -42,6 +42,7 @@ data E a where
   EVarDescription :: E Text
   EVarBookingDate :: E Day
   EVarValueDate :: E Day
+  EVarImporter :: E Text
   EDate :: Day -> E Day
   EAmount :: Amount -> E Amount
   EText :: Text -> E Text
@@ -69,6 +70,7 @@ instance Show a => Show (E a) where
   show EVarDescription = "description"
   show EVarBookingDate = "bookingDate"
   show EVarValueDate   = "valueDate"
+  show EVarImporter    = "importer"
   show (EAbs a)        = "abs(" <> show a <> ")"
   show (EAnd a b)      = "(" <> show a <> " && " <> show b <> ")"
   show (EOr a b)       = "(" <> show a <> " || " <> show b <> ")"
@@ -103,6 +105,7 @@ evalE EVarAmount      = asks eAmount
 evalE EVarDescription = asks eDescription
 evalE EVarBookingDate = asks eBookingDate
 evalE EVarValueDate   = asks eValueDate
+evalE EVarImporter    = pack . show <$> asks eImporter
 evalE (EAbs a    )    = abs <$> evalE a
 evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
 evalE (EOr  a b  )    = (||) <$> evalE a <*> evalE b

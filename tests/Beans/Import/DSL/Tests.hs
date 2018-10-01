@@ -76,6 +76,7 @@ evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
                 (-100)
                 (Commodity "CHF")
                 (fromGregorian 2018 1 1)
+                "zz.bigbank"
                 (Just 500)
   account1 = Account Expenses ["Shopping"]
   account2 = Account Assets ["Bankaccount"]

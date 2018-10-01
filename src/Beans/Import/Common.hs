@@ -21,5 +21,6 @@ data Entry = Entry
   , eAmount      :: Amount
   , eCommodity   :: Commodity
   , eValueDate   :: Day
+  , eImporter    :: Text
   , eBalance     :: Maybe Amount
   } deriving (Eq, Show)

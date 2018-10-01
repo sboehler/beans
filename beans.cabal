@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d9f0c7617647b59a747886b11a8edaa5e7cc527265e45530db115e643908c73c
+-- hash: aaa48efe9c01772ff5c31e25e962a38aa0147578374be0e7ad962442d5c81f74
 
 name:           beans
 version:        0.1.0.0
@@ -93,6 +93,7 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: test.hs
   other-modules:
+      Beans.Import.CH.Postfinance.Tests
       Beans.Import.DSL.Tests
       Paths_beans
   hs-source-dirs:
@@ -106,6 +107,7 @@ test-suite test
     , filepath
     , megaparsec
     , mtl
+    , pretty-simple
     , regex-pcre
     , tasty
     , tasty-golden

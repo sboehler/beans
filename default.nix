@@ -1,8 +1,8 @@
 { mkDerivation, base, bifunctors, bytestring, containers
 , exceptions, filepath, groups, megaparsec, mtl
-, optparse-applicative, prettyprinter, regex-pcre, scientific
-, stdenv, tasty, tasty-golden, tasty-hunit, tasty-quickcheck
-, tasty-smallcheck, text, time
+, optparse-applicative, pretty-simple, prettyprinter, regex-pcre
+, scientific, stdenv, tasty, tasty-golden, tasty-hunit
+, tasty-quickcheck, tasty-smallcheck, text, time
 }:
 mkDerivation {
   pname = "beans";
@@ -12,13 +12,14 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     base bifunctors bytestring containers exceptions filepath groups
-    megaparsec mtl optparse-applicative prettyprinter regex-pcre
-    scientific text time
+    megaparsec mtl optparse-applicative pretty-simple prettyprinter
+    regex-pcre scientific text time
   ];
   executableHaskellDepends = [ base optparse-applicative ];
   testHaskellDepends = [
-    base bytestring megaparsec tasty tasty-golden tasty-hunit
-    tasty-quickcheck tasty-smallcheck
+    base bytestring filepath megaparsec mtl regex-pcre tasty
+    tasty-golden tasty-hunit tasty-quickcheck tasty-smallcheck text
+    time
   ];
   homepage = "https://github.com/sboehler/beans#readme";
   description = "A plain text accounting tool";

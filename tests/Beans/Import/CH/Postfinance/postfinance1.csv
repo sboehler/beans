@@ -1,0 +1,15 @@
+Datum von:;2017-05-23
+Buchungsart:;Alle Buchungen
+Konto:;CHXXXXXXXXXXXXXXXXXXX
+Währung:;CHF
+Buchungsdatum;Avisierungstext;Gutschrift;Lastschrift;Valuta;Saldo
+2017-06-01;"Acme Corp Three Monkeys";;-135.00;2017-06-01;
+2017-05-31;"FOOBAR COMMUNICATIONS INC";;-52.60;2017-05-31;
+2017-05-29;"Transfer 01-45-06 Bigbank";;-1040.00;2017-05-29;36096.54
+2017-05-26;"Cleaning XERDS";;-300.00;2017-05-24;37136.54
+2017-05-26;"Supermarket BarBaz";;-115.20;2017-05-26;
+2017-05-26;"Bank 2000";;-250.00;2017-05-26;
+2017-05-26;"Tire Car Sales";;-95.85;2017-05-26;
+
+Disclaimer:
+Dies ist kein durch PostFinance AG erstelltes Dokument. PostFinance AG ist nicht verantwortlich für den Inhalt.

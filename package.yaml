@@ -85,6 +85,7 @@ tests:
       - tasty-hunit
       - tasty-golden
       - text
+      - pretty-simple
       - megaparsec
       - mtl
       - time

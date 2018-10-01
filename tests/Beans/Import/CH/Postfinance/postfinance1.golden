@@ -1,0 +1,7 @@
+Entry {eBookingDate = 2017-06-01, eDescription = "Acme Corp Three Monkeys", eAmount = Sum {getSum = -135.0}, eCommodity = CHF, eValueDate = 2017-06-01, eImporter = "ch.postfinance", eBalance = Nothing}
+Entry {eBookingDate = 2017-05-31, eDescription = "FOOBAR COMMUNICATIONS INC", eAmount = Sum {getSum = -52.6}, eCommodity = CHF, eValueDate = 2017-05-31, eImporter = "ch.postfinance", eBalance = Nothing}
+Entry {eBookingDate = 2017-05-29, eDescription = "Transfer 01-45-06 Bigbank", eAmount = Sum {getSum = -1040.0}, eCommodity = CHF, eValueDate = 2017-05-29, eImporter = "ch.postfinance", eBalance = Just (Sum {getSum = 36096.54})}
+Entry {eBookingDate = 2017-05-26, eDescription = "Cleaning XERDS", eAmount = Sum {getSum = -300.0}, eCommodity = CHF, eValueDate = 2017-05-24, eImporter = "ch.postfinance", eBalance = Just (Sum {getSum = 37136.54})}
+Entry {eBookingDate = 2017-05-26, eDescription = "Supermarket BarBaz", eAmount = Sum {getSum = -115.2}, eCommodity = CHF, eValueDate = 2017-05-26, eImporter = "ch.postfinance", eBalance = Nothing}
+Entry {eBookingDate = 2017-05-26, eDescription = "Bank 2000", eAmount = Sum {getSum = -250.0}, eCommodity = CHF, eValueDate = 2017-05-26, eImporter = "ch.postfinance", eBalance = Nothing}
+Entry {eBookingDate = 2017-05-26, eDescription = "Tire Car Sales", eAmount = Sum {getSum = -95.85}, eCommodity = CHF, eValueDate = 2017-05-26, eImporter = "ch.postfinance", eBalance = Nothing}

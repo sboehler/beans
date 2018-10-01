@@ -315,7 +315,7 @@ Account            Amount    Commodity
 There are some formatting options available:
 
 #+NAME: beans-balance-with-options
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
   beans balance examples/example1.bean --report-type flat --depth 0
 #+END_SRC
 
@@ -333,10 +333,11 @@ Account  Amount    Commodity
 
 #+end_example
 
+
 But how much is this worth in USD?
 
 #+NAME: beans-balance-market1
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
   beans balance examples/example1.bean -c USD
 #+END_SRC
 
@@ -360,7 +361,7 @@ Account            Amount    Commodity
 How about CHF?
 
 #+NAME: beans-balance-market-2
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
   beans balance examples/example1.bean -c CHF
 #+END_SRC
 
@@ -397,7 +398,7 @@ available. Inverted rates are derived automatically.
 How did our portfolio perform in February, in USD?
 
 #+NAME: beans-balance-market-3
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
   beans balance examples/example1.bean -c USD -f Portfolio --from 2018-02-01 --to 2018-02-28
 #+END_SRC
 

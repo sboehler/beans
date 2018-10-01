@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 79f3ed370307a0482338799329b36cba22d5406e606d299891fb4fd8172f5a45
+-- hash: d9f0c7617647b59a747886b11a8edaa5e7cc527265e45530db115e643908c73c
 
 name:           beans
 version:        0.1.0.0
@@ -21,7 +21,7 @@ cabal-version:  >= 1.10
 
 extra-source-files:
     ChangeLog.md
-    README.md
+    README.org
 
 source-repository head
   type: git
@@ -65,7 +65,7 @@ library
     , exceptions
     , filepath
     , groups
-    , megaparsec
+    , megaparsec ==6.*
     , mtl
     , optparse-applicative
     , prettyprinter

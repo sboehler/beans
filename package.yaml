@@ -7,7 +7,7 @@ maintainer:          sboehler@gmail.com
 copyright:           2017 Silvio Böhler
 
 extra-source-files:
-- README.md
+- README.org
 - ChangeLog.md
 
 synopsis:            A plain text accounting tool
@@ -59,7 +59,7 @@ library:
   - exceptions
   - filepath
   - groups
-  - megaparsec
+  - megaparsec == 6.*
   - mtl
   - optparse-applicative
   - prettyprinter

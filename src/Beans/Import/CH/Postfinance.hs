@@ -1,5 +1,5 @@
 module Beans.Import.CH.Postfinance
-  ( readCSV
+  ( parseEntries, name
   ) where
 
 import           Beans.Data.Accounts        (Amount, Commodity (Commodity))
@@ -22,8 +22,12 @@ import           Text.Megaparsec.Char       (alphaNumChar, anyChar, char,
                                              digitChar, eol)
 import qualified Text.Megaparsec.Char.Lexer as L
 
-readCSV :: (MonadIO m, MonadThrow m) => FilePath -> m [Entry]
-readCSV f = do
+
+name :: Text
+name = "ch.postfinance" :: Text
+
+parseEntries :: (MonadIO m, MonadThrow m) => FilePath -> m [Entry]
+parseEntries f = do
   source <- liftIO $ decodeLatin1 <$> BS.readFile f
   case parse postfinanceData mempty source of
     Left  e -> (throwM . ImporterException . parseErrorPretty) e
@@ -46,6 +50,7 @@ entry commodity =
     <*> entryAmount
     <*> pure commodity
     <*> date
+    <*> pure name
     <*> balance
 
 entryAmount :: Parser Amount

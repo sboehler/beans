@@ -2,6 +2,7 @@
 
 #+STARTUP: content
 #+OPTIONS: toc:nil
+#+PROPERTY: header-args :var FOO="dist/build/beans/beans"
 
 * beans - A Plain-Text Accounting Tool
 
@@ -100,7 +101,7 @@ and can be run from there.
 This is what you see when you call beans:
 
 #+NAME: beans-help
-#+BEGIN_SRC sh :exports both :results output
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
   beans --help
 #+END_SRC
 
@@ -207,8 +208,8 @@ Having both a parser and a rules file, converting the bank account
 statement to transactions is a simple command:
 
 #+NAME: beans-import
-#+BEGIN_SRC sh :exports both :results output
-beans import -i postfinance examples/postfinance.rules -a Assets:Checking examples/postfinance.csv
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+  beans import -i ch.postfinance examples/postfinance.rules -a Assets:Checking examples/postfinance.csv
 #+END_SRC
 
 ~import~ outputs a simple list of transactions to stdout, in a format
@@ -286,7 +287,7 @@ Some remarks:
 The simplest command is
 
 #+NAME: beans-balance
-#+BEGIN_SRC sh :exports both :results output
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
   beans balance examples/example1.bean
 #+END_SRC
 
@@ -313,7 +314,7 @@ Account            Amount    Commodity
 There are some formatting options available:
 
 #+NAME: beans-balance-with-options
-#+BEGIN_SRC sh :exports both :results output
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
   beans balance examples/example1.bean --report-type flat --depth 0
 #+END_SRC
 
@@ -334,7 +335,7 @@ Account  Amount    Commodity
 But how much is this worth in USD?
 
 #+NAME: beans-balance-market1
-#+BEGIN_SRC sh :exports both :results output
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
   beans balance examples/example1.bean -c USD
 #+END_SRC
 
@@ -358,7 +359,7 @@ Account            Amount    Commodity
 How about CHF?
 
 #+NAME: beans-balance-market-2
-#+BEGIN_SRC sh :exports both :results output
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
   beans balance examples/example1.bean -c CHF
 #+END_SRC
 
@@ -395,7 +396,7 @@ available. Inverted rates are derived automatically.
 How did our portfolio perform in February, in USD?
 
 #+NAME: beans-balance-market-3
-#+BEGIN_SRC sh :exports both :results output
+#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
   beans balance examples/example1.bean -c USD -f Portfolio --from 2018-02-01 --to 2018-02-28
 #+END_SRC
 

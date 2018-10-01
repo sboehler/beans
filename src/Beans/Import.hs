@@ -9,16 +9,18 @@ import qualified Beans.Data.Map              as M
 import qualified Beans.Import.CH.Postfinance
 import           Beans.Import.Common         (Entry (..))
 import           Beans.Import.DSL            (Rule, evaluate, parseFile)
-import           Beans.Options               (ImportOptions (..), Importer (..))
+import           Beans.Options               (ImportOptions (..))
 import           Beans.Pretty                ()
 import           Control.Applicative         (ZipList (ZipList), getZipList)
 import           Control.Exception           (Exception)
 import           Control.Monad.Catch         (MonadThrow, throwM)
 import           Control.Monad.IO.Class      (MonadIO, liftIO)
 import           Control.Monad.Reader        (MonadReader, ask, asks)
+import           Data.Monoid                 ((<>))
 import qualified Data.Text.Prettyprint.Doc   as P
+import           Debug.Trace
 
-data ImportException = NoAccountFound [Rule] Entry deriving (Show)
+data ImportException = NoAccountFound [Rule] Entry | InvalidImporter String deriving (Show)
 
 instance Exception ImportException
 
@@ -57,5 +59,11 @@ mkTransaction Entry {..} account otherAccount =
 getParser
   :: (MonadThrow m, MonadIO m, MonadReader ImportOptions m)
   => m (FilePath -> m [Entry])
-getParser = select <$> asks optImporter
-  where select Postfinance = Beans.Import.CH.Postfinance.readCSV
+getParser = do
+  name <- asks optImporter
+  select name
+ where
+  select n
+    | traceShowId (n) == Beans.Import.CH.Postfinance.name = return
+      Beans.Import.CH.Postfinance.parseEntries
+    | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n

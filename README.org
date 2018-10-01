@@ -2,7 +2,8 @@
 
 #+STARTUP: content
 #+OPTIONS: toc:nil
-#+PROPERTY: header-args :var FOO="dist/build/beans/beans"
+
+[[https://travis-ci.org/sboehler/beans.svg?branch=master]]
 
 * beans - A Plain-Text Accounting Tool
 

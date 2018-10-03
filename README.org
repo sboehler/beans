@@ -463,22 +463,22 @@ not have an explicit road map, but here are some ideas I'd like to be
 working on in the future:
 
 **** Shorter term
-- new command to print and filter the ledger (as-is or at market value)
-- multi-period reports (yearly, monthly, weekly, daily, ...)
-- colored output
-- friendlier command line
-- accounting at cost
-- more importers (I'll do those that I need personally, but I am happy
+- [ ] new command to print and filter the ledger (as-is or at market value)
+- [ ] multi-period reports (yearly, monthly, weekly, daily, ...)
+- [ ] colored output
+- [ ] friendlier command line
+- [ ] accounting at cost
+- [ ] more importers (I'll do those that I need personally, but I am happy
   to receive contributions if they are provided with a sample file /
   test)
 
 **** Longer term
-- general reporting infrastructure
-- more reports (income statement, cash flow statement)
-- plotting / graphs
-- portfolio performance calculation
-- export to other tools (beancount / hledger / ledger)
-- more UI options (web, terminal)
+- [ ] general reporting infrastructure
+- [ ] more reports (income statement, cash flow statement)
+- [ ] plotting / graphs
+- [ ] portfolio performance calculation
+- [ ] export to other tools (beancount / hledger / ledger)
+- [ ] more UI options (web, terminal)
 
 *** Compatibility
 

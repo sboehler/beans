@@ -1,7 +1,6 @@
 module Main where
 
-import           Beans.CLI.Balance   (balanceOptions)
-import           Beans.CLI.Import    (importOptions)
+import           Beans.CLI           (balanceOptions, importOptions)
 import           Beans.Lib           (runBeans)
 import           Beans.Options       (Command (..))
 import           Data.Semigroup      ((<>))

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aaa48efe9c01772ff5c31e25e962a38aa0147578374be0e7ad962442d5c81f74
+-- hash: 6e950be54907d04879d77a011c3487eff5b577dd4dd11860a496038b996c3b5b
 
 name:           beans
 version:        0.1.0.0
@@ -31,9 +31,7 @@ library
   exposed-modules:
       Beans.Accounts
       Beans.Balance
-      Beans.CLI.Balance
-      Beans.CLI.Common
-      Beans.CLI.Import
+      Beans.CLI
       Beans.Data.Accounts
       Beans.Data.Directives
       Beans.Data.Map

@@ -10,14 +10,14 @@ data Command
   deriving (Show)
 
 data BalanceOptions = BalanceOptions
-  { optJournal    :: FilePath
-  , optMarket     :: Valuation
-  , optLots       :: Bool
-  , optFrom       :: Maybe Day
-  , optTo         :: Maybe Day
-  , optDepth      :: Maybe Int
-  , optFilter     :: Filter
-  , optReportType :: ReportType
+  { balOptJournal    :: FilePath
+  , balOptMarket     :: Valuation
+  , balOptLots       :: Bool
+  , balOptFrom       :: Maybe Day
+  , balOptTo         :: Maybe Day
+  , balOptDepth      :: Maybe Int
+  , balOptFilter     :: Filter
+  , balOptReportType :: ReportType
   } deriving (Show)
 
 data Filter = NoFilter | StrictFilter String | Filter String deriving (Eq, Show)
@@ -28,8 +28,8 @@ data ReportType = Hierarchical | Flat  deriving (Eq, Show)
 
 data ImportOptions = ImportOptions
   {
-    optImporter :: Text
-  , optConfig   :: FilePath
-  , optAccount  :: Account
-  , optData     :: FilePath
+    impOptImporter :: Text
+  , impOptConfig   :: FilePath
+  , impOptAccount  :: Account
+  , impOptData     :: FilePath
   } deriving (Show)

@@ -28,8 +28,8 @@ reportStage
   => AccountsHistory
   -> m Accounts
 reportStage accountsHistory = do
-  to   <- maybe (liftIO getDate) pure =<< asks optTo
-  from <- asks optFrom
+  to   <- maybe (liftIO getDate) pure =<< asks balOptTo
+  from <- asks balOptFrom
   let a1 = M.lookupLEM to accountsHistory
       a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
   return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
@@ -52,12 +52,12 @@ balanceCommand = do
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
 parseStage = do
-  journal <- asks optJournal
+  journal <- asks balOptJournal
   buildLedger <$> parseFile journal
 
 filterStage :: (MonadReader BalanceOptions m) => Ledger -> m Ledger
 filterStage l = do
-  filter' <- asks optFilter
+  filter' <- asks balOptFilter
   return $ case filter' of
     StrictFilter regex -> filterLedger True regex l
     Filter       regex -> filterLedger False regex l
@@ -69,7 +69,7 @@ valuationStage
   -> Ledger
   -> m Ledger
 valuationStage accountsHistory ledger = do
-  target <- asks optMarket
+  target <- asks balOptMarket
   case target of
     AtMarket commodity -> calculateValuation accountsHistory
                                              commodity
@@ -88,8 +88,8 @@ aggregationStage
   => Accounts
   -> m Accounts
 aggregationStage accounts = do
-  showLots <- asks optLots
-  depth    <- asks optDepth
+  showLots <- asks balOptLots
+  depth    <- asks balOptDepth
   let eraseStage = if showLots then id else eraseLots
   let summarize' = case depth of
         Just d  -> summarize d
@@ -98,7 +98,7 @@ aggregationStage accounts = do
 
 printStage :: (MonadReader BalanceOptions m, MonadIO m) => Accounts -> m ()
 printStage accounts = do
-  reportType <- asks optReportType
+  reportType <- asks balOptReportType
   let f = case reportType of
         Hierarchical -> hierarchical
         Flat         -> flat

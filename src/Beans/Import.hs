@@ -26,16 +26,16 @@ instance Exception ImportException
 
 importCommand :: (MonadReader ImportOptions m, MonadThrow m, MonadIO m) => m ()
 importCommand = do
-  parse                        <- getParser
-  entries                      <- asks optData >>= parse
-  rules                        <- asks optConfig >>= parseFile
-  ImportOptions { optAccount } <- ask
-  accounts                     <- mapM (eval rules) entries
+  parse                           <- getParser
+  entries                         <- asks impOptData >>= parse
+  rules                           <- asks impOptConfig >>= parseFile
+  ImportOptions { impOptAccount } <- ask
+  accounts                        <- mapM (eval rules) entries
   let transactions =
         getZipList
           $   mkTransaction
           <$> ZipList entries
-          <*> pure optAccount
+          <*> pure impOptAccount
           <*> ZipList accounts
   liftIO $ print $ P.sep (P.pretty <$> transactions)
 
@@ -60,7 +60,7 @@ getParser
   :: (MonadThrow m, MonadIO m, MonadReader ImportOptions m)
   => m (FilePath -> m [Entry])
 getParser = do
-  name <- asks optImporter
+  name <- asks impOptImporter
   select name
  where
   select n

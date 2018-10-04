@@ -10,7 +10,8 @@ import qualified Beans.Data.Map         as M
 import           Beans.Format           (createReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
-import           Beans.Options          (BalanceOptions (..), ReportType (..))
+import           Beans.Options          (BalanceOptions (..), Filter (..),
+                                         ReportType (..))
 import           Beans.Parser           (parseFile)
 import           Beans.Valuation        (calculateValuation)
 import           Control.Monad.Catch    (MonadThrow)
@@ -57,10 +58,10 @@ parseStage = do
 filterStage :: (MonadReader BalanceOptions m) => Ledger -> m Ledger
 filterStage l = do
   filter' <- asks optFilter
-  strict  <- asks optStrictFilter
   return $ case filter' of
-    Just regex -> filterLedger strict regex l
-    Nothing    -> l
+    StrictFilter regex -> filterLedger True regex l
+    Filter       regex -> filterLedger False regex l
+    NoFilter           -> l
 
 valuationStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)

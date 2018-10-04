@@ -11,7 +11,7 @@ import           Beans.Format           (createReport, formatTable,
                                          reportToRows)
 import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
 import           Beans.Options          (BalanceOptions (..), Filter (..),
-                                         ReportType (..))
+                                         ReportType (..), Valuation (..))
 import           Beans.Parser           (parseFile)
 import           Beans.Valuation        (calculateValuation)
 import           Control.Monad.Catch    (MonadThrow)
@@ -71,11 +71,11 @@ valuationStage
 valuationStage accountsHistory ledger = do
   target <- asks optMarket
   case target of
-    Just commodity -> calculateValuation accountsHistory
-                                         commodity
-                                         (Account Equity ["Valuation"])
-                                         ledger
-    Nothing -> pure ledger
+    AtMarket commodity -> calculateValuation accountsHistory
+                                             commodity
+                                             (Account Equity ["Valuation"])
+                                             ledger
+    _ -> pure ledger
 
 accountsStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)

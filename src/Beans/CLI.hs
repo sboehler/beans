@@ -22,6 +22,11 @@ dateparser optionStr helpStr = optional $ option
   (toReadM P.date)
   (long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
 
+fromParser, toParser :: Parser (Maybe Day)
+fromParser =
+  dateparser "from" "Consider only transactions at or after this date"
+toParser = dateparser "to" "Consider only transactions before this date"
+
 filterParser :: Parser Filter
 filterParser =
   ( Filter <$> strOption
@@ -52,17 +57,21 @@ valuationParser =
         )
     <|> pure NoValuation
 
+journalParser :: Parser FilePath
+journalParser = strOption
+  ( short 'j' <> long "journal" <> metavar "JOURNAL" <> help
+    "The journal file to parse"
+  )
+
+
 balanceOptions :: Parser BalanceOptions
 balanceOptions =
   BalanceOptions
-    <$> strOption
-          ( short 'j' <> long "journal" <> metavar "JOURNAL" <> help
-            "The journal file to parse"
-          )
+    <$> journalParser
     <*> valuationParser
     <*> switch (long "lots" <> short 'l' <> help "Show lots")
-    <*> dateparser "from" "Consider only transactions at or after this date"
-    <*> dateparser "to"   "Consider only transaction before or at this date"
+    <*> fromParser
+    <*> toParser
     <*> optional
           ( option
             auto

@@ -5,6 +5,7 @@ module Beans.CLI
 import           Beans.Options       (BalanceOptions (..), ImportOptions (..),
                                       ReportType (..))
 import qualified Beans.Parser        as P
+import           Data.Bifunctor      (first)
 import           Data.Semigroup      ((<>))
 import qualified Data.Text           as T
 import           Data.Time.Calendar  (Day)
@@ -13,33 +14,12 @@ import           Text.Megaparsec     (parse, parseErrorPretty)
 
 
 toReadM :: P.Parser a -> ReadM a
-toReadM p = eitherReader $ parse' p "" . T.pack
- where
-  parse' parser input s = case parse parser input s of
-    Left  e -> Left $ parseErrorPretty e
-    Right d -> Right d
-
+toReadM p = eitherReader $ first parseErrorPretty . parse p "" . T.pack
 
 dateparser :: String -> String -> Parser (Maybe Day)
 dateparser optionStr helpStr = optional $ option
   (toReadM P.date)
   (long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
-
-parseReportType :: ReadM ReportType
-parseReportType = eitherReader $ \case
-  "hierarchical" -> Right Hierarchical
-  "flat"         -> Right Flat
-  s              -> Left $ "Invalid report type: " <> s
-
-reportType :: Parser ReportType
-reportType = option
-  parseReportType
-  (  value Hierarchical
-  <> help "The type of the report"
-  <> long "report-type"
-  <> metavar "(flat|hierarchical)"
-  <> short 'r'
-  )
 
 balanceOptions :: Parser BalanceOptions
 balanceOptions =
@@ -76,7 +56,8 @@ balanceOptions =
           <> help
                "If enabled, strict filtering will filter all postings which don't match. If disabled (default), only transactions are filtered."
           )
-    <*> reportType
+    <*> flag Hierarchical Flat (long "flat" <> help "Show a flat report")
+
 
 importOptions :: Parser ImportOptions
 importOptions =

@@ -11,7 +11,7 @@ data Command
 
 data BalanceOptions = BalanceOptions
   { optJournal    :: FilePath
-  , optMarket     :: Maybe Commodity
+  , optMarket     :: Valuation
   , optLots       :: Bool
   , optFrom       :: Maybe Day
   , optTo         :: Maybe Day
@@ -22,10 +22,9 @@ data BalanceOptions = BalanceOptions
 
 data Filter = NoFilter | StrictFilter String | Filter String deriving (Eq, Show)
 
-data ReportType
-  = Hierarchical
-  | Flat
-  deriving (Eq, Show)
+data Valuation = NoValuation | AtMarket Commodity | AtCost Commodity deriving (Eq, Show)
+
+data ReportType = Hierarchical | Flat  deriving (Eq, Show)
 
 data ImportOptions = ImportOptions
   {

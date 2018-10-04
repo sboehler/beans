@@ -3,7 +3,8 @@ module Beans.CLI
   ) where
 
 import           Beans.Options       (BalanceOptions (..), Filter (..),
-                                      ImportOptions (..), ReportType (..))
+                                      ImportOptions (..), ReportType (..),
+                                      Valuation (..))
 import qualified Beans.Parser        as P
 import           Data.Bifunctor      (first)
 import           Data.Semigroup      ((<>))
@@ -35,6 +36,22 @@ filterParser =
         )
     <|> pure NoFilter
 
+valuationParser :: Parser Valuation
+valuationParser =
+  ( AtMarket <$> option
+      (toReadM P.commodity)
+      ( long "at-market" <> metavar "COMMODITY" <> short 'm' <> help
+        "Valuation at market prices"
+      )
+    )
+    <|> ( AtCost <$> option
+          (toReadM P.commodity)
+          ( long "at-cost" <> metavar "COMMODITY" <> help
+            "Valuation at recorded costs"
+          )
+        )
+    <|> pure NoValuation
+
 balanceOptions :: Parser BalanceOptions
 balanceOptions =
   BalanceOptions
@@ -42,7 +59,7 @@ balanceOptions =
           ( short 'j' <> long "journal" <> metavar "JOURNAL" <> help
             "The journal file to parse"
           )
-    <*> optional (option (toReadM P.commodity) (long "convert" <> short 'c'))
+    <*> valuationParser
     <*> switch (long "lots" <> short 'l' <> help "Show lots")
     <*> dateparser "from" "Consider only transactions at or after this date"
     <*> dateparser "to"   "Consider only transaction before or at this date"

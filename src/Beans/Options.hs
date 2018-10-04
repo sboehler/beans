@@ -10,16 +10,17 @@ data Command
   deriving (Show)
 
 data BalanceOptions = BalanceOptions
-  { optJournal      :: FilePath
-  , optMarket       :: Maybe Commodity
-  , optLots         :: Bool
-  , optFrom         :: Maybe Day
-  , optTo           :: Maybe Day
-  , optDepth        :: Maybe Int
-  , optFilter       :: Maybe String
-  , optStrictFilter :: Bool
-  , optReportType   :: ReportType
+  { optJournal    :: FilePath
+  , optMarket     :: Maybe Commodity
+  , optLots       :: Bool
+  , optFrom       :: Maybe Day
+  , optTo         :: Maybe Day
+  , optDepth      :: Maybe Int
+  , optFilter     :: Filter
+  , optReportType :: ReportType
   } deriving (Show)
+
+data Filter = NoFilter | StrictFilter String | Filter String deriving (Eq, Show)
 
 data ReportType
   = Hierarchical

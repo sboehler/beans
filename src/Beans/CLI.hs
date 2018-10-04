@@ -2,8 +2,8 @@ module Beans.CLI
   ( balanceOptions, importOptions
   ) where
 
-import           Beans.Options       (BalanceOptions (..), ImportOptions (..),
-                                      ReportType (..))
+import           Beans.Options       (BalanceOptions (..), Filter (..),
+                                      ImportOptions (..), ReportType (..))
 import qualified Beans.Parser        as P
 import           Data.Bifunctor      (first)
 import           Data.Semigroup      ((<>))
@@ -21,12 +21,25 @@ dateparser optionStr helpStr = optional $ option
   (toReadM P.date)
   (long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
 
+filterParser :: Parser Filter
+filterParser =
+  ( Filter <$> strOption
+      ( long "filter" <> metavar "REGEX" <> short 'f' <> help
+        "Filter the postings with the given regex."
+      )
+    )
+    <|> ( StrictFilter <$> strOption
+          ( long "strict-filter" <> metavar "REGEX" <> help
+            "Filter the transactions with the given regex."
+          )
+        )
+    <|> pure NoFilter
+
 balanceOptions :: Parser BalanceOptions
 balanceOptions =
   BalanceOptions
-    <$> argument
-          str
-          ( value "journal.bean" <> metavar "JOURNAL" <> help
+    <$> strOption
+          ( short 'j' <> long "journal" <> metavar "JOURNAL" <> help
             "The journal file to parse"
           )
     <*> optional (option (toReadM P.commodity) (long "convert" <> short 'c'))
@@ -42,20 +55,7 @@ balanceOptions =
             <> short 'd'
             )
           )
-    <*> optional
-          ( strOption
-            (  metavar "REGEX"
-            <> help "A regular expression to filter the accounts"
-            <> long "filter"
-            <> short 'f'
-            )
-          )
-    <*> switch
-          (  long "strict-filter"
-          <> short 's'
-          <> help
-               "If enabled, strict filtering will filter all postings which don't match. If disabled (default), only transactions are filtered."
-          )
+    <*> filterParser
     <*> flag Hierarchical Flat (long "flat" <> help "Show a flat report")
 
 

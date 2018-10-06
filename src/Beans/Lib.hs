@@ -5,6 +5,7 @@ module Beans.Lib
 
 import           Beans.Balance          (balanceCommand)
 import           Beans.Import           (importCommand)
+import           Beans.Journal          (journalCommand)
 import           Beans.Options          (Command (..))
 import           Control.Monad.Catch    (MonadThrow)
 import           Control.Monad.IO.Class (MonadIO)
@@ -19,3 +20,4 @@ run = do
   case command of
     Balance options -> runReaderT balanceCommand options
     Import  options -> runReaderT importCommand options
+    Journal options -> runReaderT journalCommand options

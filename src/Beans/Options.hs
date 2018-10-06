@@ -7,6 +7,7 @@ import           Data.Time.Calendar  (Day)
 data Command
   = Balance BalanceOptions
   | Import ImportOptions
+  | Journal JournalOptions
   deriving (Show)
 
 data BalanceOptions = BalanceOptions
@@ -19,6 +20,16 @@ data BalanceOptions = BalanceOptions
   , balOptFilter     :: Filter
   , balOptReportType :: ReportType
   } deriving (Show)
+
+
+data JournalOptions = JournalOptions
+  { ledOptJournal :: FilePath
+  , ledOptMarket  :: Valuation
+  , ledOptFrom    :: Maybe Day
+  , ledOptTo      :: Maybe Day
+  , ledOptFilter  :: Filter
+  } deriving (Show)
+
 
 data Filter = NoFilter | StrictFilter String | Filter String deriving (Eq, Show)
 

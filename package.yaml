@@ -1,5 +1,5 @@
 name:                beans
-version:             0.1.0.0
+version:             0.0.1.0
 github:              sboehler/beans
 license:             BSD3
 author:              Silvio Böhler
@@ -46,6 +46,9 @@ executables:
     dependencies:
       - base >= 4.7 && < 5
       - beans
+      - text
+      - time
+      - megaparsec == 6.*
       - optparse-applicative
 
 library:
@@ -61,7 +64,6 @@ library:
   - groups
   - megaparsec == 6.*
   - mtl
-  - optparse-applicative
   - prettyprinter
   - regex-pcre
   - scientific

@@ -17,6 +17,7 @@ import           Beans.Valuation        (calculateValuation)
 import           Control.Monad.Catch    (MonadThrow)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 import           Control.Monad.Reader   (MonadReader, asks)
+import           Data.Maybe             (fromMaybe)
 import qualified Data.Text              as T
 import qualified Data.Text.IO           as TIO
 import           Data.Time.Calendar     (Day)
@@ -28,9 +29,10 @@ reportStage
   => AccountsHistory
   -> m Accounts
 reportStage accountsHistory = do
-  to   <- maybe (liftIO getDate) pure =<< asks balOptTo
-  from <- asks balOptFrom
-  let a1 = M.lookupLEM to accountsHistory
+  today <- liftIO getDate
+  to    <- asks balOptTo
+  from  <- asks balOptFrom
+  let a1 = M.lookupLEM (fromMaybe today to) accountsHistory
       a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
   return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
 
@@ -51,31 +53,27 @@ balanceCommand = do
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
-parseStage = do
-  journal <- asks balOptJournal
-  buildLedger <$> parseFile journal
+parseStage = buildLedger <$> (asks balOptJournal >>= parseFile)
 
 filterStage :: (MonadReader BalanceOptions m) => Ledger -> m Ledger
-filterStage l = do
-  filter' <- asks balOptFilter
-  return $ case filter' of
-    StrictFilter regex -> filterLedger True regex l
-    Filter       regex -> filterLedger False regex l
-    NoFilter           -> l
+filterStage l = f <$> asks balOptFilter
+ where
+  f (StrictFilter regex) = filterLedger True regex l
+  f (Filter       regex) = filterLedger False regex l
+  f NoFilter             = l
 
 valuationStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
   => AccountsHistory
   -> Ledger
   -> m Ledger
-valuationStage accountsHistory ledger = do
-  target <- asks balOptMarket
-  case target of
-    AtMarket commodity -> calculateValuation accountsHistory
-                                             commodity
-                                             (Account Equity ["Valuation"])
-                                             ledger
-    _ -> pure ledger
+valuationStage accountsHistory ledger = asks balOptMarket >>= f
+ where
+  f (AtMarket commodity) = calculateValuation accountsHistory
+                                              commodity
+                                              (Account Equity ["Valuation"])
+                                              ledger
+  f _ = pure ledger
 
 accountsStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)

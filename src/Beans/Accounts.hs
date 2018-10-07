@@ -3,6 +3,8 @@ module Beans.Accounts
   , Accounts
   , calculateAccounts
   , processTimestep
+  , processTimestep'
+  , checkTimestep
   ) where
 
 import           Beans.Data.Accounts     (Account, Accounts, Amount, Commodity)
@@ -76,6 +78,12 @@ processTimestep
 processTimestep (Timestep day commands) = do
   a <- mapM_ process commands >> get
   return (day, a)
+
+processTimestep'
+  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m Accounts
+processTimestep' (Timestep _ commands) = do
+  mapM_ process commands >> get
+
 
 process :: (MonadThrow m, MonadState Accounts m) => Command -> m ()
 process (CloseCommand closing@Close { cAccount }) = do

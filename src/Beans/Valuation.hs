@@ -1,8 +1,9 @@
-module Beans.Valuation where
+module Beans.Valuation(calculateValuation)  where
 
+import           Beans.Accounts        (checkTimestep, processTimestep')
 import           Beans.Data.Accounts   (Account (..), AccountType (..),
-                                        Accounts, AccountsHistory, Amount,
-                                        Amounts, Commodity (..), Lot (..))
+                                        Accounts, Amount, Amounts,
+                                        Commodity (..), Lot (..))
 import           Beans.Data.Directives (Command (..), Flag (..), Posting,
                                         Transaction (..), mkBalancedTransaction)
 import qualified Beans.Data.Map        as M
@@ -19,27 +20,19 @@ data ValuationState = ValuationState
   , vsPrevNormalizedPrices :: NormalizedPrices
   , vsNormalizedPrices     :: NormalizedPrices
   , vsPrevAccounts         :: Accounts
-  , vsAccounts             :: AccountsHistory
   , vsTarget               :: Commodity
   , vsValuationAccount     :: Account
   , vsDate                 :: Day
   }
 
-calculateValuation
-  :: MonadThrow m
-  => AccountsHistory
-  -> Commodity
-  -> Account
-  -> Ledger
-  -> m Ledger
-calculateValuation accounts target valuationAccount ledger = evalStateT
+calculateValuation :: MonadThrow m => Commodity -> Account -> Ledger -> m Ledger
+calculateValuation target valuationAccount ledger = evalStateT
   (mapM convertTimestep ledger)
   ValuationState
     { vsPrices               = mempty
     , vsPrevNormalizedPrices = mempty
     , vsNormalizedPrices     = mempty
     , vsPrevAccounts         = mempty
-    , vsAccounts             = accounts
     , vsDate                 = fromGregorian 1900 1 1
     , vsTarget               = target
     , vsValuationAccount     = valuationAccount
@@ -49,8 +42,9 @@ convertTimestep
   :: (MonadThrow m, MonadState ValuationState m) => Timestep -> m Timestep
 convertTimestep timestep@(Timestep day commands) = do
   ValuationState {..} <- get
-  let accounts  = M.lookupLEM day vsAccounts
-      vsPrices' = updatePrices timestep vsPrices
+  let vsPrices' = updatePrices timestep vsPrices
+  evalStateT (checkTimestep timestep) mempty
+  accounts <- evalStateT (processTimestep' timestep) vsPrevAccounts
   put ValuationState
     { vsPrices               = vsPrices'
     , vsPrevNormalizedPrices = vsNormalizedPrices

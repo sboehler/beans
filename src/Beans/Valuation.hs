@@ -6,8 +6,7 @@ import           Beans.Data.Accounts   (Account (..), AccountType (..),
 import           Beans.Data.Directives (Command (..), Flag (..), Posting,
                                         Transaction (..), mkBalancedTransaction)
 import qualified Beans.Data.Map        as M
-import           Beans.Ledger          (Ledger (..), Timestep (..))
-import qualified Beans.Ledger          as L
+import           Beans.Ledger          (Ledger, Timestep (..))
 import           Beans.Prices          (NormalizedPrices, Prices, lookupPrice,
                                         normalize, updatePrices)
 import           Control.Monad.Catch   (MonadThrow)
@@ -34,7 +33,7 @@ calculateValuation
   -> Ledger
   -> m Ledger
 calculateValuation accounts target valuationAccount ledger = evalStateT
-  (Ledger <$> mapM convertTimestep (L.toList ledger))
+  (mapM convertTimestep ledger)
   ValuationState
     { vsPrices               = mempty
     , vsPrevNormalizedPrices = mempty

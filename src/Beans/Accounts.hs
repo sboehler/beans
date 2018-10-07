@@ -5,8 +5,7 @@ module Beans.Accounts
   , processTimestep
   ) where
 
-import           Beans.Data.Accounts     (Account, Accounts, Amount,
-                                          Commodity)
+import           Beans.Data.Accounts     (Account, Accounts, Amount, Commodity)
 import qualified Beans.Data.Accounts     as A
 import           Beans.Data.Directives   (Balance (..), Close (..),
                                           Command (..), Open (..),
@@ -14,7 +13,7 @@ import           Beans.Data.Directives   (Balance (..), Close (..),
 import qualified Beans.Data.Map          as M
 import           Beans.Data.Restrictions (Restriction, Restrictions)
 import qualified Beans.Data.Restrictions as R
-import           Beans.Ledger            (Ledger (..), Timestep (..))
+import           Beans.Ledger            (Ledger, Timestep (..))
 import           Control.Monad           (unless, when)
 import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
 import           Control.Monad.State     (MonadState, evalStateT, get, modify,
@@ -38,17 +37,9 @@ data AccountsException
 instance Exception AccountsException
 
 calculateAccounts :: (MonadThrow m) => Ledger -> m (M.Map Day Accounts)
-calculateAccounts (Ledger l) =
-  let processing = M.fromListM <$> mapM processTimestep l
-  in  do
-        evalStateT (mapM_ checkTimestep l) mempty
-        evalStateT processing              mempty
-
-processTimestep
-  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m (Day, Accounts)
-processTimestep (Timestep day commands) = do
-  a <- mapM_ process commands >> get
-  return (day, a)
+calculateAccounts l = do
+  evalStateT (mapM_ checkTimestep l)                  mempty
+  evalStateT (M.fromListM <$> mapM processTimestep l) mempty
 
 checkTimestep :: (MonadThrow m, MonadState Restrictions m) => Timestep -> m ()
 checkTimestep (Timestep _ commands) = mapM_ check commands
@@ -79,6 +70,12 @@ check (BalanceCommand bal@Balance { bAccount }) = do
   r <- get
   unless (bAccount `M.member` r) (throwM $ AccountDoesNotExist bal)
 check _ = pure ()
+
+processTimestep
+  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m (Day, Accounts)
+processTimestep (Timestep day commands) = do
+  a <- mapM_ process commands >> get
+  return (day, a)
 
 process :: (MonadThrow m, MonadState Accounts m) => Command -> m ()
 process (CloseCommand closing@Close { cAccount }) = do

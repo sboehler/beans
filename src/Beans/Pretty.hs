@@ -15,7 +15,7 @@ import           Beans.Data.Directives     (Balance (..), Close (..),
                                             Transaction (..))
 import qualified Beans.Data.Map            as M
 import           Beans.Data.Restrictions   (Restriction (..))
-import           Beans.Ledger              (Ledger, Timestep (Timestep), toList)
+import           Beans.Ledger              (Ledger, Timestep (Timestep))
 import           Data.Monoid               (Sum (..))
 import           Data.Scientific           (Scientific)
 import           Data.Text.Prettyprint.Doc
@@ -107,7 +107,7 @@ prettyPrint :: [Directive] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
 prettyPrintLedger :: Ledger -> IO ()
-prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty) . toList
+prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty)
 
 instance Pretty Timestep where
   pretty (Timestep day commands) = vsep (map pretty' commands) <> hardline

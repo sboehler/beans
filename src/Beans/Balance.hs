@@ -24,27 +24,11 @@ import           Data.Time.Calendar     (Day)
 import           Data.Time.LocalTime    (getZonedTime, localDay,
                                          zonedTimeToLocalTime)
 
-reportStage
-  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => AccountsHistory
-  -> m Accounts
-reportStage accountsHistory = do
-  today <- liftIO getDate
-  to    <- asks balOptTo
-  from  <- asks balOptFrom
-  let a1 = M.lookupLEM (fromMaybe today to) accountsHistory
-      a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
-  return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
-
-getDate :: IO Day
-getDate = localDay . zonedTimeToLocalTime <$> getZonedTime
-
 balanceCommand
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
-balanceCommand = do
-  ledger          <- parseStage
-  accountsHistory <- accountsStage ledger
-  valuationStage accountsHistory ledger
+balanceCommand =
+  parseStage
+    >>= valuationStage
     >>= filterStage
     >>= accountsStage
     >>= reportStage
@@ -64,15 +48,12 @@ filterStage l = f <$> asks balOptFilter
 
 valuationStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => AccountsHistory
-  -> Ledger
+  => Ledger
   -> m Ledger
-valuationStage accountsHistory ledger = asks balOptMarket >>= f
+valuationStage ledger = asks balOptMarket >>= f
  where
-  f (AtMarket commodity) = calculateValuation accountsHistory
-                                              commodity
-                                              (Account Equity ["Valuation"])
-                                              ledger
+  f (AtMarket commodity) =
+    calculateValuation commodity (Account Equity ["Valuation"]) ledger
   f _ = pure ledger
 
 accountsStage
@@ -80,6 +61,21 @@ accountsStage
   => Ledger
   -> m AccountsHistory
 accountsStage = calculateAccounts
+
+reportStage
+  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
+  => AccountsHistory
+  -> m Accounts
+reportStage accountsHistory = do
+  today <- liftIO getDate
+  to    <- asks balOptTo
+  from  <- asks balOptFrom
+  let a1 = M.lookupLEM (fromMaybe today to) accountsHistory
+      a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
+  return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
+
+getDate :: IO Day
+getDate = localDay . zonedTimeToLocalTime <$> getZonedTime
 
 aggregationStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)

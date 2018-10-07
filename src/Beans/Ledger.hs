@@ -1,7 +1,6 @@
 module Beans.Ledger
-  ( Ledger(..)
+  ( Ledger
   , Timestep(..)
-  , toList
   , buildLedger
   , filterLedger
   ) where
@@ -19,15 +18,10 @@ data Timestep =
            [Command]
   deriving (Show)
 
-newtype Ledger =
-  Ledger [Timestep]
-  deriving (Show)
-
-toList :: Ledger -> [Timestep]
-toList (Ledger l) = l
+type Ledger = [Timestep]
 
 buildLedger :: [Directive] -> Ledger
-buildLedger = Ledger . build . L.sort . filter
+buildLedger = build . L.sort . filter
  where
   filter d = [ c | (DatedCommandDirective c) <- d ]
   build = foldr add []
@@ -39,8 +33,8 @@ buildLedger = Ledger . build . L.sort . filter
 -- filter a ledger
 filterLedger :: Bool -> String -> Ledger -> Ledger
 filterLedger strict regex ledger = if strict
-  then Ledger $ strictFilter <$> toList ledger
-  else Ledger $ nonstrictFilter <$> toList ledger
+  then strictFilter <$> ledger
+  else nonstrictFilter <$> ledger
  where
   nonstrictFilter (Timestep day commands) =
     Timestep day (L.filter (matchTransaction regex) commands)

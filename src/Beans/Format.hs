@@ -3,20 +3,29 @@ module Beans.Format
   , formatTable
   , reportToRows
   , createReport
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts       (Account (..), Accounts, Amount,
-                                            Amounts, Commodity (..),
-                                            Lot (..))
-import qualified Beans.Data.Map            as M
-import           Beans.Pretty              ()
-import           Beans.Table               (Column (..), formatStandard, left,
-                                            right, showTable)
-import           Data.Foldable             (fold)
-import           Data.Monoid               ((<>))
-import           Data.Text                 (Text)
-import qualified Data.Text                 as T
-import           Data.Text.Prettyprint.Doc (pretty)
+import           Beans.Data.Accounts                      ( Account(..)
+                                                          , Accounts
+                                                          , Amount
+                                                          , Amounts
+                                                          , Commodity(..)
+                                                          , Lot(..)
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Pretty                             ( )
+import           Beans.Table                              ( Column(..)
+                                                          , formatStandard
+                                                          , left
+                                                          , right
+                                                          , showTable
+                                                          )
+import           Data.Foldable                            ( fold )
+import           Data.Monoid                              ( (<>) )
+import           Data.Text                                ( Text )
+import qualified Data.Text                     as T
+import           Data.Text.Prettyprint.Doc                ( pretty )
 
 type Positions = M.Map (Commodity, Maybe Lot) Amounts
 
@@ -45,8 +54,8 @@ groupLabeledPositions labeledPositions = Section positions
 splitSection :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
 splitSection = M.mapEntries f
  where
-  f (n:ns, ps) = (n, M.singleton ns ps)
-  f ([]  , ps) = (mempty, M.singleton [] ps)
+  f (n : ns, ps) = (n, M.singleton ns ps)
+  f ([]    , ps) = (mempty, M.singleton [] ps)
 
 -- Formatting a report into rows
 data Row = Row
@@ -66,21 +75,21 @@ sectionToRows (label, Section _ subsections subtotals) =
   positionRows   = positionsToRows label subtotals
 
 positionsToRows :: Text -> Positions -> [Row]
-positionsToRows title subtotals =
-  let
-    nbrSubtotals = M.size subtotals
-    nbrRows      = maximum [1, nbrSubtotals]
-    st           = flattenPositions subtotals
-      ++ replicate (nbrRows - nbrSubtotals) (Nothing, Nothing, Nothing)
-  in
-    do
-      (rAccount, (lot, commodity, amount)) <- zip (title : repeat "") st
-      pure Row
-        { rAccount
-        , rAmount    = maybe "" formatStandard amount
-        , rCommodity = T.pack
-          $ unwords [maybe "" show commodity, maybe "" (show . pretty) lot]
-        }
+positionsToRows title subtotals
+  = let
+      nbrSubtotals = M.size subtotals
+      nbrRows      = maximum [1, nbrSubtotals]
+      st           = flattenPositions subtotals
+        ++ replicate (nbrRows - nbrSubtotals) (Nothing, Nothing, Nothing)
+    in
+      do
+        (rAccount, (lot, commodity, amount)) <- zip (title : repeat "") st
+        pure Row
+          { rAccount
+          , rAmount    = maybe "" formatStandard amount
+          , rCommodity = T.pack
+            $ unwords [maybe "" show commodity, maybe "" (show . pretty) lot]
+          }
 
 flattenPositions :: Positions -> [(Maybe Lot, Maybe Commodity, Maybe Amount)]
 flattenPositions positions = do

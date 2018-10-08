@@ -6,18 +6,29 @@ module Beans.Prices
   , updatePrices
   , normalize
   , lookupPrice
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts   (Commodity (..))
-import           Beans.Data.Directives (Command (..), Price (..))
-import           Beans.Ledger          (Timestep (..))
-import           Control.Monad.Catch   (Exception, MonadThrow, throwM)
-import           Control.Monad.State   (evalState, get, modify)
-import           Data.Foldable         (foldl')
-import qualified Data.Map.Strict       as M
-import           Data.Scientific       (Scientific, fromFloatDigits,
-                                        toRealFloat)
-import           Data.Time.Calendar    (Day)
+import           Beans.Data.Accounts                      ( Commodity(..) )
+import           Beans.Data.Directives                    ( Command(..)
+                                                          , Price(..)
+                                                          )
+import           Beans.Ledger                             ( Timestep(..) )
+import           Control.Monad.Catch                      ( Exception
+                                                          , MonadThrow
+                                                          , throwM
+                                                          )
+import           Control.Monad.State                      ( evalState
+                                                          , get
+                                                          , modify
+                                                          )
+import           Data.Foldable                            ( foldl' )
+import qualified Data.Map.Strict               as M
+import           Data.Scientific                          ( Scientific
+                                                          , fromFloatDigits
+                                                          , toRealFloat
+                                                          )
+import           Data.Time.Calendar                       ( Day )
 
 type PricesHistory = M.Map Day Prices
 

@@ -2,11 +2,14 @@ module Beans.Data.Restrictions
   ( Restrictions
   , Restriction(..)
   , isCompatible
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts (Account, Commodity)
-import qualified Beans.Data.Map      as M
-import           Data.List           (union)
+import           Beans.Data.Accounts                      ( Account
+                                                          , Commodity
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Data.List                                ( union )
 
 type Restrictions = M.Map Account Restriction
 

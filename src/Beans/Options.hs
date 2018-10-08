@@ -1,8 +1,10 @@
 module Beans.Options where
 
-import           Beans.Data.Accounts (Account, Commodity (..))
-import           Data.Text           (Text)
-import           Data.Time.Calendar  (Day)
+import           Beans.Data.Accounts                      ( Account
+                                                          , Commodity(..)
+                                                          )
+import           Data.Text                                ( Text )
+import           Data.Time.Calendar                       ( Day )
 
 data Command
   = Balance BalanceOptions

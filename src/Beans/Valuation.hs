@@ -1,19 +1,46 @@
-module Beans.Valuation(calculateValuation)  where
+module Beans.Valuation
+  ( calculateValuation
+  )
+where
 
-import           Beans.Accounts        (checkTimestep, processTimestep')
-import           Beans.Data.Accounts   (Account (..), AccountType (..),
-                                        Accounts, Amount, Amounts,
-                                        Commodity (..), Lot (..))
-import           Beans.Data.Directives (Command (..), Flag (..), Posting,
-                                        Transaction (..), mkBalancedTransaction)
-import qualified Beans.Data.Map        as M
-import           Beans.Ledger          (Ledger, Timestep (..))
-import           Beans.Prices          (NormalizedPrices, Prices, lookupPrice,
-                                        normalize, updatePrices)
-import           Control.Monad.Catch   (MonadThrow)
-import           Control.Monad.State   (MonadState, evalStateT, get, gets, put)
-import           Data.Monoid           (Sum (Sum))
-import           Data.Time.Calendar    (Day, fromGregorian)
+import           Beans.Accounts                           ( checkTimestep
+                                                          , processTimestep'
+                                                          )
+import           Beans.Data.Accounts                      ( Account(..)
+                                                          , AccountType(..)
+                                                          , Accounts
+                                                          , Amount
+                                                          , Amounts
+                                                          , Commodity(..)
+                                                          , Lot(..)
+                                                          )
+import           Beans.Data.Directives                    ( Command(..)
+                                                          , Flag(..)
+                                                          , Posting
+                                                          , Transaction(..)
+                                                          , mkBalancedTransaction
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Ledger                             ( Ledger
+                                                          , Timestep(..)
+                                                          )
+import           Beans.Prices                             ( NormalizedPrices
+                                                          , Prices
+                                                          , lookupPrice
+                                                          , normalize
+                                                          , updatePrices
+                                                          )
+import           Control.Monad.Catch                      ( MonadThrow )
+import           Control.Monad.State                      ( MonadState
+                                                          , evalStateT
+                                                          , get
+                                                          , gets
+                                                          , put
+                                                          )
+import           Data.Monoid                              ( Sum(Sum) )
+import           Data.Time.Calendar                       ( Day
+                                                          , fromGregorian
+                                                          )
 
 data ValuationState = ValuationState
   { vsPrices               :: Prices

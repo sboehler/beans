@@ -3,23 +3,37 @@
 module Beans.Pretty
   ( prettyPrint
   , prettyPrintLedger
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts       (Account (..), Accounts, Amount,
-                                            Commodity (..), Lot (..))
-import           Beans.Data.Directives     (Balance (..), Close (..),
-                                            Command (..), DatedCommand (..),
-                                            Directive (..), Flag (..),
-                                            Include (..), Open (..),
-                                            Option (..), Price (..), Tag (..),
-                                            Transaction (..))
-import qualified Beans.Data.Map            as M
-import           Beans.Data.Restrictions   (Restriction (..))
-import           Beans.Ledger              (Ledger, Timestep (Timestep))
-import           Data.Monoid               (Sum (..))
-import           Data.Scientific           (Scientific)
+import           Beans.Data.Accounts                      ( Account(..)
+                                                          , Accounts
+                                                          , Amount
+                                                          , Commodity(..)
+                                                          , Lot(..)
+                                                          )
+import           Beans.Data.Directives                    ( Balance(..)
+                                                          , Close(..)
+                                                          , Command(..)
+                                                          , DatedCommand(..)
+                                                          , Directive(..)
+                                                          , Flag(..)
+                                                          , Include(..)
+                                                          , Open(..)
+                                                          , Option(..)
+                                                          , Price(..)
+                                                          , Tag(..)
+                                                          , Transaction(..)
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Data.Restrictions                  ( Restriction(..) )
+import           Beans.Ledger                             ( Ledger
+                                                          , Timestep(Timestep)
+                                                          )
+import           Data.Monoid                              ( Sum(..) )
+import           Data.Scientific                          ( Scientific )
 import           Data.Text.Prettyprint.Doc
-import           Data.Time.Calendar        (Day)
+import           Data.Time.Calendar                       ( Day )
 
 instance Pretty Amount where
   pretty (Sum a) = pretty $ show a

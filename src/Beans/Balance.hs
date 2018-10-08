@@ -1,28 +1,47 @@
 module Beans.Balance
   ( balanceCommand
-  ) where
+  )
+where
 
-import           Beans.Accounts         (calculateAccounts)
-import           Beans.Data.Accounts    (Account (..), AccountType (..),
-                                         Accounts, AccountsHistory, eraseLots,
-                                         summarize)
-import qualified Beans.Data.Map         as M
-import           Beans.Format           (createReport, formatTable,
-                                         reportToRows)
-import           Beans.Ledger           (Ledger, buildLedger, filterLedger)
-import           Beans.Options          (BalanceOptions (..), Filter (..),
-                                         ReportType (..), Valuation (..))
-import           Beans.Parser           (parseFile)
-import           Beans.Valuation        (calculateValuation)
-import           Control.Monad.Catch    (MonadThrow)
-import           Control.Monad.IO.Class (MonadIO, liftIO)
-import           Control.Monad.Reader   (MonadReader, asks)
-import           Data.Maybe             (fromMaybe)
-import qualified Data.Text              as T
-import qualified Data.Text.IO           as TIO
-import           Data.Time.Calendar     (Day)
-import           Data.Time.LocalTime    (getZonedTime, localDay,
-                                         zonedTimeToLocalTime)
+import           Beans.Accounts                           ( calculateAccounts )
+import           Beans.Data.Accounts                      ( Account(..)
+                                                          , AccountType(..)
+                                                          , Accounts
+                                                          , AccountsHistory
+                                                          , eraseLots
+                                                          , summarize
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Format                             ( createReport
+                                                          , formatTable
+                                                          , reportToRows
+                                                          )
+import           Beans.Ledger                             ( Ledger
+                                                          , buildLedger
+                                                          , filterLedger
+                                                          )
+import           Beans.Options                            ( BalanceOptions(..)
+                                                          , Filter(..)
+                                                          , ReportType(..)
+                                                          , Valuation(..)
+                                                          )
+import           Beans.Parser                             ( parseFile )
+import           Beans.Valuation                          ( calculateValuation )
+import           Control.Monad.Catch                      ( MonadThrow )
+import           Control.Monad.IO.Class                   ( MonadIO
+                                                          , liftIO
+                                                          )
+import           Control.Monad.Reader                     ( MonadReader
+                                                          , asks
+                                                          )
+import           Data.Maybe                               ( fromMaybe )
+import qualified Data.Text                     as T
+import qualified Data.Text.IO                  as TIO
+import           Data.Time.Calendar                       ( Day )
+import           Data.Time.LocalTime                      ( getZonedTime
+                                                          , localDay
+                                                          , zonedTimeToLocalTime
+                                                          )
 
 balanceCommand
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()

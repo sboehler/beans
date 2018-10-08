@@ -1,9 +1,11 @@
 module Beans.Import.Common where
 
-import           Beans.Data.Accounts (Amount, Commodity)
-import           Control.Exception   (Exception)
-import           Data.Text           (Text)
-import           Data.Time.Calendar  (Day)
+import           Beans.Data.Accounts                      ( Amount
+                                                          , Commodity
+                                                          )
+import           Control.Exception                        ( Exception )
+import           Data.Text                                ( Text )
+import           Data.Time.Calendar                       ( Day )
 
 -- The exception exported by this module
 newtype ImporterException =

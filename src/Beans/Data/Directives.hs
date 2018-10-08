@@ -13,17 +13,26 @@ module Beans.Data.Directives
   , Price(..)
   , Tag(..)
   , Flag(..)
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts     (Account, Accounts, Amount,
-                                          Amounts, Commodity, Lot (..))
-import qualified Beans.Data.Map          as M
-import           Beans.Data.Restrictions (Restriction)
-import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
-import           Data.Scientific         (Scientific)
-import           Data.Text               (Text)
-import           Data.Time.Calendar      (Day)
-import qualified Text.Megaparsec.Pos     as P
+import           Beans.Data.Accounts                      ( Account
+                                                          , Accounts
+                                                          , Amount
+                                                          , Amounts
+                                                          , Commodity
+                                                          , Lot(..)
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Data.Restrictions                  ( Restriction )
+import           Control.Monad.Catch                      ( Exception
+                                                          , MonadThrow
+                                                          , throwM
+                                                          )
+import           Data.Scientific                          ( Scientific )
+import           Data.Text                                ( Text )
+import           Data.Time.Calendar                       ( Day )
+import qualified Text.Megaparsec.Pos           as P
 
 data Directive
   = DatedCommandDirective DatedCommand

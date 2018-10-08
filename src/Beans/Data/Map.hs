@@ -37,9 +37,11 @@ newtype Map k v = Map
   { unmap :: M.Map k v
   } deriving (Eq, Functor, Traversable, Foldable)
 
+instance (Semigroup v, Ord k) => Semigroup (Map k v) where
+  (Map m1) <> (Map m2) = Map (M.unionWith (<>) m1 m2)
+
 instance (Monoid v, Ord k) => Monoid (Map k v) where
   mempty = Map mempty
-  (Map m1) `mappend` (Map m2) = Map (M.unionWith mappend m1 m2)
 
 instance (Group v, Ord k) => Group (Map k v) where
   invert (Map v) = Map (invert <$> v)

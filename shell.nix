@@ -1,6 +1,6 @@
 {
   nixpkgs ? import <nixpkgs> {},
-  compiler ? "ghc822",
+  compiler ? "ghc843",
   withHoogle ? true
 }:
 

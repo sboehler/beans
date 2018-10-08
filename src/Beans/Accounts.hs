@@ -38,6 +38,7 @@ import           Control.Monad.Catch                      ( Exception
 import           Control.Monad.State                      ( MonadState
                                                           , evalStateT
                                                           , get
+                                                          , gets
                                                           , modify
                                                           , put
                                                           )
@@ -74,8 +75,8 @@ check (OpenCommand open@Open { oAccount, oRestriction }) = do
   when (oAccount `M.member` restrictions) (throwM $ AccountIsAlreadyOpen open)
   modify $ M.insert oAccount oRestriction
 check (CloseCommand closing@Close { cAccount }) = do
-  (restriction, remainingRestrictions) <-
-    M.partitionWithKey (const . (== cAccount)) <$> get
+  (restriction, remainingRestrictions) <- gets
+    (M.partitionWithKey (const . (== cAccount)))
   when (null restriction) (throwM $ AccountIsNotOpen closing)
   put remainingRestrictions
 check (TransactionCommand Transaction { tPostings }) = do
@@ -101,19 +102,18 @@ processTimestep (Timestep day commands) = do
 
 processTimestep'
   :: (MonadThrow m, MonadState Accounts m) => Timestep -> m Accounts
-processTimestep' (Timestep _ commands) = do
-  mapM_ process commands >> get
+processTimestep' (Timestep _ commands) = mapM_ process commands >> get
 
 
 process :: (MonadThrow m, MonadState Accounts m) => Command -> m ()
 process (CloseCommand closing@Close { cAccount }) = do
-  (deletedAccount, remainingAccounts) <- M.partitionWithKey g <$> get
+  (deletedAccount, remainingAccounts) <- gets (M.partitionWithKey g)
   unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero closing)
   put remainingAccounts
   where g (a, _, _) _ = a == cAccount
 process (TransactionCommand Transaction { tPostings }) =
   modify $ mappend tPostings
 process (BalanceCommand bal@Balance { bAccount, bAmount, bCommodity }) = do
-  s <- A.balance bAccount bCommodity <$> get
+  s <- gets $ A.balance bAccount bCommodity
   unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
 process _ = pure ()

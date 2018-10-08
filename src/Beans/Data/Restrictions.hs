@@ -15,6 +15,10 @@ data Restriction
   | RestrictedTo [Commodity]
   deriving (Eq, Ord, Show)
 
+instance Semigroup Restriction where
+  RestrictedTo x <> RestrictedTo y = RestrictedTo (x `union` y)
+  _ <> _ = NoRestriction
+
 instance Monoid Restriction where
   mempty = RestrictedTo []
   RestrictedTo x `mappend` RestrictedTo y = RestrictedTo (x `union` y)

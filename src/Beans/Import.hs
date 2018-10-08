@@ -1,23 +1,39 @@
 module Beans.Import
   ( importCommand
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts         (Account)
-import           Beans.Data.Directives       (Command (..), DatedCommand (..),
-                                              Flag (Complete), Transaction (..))
-import qualified Beans.Data.Map              as M
+import           Beans.Data.Accounts                      ( Account )
+import           Beans.Data.Directives                    ( Command(..)
+                                                          , DatedCommand(..)
+                                                          , Flag(Complete)
+                                                          , Transaction(..)
+                                                          )
+import qualified Beans.Data.Map                as M
 import qualified Beans.Import.CH.Postfinance
-import           Beans.Import.Common         (Entry (..))
-import           Beans.Import.DSL            (Rule, evaluate, parseFile)
-import           Beans.Options               (ImportOptions (..))
-import           Beans.Pretty                ()
-import           Control.Applicative         (ZipList (ZipList), getZipList)
-import           Control.Exception           (Exception)
-import           Control.Monad.Catch         (MonadThrow, throwM)
-import           Control.Monad.IO.Class      (MonadIO, liftIO)
-import           Control.Monad.Reader        (MonadReader, ask, asks)
-import           Data.Monoid                 ((<>))
-import qualified Data.Text.Prettyprint.Doc   as P
+import           Beans.Import.Common                      ( Entry(..) )
+import           Beans.Import.DSL                         ( Rule
+                                                          , evaluate
+                                                          , parseFile
+                                                          )
+import           Beans.Options                            ( ImportOptions(..) )
+import           Beans.Pretty                             ( )
+import           Control.Applicative                      ( ZipList(ZipList)
+                                                          , getZipList
+                                                          )
+import           Control.Exception                        ( Exception )
+import           Control.Monad.Catch                      ( MonadThrow
+                                                          , throwM
+                                                          )
+import           Control.Monad.IO.Class                   ( MonadIO
+                                                          , liftIO
+                                                          )
+import           Control.Monad.Reader                     ( MonadReader
+                                                          , ask
+                                                          , asks
+                                                          )
+import           Data.Monoid                              ( (<>) )
+import qualified Data.Text.Prettyprint.Doc     as P
 import           Debug.Trace
 
 data ImportException = NoAccountFound [Rule] Entry | InvalidImporter String deriving (Show)

@@ -24,14 +24,17 @@ module Beans.Data.Map
   , member
   , toList
   , partitionWithKey
-  ) where
+  )
+where
 
-import           Data.Foldable    (Foldable)
-import           Data.Group       (Group (..))
-import qualified Data.Map.Strict  as M
-import qualified Data.Set         as S
-import           Data.Traversable (Traversable (..))
-import           Prelude          hiding (filter, lookup)
+import           Data.Foldable                            ( Foldable )
+import           Data.Group                               ( Group(..) )
+import qualified Data.Map.Strict               as M
+import qualified Data.Set                      as S
+import           Data.Traversable                         ( Traversable(..) )
+import           Prelude                           hiding ( filter
+                                                          , lookup
+                                                          )
 
 newtype Map k v = Map
   { unmap :: M.Map k v

@@ -10,16 +10,19 @@ module Beans.Data.Accounts
   , summarize
   , eraseLots
   , Account(..)
-  ) where
+  )
+where
 
-import qualified Beans.Data.Map     as M
-import           Data.Foldable      (fold)
-import qualified Data.List          as L
-import           Data.Maybe         (catMaybes)
-import           Data.Monoid        (Sum)
-import           Data.Scientific    (Scientific)
-import           Data.Text          (Text, unpack)
-import           Data.Time.Calendar (Day)
+import qualified Beans.Data.Map                as M
+import           Data.Foldable                            ( fold )
+import qualified Data.List                     as L
+import           Data.Maybe                               ( catMaybes )
+import           Data.Monoid                              ( Sum )
+import           Data.Scientific                          ( Scientific )
+import           Data.Text                                ( Text
+                                                          , unpack
+                                                          )
+import           Data.Time.Calendar                       ( Day )
 
 type Amount = Sum Scientific
 

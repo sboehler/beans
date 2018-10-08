@@ -1,26 +1,49 @@
 module Beans.Import.CH.Postfinance
-  ( parseEntries, name
-  ) where
+  ( parseEntries
+  , name
+  )
+where
 
-import           Beans.Data.Accounts        (Amount, Commodity (Commodity))
-import           Beans.Import.Common        (Entry (..), ImporterException (..))
-import           Control.Monad              (void)
-import           Control.Monad.Catch        (MonadThrow, throwM)
-import           Control.Monad.IO.Class     (MonadIO, liftIO)
-import qualified Data.ByteString            as BS
-import           Data.Monoid                (Sum (Sum))
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import           Data.Text.Encoding         (decodeLatin1)
-import           Data.Time.Calendar         (Day, fromGregorian)
-import           Data.Void                  (Void)
+import           Beans.Data.Accounts                      ( Amount
+                                                          , Commodity(Commodity)
+                                                          )
+import           Beans.Import.Common                      ( Entry(..)
+                                                          , ImporterException(..)
+                                                          )
+import           Control.Monad                            ( void )
+import           Control.Monad.Catch                      ( MonadThrow
+                                                          , throwM
+                                                          )
+import           Control.Monad.IO.Class                   ( MonadIO
+                                                          , liftIO
+                                                          )
+import qualified Data.ByteString               as BS
+import           Data.Monoid                              ( Sum(Sum) )
+import           Data.Text                                ( Text )
+import qualified Data.Text                     as T
+import           Data.Text.Encoding                       ( decodeLatin1 )
+import           Data.Time.Calendar                       ( Day
+                                                          , fromGregorian
+                                                          )
+import           Data.Void                                ( Void )
 
-import           Text.Megaparsec            (Parsec, count, manyTill, optional,
-                                             parse, parseErrorPretty,
-                                             skipManyTill, some, (<|>))
-import           Text.Megaparsec.Char       (alphaNumChar, anyChar, char,
-                                             digitChar, eol)
-import qualified Text.Megaparsec.Char.Lexer as L
+import           Text.Megaparsec                          ( Parsec
+                                                          , count
+                                                          , manyTill
+                                                          , optional
+                                                          , parse
+                                                          , parseErrorPretty
+                                                          , skipManyTill
+                                                          , some
+                                                          , (<|>)
+                                                          )
+import           Text.Megaparsec.Char                     ( alphaNumChar
+                                                          , anyChar
+                                                          , char
+                                                          , digitChar
+                                                          , eol
+                                                          )
+import qualified Text.Megaparsec.Char.Lexer    as L
 
 
 name :: Text

@@ -1,41 +1,79 @@
 module Beans.Parser where
 
-import           Beans.Data.Accounts        (Account (..), AccountType (..),
-                                             Amount, Amounts,
-                                             Commodity (..), Lot (..))
-import           Beans.Data.Directives      (Balance (..), Close (..),
-                                             Command (..), DatedCommand (..),
-                                             Directive (..), Flag (..),
-                                             Include (..), Open (..),
-                                             Option (..), Price (..), Tag (..),
-                                             Transaction (..),
-                                             mkBalancedTransaction)
-import qualified Beans.Data.Map             as M
-import           Beans.Data.Restrictions    (Restriction (..))
-import           Control.Monad              (void)
-import           Control.Monad.Catch        (Exception, MonadThrow, throwM)
-import           Control.Monad.IO.Class     (MonadIO)
-import           Control.Monad.Trans        (liftIO)
-import           Data.Char                  (isAlphaNum)
-import           Data.Functor               (($>))
-import           Data.Monoid                (Sum (Sum))
-import qualified Data.Set                   as S
-import           Data.Text                  (Text, cons, unpack)
-import           Data.Text.IO               (readFile)
-import           Data.Time.Calendar         (Day, fromGregorian)
-import           Prelude                    hiding (readFile)
-import           System.FilePath.Posix      (combine, takeDirectory)
-import           Text.Megaparsec            (ErrorFancy (..), Parsec,
-                                             ShowErrorComponent (..), between,
-                                             count, empty, eof, fancyFailure,
-                                             getPosition, many, optional, parse,
-                                             parseErrorPretty, sepBy, sepBy1,
-                                             some, takeWhile1P, takeWhileP, try,
-                                             (<|>))
-import           Text.Megaparsec.Char       (char, digitChar, letterChar,
-                                             space1)
-import qualified Text.Megaparsec.Char.Lexer as L
-import qualified Text.Megaparsec.Pos        as P
+import           Beans.Data.Accounts                      ( Account(..)
+                                                          , AccountType(..)
+                                                          , Amount
+                                                          , Amounts
+                                                          , Commodity(..)
+                                                          , Lot(..)
+                                                          )
+import           Beans.Data.Directives                    ( Balance(..)
+                                                          , Close(..)
+                                                          , Command(..)
+                                                          , DatedCommand(..)
+                                                          , Directive(..)
+                                                          , Flag(..)
+                                                          , Include(..)
+                                                          , Open(..)
+                                                          , Option(..)
+                                                          , Price(..)
+                                                          , Tag(..)
+                                                          , Transaction(..)
+                                                          , mkBalancedTransaction
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Data.Restrictions                  ( Restriction(..) )
+import           Control.Monad                            ( void )
+import           Control.Monad.Catch                      ( Exception
+                                                          , MonadThrow
+                                                          , throwM
+                                                          )
+import           Control.Monad.IO.Class                   ( MonadIO )
+import           Control.Monad.Trans                      ( liftIO )
+import           Data.Char                                ( isAlphaNum )
+import           Data.Functor                             ( ($>) )
+import           Data.Monoid                              ( Sum(Sum) )
+import qualified Data.Set                      as S
+import           Data.Text                                ( Text
+                                                          , cons
+                                                          , unpack
+                                                          )
+import           Data.Text.IO                             ( readFile )
+import           Data.Time.Calendar                       ( Day
+                                                          , fromGregorian
+                                                          )
+import           Prelude                           hiding ( readFile )
+import           System.FilePath.Posix                    ( combine
+                                                          , takeDirectory
+                                                          )
+import           Text.Megaparsec                          ( ErrorFancy(..)
+                                                          , Parsec
+                                                          , ShowErrorComponent(..)
+                                                          , between
+                                                          , count
+                                                          , empty
+                                                          , eof
+                                                          , fancyFailure
+                                                          , getPosition
+                                                          , many
+                                                          , optional
+                                                          , parse
+                                                          , parseErrorPretty
+                                                          , sepBy
+                                                          , sepBy1
+                                                          , some
+                                                          , takeWhile1P
+                                                          , takeWhileP
+                                                          , try
+                                                          , (<|>)
+                                                          )
+import           Text.Megaparsec.Char                     ( char
+                                                          , digitChar
+                                                          , letterChar
+                                                          , space1
+                                                          )
+import qualified Text.Megaparsec.Char.Lexer    as L
+import qualified Text.Megaparsec.Pos           as P
 
 -- The exception exported by this module
 newtype ParserException =

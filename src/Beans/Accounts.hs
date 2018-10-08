@@ -5,22 +5,43 @@ module Beans.Accounts
   , processTimestep
   , processTimestep'
   , checkTimestep
-  ) where
+  )
+where
 
-import           Beans.Data.Accounts     (Account, Accounts, Amount, Commodity)
-import qualified Beans.Data.Accounts     as A
-import           Beans.Data.Directives   (Balance (..), Close (..),
-                                          Command (..), Open (..),
-                                          Transaction (..))
-import qualified Beans.Data.Map          as M
-import           Beans.Data.Restrictions (Restriction, Restrictions)
-import qualified Beans.Data.Restrictions as R
-import           Beans.Ledger            (Ledger, Timestep (..))
-import           Control.Monad           (unless, when)
-import           Control.Monad.Catch     (Exception, MonadThrow, throwM)
-import           Control.Monad.State     (MonadState, evalStateT, get, modify,
-                                          put)
-import           Data.Time.Calendar      (Day)
+import           Beans.Data.Accounts                      ( Account
+                                                          , Accounts
+                                                          , Amount
+                                                          , Commodity
+                                                          )
+import qualified Beans.Data.Accounts           as A
+import           Beans.Data.Directives                    ( Balance(..)
+                                                          , Close(..)
+                                                          , Command(..)
+                                                          , Open(..)
+                                                          , Transaction(..)
+                                                          )
+import qualified Beans.Data.Map                as M
+import           Beans.Data.Restrictions                  ( Restriction
+                                                          , Restrictions
+                                                          )
+import qualified Beans.Data.Restrictions       as R
+import           Beans.Ledger                             ( Ledger
+                                                          , Timestep(..)
+                                                          )
+import           Control.Monad                            ( unless
+                                                          , when
+                                                          )
+import           Control.Monad.Catch                      ( Exception
+                                                          , MonadThrow
+                                                          , throwM
+                                                          )
+import           Control.Monad.State                      ( MonadState
+                                                          , evalStateT
+                                                          , get
+                                                          , modify
+                                                          , put
+                                                          )
+import           Data.Time.Calendar                       ( Day )
 
 data AccountsException
   = AccountIsNotOpen Close
@@ -65,8 +86,7 @@ check (TransactionCommand Transaction { tPostings }) = do
     Nothing -> throwM $ BookingErrorAccountNotOpen a
     Just r  -> unless
       (R.isCompatible r c)
-      ( throwM
-      $ BookingErrorCommodityIncompatible a c (M.findWithDefaultM c s) r
+      (throwM $ BookingErrorCommodityIncompatible a c (M.findWithDefaultM c s) r
       )
 check (BalanceCommand bal@Balance { bAccount }) = do
   r <- get

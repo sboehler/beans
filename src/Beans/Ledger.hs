@@ -3,15 +3,19 @@ module Beans.Ledger
   , Timestep(..)
   , buildLedger
   , filterLedger
-  ) where
+  )
+where
 
-import           Beans.Data.Directives (Command (..), DatedCommand (..),
-                                        Directive (..), Transaction (..))
-import qualified Beans.Data.Map        as M
-import qualified Data.List             as L
-import           Data.Time.Calendar    (Day)
-import           Prelude               hiding (filter)
-import           Text.Regex.PCRE       ((=~))
+import           Beans.Data.Directives                    ( Command(..)
+                                                          , DatedCommand(..)
+                                                          , Directive(..)
+                                                          , Transaction(..)
+                                                          )
+import qualified Beans.Data.Map                as M
+import qualified Data.List                     as L
+import           Data.Time.Calendar                       ( Day )
+import           Prelude                           hiding ( filter )
+import           Text.Regex.PCRE                          ( (=~) )
 
 data Timestep =
   Timestep Day
@@ -26,7 +30,7 @@ buildLedger = build . L.sort . filter
   filter d = [ c | (DatedCommandDirective c) <- d ]
   build = foldr add []
   add (DatedCommand d c) [] = [Timestep d [c]]
-  add (DatedCommand d command) timesteps@(Timestep day commands:ts)
+  add (DatedCommand d command) timesteps@(Timestep day commands : ts)
     | day == d  = Timestep day (command : commands) : ts
     | otherwise = Timestep d [command] : timesteps
 

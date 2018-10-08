@@ -80,6 +80,6 @@ getParser = do
   select name
  where
   select n
-    | traceShowId (n) == Beans.Import.CH.Postfinance.name = return
+    | traceShowId n == Beans.Import.CH.Postfinance.name = return
       Beans.Import.CH.Postfinance.parseEntries
     | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n

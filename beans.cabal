@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.21.2.
+-- This file has been generated from package.yaml by hpack version 0.28.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2a7526b682abedbedb5c0e34296793dac62f1ab1e264e72f2b277c792bc0bede
+-- hash: 566e95d2a5c7579275879988425de67589b08a2abb24e0456135078cf51d0fda
 
 name:           beans
 version:        0.0.1.0
@@ -18,7 +18,6 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
-
 extra-source-files:
     ChangeLog.md
     README.org

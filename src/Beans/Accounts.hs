@@ -1,14 +1,14 @@
 module Beans.Accounts
   ( AccountsException(..)
   , Accounts
-  , calculateAccounts
+  , calculateAccountsForDays
+  , checkLedger
   , processTimestep
-  , processTimestep'
   , checkTimestep
-  , checkTimestep'
   )
 where
 
+import qualified Data.List                     as L
 import           Beans.Data.Accounts                      ( Account
                                                           , Accounts
                                                           , Amount
@@ -31,6 +31,8 @@ import           Beans.Ledger                             ( Ledger
                                                           , Timestep(..)
                                                           )
 import           Control.Monad                            ( unless
+                                                          , foldM
+                                                          , foldM_
                                                           , when
                                                           )
 import           Control.Monad.Catch                      ( Exception
@@ -61,17 +63,21 @@ data AccountsException
 
 instance Exception AccountsException
 
-calculateAccounts :: (MonadThrow m) => Ledger -> m (M.Map Date Accounts)
-calculateAccounts l = do
-  evalStateT (mapM_ checkTimestep l)                  mempty
-  evalStateT (M.fromListM <$> mapM processTimestep l) mempty
+checkLedger :: (MonadThrow m) => Ledger -> m Ledger
+checkLedger l = foldM_ checkTimestep mempty l >> pure l
 
-checkTimestep :: (MonadThrow m, MonadState Restrictions m) => Timestep -> m ()
-checkTimestep (Timestep _ commands) = mapM_ check commands
+calculateAccountsForDays
+  :: (MonadThrow m) => Ledger -> [Date] -> Accounts -> m [Accounts]
+calculateAccountsForDays ledger (day : days) initialAccounts = do
+  let (previous, later) = L.span ((<= day) . tsDate) ledger
+  currAccounts <- foldM processTimestep initialAccounts previous
+  rest         <- calculateAccountsForDays later days currAccounts
+  return $ currAccounts : rest
+calculateAccountsForDays _ [] _ = return []
 
-checkTimestep'
-  :: (MonadThrow m, MonadState Restrictions m) => Timestep -> m Restrictions
-checkTimestep' (Timestep _ commands) = mapM_ check commands >> get
+checkTimestep :: (MonadThrow m) => Restrictions -> Timestep -> m Restrictions
+checkTimestep restrictions (Timestep _ commands) =
+  evalStateT (mapM_ check commands >> get) restrictions
 
 
 check :: (MonadThrow m, MonadState Restrictions m) => Command -> m ()
@@ -99,16 +105,9 @@ check (BalanceCommand bal@Balance { bAccount }) = do
   unless (bAccount `M.member` r) (throwM $ AccountDoesNotExist bal)
 check _ = pure ()
 
-processTimestep
-  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m (Date, Accounts)
-processTimestep (Timestep day commands) = do
-  a <- mapM_ process commands >> get
-  return (day, a)
-
-processTimestep'
-  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m Accounts
-processTimestep' (Timestep _ commands) = mapM_ process commands >> get
-
+processTimestep :: (MonadThrow m) => Accounts -> Timestep -> m Accounts
+processTimestep accounts (Timestep _ commands) =
+  evalStateT (mapM_ process commands >> get) accounts
 
 process :: (MonadThrow m, MonadState Accounts m) => Command -> m ()
 process (CloseCommand closing@Close { cAccount }) = do

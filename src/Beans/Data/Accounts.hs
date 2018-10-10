@@ -2,7 +2,6 @@ module Beans.Data.Accounts
   ( Accounts
   , Amount
   , Amounts
-  , AccountsHistory
   , AccountType(..)
   , Commodity(..)
   , Date(..)
@@ -32,8 +31,6 @@ data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord, Show)
 type Amounts = M.Map Commodity Amount
 
 type Accounts = M.Map (Account, Commodity, Maybe Lot) Amounts
-
-type AccountsHistory = M.Map Date Accounts
 
 data AccountType
   = Assets

@@ -4,6 +4,7 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , AccountType(..)
                                                           , Amount
                                                           , Amounts
+                                                          , Date(..)
                                                           , Commodity(..)
                                                           , Lot(..)
                                                           )
@@ -120,12 +121,15 @@ lexeme = L.lexeme sc
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
-date :: Parser Day
-date =
+day :: Parser Day
+day =
   lexeme $ fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
  where
   dash = symbol "-"
   digits n = read <$> count n digitChar
+
+date :: Parser Date
+date = Date <$> day
 
 identifier :: Parser Text
 identifier =
@@ -153,7 +157,7 @@ quotedString = lexeme
   $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
   where quote = char '"'
 
-lot :: Day -> Parser Lot
+lot :: Date -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)
  where
   comma    = symbol ","
@@ -164,7 +168,7 @@ postingPrice :: Parser ()
 postingPrice = (at *> optional at *> amount *> commodity) $> ()
   where at = symbol "@"
 
-posting :: Day -> Parser ((Account, Commodity, Maybe Lot), Amounts)
+posting :: Date -> Parser ((Account, Commodity, Maybe Lot), Amounts)
 posting d = do
   a <- account
   s <- amount
@@ -184,7 +188,7 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: Day -> Parser Transaction
+transaction :: Date -> Parser Transaction
 transaction d = do
   f      <- flag
   desc   <- quotedString
@@ -215,7 +219,7 @@ price :: Parser Price
 price = Price <$ symbol "price" <*> commodity <*> p <*> commodity
   where p = lexeme $ L.signed sc L.scientific
 
-command :: Day -> Parser Command
+command :: Date -> Parser Command
 command d =
   TransactionCommand
     <$> transaction d

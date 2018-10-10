@@ -12,6 +12,7 @@ where
 import           Beans.Data.Accounts                      ( Account
                                                           , Accounts
                                                           , Amount
+                                                          , Date
                                                           , Commodity
                                                           )
 import qualified Beans.Data.Accounts           as A
@@ -43,7 +44,6 @@ import           Control.Monad.State                      ( MonadState
                                                           , modify
                                                           , put
                                                           )
-import           Data.Time.Calendar                       ( Day )
 
 data AccountsException
   = AccountIsNotOpen Close
@@ -61,7 +61,7 @@ data AccountsException
 
 instance Exception AccountsException
 
-calculateAccounts :: (MonadThrow m) => Ledger -> m (M.Map Day Accounts)
+calculateAccounts :: (MonadThrow m) => Ledger -> m (M.Map Date Accounts)
 calculateAccounts l = do
   evalStateT (mapM_ checkTimestep l)                  mempty
   evalStateT (M.fromListM <$> mapM processTimestep l) mempty
@@ -100,7 +100,7 @@ check (BalanceCommand bal@Balance { bAccount }) = do
 check _ = pure ()
 
 processTimestep
-  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m (Day, Accounts)
+  :: (MonadThrow m, MonadState Accounts m) => Timestep -> m (Date, Accounts)
 processTimestep (Timestep day commands) = do
   a <- mapM_ process commands >> get
   return (day, a)

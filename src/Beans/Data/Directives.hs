@@ -18,6 +18,7 @@ where
 
 import           Beans.Data.Accounts                      ( Account
                                                           , Accounts
+                                                          , Date
                                                           , Amount
                                                           , Amounts
                                                           , Commodity
@@ -31,7 +32,6 @@ import           Control.Monad.Catch                      ( Exception
                                                           )
 import           Data.Scientific                          ( Scientific )
 import           Data.Text                                ( Text )
-import           Data.Time.Calendar                       ( Day )
 import qualified Text.Megaparsec.Pos           as P
 
 data Directive
@@ -41,7 +41,7 @@ data Directive
   deriving (Eq, Ord, Show)
 
 data DatedCommand =
-  DatedCommand Day
+  DatedCommand Date
                Command
   deriving (Eq, Ord, Show)
 

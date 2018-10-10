@@ -1,6 +1,7 @@
 module Main where
 
 import           Beans.Lib                                ( runBeans )
+import           Beans.Data.Accounts                      ( Date(..) )
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , Command(..)
                                                           , Filter(..)
@@ -13,7 +14,6 @@ import qualified Beans.Parser                  as P
 import           Data.Bifunctor                           ( first )
 import           Data.Semigroup                           ( (<>) )
 import qualified Data.Text                     as T
-import           Data.Time.Calendar                       ( Day )
 import           Options.Applicative
 import           Text.Megaparsec                          ( parse
                                                           , parseErrorPretty
@@ -23,15 +23,16 @@ import           Text.Megaparsec                          ( parse
 toReadM :: P.Parser a -> ReadM a
 toReadM p = eitherReader $ first parseErrorPretty . parse p "" . T.pack
 
-dateparser :: String -> String -> Parser (Maybe Day)
-dateparser optionStr helpStr = optional $ option
+dateparser :: Date -> String -> String -> Parser Date
+dateparser v optionStr helpStr = option
   (toReadM P.date)
-  (long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
+  (value v <> long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
 
-fromParser, toParser :: Parser (Maybe Day)
+fromParser, toParser :: Parser Date
 fromParser =
-  dateparser "from" "Consider only transactions at or after this date"
-toParser = dateparser "to" "Consider only transactions before this date"
+  dateparser MinDate "from" "Consider only transactions at or after this date"
+toParser =
+  dateparser MaxDate "to" "Consider only transactions before this date"
 
 filterParser :: Parser Filter
 filterParser =

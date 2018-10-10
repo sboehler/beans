@@ -33,14 +33,9 @@ import           Control.Monad.IO.Class                   ( MonadIO
 import           Control.Monad.Reader                     ( MonadReader
                                                           , asks
                                                           )
-import           Data.Maybe                               ( fromMaybe )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
-import           Data.Time.Calendar                       ( Day )
-import           Data.Time.LocalTime                      ( getZonedTime
-                                                          , localDay
-                                                          , zonedTimeToLocalTime
-                                                          )
+
 
 balanceCommand
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
@@ -72,18 +67,13 @@ accountsStage
   :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m AccountsHistory
 accountsStage = calculateAccounts
 
-reportStage
-  :: (MonadIO m, MonadReader BalanceOptions m) => AccountsHistory -> m Accounts
+reportStage :: (MonadReader BalanceOptions m) => AccountsHistory -> m Accounts
 reportStage accountsHistory = do
-  today <- liftIO getDate
-  to    <- asks balOptTo
-  from  <- asks balOptFrom
-  let a1 = M.lookupLEM (fromMaybe today to) accountsHistory
-      a0 = maybe mempty (`M.lookupLEM` accountsHistory) from
+  to   <- asks balOptTo
+  from <- asks balOptFrom
+  let a1 = M.lookupLEM to accountsHistory
+      a0 = M.lookupLEM from accountsHistory
   return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
-
-getDate :: IO Day
-getDate = localDay . zonedTimeToLocalTime <$> getZonedTime
 
 aggregationStage :: (MonadReader BalanceOptions m) => Accounts -> m Accounts
 aggregationStage accounts = do

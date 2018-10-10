@@ -2,9 +2,10 @@ module Beans.Options where
 
 import           Beans.Data.Accounts                      ( Account
                                                           , Commodity(..)
+                                                          , Date(..)
                                                           )
 import           Data.Text                                ( Text )
-import           Data.Time.Calendar                       ( Day )
+
 
 data Command
   = Balance BalanceOptions
@@ -16,8 +17,8 @@ data BalanceOptions = BalanceOptions
   { balOptJournal    :: FilePath
   , balOptMarket     :: Valuation
   , balOptLots       :: Bool
-  , balOptFrom       :: Maybe Day
-  , balOptTo         :: Maybe Day
+  , balOptFrom       :: Date
+  , balOptTo         :: Date
   , balOptDepth      :: Maybe Int
   , balOptFilter     :: Filter
   , balOptReportType :: ReportType
@@ -27,8 +28,8 @@ data BalanceOptions = BalanceOptions
 data JournalOptions = JournalOptions
   { ledOptJournal :: FilePath
   , ledOptMarket  :: Valuation
-  , ledOptFrom    :: Maybe Day
-  , ledOptTo      :: Maybe Day
+  , ledOptFrom    :: Date
+  , ledOptTo      :: Date
   , ledOptFilter  :: Filter
   } deriving (Show)
 

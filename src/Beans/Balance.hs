@@ -66,9 +66,7 @@ filterStage l = f <$> asks balOptFilter
   f NoFilter             = l
 
 valuationStage
-  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => Ledger
-  -> m Ledger
+  :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m Ledger
 valuationStage ledger = asks balOptMarket >>= f
  where
   f (AtMarket commodity) =
@@ -76,15 +74,11 @@ valuationStage ledger = asks balOptMarket >>= f
   f _ = pure ledger
 
 accountsStage
-  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => Ledger
-  -> m AccountsHistory
+  :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m AccountsHistory
 accountsStage = calculateAccounts
 
 reportStage
-  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => AccountsHistory
-  -> m Accounts
+  :: (MonadIO m, MonadReader BalanceOptions m) => AccountsHistory -> m Accounts
 reportStage accountsHistory = do
   today <- liftIO getDate
   to    <- asks balOptTo
@@ -96,10 +90,7 @@ reportStage accountsHistory = do
 getDate :: IO Day
 getDate = localDay . zonedTimeToLocalTime <$> getZonedTime
 
-aggregationStage
-  :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m)
-  => Accounts
-  -> m Accounts
+aggregationStage :: (MonadReader BalanceOptions m) => Accounts -> m Accounts
 aggregationStage accounts = do
   showLots <- asks balOptLots
   depth    <- asks balOptDepth

@@ -59,11 +59,7 @@ parseStage
 parseStage = buildLedger <$> (asks balOptJournal >>= parseFile)
 
 filterStage :: (MonadReader BalanceOptions m) => Ledger -> m Ledger
-filterStage l = f <$> asks balOptFilter
- where
-  f (StrictFilter regex) = filterLedger True regex l
-  f (Filter       regex) = filterLedger False regex l
-  f NoFilter             = l
+filterStage l = flip filterLedger l <$> asks balOptFilter
 
 valuationStage
   :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m Ledger

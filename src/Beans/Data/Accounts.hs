@@ -5,6 +5,7 @@ module Beans.Data.Accounts
   , AccountsHistory
   , AccountType(..)
   , Commodity(..)
+  , Date(..)
   , Lot(..)
   , balance
   , summarize
@@ -26,11 +27,13 @@ import           Data.Time.Calendar                       ( Day )
 
 type Amount = Sum Scientific
 
+data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord, Show)
+
 type Amounts = M.Map Commodity Amount
 
 type Accounts = M.Map (Account, Commodity, Maybe Lot) Amounts
 
-type AccountsHistory = M.Map Day Accounts
+type AccountsHistory = M.Map Date Accounts
 
 data AccountType
   = Assets
@@ -58,7 +61,7 @@ instance Show Commodity where
 data Lot = Lot
   { lPrice           :: Amount
   , lTargetCommodity :: Commodity
-  , lDate            :: Day
+  , lDate            :: Date
   , lLabel           :: Maybe Text
   } deriving (Eq, Ord)
 

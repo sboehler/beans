@@ -9,6 +9,7 @@ where
 import           Beans.Data.Accounts                      ( Account(..)
                                                           , Accounts
                                                           , Amount
+                                                          , Date(..)
                                                           , Commodity(..)
                                                           , Lot(..)
                                                           )
@@ -33,7 +34,6 @@ import           Beans.Ledger                             ( Ledger
 import           Data.Monoid                              ( Sum(..) )
 import           Data.Scientific                          ( Scientific )
 import           Data.Text.Prettyprint.Doc
-import           Data.Time.Calendar                       ( Day )
 
 instance Pretty Amount where
   pretty (Sum a) = pretty $ show a
@@ -47,7 +47,7 @@ instance Pretty Account where
 instance Pretty Commodity where
   pretty (Commodity c) = pretty c
 
-instance Pretty Day where
+instance Pretty Date where
   pretty = pretty . show
 
 instance Pretty Transaction where

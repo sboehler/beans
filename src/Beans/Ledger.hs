@@ -13,13 +13,13 @@ import           Beans.Data.Directives                    ( Command(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import qualified Data.List                     as L
-import           Data.Time.Calendar                       ( Day )
 import           Prelude                           hiding ( filter )
 import           Text.Regex.PCRE                          ( (=~) )
 import           Beans.Options                            ( Filter(..) )
+import           Beans.Data.Accounts                      ( Date )
 
 data Timestep =
-  Timestep Day
+  Timestep Date
            [Command]
   deriving (Show)
 

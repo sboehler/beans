@@ -3,7 +3,9 @@ module Beans.Import
   )
 where
 
-import           Beans.Data.Accounts                      ( Account )
+import           Beans.Data.Accounts                      ( Account
+                                                          , Date(Date)
+                                                          )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , DatedCommand(..)
                                                           , Flag(Complete)
@@ -61,10 +63,11 @@ eval rules entry =
 
 mkTransaction :: Entry -> Account -> Account -> DatedCommand
 mkTransaction Entry {..} account otherAccount =
-  DatedCommand eBookingDate $ TransactionCommand $ Transaction Complete
-                                                               eDescription
-                                                               []
-                                                               postings
+  DatedCommand (Date eBookingDate) $ TransactionCommand $ Transaction
+    Complete
+    eDescription
+    []
+    postings
  where
   postings = M.fromListM
     [ ((account, eCommodity, Nothing)     , M.singleton eCommodity eAmount)

@@ -4,8 +4,8 @@ module Beans.Valuation
 where
 
 import           Beans.Data.Restrictions                  ( Restrictions )
-import           Beans.Accounts                           ( checkTimestep'
-                                                          , processTimestep'
+import           Beans.Accounts                           ( checkTimestep
+                                                          , processTimestep
                                                           )
 import           Beans.Data.Accounts                      ( Account(..)
                                                           , AccountType(..)
@@ -73,8 +73,8 @@ convertTimestep
 convertTimestep timestep@(Timestep day commands) = do
   ValuationState {..} <- get
   let vsPrices' = updatePrices timestep vsPrices
-  vsRestrictions' <- evalStateT (checkTimestep' timestep) vsRestrictions
-  accounts        <- evalStateT (processTimestep' timestep) vsPrevAccounts
+  vsRestrictions' <- checkTimestep vsRestrictions timestep
+  accounts        <- processTimestep vsPrevAccounts timestep
   put ValuationState
     { vsPrices               = vsPrices'
     , vsPrevNormalizedPrices = vsNormalizedPrices

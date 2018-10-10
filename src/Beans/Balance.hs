@@ -3,11 +3,12 @@ module Beans.Balance
   )
 where
 
-import           Beans.Accounts                           ( calculateAccounts )
+import           Beans.Accounts                           ( calculateAccountsForDays
+                                                          , checkLedger
+                                                          )
 import           Beans.Data.Accounts                      ( Account(..)
                                                           , AccountType(..)
                                                           , Accounts
-                                                          , AccountsHistory
                                                           , eraseLots
                                                           , summarize
                                                           )
@@ -41,9 +42,9 @@ balanceCommand
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
 balanceCommand =
   parseStage
+    >>= checkLedger
     >>= valuationStage
     >>= filterStage
-    >>= accountsStage
     >>= reportStage
     >>= aggregationStage
     >>= printStage
@@ -63,16 +64,12 @@ valuationStage ledger = asks balOptMarket >>= f
     calculateValuation commodity (Account Equity ["Valuation"]) ledger
   f _ = pure ledger
 
-accountsStage
-  :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m AccountsHistory
-accountsStage = calculateAccounts
-
-reportStage :: (MonadReader BalanceOptions m) => AccountsHistory -> m Accounts
-reportStage accountsHistory = do
-  to   <- asks balOptTo
-  from <- asks balOptFrom
-  let a1 = M.lookupLEM to accountsHistory
-      a0 = M.lookupLEM from accountsHistory
+reportStage
+  :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m Accounts
+reportStage ledger = do
+  to       <- asks balOptTo
+  from     <- asks balOptFrom
+  [a0, a1] <- calculateAccountsForDays ledger [from, to] mempty
   return $ M.filter (not . null) $ fmap (M.filter (/= 0)) $ a1 `M.minus` a0
 
 aggregationStage :: (MonadReader BalanceOptions m) => Accounts -> m Accounts

@@ -19,8 +19,10 @@ import           Beans.Options                            ( Filter(..) )
 import           Beans.Data.Accounts                      ( Date )
 
 data Timestep =
-  Timestep Date
-           [Command]
+  Timestep {
+    tsDate :: Date,
+    tsCommands :: [Command]
+    }
   deriving (Show)
 
 type Ledger = [Timestep]

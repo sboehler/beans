@@ -5,6 +5,7 @@ module Beans.Accounts
   , processTimestep
   , processTimestep'
   , checkTimestep
+  , checkTimestep'
   )
 where
 
@@ -67,6 +68,10 @@ calculateAccounts l = do
 
 checkTimestep :: (MonadThrow m, MonadState Restrictions m) => Timestep -> m ()
 checkTimestep (Timestep _ commands) = mapM_ check commands
+
+checkTimestep'
+  :: (MonadThrow m, MonadState Restrictions m) => Timestep -> m Restrictions
+checkTimestep' (Timestep _ commands) = mapM_ check commands >> get
 
 
 check :: (MonadThrow m, MonadState Restrictions m) => Command -> m ()

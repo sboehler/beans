@@ -21,7 +21,6 @@ import           Beans.Ledger                             ( Ledger
                                                           , filterLedger
                                                           )
 import           Beans.Options                            ( BalanceOptions(..)
-                                                          , Filter(..)
                                                           , ReportType(..)
                                                           , Valuation(..)
                                                           )

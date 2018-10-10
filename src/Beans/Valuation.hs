@@ -3,7 +3,8 @@ module Beans.Valuation
   )
 where
 
-import           Beans.Accounts                           ( checkTimestep
+import           Beans.Data.Restrictions                  ( Restrictions )
+import           Beans.Accounts                           ( checkTimestep'
                                                           , processTimestep'
                                                           )
 import           Beans.Data.Accounts                      ( Account(..)
@@ -50,6 +51,7 @@ data ValuationState = ValuationState
   , vsTarget               :: Commodity
   , vsValuationAccount     :: Account
   , vsDate                 :: Day
+  , vsRestrictions :: Restrictions
   }
 
 calculateValuation :: MonadThrow m => Commodity -> Account -> Ledger -> m Ledger
@@ -63,6 +65,7 @@ calculateValuation target valuationAccount ledger = evalStateT
     , vsDate                 = fromGregorian 1900 1 1
     , vsTarget               = target
     , vsValuationAccount     = valuationAccount
+    , vsRestrictions         = mempty
     }
 
 convertTimestep
@@ -70,13 +73,14 @@ convertTimestep
 convertTimestep timestep@(Timestep day commands) = do
   ValuationState {..} <- get
   let vsPrices' = updatePrices timestep vsPrices
-  evalStateT (checkTimestep timestep) mempty
-  accounts <- evalStateT (processTimestep' timestep) vsPrevAccounts
+  vsRestrictions' <- evalStateT (checkTimestep' timestep) vsRestrictions
+  accounts        <- evalStateT (processTimestep' timestep) vsPrevAccounts
   put ValuationState
     { vsPrices               = vsPrices'
     , vsPrevNormalizedPrices = vsNormalizedPrices
     , vsNormalizedPrices     = normalize vsPrices' vsTarget
     , vsPrevAccounts         = accounts
+    , vsRestrictions         = vsRestrictions'
     , ..
     }
   valuationTransactions <- adjustValuationForAccounts

@@ -16,7 +16,7 @@ import qualified Data.List                     as L
 import           Data.Time.Calendar                       ( Day )
 import           Prelude                           hiding ( filter )
 import           Text.Regex.PCRE                          ( (=~) )
-import Beans.Options(Filter(..))
+import           Beans.Options                            ( Filter(..) )
 
 data Timestep =
   Timestep Day
@@ -37,7 +37,7 @@ buildLedger = build . L.sort . filter
 
 -- filter a ledger
 filterLedger :: Filter -> Ledger -> Ledger
-filterLedger (StrictFilter regex) ledger =  strictFilter <$> ledger
+filterLedger (StrictFilter regex) ledger = strictFilter <$> ledger
  where
   strictFilter (Timestep day commands) = Timestep
     day

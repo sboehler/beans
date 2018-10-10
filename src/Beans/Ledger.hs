@@ -16,6 +16,7 @@ import qualified Data.List                     as L
 import           Data.Time.Calendar                       ( Day )
 import           Prelude                           hiding ( filter )
 import           Text.Regex.PCRE                          ( (=~) )
+import Beans.Options(Filter(..))
 
 data Timestep =
   Timestep Day
@@ -35,16 +36,17 @@ buildLedger = build . L.sort . filter
     | otherwise = Timestep d [command] : timesteps
 
 -- filter a ledger
-filterLedger :: Bool -> String -> Ledger -> Ledger
-filterLedger strict regex ledger = if strict
-  then strictFilter <$> ledger
-  else nonstrictFilter <$> ledger
+filterLedger :: Filter -> Ledger -> Ledger
+filterLedger (StrictFilter regex) ledger =  strictFilter <$> ledger
  where
-  nonstrictFilter (Timestep day commands) =
-    Timestep day (L.filter (matchTransaction regex) commands)
   strictFilter (Timestep day commands) = Timestep
     day
     (filterPostings regex <$> L.filter (matchTransaction regex) commands)
+filterLedger (Filter regex) ledger = nonstrictFilter <$> ledger
+ where
+  nonstrictFilter (Timestep day commands) =
+    Timestep day (L.filter (matchTransaction regex) commands)
+filterLedger NoFilter ledger = ledger
 
 filterPostings :: String -> Command -> Command
 filterPostings regex (TransactionCommand trx@Transaction { tPostings }) =

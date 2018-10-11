@@ -26,11 +26,11 @@ data BalanceOptions = BalanceOptions
 
 
 data JournalOptions = JournalOptions
-  { ledOptJournal :: FilePath
-  , ledOptMarket  :: Valuation
-  , ledOptFrom    :: Date
-  , ledOptTo      :: Date
-  , ledOptFilter  :: Filter
+  { jrnOptJournal :: FilePath
+  , jrnOptMarket  :: Valuation
+  , jrnOptFrom    :: Date
+  , jrnOptTo      :: Date
+  , jrnOptFilter  :: Filter
   } deriving (Show)
 
 

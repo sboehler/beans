@@ -26,7 +26,12 @@ import           Data.Time.Calendar                       ( Day )
 
 type Amount = Sum Scientific
 
-data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord, Show)
+data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord)
+
+instance Show Date where
+  show MinDate = "<MIN_DATE>"
+  show MaxDate = "<MAX_DATE>"
+  show (Date d) = show d
 
 type Amounts = M.Map Commodity Amount
 

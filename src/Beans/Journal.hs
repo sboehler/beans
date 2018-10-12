@@ -3,7 +3,9 @@ module Beans.Journal
   )
 where
 
-import           Beans.Data.Directives                    ( Dated(..) )
+import           Beans.Data.Directives                    ( Dated(..)
+                                                          , Command(Transaction)
+                                                          )
 import           Beans.Options                            ( JournalOptions(..) )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Control.Monad.IO.Class                   ( MonadIO
@@ -46,5 +48,8 @@ valuationStage
   :: (MonadThrow m, MonadReader JournalOptions m) => Ledger -> m Ledger
 valuationStage ledger = asks jrnOptMarket >>= flip valuateLedger ledger
 
-filterStage :: MonadReader JournalOptions f => Ledger -> f Ledger
-filterStage l = flip BL.filter l <$> asks jrnOptFilter
+filterStage :: MonadReader JournalOptions m => Ledger -> m Ledger
+filterStage l = do
+  let transactions = [ x | x@(Dated _ Transaction{}) <- l ]
+  filterConfig <- asks jrnOptFilter
+  return $ BL.filter filterConfig transactions

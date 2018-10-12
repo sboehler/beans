@@ -13,10 +13,8 @@ import           Control.Monad.Reader                     ( MonadReader
                                                           , asks
                                                           )
 import           Beans.Parser                             ( parseFile )
-import           Beans.Ledger                             ( Ledger
-                                                          , buildLedger
-                                                          , filterLedger
-                                                          )
+import qualified Beans.Ledger                  as BL
+import           Beans.Ledger                             ( Ledger )
 import           Beans.Accounts                           ( checkLedger )
 import           Beans.Valuation                          ( valuateLedger )
 import qualified Data.List                     as L
@@ -42,11 +40,11 @@ reportStage ledger = do
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m Ledger
-parseStage = buildLedger <$> (asks jrnOptJournal >>= parseFile)
+parseStage = BL.build <$> (asks jrnOptJournal >>= parseFile)
 
 valuationStage
   :: (MonadThrow m, MonadReader JournalOptions m) => Ledger -> m Ledger
 valuationStage ledger = asks jrnOptMarket >>= flip valuateLedger ledger
 
 filterStage :: MonadReader JournalOptions f => Ledger -> f Ledger
-filterStage l = flip filterLedger l <$> asks jrnOptFilter
+filterStage l = flip BL.filter l <$> asks jrnOptFilter

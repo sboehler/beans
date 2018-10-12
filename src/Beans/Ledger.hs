@@ -1,7 +1,7 @@
 module Beans.Ledger
   ( Ledger
-  , buildLedger
-  , filterLedger
+  , build
+  , filter
   )
 where
 
@@ -18,16 +18,14 @@ import           Beans.Options                            ( Filter(..) )
 
 type Ledger = [Dated Command]
 
-buildLedger :: [Directive] -> Ledger
-buildLedger = L.sort . filter
-  where filter d = [ c | (DatedCommandDirective c) <- d ]
+build :: [Directive] -> Ledger
+build = L.sort . f where f d = [ c | (DatedCommandDirective c) <- d ]
 
--- filter a ledger
-filterLedger :: Filter -> Ledger -> Ledger
-filterLedger (StrictFilter regex) =
+filter :: Filter -> Ledger -> Ledger
+filter (StrictFilter regex) =
   fmap (fmap (filterPostings regex)) . L.filter (matchCommand regex . undate)
-filterLedger (Filter regex) = L.filter (matchCommand regex . undate)
-filterLedger NoFilter       = id
+filter (Filter regex) = L.filter (matchCommand regex . undate)
+filter NoFilter       = id
 
 filterPostings :: String -> Command -> Command
 filterPostings regex (TransactionCommand trx@Transaction { tPostings }) =

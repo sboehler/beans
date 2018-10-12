@@ -2,7 +2,6 @@ module Beans.Prices
   ( PricesHistory
   , NormalizedPrices
   , Prices
-  , calculatePrices
   , updatePrices
   , normalize
   , lookupPrice
@@ -13,16 +12,10 @@ import           Beans.Data.Accounts                      ( Commodity(..) )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Price(..)
                                                           )
-import           Beans.Ledger                             ( Timestep(..) )
 import           Control.Monad.Catch                      ( Exception
                                                           , MonadThrow
                                                           , throwM
                                                           )
-import           Control.Monad.State                      ( evalState
-                                                          , get
-                                                          , modify
-                                                          )
-import           Data.Foldable                            ( foldl' )
 import qualified Data.Map.Strict               as M
 import           Data.Scientific                          ( Scientific
                                                           , fromFloatDigits
@@ -45,14 +38,9 @@ data PriceException
 
 instance Exception PriceException
 
-calculatePrices :: Traversable t => t Timestep -> t Prices
-calculatePrices l = evalState (mapM f l) mempty
-  where f timestep = modify (updatePrices timestep) >> get
-
-updatePrices :: Timestep -> Prices -> Prices
-updatePrices (Timestep _ commands) prices =
-  let prices' = foldl' addPrice prices commands
-  in  foldl' (\p -> addPrice p . invert) prices' commands
+updatePrices :: Prices -> Command -> Prices
+updatePrices prices command =
+  let prices' = addPrice prices command in addPrice prices' (invert command)
 
 addPrice :: Prices -> Command -> Prices
 addPrice prices (PriceCommand Price { pCommodity, pPrice, pTargetCommodity }) =

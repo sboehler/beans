@@ -1,6 +1,7 @@
+{-# Language DeriveTraversable #-}
 module Beans.Data.Directives
   ( Command(..)
-  , DatedCommand(..)
+  , Dated(..)
   , Directive(..)
   , Transaction(..)
   , mkBalancedTransaction
@@ -35,15 +36,17 @@ import           Data.Text                                ( Text )
 import qualified Text.Megaparsec.Pos           as P
 
 data Directive
-  = DatedCommandDirective DatedCommand
+  = DatedCommandDirective (Dated Command)
   | OptionDirective Option
   | IncludeDirective Include
   deriving (Eq, Ord, Show)
 
-data DatedCommand =
-  DatedCommand Date
-               Command
-  deriving (Eq, Ord, Show)
+data Dated a =
+  Dated {
+    date :: Date,
+    undate :: a
+    }
+  deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 data Command
   = BalanceCommand Balance
@@ -126,9 +129,9 @@ mkBalancedTransaction flag desc tags postings wildcard =
 
 completePostings :: MonadThrow m => Maybe Account -> Accounts -> m Accounts
 completePostings wildcard postings =
-  let imbalances = calculateImbalances postings
-  in  mappend postings <$> fixImbalances wildcard imbalances
+  mappend postings <$> fixImbalances wildcard imbalances
  where
+  imbalances = calculateImbalances postings
   fixImbalances w i
     | null i = return mempty
     | M.size i == 1 = case w of

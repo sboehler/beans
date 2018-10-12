@@ -25,7 +25,7 @@ toReadM p = eitherReader $ first parseErrorPretty . parse p "" . T.pack
 
 dateparser :: Date -> String -> String -> Parser Date
 dateparser v optionStr helpStr = option
-  (toReadM P.date)
+  (toReadM P.pDate)
   (value v <> long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
 
 fromParser, toParser :: Parser Date

@@ -11,7 +11,7 @@ import           Beans.Data.Accounts                      ( Account(..)
 import           Beans.Data.Directives                    ( Balance(..)
                                                           , Close(..)
                                                           , Command(..)
-                                                          , DatedCommand(..)
+                                                          , Dated(..)
                                                           , Directive(..)
                                                           , Flag(..)
                                                           , Include(..)
@@ -128,8 +128,8 @@ day =
   dash = symbol "-"
   digits n = read <$> count n digitChar
 
-date :: Parser Date
-date = Date <$> day
+pDate :: Parser Date
+pDate = Date <$> day
 
 identifier :: Parser Text
 identifier =
@@ -161,7 +161,7 @@ lot :: Date -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)
  where
   comma    = symbol ","
-  lotDate  = (comma >> date) <|> pure d
+  lotDate  = (comma >> pDate) <|> pure d
   lotLabel = optional (comma >> quotedString)
 
 postingPrice :: Parser ()
@@ -242,8 +242,8 @@ config =
 
 commandDirective :: Parser Directive
 commandDirective = do
-  d <- try date
-  DatedCommandDirective . DatedCommand d <$> command d
+  d <- try pDate
+  DatedCommandDirective . Dated d <$> command d
 
 directive :: Parser Directive
 directive =

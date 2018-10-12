@@ -16,7 +16,7 @@ import           Beans.Data.Accounts                      ( Account(..)
 import           Beans.Data.Directives                    ( Balance(..)
                                                           , Close(..)
                                                           , Command(..)
-                                                          , DatedCommand(..)
+                                                          , Dated(..)
                                                           , Directive(..)
                                                           , Flag(..)
                                                           , Include(..)
@@ -28,9 +28,7 @@ import           Beans.Data.Directives                    ( Balance(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import           Beans.Data.Restrictions                  ( Restriction(..) )
-import           Beans.Ledger                             ( Ledger
-                                                          , Timestep(Timestep)
-                                                          )
+import           Beans.Ledger                             ( Ledger )
 import           Data.Monoid                              ( Sum(..) )
 import           Data.Scientific                          ( Scientific )
 import           Data.Text.Prettyprint.Doc
@@ -82,8 +80,8 @@ instance Pretty Directive where
   pretty (OptionDirective o)       = pretty o
   pretty (IncludeDirective i)      = pretty i
 
-instance Pretty DatedCommand where
-  pretty (DatedCommand day command) = pretty day <+> pretty command
+instance Pretty a => Pretty (Dated a) where
+  pretty (Dated day x) = pretty day <+> pretty x
 
 instance Pretty Command where
   pretty (BalanceCommand b)     = pretty b
@@ -122,8 +120,3 @@ prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
 prettyPrintLedger :: Ledger -> IO ()
 prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty)
-
-instance Pretty Timestep where
-  pretty (Timestep day commands) = vsep (map pretty' commands) <> hardline
-    where
-      pretty' command = pretty day <+> pretty command

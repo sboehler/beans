@@ -3,8 +3,8 @@ module Beans.Accounts
   , Accounts
   , calculateAccountsForDays
   , checkLedger
-  , processTimestep
-  , checkTimestep
+  , check
+  , process
   )
 where
 
@@ -19,6 +19,7 @@ import qualified Beans.Data.Accounts           as A
 import           Beans.Data.Directives                    ( Balance(..)
                                                           , Close(..)
                                                           , Command(..)
+                                                          , Dated(..)
                                                           , Open(..)
                                                           , Transaction(..)
                                                           )
@@ -27,9 +28,7 @@ import           Beans.Data.Restrictions                  ( Restriction
                                                           , Restrictions
                                                           )
 import qualified Beans.Data.Restrictions       as R
-import           Beans.Ledger                             ( Ledger
-                                                          , Timestep(..)
-                                                          )
+import           Beans.Ledger                             ( Ledger )
 import           Control.Monad                            ( unless
                                                           , foldM
                                                           , foldM_
@@ -57,20 +56,16 @@ data AccountsException
 instance Exception AccountsException
 
 checkLedger :: (MonadThrow m) => Ledger -> m Ledger
-checkLedger l = foldM_ checkTimestep mempty l >> pure l
+checkLedger l = foldM_ check mempty (fmap undate l) >> pure l
 
 calculateAccountsForDays
   :: (MonadThrow m) => Ledger -> [Date] -> Accounts -> m [Accounts]
 calculateAccountsForDays ledger (day : days) initialAccounts = do
-  let (previous, later) = L.span ((<= day) . tsDate) ledger
-  currAccounts <- foldM processTimestep initialAccounts previous
+  let (previous, later) = L.span ((<= day) . date) ledger
+  currAccounts <- foldM process initialAccounts (undate <$> previous)
   rest         <- calculateAccountsForDays later days currAccounts
   return $ currAccounts : rest
 calculateAccountsForDays _ [] _ = return []
-
-checkTimestep :: (MonadThrow m) => Restrictions -> Timestep -> m Restrictions
-checkTimestep restrictions (Timestep _ commands) =
-  foldM check restrictions commands
 
 check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
 check restrictions (OpenCommand open@Open { oAccount, oRestriction }) = do
@@ -96,10 +91,6 @@ check restrictions (BalanceCommand bal@Balance { bAccount }) = do
   unless (bAccount `M.member` restrictions) $ throwM (AccountDoesNotExist bal)
   return restrictions
 check restrictions _ = pure restrictions
-
-processTimestep :: (MonadThrow m) => Accounts -> Timestep -> m Accounts
-processTimestep accounts (Timestep _ commands) =
-  foldM process accounts commands
 
 process :: (MonadThrow m) => Accounts -> Command -> m Accounts
 process accounts (CloseCommand closing@Close { cAccount }) = do

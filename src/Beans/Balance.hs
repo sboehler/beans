@@ -26,7 +26,7 @@ import           Beans.Options                            ( BalanceOptions(..)
                                                           , Valuation(..)
                                                           )
 import           Beans.Parser                             ( parseFile )
-import           Beans.Valuation                          ( calculateValuation )
+import           Beans.Valuation                          ( valuateLedger )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
@@ -61,7 +61,7 @@ valuationStage
 valuationStage ledger = asks balOptMarket >>= f
  where
   f (AtMarket commodity) =
-    calculateValuation commodity (Account Equity ["Valuation"]) ledger
+    valuateLedger commodity (Account Equity ["Valuation"]) ledger
   f _ = pure ledger
 
 reportStage

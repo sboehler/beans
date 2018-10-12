@@ -7,7 +7,7 @@ import           Beans.Data.Accounts                      ( Account
                                                           , Date(Date)
                                                           )
 import           Beans.Data.Directives                    ( Command(..)
-                                                          , DatedCommand(..)
+                                                          , Dated(..)
                                                           , Flag(Complete)
                                                           , Transaction(..)
                                                           )
@@ -61,13 +61,12 @@ eval :: MonadThrow m => [Rule] -> Entry -> m Account
 eval rules entry =
   maybe (throwM $ NoAccountFound rules entry) return (evaluate rules entry)
 
-mkTransaction :: Entry -> Account -> Account -> DatedCommand
+mkTransaction :: Entry -> Account -> Account -> Dated Command
 mkTransaction Entry {..} account otherAccount =
-  DatedCommand (Date eBookingDate) $ TransactionCommand $ Transaction
-    Complete
-    eDescription
-    []
-    postings
+  Dated (Date eBookingDate) $ TransactionCommand $ Transaction Complete
+                                                               eDescription
+                                                               []
+                                                               postings
  where
   postings = M.fromListM
     [ ((account, eCommodity, Nothing)     , M.singleton eCommodity eAmount)

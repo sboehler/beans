@@ -3,6 +3,7 @@ module Beans.Journal
   )
 where
 
+import           Beans.Data.Directives                    ( Dated(..) )
 import           Beans.Options                            ( JournalOptions(..)
                                                           , Valuation(..)
                                                           )
@@ -15,12 +16,11 @@ import           Control.Monad.Reader                     ( MonadReader
                                                           )
 import           Beans.Parser                             ( parseFile )
 import           Beans.Ledger                             ( Ledger
-                                                          , Timestep(..)
                                                           , buildLedger
                                                           , filterLedger
                                                           )
 import           Beans.Accounts                           ( checkLedger )
-import           Beans.Valuation                          ( calculateValuation )
+import           Beans.Valuation                          ( valuateLedger )
 import qualified Data.List                     as L
 import           Beans.Pretty                             ( prettyPrintLedger )
 import           Beans.Data.Accounts                      ( Account(..)
@@ -43,8 +43,7 @@ reportStage
 reportStage ledger = do
   to   <- asks jrnOptTo
   from <- asks jrnOptFrom
-  return
-    $ L.filter (\Timestep { tsDate } -> tsDate >= from && tsDate <= to) ledger
+  return $ L.filter (\(Dated d _) -> d >= from && d <= to) ledger
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m Ledger
@@ -55,7 +54,7 @@ valuationStage
 valuationStage ledger = asks jrnOptMarket >>= f
  where
   f (AtMarket commodity) =
-    calculateValuation commodity (Account Equity ["Valuation"]) ledger
+    valuateLedger commodity (Account Equity ["Valuation"]) ledger
   f _ = pure ledger
 
 filterStage :: MonadReader JournalOptions f => Ledger -> f Ledger

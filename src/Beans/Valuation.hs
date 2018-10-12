@@ -1,11 +1,11 @@
 module Beans.Valuation
-  ( calculateValuation
+  ( valuateLedger
   )
 where
 
 import           Beans.Data.Restrictions                  ( Restrictions )
-import           Beans.Accounts                           ( checkTimestep
-                                                          , processTimestep
+import           Beans.Accounts                           ( check
+                                                          , process
                                                           )
 import           Beans.Data.Accounts                      ( Account(..)
                                                           , AccountType(..)
@@ -16,21 +16,20 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , Lot(..)
                                                           )
 import           Beans.Data.Directives                    ( Command(..)
+                                                          , Dated(..)
                                                           , Flag(..)
-                                                          , Posting
                                                           , Transaction(..)
                                                           , mkBalancedTransaction
                                                           )
 import qualified Beans.Data.Map                as M
-import           Beans.Ledger                             ( Ledger
-                                                          , Timestep(..)
-                                                          )
+import           Beans.Ledger                             ( Ledger )
 import           Beans.Prices                             ( NormalizedPrices
                                                           , Prices
                                                           , lookupPrice
                                                           , normalize
                                                           , updatePrices
                                                           )
+import           Control.Monad                            ( foldM )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Control.Monad.State                      ( MonadState
                                                           , evalStateT
@@ -39,78 +38,85 @@ import           Control.Monad.State                      ( MonadState
                                                           , put
                                                           )
 import           Data.Monoid                              ( Sum(Sum) )
-import           Data.Time.Calendar                       ( Day
-                                                          , fromGregorian
-                                                          )
+import qualified Data.List                     as L
+
 
 data ValuationState = ValuationState
   { vsPrices               :: Prices
   , vsPrevNormalizedPrices :: NormalizedPrices
   , vsNormalizedPrices     :: NormalizedPrices
   , vsPrevAccounts         :: Accounts
+  , vsAccounts             :: Accounts
   , vsTarget               :: Commodity
   , vsValuationAccount     :: Account
-  , vsDate                 :: Day
   , vsRestrictions :: Restrictions
   }
 
-calculateValuation :: MonadThrow m => Commodity -> Account -> Ledger -> m Ledger
-calculateValuation target valuationAccount ledger = evalStateT
-  (mapM convertTimestep ledger)
-  ValuationState
-    { vsPrices               = mempty
-    , vsPrevNormalizedPrices = mempty
-    , vsNormalizedPrices     = mempty
-    , vsPrevAccounts         = mempty
-    , vsDate                 = fromGregorian 1900 1 1
-    , vsTarget               = target
-    , vsValuationAccount     = valuationAccount
-    , vsRestrictions         = mempty
-    }
+valuateLedger :: MonadThrow m => Commodity -> Account -> Ledger -> m Ledger
+valuateLedger target valuationAccount ledger =
+  let sameDay (Dated d1 _) (Dated d2 _) = d1 == d2
+      groups = L.groupBy sameDay ledger
+  in  concat <$> evalStateT
+        (mapM valuateGroup groups)
+        ValuationState
+          { vsPrices               = mempty
+          , vsPrevNormalizedPrices = mempty
+          , vsNormalizedPrices     = mempty
+          , vsPrevAccounts         = mempty
+          , vsAccounts             = mempty
+          , vsTarget               = target
+          , vsValuationAccount     = valuationAccount
+          , vsRestrictions         = mempty
+          }
 
-convertTimestep
-  :: (MonadThrow m, MonadState ValuationState m) => Timestep -> m Timestep
-convertTimestep timestep@(Timestep day commands) = do
-  ValuationState {..} <- get
-  let vsPrices' = updatePrices timestep vsPrices
-  vsRestrictions' <- checkTimestep vsRestrictions timestep
-  accounts        <- processTimestep vsPrevAccounts timestep
-  put ValuationState
-    { vsPrices               = vsPrices'
-    , vsPrevNormalizedPrices = vsNormalizedPrices
-    , vsNormalizedPrices     = normalize vsPrices' vsTarget
-    , vsPrevAccounts         = accounts
-    , vsRestrictions         = vsRestrictions'
-    , ..
-    }
+valuateGroup
+  :: (MonadThrow m, MonadState ValuationState m) => Ledger -> m Ledger
+valuateGroup dated@(c : _) = do
+  v@ValuationState {..} <- get
+  let vsDate'   = date c
+      commands  = undate <$> dated
+      vsPrices' = foldl updatePrices vsPrices commands
+  vsRestrictions' <- foldM check vsRestrictions commands
+  vsAccounts'     <- foldM process vsAccounts commands
+  put $ v { vsPrices               = vsPrices'
+          , vsAccounts             = vsAccounts'
+          , vsRestrictions         = vsRestrictions'
+          , vsPrevNormalizedPrices = vsNormalizedPrices
+          , vsNormalizedPrices     = normalize vsPrices' vsTarget
+          , vsPrevAccounts         = vsAccounts
+          }
   valuationTransactions <- adjustValuationForAccounts
-  commands'             <- concat <$> mapM process commands
-  return $ Timestep day (commands' ++ valuationTransactions)
+  commands'             <- mapM processCommand $ filter notBalance commands
+  return $ Dated vsDate' <$> (commands' ++ valuationTransactions)
+valuateGroup [] = pure []
 
-process :: (MonadThrow m, MonadState ValuationState m) => Command -> m [Command]
-process (TransactionCommand Transaction {..}) = do
+notBalance :: Command -> Bool
+notBalance (BalanceCommand _) = False
+notBalance _                  = True
+
+
+processCommand
+  :: (MonadThrow m, MonadState ValuationState m) => Command -> m Command
+processCommand (TransactionCommand Transaction {..}) = do
   ValuationState { vsValuationAccount } <- get
-  postings <- M.fromListM <$> mapM convertPosting (M.toList tPostings)
+  postings <- mapM valuateAmounts tPostings
   t        <- mkBalancedTransaction tFlag
                                     tDescription
                                     tTags
                                     postings
                                     (Just vsValuationAccount)
-  return [TransactionCommand t]
-process (BalanceCommand _) = pure []
-process c                  = pure [c]
+  return $ TransactionCommand t
+processCommand c = pure c
 
-convertPosting
-  :: (MonadThrow m, MonadState ValuationState m) => Posting -> m Posting
-convertPosting (k, amounts) = do
-  e <- mapM convertAmount $ M.toList amounts
-  return (k, M.fromListM e)
+valuateAmounts
+  :: (MonadThrow m, MonadState ValuationState m) => Amounts -> m Amounts
+valuateAmounts amounts = M.fromListM <$> mapM valuateAmount (M.toList amounts)
 
-convertAmount
+valuateAmount
   :: (MonadThrow m, MonadState ValuationState m)
   => (Commodity, Amount)
   -> m (Commodity, Amount)
-convertAmount a@(commodity, amount) = do
+valuateAmount a@(commodity, amount) = do
   tc <- gets vsTarget
   if tc == commodity
     then return a

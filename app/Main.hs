@@ -1,7 +1,7 @@
 module Main where
 
 import           Beans.Lib                                ( runBeans )
-import           Beans.Data.Accounts                      ( Date(..) )
+import           Beans.Data.Accounts                      ( Date(..), Account(..), AccountType(Equity))
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , Command(..)
                                                           , Filter(..)
@@ -49,12 +49,14 @@ filterParser =
     <|> pure NoFilter
 
 valuationParser :: Parser Valuation
-valuationParser =
+valuationParser = let
+  account = Account Equity ["Valuation"]
+ in
   (AtMarket <$> option
       (toReadM P.commodity)
       (long "at-market" <> metavar "COMMODITY" <> short 'm' <> help
         "Valuation at market prices"
-      )
+      ) <*> pure account
     )
     <|> (AtCost <$> option
           (toReadM P.commodity)

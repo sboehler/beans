@@ -4,9 +4,7 @@ module Beans.Journal
 where
 
 import           Beans.Data.Directives                    ( Dated(..) )
-import           Beans.Options                            ( JournalOptions(..)
-                                                          , Valuation(..)
-                                                          )
+import           Beans.Options                            ( JournalOptions(..) )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
@@ -23,9 +21,6 @@ import           Beans.Accounts                           ( checkLedger )
 import           Beans.Valuation                          ( valuateLedger )
 import qualified Data.List                     as L
 import           Beans.Pretty                             ( prettyPrintLedger )
-import           Beans.Data.Accounts                      ( Account(..)
-                                                          , AccountType(..)
-                                                          )
 
 journalCommand
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m ()
@@ -51,11 +46,7 @@ parseStage = buildLedger <$> (asks jrnOptJournal >>= parseFile)
 
 valuationStage
   :: (MonadThrow m, MonadReader JournalOptions m) => Ledger -> m Ledger
-valuationStage ledger = asks jrnOptMarket >>= f
- where
-  f (AtMarket commodity) =
-    valuateLedger commodity (Account Equity ["Valuation"]) ledger
-  f _ = pure ledger
+valuationStage ledger = asks jrnOptMarket >>= flip valuateLedger ledger
 
 filterStage :: MonadReader JournalOptions f => Ledger -> f Ledger
 filterStage l = flip filterLedger l <$> asks jrnOptFilter

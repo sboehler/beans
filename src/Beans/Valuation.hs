@@ -21,6 +21,7 @@ import           Beans.Data.Directives                    ( Command(..)
                                                           , Transaction(..)
                                                           , mkBalancedTransaction
                                                           )
+import           Beans.Options                            ( Valuation(..) )
 import qualified Beans.Data.Map                as M
 import           Beans.Ledger                             ( Ledger )
 import           Beans.Prices                             ( NormalizedPrices
@@ -52,8 +53,8 @@ data ValuationState = ValuationState
   , vsRestrictions :: Restrictions
   }
 
-valuateLedger :: MonadThrow m => Commodity -> Account -> Ledger -> m Ledger
-valuateLedger target valuationAccount ledger =
+valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
+valuateLedger (AtMarket target valuationAccount) ledger =
   let sameDay (Dated d1 _) (Dated d2 _) = d1 == d2
       groups = L.groupBy sameDay ledger
   in  concat <$> evalStateT
@@ -68,6 +69,8 @@ valuateLedger target valuationAccount ledger =
           , vsValuationAccount     = valuationAccount
           , vsRestrictions         = mempty
           }
+valuateLedger _ ledger = pure ledger
+
 
 valuateGroup
   :: (MonadThrow m, MonadState ValuationState m) => Ledger -> m Ledger

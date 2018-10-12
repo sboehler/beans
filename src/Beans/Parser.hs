@@ -8,18 +8,13 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , Commodity(..)
                                                           , Lot(..)
                                                           )
-import           Beans.Data.Directives                    ( Balance(..)
-                                                          , Close(..)
-                                                          , Command(..)
+import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
                                                           , Directive(..)
                                                           , Flag(..)
                                                           , Include(..)
-                                                          , Open(..)
                                                           , Option(..)
-                                                          , Price(..)
                                                           , Tag(..)
-                                                          , Transaction(..)
                                                           , mkBalancedTransaction
                                                           )
 import qualified Beans.Data.Map                as M
@@ -188,7 +183,7 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: Date -> Parser Transaction
+transaction :: Date -> Parser Command
 transaction d = do
   f      <- flag
   desc   <- quotedString
@@ -202,35 +197,25 @@ transaction d = do
       pos <- getPosition
       verifyError pos
 
-open :: Parser Open
+open :: Parser Command
 open = Open <$ symbol "open" <*> account <*> restriction
 
 restriction :: Parser Restriction
 restriction =
   RestrictedTo <$> (commodity `sepBy1` symbol ",") <|> return NoRestriction
 
-close :: Parser Close
+close :: Parser Command
 close = Close <$ symbol "close" <*> account
 
-balance :: Parser Balance
+balance :: Parser Command
 balance = Balance <$ symbol "balance" <*> account <*> amount <*> commodity
 
-price :: Parser Price
+price :: Parser Command
 price = Price <$ symbol "price" <*> commodity <*> p <*> commodity
   where p = lexeme $ L.signed sc L.scientific
 
 command :: Date -> Parser Command
-command d =
-  TransactionCommand
-    <$> transaction d
-    <|> OpenCommand
-    <$> open
-    <|> CloseCommand
-    <$> close
-    <|> BalanceCommand
-    <$> balance
-    <|> PriceCommand
-    <$> price
+command d = transaction d <|> open <|> close <|> balance <|> price
 
 include :: Parser Include
 include =

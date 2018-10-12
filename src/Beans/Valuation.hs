@@ -18,7 +18,6 @@ import           Beans.Data.Accounts                      ( Account(..)
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
                                                           , Flag(..)
-                                                          , Transaction(..)
                                                           , mkBalancedTransaction
                                                           )
 import           Beans.Options                            ( Valuation(..) )
@@ -94,21 +93,20 @@ valuateGroup dated@(c : _) = do
 valuateGroup [] = pure []
 
 notBalance :: Command -> Bool
-notBalance (BalanceCommand _) = False
-notBalance _                  = True
+notBalance Balance{} = False
+notBalance _         = True
 
 
 processCommand
   :: (MonadThrow m, MonadState ValuationState m) => Command -> m Command
-processCommand (TransactionCommand Transaction {..}) = do
+processCommand Transaction {..} = do
   ValuationState { vsValuationAccount } <- get
-  postings <- mapM valuateAmounts tPostings
-  t        <- mkBalancedTransaction tFlag
-                                    tDescription
-                                    tTags
-                                    postings
-                                    (Just vsValuationAccount)
-  return $ TransactionCommand t
+  postings                              <- mapM valuateAmounts tPostings
+  mkBalancedTransaction tFlag
+                        tDescription
+                        tTags
+                        postings
+                        (Just vsValuationAccount)
 processCommand c = pure c
 
 valuateAmounts
@@ -159,10 +157,7 @@ createValuationTransaction
   -> m Command
 createValuationTransaction (a, c, l) amount = do
   ValuationState { vsTarget, vsValuationAccount } <- get
-  return
-    $ TransactionCommand
-    $ Transaction Complete "valuation" []
-    $ M.fromListM
-        [ ((a, c, l)                 , M.singleton vsTarget amount)
-        , ((vsValuationAccount, c, l), M.singleton vsTarget (-amount))
-        ]
+  return $ Transaction Complete "valuation" [] $ M.fromListM
+    [ ((a, c, l)                 , M.singleton vsTarget amount)
+    , ((vsValuationAccount, c, l), M.singleton vsTarget (-amount))
+    ]

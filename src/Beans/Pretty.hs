@@ -13,18 +13,13 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , Commodity(..)
                                                           , Lot(..)
                                                           )
-import           Beans.Data.Directives                    ( Balance(..)
-                                                          , Close(..)
-                                                          , Command(..)
+import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
                                                           , Directive(..)
                                                           , Flag(..)
                                                           , Include(..)
-                                                          , Open(..)
                                                           , Option(..)
-                                                          , Price(..)
                                                           , Tag(..)
-                                                          , Transaction(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import           Beans.Data.Restrictions                  ( Restriction(..) )
@@ -48,11 +43,6 @@ instance Pretty Commodity where
 instance Pretty Date where
   pretty = pretty . show
 
-instance Pretty Transaction where
-  pretty Transaction {..} =
-    pretty tFlag <+>
-    dquotes (pretty tDescription) <+>
-    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings) <> hardline
 
 prettyAccounts :: Accounts -> [Doc a]
 prettyAccounts = concatMap p . M.toList
@@ -84,30 +74,22 @@ instance Pretty a => Pretty (Dated a) where
   pretty (Dated day x) = pretty day <+> pretty x
 
 instance Pretty Command where
-  pretty (BalanceCommand b)     = pretty b
-  pretty (OpenCommand o)        = pretty o
-  pretty (CloseCommand c)       = pretty c
-  pretty (TransactionCommand t) = pretty t
-  pretty (PriceCommand p)       = pretty p
-
-instance Pretty Balance where
+  pretty Transaction {..} =
+    pretty tFlag <+>
+    dquotes (pretty tDescription) <+>
+    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings) <> hardline
   pretty Balance {bAccount, bAmount, bCommodity} =
     "balance" <+> pretty bAccount <+> pretty bAmount <+> pretty bCommodity
-
-instance Pretty Open where
   pretty Open {oAccount, oRestriction} =
     "open" <+> pretty oAccount <+> pretty oRestriction
+  pretty Close {cAccount} = "close" <+> pretty cAccount
+  pretty Price {pCommodity, pPrice, pTargetCommodity} =
+    "price" <+> pretty pCommodity <+> pretty pPrice <+> pretty pTargetCommodity
 
 instance Pretty Restriction where
   pretty NoRestriction    = mempty
   pretty (RestrictedTo c) = hsep (map pretty c)
 
-instance Pretty Close where
-  pretty Close {cAccount} = "close" <+> pretty cAccount
-
-instance Pretty Price where
-  pretty Price {pCommodity, pPrice, pTargetCommodity} =
-    "price" <+> pretty pCommodity <+> pretty pPrice <+> pretty pTargetCommodity
 
 instance Pretty Include where
   pretty (Include _ filePath) = "include" <+> pretty filePath

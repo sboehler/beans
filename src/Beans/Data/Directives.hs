@@ -3,15 +3,10 @@ module Beans.Data.Directives
   ( Command(..)
   , Dated(..)
   , Directive(..)
-  , Transaction(..)
   , mkBalancedTransaction
-  , Balance(..)
   , Posting
-  , Open(..)
-  , Close(..)
   , Include(..)
   , Option(..)
-  , Price(..)
   , Tag(..)
   , Flag(..)
   )
@@ -49,43 +44,30 @@ data Dated a =
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 data Command
-  = BalanceCommand Balance
-  | OpenCommand Open
-  | CloseCommand Close
-  | TransactionCommand Transaction
-  | PriceCommand Price
-  deriving (Eq, Ord, Show)
-
-data Balance = Balance
+ = Balance
   { bAccount   :: Account
   , bAmount    :: Amount
   , bCommodity :: Commodity
-  } deriving (Eq, Ord, Show)
-
-data Open = Open
+  }
+ | Open
   { oAccount     :: Account
   , oRestriction :: Restriction
-  } deriving (Eq, Ord, Show)
-
-newtype Close = Close
+  }
+ | Close
   { cAccount :: Account
-  } deriving (Eq, Ord, Show)
-
-data Price = Price
+  }
+ | Price
   { pCommodity       :: Commodity
   , pPrice           :: Scientific
   , pTargetCommodity :: Commodity
-  } deriving (Eq, Ord, Show)
-
-data Transaction = Transaction
+  }
+ | Transaction
   { tFlag        :: Flag
   , tDescription :: Text
   , tTags        :: [Tag]
   , tPostings    :: Accounts
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord)
 
-instance Ord Transaction where
-  _ `compare` _ = EQ
 
 data Flag
   = Complete
@@ -123,7 +105,7 @@ mkBalancedTransaction
   -> [Tag]
   -> Accounts
   -> Maybe Account
-  -> m Transaction
+  -> m Command
 mkBalancedTransaction flag desc tags postings wildcard =
   Transaction flag desc tags <$> completePostings wildcard postings
 

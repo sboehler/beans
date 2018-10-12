@@ -38,7 +38,7 @@ import           Prelude                           hiding ( filter
 
 newtype Map k v = Map
   { unmap :: M.Map k v
-  } deriving (Eq, Functor, Traversable, Foldable)
+  } deriving (Eq, Ord, Functor, Traversable, Foldable)
 
 instance (Semigroup v, Ord k) => Semigroup (Map k v) where
   (Map m1) <> (Map m2) = Map (M.unionWith (<>) m1 m2)

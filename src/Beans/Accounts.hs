@@ -16,12 +16,8 @@ import           Beans.Data.Accounts                      ( Account
                                                           , Commodity
                                                           )
 import qualified Beans.Data.Accounts           as A
-import           Beans.Data.Directives                    ( Balance(..)
-                                                          , Close(..)
-                                                          , Command(..)
+import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
-                                                          , Open(..)
-                                                          , Transaction(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import           Beans.Data.Restrictions                  ( Restriction
@@ -40,16 +36,16 @@ import           Control.Monad.Catch                      ( Exception
                                                           )
 
 data AccountsException
-  = AccountIsNotOpen Close
+  = AccountIsNotOpen Command
   | BookingErrorAccountNotOpen Account
   | BookingErrorCommodityIncompatible Account
                                       Commodity
                                       Amount
                                       Restriction
-  | AccountIsAlreadyOpen Open
-  | BalanceIsNotZero Close
-  | AccountDoesNotExist Balance
-  | BalanceDoesNotMatch Balance
+  | AccountIsAlreadyOpen Command
+  | BalanceIsNotZero Command
+  | AccountDoesNotExist Command
+  | BalanceDoesNotMatch Command
                         Amount
   deriving (Show)
 
@@ -68,15 +64,15 @@ calculateAccountsForDays ledger (day : days) initialAccounts = do
 calculateAccountsForDays _ [] _ = return []
 
 check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
-check restrictions (OpenCommand open@Open { oAccount, oRestriction }) = do
+check restrictions open@Open { oAccount, oRestriction } = do
   when (oAccount `M.member` restrictions) (throwM $ AccountIsAlreadyOpen open)
   return $ M.insert oAccount oRestriction restrictions
-check restrictions (CloseCommand closing@Close { cAccount }) = do
+check restrictions closing@Close { cAccount } = do
   let (restriction, remainingRestrictions) =
         M.partitionWithKey (const . (== cAccount)) restrictions
   when (null restriction) (throwM $ AccountIsNotOpen closing)
   return remainingRestrictions
-check restrictions (TransactionCommand Transaction { tPostings }) = do
+check restrictions Transaction { tPostings } = do
   mapM_ (g restrictions) $ M.toList tPostings
   return restrictions
  where
@@ -87,22 +83,21 @@ check restrictions (TransactionCommand Transaction { tPostings }) = do
       ( throwM
       $ BookingErrorCommodityIncompatible a c (M.findWithDefaultM c s) r'
       )
-check restrictions (BalanceCommand bal@Balance { bAccount }) = do
+check restrictions bal@Balance { bAccount } = do
   unless (bAccount `M.member` restrictions) $ throwM (AccountDoesNotExist bal)
   return restrictions
 check restrictions _ = pure restrictions
 
 process :: (MonadThrow m) => Accounts -> Command -> m Accounts
-process accounts (CloseCommand closing@Close { cAccount }) = do
+process accounts closing@Close { cAccount } = do
   let (deletedAccount, remainingAccounts) = M.partitionWithKey g accounts
   unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero closing)
   return remainingAccounts
   where g (a, _, _) _ = a == cAccount
-process accounts (TransactionCommand Transaction { tPostings }) =
+process accounts Transaction { tPostings } =
   return $ accounts `mappend` tPostings
-process accounts (BalanceCommand bal@Balance { bAccount, bAmount, bCommodity })
-  = do
-    let s = A.balance bAccount bCommodity accounts
-    unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
-    return accounts
+process accounts bal@Balance { bAccount, bAmount, bCommodity } = do
+  let s = A.balance bAccount bCommodity accounts
+  unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
+  return accounts
 process accounts _ = pure accounts

@@ -9,7 +9,6 @@ import           Beans.Data.Accounts                      ( Account
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
                                                           , Flag(Complete)
-                                                          , Transaction(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import qualified Beans.Import.CH.Postfinance
@@ -63,10 +62,7 @@ eval rules entry =
 
 mkTransaction :: Entry -> Account -> Account -> Dated Command
 mkTransaction Entry {..} account otherAccount =
-  Dated (Date eBookingDate) $ TransactionCommand $ Transaction Complete
-                                                               eDescription
-                                                               []
-                                                               postings
+  Dated (Date eBookingDate) $ Transaction Complete eDescription [] postings
  where
   postings = M.fromListM
     [ ((account, eCommodity, Nothing)     , M.singleton eCommodity eAmount)

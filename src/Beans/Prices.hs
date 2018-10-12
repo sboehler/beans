@@ -9,9 +9,7 @@ module Beans.Prices
 where
 
 import           Beans.Data.Accounts                      ( Commodity(..) )
-import           Beans.Data.Directives                    ( Command(..)
-                                                          , Price(..)
-                                                          )
+import           Beans.Data.Directives                    ( Command(..) )
 import           Control.Monad.Catch                      ( Exception
                                                           , MonadThrow
                                                           , throwM
@@ -43,13 +41,13 @@ updatePrices prices command =
   let prices' = addPrice prices command in addPrice prices' (invert command)
 
 addPrice :: Prices -> Command -> Prices
-addPrice prices (PriceCommand Price { pCommodity, pPrice, pTargetCommodity }) =
+addPrice prices Price { pCommodity, pPrice, pTargetCommodity } =
   let p = M.findWithDefault mempty pCommodity prices
   in  M.insert pCommodity (M.insert pTargetCommodity pPrice p) prices
 addPrice prices _ = prices
 
 invert :: Command -> Command
-invert (PriceCommand p@Price {..}) = PriceCommand $ p
+invert Price { pCommodity, pTargetCommodity, pPrice } = Price
   { pCommodity       = pTargetCommodity
   , pTargetCommodity = pCommodity
   , pPrice           = 1 `sdiv` pPrice

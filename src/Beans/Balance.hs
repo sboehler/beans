@@ -16,10 +16,8 @@ import           Beans.Format                             ( createReport
                                                           , formatTable
                                                           , reportToRows
                                                           )
-import           Beans.Ledger                             ( Ledger
-                                                          , buildLedger
-                                                          , filterLedger
-                                                          )
+import qualified Beans.Ledger                  as L
+import           Beans.Ledger                             ( Ledger )
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , ReportType(..)
                                                           )
@@ -49,10 +47,10 @@ balanceCommand =
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m Ledger
-parseStage = buildLedger <$> (asks balOptJournal >>= parseFile)
+parseStage = L.build <$> (asks balOptJournal >>= parseFile)
 
 filterStage :: (MonadReader BalanceOptions m) => Ledger -> m Ledger
-filterStage l = flip filterLedger l <$> asks balOptFilter
+filterStage l = flip L.filter l <$> asks balOptFilter
 
 valuationStage
   :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m Ledger

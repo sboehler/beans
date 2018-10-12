@@ -7,7 +7,6 @@ import           Beans.Accounts                           ( calculateAccountsFor
                                                           , checkLedger
                                                           )
 import           Beans.Data.Accounts                      ( Account(..)
-                                                          , AccountType(..)
                                                           , Accounts
                                                           , eraseLots
                                                           , summarize
@@ -23,7 +22,6 @@ import           Beans.Ledger                             ( Ledger
                                                           )
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , ReportType(..)
-                                                          , Valuation(..)
                                                           )
 import           Beans.Parser                             ( parseFile )
 import           Beans.Valuation                          ( valuateLedger )
@@ -58,11 +56,7 @@ filterStage l = flip filterLedger l <$> asks balOptFilter
 
 valuationStage
   :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m Ledger
-valuationStage ledger = asks balOptMarket >>= f
- where
-  f (AtMarket commodity) =
-    valuateLedger commodity (Account Equity ["Valuation"]) ledger
-  f _ = pure ledger
+valuationStage ledger = asks balOptMarket >>= flip valuateLedger ledger
 
 reportStage
   :: (MonadThrow m, MonadReader BalanceOptions m) => Ledger -> m Accounts

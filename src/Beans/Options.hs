@@ -36,7 +36,7 @@ data JournalOptions = JournalOptions
 
 data Filter = NoFilter | StrictFilter String | Filter String deriving (Eq, Show)
 
-data Valuation = NoValuation | AtMarket Commodity | AtCost Commodity deriving (Eq, Show)
+data Valuation = NoValuation | AtMarket Commodity Account | AtCost Commodity deriving (Eq, Show)
 
 data ReportType = Hierarchical | Flat  deriving (Eq, Show)
 

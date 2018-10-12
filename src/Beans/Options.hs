@@ -34,7 +34,11 @@ data JournalOptions = JournalOptions
   } deriving (Show)
 
 
-data Filter = NoFilter | StrictFilter String | Filter String deriving (Eq, Show)
+data Filter =
+    NoFilter
+  | StrictFilter String
+  | Filter String
+  | PeriodFilter Date Date deriving (Eq, Show)
 
 data Valuation = NoValuation | AtMarket Commodity Account | AtCost Commodity deriving (Eq, Show)
 

@@ -22,9 +22,10 @@ build = L.sort . f where f d = [ c | (DatedCommandDirective c) <- d ]
 
 filter :: Filter -> Ledger -> Ledger
 filter (StrictFilter regex) =
-  fmap (fmap (filterPostings regex)) . L.filter (matchCommand regex . undate)
-filter (Filter regex) = L.filter (matchCommand regex . undate)
-filter NoFilter       = id
+  fmap (fmap (filterPostings regex)) . filter (Filter regex)
+filter (Filter regex        ) = L.filter (matchCommand regex . undate)
+filter (PeriodFilter from to) = L.filter $ \(Dated d _) -> d >= from && d <= to
+filter NoFilter               = id
 
 filterPostings :: String -> Command -> Command
 filterPostings regex Transaction { tPostings, ..} = Transaction

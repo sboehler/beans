@@ -5,6 +5,7 @@ module Beans.Ledger
   )
 where
 
+import           Beans.Data.Accounts                      ( Position(..) )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
                                                           , between
@@ -30,14 +31,13 @@ filter NoFilter               = id
 
 filterPostings :: String -> Command -> Command
 filterPostings regex Transaction { tPostings, ..} = Transaction
-  { tPostings = M.filterWithKey matchPosting tPostings
+  { tPostings = M.filterKeys ((=~ regex) . show . pAccount) tPostings
   , ..
   }
-  where matchPosting (a, _, _) _ = show a =~ regex
 filterPostings _ command = command
 
 matchCommand :: String -> Command -> Bool
 matchCommand regex Transaction { tPostings } = (any match . M.keys) tPostings
-  where match (a, _, _) = show a =~ regex
+  where match = (=~ regex) . show . pAccount
 matchCommand _ Balance {..} = False
 matchCommand _ _            = True

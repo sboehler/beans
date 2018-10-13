@@ -6,6 +6,7 @@ module Beans.Data.Accounts
   , Commodity(..)
   , Date(..)
   , Lot(..)
+  , Position(..)
   , balance
   , summarize
   , eraseLots
@@ -35,7 +36,14 @@ instance Show Date where
 
 type Amounts = M.Map Commodity Amount
 
-type Accounts = M.Map (Account, Commodity, Maybe Lot) Amounts
+data Position = Position {
+  pAccount :: Account,
+  pCommodity :: Commodity,
+  pLot :: Maybe Lot
+  }
+  deriving (Eq, Ord, Show)
+
+type Accounts = M.Map Position Amounts
 
 data AccountType
   = Assets
@@ -46,8 +54,10 @@ data AccountType
   deriving (Eq, Ord, Read, Show)
 
 data Account =
-  Account AccountType
-              [Text]
+  Account {
+  aType :: AccountType,
+  aSegments :: [Text]
+  }
   deriving (Eq, Ord)
 
 instance Show Account where
@@ -75,14 +85,16 @@ instance Show Lot where
 
 balance :: Account -> Commodity -> Accounts -> Amount
 balance accountName commodityName =
-  M.findWithDefaultM commodityName . fold . M.filterWithKey f
-  where f (a, c, _) _ = accountName == a && commodityName == c
+  M.findWithDefaultM commodityName . fold . M.filterKeys f
+ where
+  f Position { pAccount, pCommodity } =
+    accountName == pAccount && commodityName == pCommodity
 
 summarize :: Int -> Accounts -> Accounts
-summarize d = M.mapKeysM g where g (a, c, l) = (shorten d a, c, l)
+summarize d = M.mapKeysM $ \p -> p { pAccount = shorten d (pAccount p) }
 
 shorten :: Int -> Account -> Account
 shorten d (Account t a) = Account t (take d a)
 
 eraseLots :: Accounts -> Accounts
-eraseLots = M.mapKeysM g where g (a, c, _) = (a, c, Nothing)
+eraseLots = M.mapKeysM (\p -> p { pLot = Nothing })

@@ -5,6 +5,7 @@ where
 
 import           Beans.Data.Accounts                      ( Account
                                                           , Date(Date)
+                                                          , Position(..)
                                                           )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
@@ -65,8 +66,10 @@ mkTransaction Entry {..} account otherAccount =
   Dated (Date eBookingDate) $ Transaction Complete eDescription [] postings
  where
   postings = M.fromListM
-    [ ((account, eCommodity, Nothing)     , M.singleton eCommodity eAmount)
-    , ((otherAccount, eCommodity, Nothing), M.singleton eCommodity (-eAmount))
+    [ (Position account eCommodity Nothing, M.singleton eCommodity eAmount)
+    , ( Position otherAccount eCommodity Nothing
+      , M.singleton eCommodity (-eAmount)
+      )
     ]
 
 

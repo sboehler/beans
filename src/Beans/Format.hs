@@ -6,12 +6,12 @@ module Beans.Format
   )
 where
 
-import           Beans.Data.Accounts                      ( Account(..)
-                                                          , Accounts
+import           Beans.Data.Accounts                      ( Accounts
                                                           , Amount
                                                           , Amounts
                                                           , Commodity(..)
                                                           , Lot(..)
+                                                          , Position(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                             ( )
@@ -36,10 +36,11 @@ data Section = Section
   } deriving (Show)
 
 -- Creating a report
-createReport
-  :: ((Account, Commodity, Maybe Lot) -> [Text]) -> Accounts -> Section
+createReport :: (Position -> [Text]) -> Accounts -> Section
 createReport label = groupLabeledPositions . M.mapEntries f
-  where f (k@(_, c, l), s) = (label k, M.singleton (c, l) s)
+ where
+  f (k@Position { pCommodity, pLot }, amount) =
+    (label k, M.singleton (pCommodity, pLot) amount)
 
 groupLabeledPositions :: M.Map [Text] Positions -> Section
 groupLabeledPositions labeledPositions = Section positions

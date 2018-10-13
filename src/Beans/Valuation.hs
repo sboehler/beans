@@ -13,7 +13,7 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , Amount
                                                           , Amounts
                                                           , Commodity(..)
-                                                          , Lot(..)
+                                                          , Position(..)
                                                           )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
@@ -133,31 +133,30 @@ adjustValuationForAccounts = do
 
 adjustValuationForAccount
   :: (MonadThrow m, MonadState ValuationState m)
-  => ((Account, Commodity, Maybe Lot), Amounts)
+  => (Position, Amounts)
   -> m [Command]
 adjustValuationForAccount (k, amounts) =
   concat <$> mapM (adjustValuationForAmount k) (M.toList amounts)
 
 adjustValuationForAmount
   :: (MonadThrow m, MonadState ValuationState m)
-  => (Account, Commodity, Maybe Lot)
+  => Position
   -> (Commodity, Amount)
   -> m [Command]
-adjustValuationForAmount k@(Account t _, _, _) (commodity, amount) = do
+adjustValuationForAmount k (commodity, amount) = do
   v0 <- gets vsPrevNormalizedPrices >>= lookupPrice commodity
   v1 <- gets vsNormalizedPrices >>= lookupPrice commodity
-  if v0 /= v1 && t `elem` [Assets, Liabilities]
+  if v0 /= v1 && (aType . pAccount) k `elem` [Assets, Liabilities]
     then pure <$> createValuationTransaction k (amount * Sum (v1 - v0))
     else return []
 
 createValuationTransaction
-  :: (MonadState ValuationState m)
-  => (Account, Commodity, Maybe Lot)
-  -> Amount
-  -> m Command
-createValuationTransaction (a, c, l) amount = do
+  :: (MonadState ValuationState m) => Position -> Amount -> m Command
+createValuationTransaction position amount = do
   ValuationState { vsTarget, vsValuationAccount } <- get
   return $ Transaction Complete "valuation" [] $ M.fromListM
-    [ ((a, c, l)                 , M.singleton vsTarget amount)
-    , ((vsValuationAccount, c, l), M.singleton vsTarget (-amount))
+    [ (position, M.singleton vsTarget amount)
+    , ( position { pAccount = vsValuationAccount }
+      , M.singleton vsTarget (-amount)
+      )
     ]

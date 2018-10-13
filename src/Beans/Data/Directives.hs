@@ -15,6 +15,7 @@ where
 
 import           Beans.Data.Accounts                      ( Account
                                                           , Accounts
+                                                          , Position(..)
                                                           , Date
                                                           , Amount
                                                           , Amounts
@@ -130,4 +131,6 @@ calculateImbalances = mconcat . fmap snd . M.toList
 
 balanceImbalances :: Account -> M.Map Commodity Amount -> Accounts
 balanceImbalances account = M.mapEntries g . fmap negate
-  where g (c, s) = ((account, c, Nothing), M.singleton c s)
+ where
+  g (commodity, amount) =
+    (Position account commodity Nothing, M.singleton commodity amount)

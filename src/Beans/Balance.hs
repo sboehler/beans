@@ -8,6 +8,7 @@ import           Beans.Accounts                           ( calculateAccountsFor
                                                           )
 import           Beans.Data.Accounts                      ( Account(..)
                                                           , Accounts
+                                                          , Position(..)
                                                           , eraseLots
                                                           , summarize
                                                           )
@@ -82,5 +83,6 @@ printStage accounts = do
         Flat         -> flat
   (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport f) accounts
  where
-  hierarchical (Account t ns, _, _) = T.pack (show t) : ns
-  flat (a, _, _) = [T.pack $ show a]
+  hierarchical Position { pAccount = Account { aType, aSegments } } =
+    T.pack (show aType) : aSegments
+  flat = pure . T.pack . show . pAccount

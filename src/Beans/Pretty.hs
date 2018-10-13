@@ -12,6 +12,7 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , Date(..)
                                                           , Commodity(..)
                                                           , Lot(..)
+                                                          , Position(..)
                                                           )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
@@ -47,7 +48,7 @@ instance Pretty Date where
 prettyAccounts :: Accounts -> [Doc a]
 prettyAccounts = concatMap p . M.toList
  where
-  p ((a, _, l), v) = fmap g (M.toList v)
+  p (Position a _ l, v) = fmap g (M.toList v)
     where g (c, s) = pretty a <+> pretty s <+> pretty c <+> pretty l
 
 instance Pretty Flag where

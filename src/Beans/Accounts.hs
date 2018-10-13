@@ -14,6 +14,7 @@ import           Beans.Data.Accounts                      ( Account
                                                           , Amount
                                                           , Date
                                                           , Commodity
+                                                          , Position(..)
                                                           )
 import qualified Beans.Data.Accounts           as A
 import           Beans.Data.Directives                    ( Command(..)
@@ -76,12 +77,15 @@ check restrictions Transaction { tPostings } = do
   mapM_ (g restrictions) $ M.toList tPostings
   return restrictions
  where
-  g r ((a, c, _), s) = case M.lookup a r of
-    Nothing -> throwM $ BookingErrorAccountNotOpen a
+  g r (Position { pAccount, pCommodity }, s) = case M.lookup pAccount r of
+    Nothing -> throwM $ BookingErrorAccountNotOpen pAccount
     Just r' -> unless
-      (R.isCompatible r' c)
-      ( throwM
-      $ BookingErrorCommodityIncompatible a c (M.findWithDefaultM c s) r'
+      (R.isCompatible r' pCommodity)
+      (throwM $ BookingErrorCommodityIncompatible
+        pAccount
+        pCommodity
+        (M.findWithDefaultM pCommodity s)
+        r'
       )
 check restrictions bal@Balance { bAccount } = do
   unless (bAccount `M.member` restrictions) $ throwM (AccountDoesNotExist bal)
@@ -89,11 +93,11 @@ check restrictions bal@Balance { bAccount } = do
 check restrictions _ = pure restrictions
 
 process :: (MonadThrow m) => Accounts -> Command -> m Accounts
-process accounts closing@Close { cAccount } = do
-  let (deletedAccount, remainingAccounts) = M.partitionWithKey g accounts
-  unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero closing)
+process accounts command@Close { cAccount } = do
+  let (deletedAccount, remainingAccounts) =
+        M.partitionKeys ((== cAccount) . pAccount) accounts
+  unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero command)
   return remainingAccounts
-  where g (a, _, _) _ = a == cAccount
 process accounts Transaction { tPostings } =
   return $ accounts `mappend` tPostings
 process accounts bal@Balance { bAccount, bAmount, bCommodity } = do

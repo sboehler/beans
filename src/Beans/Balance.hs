@@ -13,7 +13,7 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , summarize
                                                           )
 import qualified Beans.Data.Map                as M
-import           Beans.Format                             ( createReport
+import           Beans.Report.Balance                     ( createReport
                                                           , formatTable
                                                           , reportToRows
                                                           )

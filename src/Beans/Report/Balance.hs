@@ -1,4 +1,4 @@
-module Beans.Format
+module Beans.Report.Balance
   ( Section(..)
   , formatTable
   , reportToRows

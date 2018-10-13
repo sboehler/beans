@@ -2,6 +2,7 @@
 module Beans.Data.Directives
   ( Command(..)
   , Dated(..)
+  , between
   , Directive(..)
   , mkBalancedTransaction
   , Posting
@@ -42,6 +43,9 @@ data Dated a =
     undate :: a
     }
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+
+between :: Date -> Date -> Dated a -> Bool
+between from to (Dated d _) = from <= d && d <= to
 
 data Command
  = Balance

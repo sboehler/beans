@@ -9,6 +9,7 @@ module Beans.Data.Map
   , delete
   , empty
   , lookup
+  , keys
   , minus
   , findWithDefaultM
   , foldlWithKey
@@ -122,3 +123,6 @@ foldlWithKey f z = M.foldlWithKey f z . unmap
 
 delete :: Ord k => k -> Map k v -> Map k v
 delete k (Map m) = Map $ M.delete k m
+
+keys :: Map k a -> [k]
+keys = M.keys . unmap

@@ -7,6 +7,7 @@ where
 
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
+                                                          , between
                                                           , Directive(..)
                                                           )
 import qualified Beans.Data.Map                as M
@@ -24,7 +25,7 @@ filter :: Filter -> Ledger -> Ledger
 filter (StrictFilter regex) =
   fmap (fmap (filterPostings regex)) . filter (Filter regex)
 filter (Filter regex        ) = L.filter (matchCommand regex . undate)
-filter (PeriodFilter from to) = L.filter $ \(Dated d _) -> d >= from && d <= to
+filter (PeriodFilter from to) = L.filter (between from to)
 filter NoFilter               = id
 
 filterPostings :: String -> Command -> Command
@@ -36,7 +37,7 @@ filterPostings regex Transaction { tPostings, ..} = Transaction
 filterPostings _ command = command
 
 matchCommand :: String -> Command -> Bool
-matchCommand regex Transaction { tPostings } = M.foldlWithKey g False tPostings
-  where g b (a, _, _) _ = b || show a =~ regex
+matchCommand regex Transaction { tPostings } = (any match . M.keys) tPostings
+  where match (a, _, _) = show a =~ regex
 matchCommand _ Balance {..} = False
 matchCommand _ _            = True

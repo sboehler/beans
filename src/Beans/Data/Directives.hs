@@ -49,29 +49,30 @@ between :: Date -> Date -> Dated a -> Bool
 between from to (Dated d _) = from <= d && d <= to
 
 data Command
- = Balance
-  { bAccount   :: Account
-  , bAmount    :: Amount
-  , bCommodity :: Commodity
-  }
- | Open
-  { oAccount     :: Account
+  = Open {
+    oAccount :: Account
   , oRestriction :: Restriction
   }
- | Close
-  { cAccount :: Account
-  }
- | Price
-  { pCommodity       :: Commodity
-  , pPrice           :: Scientific
+  | Price {
+    pCommodity :: Commodity
+  , pPrice :: Scientific
   , pTargetCommodity :: Commodity
   }
- | Transaction
-  { tFlag        :: Flag
+  | Transaction {
+    tFlag :: Flag
   , tDescription :: Text
-  , tTags        :: [Tag]
-  , tPostings    :: Accounts
-  } deriving (Eq, Show, Ord)
+  , tTags :: [Tag]
+  , tPostings :: Accounts
+  }
+  | Balance {
+    bAccount :: Account
+  , bAmount :: Amount
+  , bCommodity :: Commodity
+  }
+  | Close {
+    cAccount :: Account
+  }
+  deriving (Eq, Show, Ord)
 
 
 data Flag

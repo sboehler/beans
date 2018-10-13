@@ -11,6 +11,7 @@ module Beans.Data.Map
   , lookup
   , keys
   , minus
+  , filterKeys
   , findWithDefaultM
   , foldlWithKey
   , fromListM
@@ -25,6 +26,7 @@ module Beans.Data.Map
   , member
   , toList
   , partitionWithKey
+  , partitionKeys
   )
 where
 
@@ -48,10 +50,10 @@ instance (Monoid v, Ord k) => Monoid (Map k v) where
   mempty = Map mempty
 
 instance (Group v, Ord k) => Group (Map k v) where
-  invert (Map v) = Map (invert <$> v)
+  invert = fmap invert
 
 instance (Show k, Show v) => Show (Map k v) where
-  show (Map m) = show m
+  show = show . unmap
 
 minus :: (Group v, Ord k) => Map k v -> Map k v -> Map k v
 minus m1 m2 = m1 `mappend` (invert <$> m2)
@@ -60,13 +62,13 @@ insertM :: (Monoid v, Ord k) => k -> v -> Map k v -> Map k v
 insertM k v (Map m) = Map $ M.insertWith mappend k v m
 
 insert :: Ord k => k -> v -> Map k v -> Map k v
-insert k v (Map m) = Map $ M.insert k v m
+insert k v = Map . M.insert k v . unmap
 
 mapKeysM :: (Ord k, Ord j, Monoid v) => (k -> j) -> Map k v -> Map j v
-mapKeysM f (Map m) = Map $ M.mapKeysWith mappend f m
+mapKeysM f = Map . M.mapKeysWith mappend f . unmap
 
 mapWithKey :: (k -> a -> v) -> Map k a -> Map k v
-mapWithKey f (Map m) = Map $ M.mapWithKey f m
+mapWithKey f = Map . M.mapWithKey f . unmap
 
 mapEntries
   :: (Ord k, Ord k', Monoid v, Monoid v')
@@ -76,14 +78,20 @@ mapEntries
 mapEntries f = fromListM . fmap f . toList
 
 filterWithKey :: (k -> v -> Bool) -> Map k v -> Map k v
-filterWithKey f (Map m) = Map $ M.filterWithKey f m
+filterWithKey f = Map . M.filterWithKey f . unmap
 
 filter :: (a -> Bool) -> Map k a -> Map k a
-filter f (Map m) = Map $ M.filter f m
+filter f = Map . M.filter f . unmap
+
+filterKeys :: (k -> Bool) -> Map k v -> Map k v
+filterKeys f = filterWithKey (\k _ -> f k)
 
 partitionWithKey :: (k -> v -> Bool) -> Map k v -> (Map k v, Map k v)
 partitionWithKey f (Map m) =
   let (m1, m2) = M.partitionWithKey f m in (Map m1, Map m2)
+
+partitionKeys :: (k -> Bool) -> Map k v -> (Map k v, Map k v)
+partitionKeys f = partitionWithKey (\k _ -> f k)
 
 toList :: Map k v -> [(k, v)]
 toList = M.toList . unmap
@@ -92,16 +100,16 @@ fromListM :: (Monoid v, Ord k) => [(k, v)] -> Map k v
 fromListM l = Map $ M.fromListWith mappend l
 
 member :: Ord k => k -> Map k v -> Bool
-member k (Map m) = k `M.member` m
+member k = (k `M.member`) . unmap
 
 lookup :: Ord k => k -> Map k a -> Maybe a
-lookup k (Map m) = M.lookup k m
+lookup k = M.lookup k . unmap
 
 findWithDefaultM :: (Ord k, Monoid a) => k -> Map k a -> a
-findWithDefaultM k (Map m) = M.findWithDefault mempty k m
+findWithDefaultM k = M.findWithDefault mempty k . unmap
 
 lookupLEM :: (Monoid v, Ord k) => k -> Map k v -> v
-lookupLEM k (Map m) = maybe mempty snd (M.lookupLE k m)
+lookupLEM k = maybe mempty snd . M.lookupLE k . unmap
 
 empty :: Map k v
 empty = Map M.empty
@@ -122,7 +130,7 @@ foldlWithKey :: (c -> k -> b -> c) -> c -> Map k b -> c
 foldlWithKey f z = M.foldlWithKey f z . unmap
 
 delete :: Ord k => k -> Map k v -> Map k v
-delete k (Map m) = Map $ M.delete k m
+delete k = Map . M.delete k . unmap
 
 keys :: Map k a -> [k]
 keys = M.keys . unmap

@@ -132,7 +132,7 @@ completePostings wildcard postings =
     | otherwise = return mempty
 
 calculateImbalances :: Accounts -> M.Map Commodity Amount
-calculateImbalances = mconcat . fmap snd . M.toList
+calculateImbalances = M.filter (/= 0) . mconcat . fmap snd . M.toList
 
 balanceImbalances :: Account -> M.Map Commodity Amount -> Accounts
 balanceImbalances account = M.mapEntries g . fmap negate

@@ -7,13 +7,13 @@ import           Beans.Data.Directives                    ( Dated(..)
                                                           , Command(Transaction)
                                                           )
 import           Beans.Options                            ( JournalOptions(..)
-                                                          , Filter(..)
                                                           )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
                                                           )
 import           Control.Monad.Reader                     ( MonadReader
+                                                          , ask
                                                           , asks
                                                           )
 import           Beans.Parser                             ( parseFile )
@@ -21,25 +21,19 @@ import qualified Beans.Ledger                  as L
 import           Beans.Ledger                             ( Ledger )
 import           Beans.Accounts                           ( checkLedger )
 import           Beans.Valuation                          ( valuateLedger )
-import           Beans.Pretty                             ( prettyPrintLedger )
+import           Beans.Report.Journal                     ( createReport )
 
 journalCommand
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m ()
 journalCommand =
-  parseStage
-    >>= checkLedger
-    >>= valuationStage
-    >>= filterStage
-    >>= reportStage
-    >>= liftIO
-    .   prettyPrintLedger
+  parseStage >>= checkLedger >>= valuationStage >>= filterStage >>= reportStage
 
 reportStage
-  :: (MonadThrow m, MonadReader JournalOptions m) => Ledger -> m Ledger
+  :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => Ledger -> m ()
 reportStage ledger = do
-  to   <- asks jrnOptTo
-  from <- asks jrnOptFrom
-  return $ L.filter (PeriodFilter from to) ledger
+  options <- ask
+  report  <- createReport options ledger
+  liftIO $ print report
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m Ledger

@@ -6,8 +6,7 @@ where
 import           Beans.Data.Directives                    ( Dated(..)
                                                           , Command(Transaction)
                                                           )
-import           Beans.Options                            ( JournalOptions(..)
-                                                          )
+import           Beans.Options                            ( JournalOptions(..) )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
@@ -21,7 +20,12 @@ import qualified Beans.Ledger                  as L
 import           Beans.Ledger                             ( Ledger )
 import           Beans.Accounts                           ( checkLedger )
 import           Beans.Valuation                          ( valuateLedger )
-import           Beans.Report.Journal                     ( createReport )
+import           Beans.Report.Journal                     ( createReport
+                                                          , formatTable
+                                                          , Report(..)
+                                                          )
+import qualified Data.Text.IO                  as TIO
+
 
 journalCommand
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m ()
@@ -31,9 +35,9 @@ journalCommand =
 reportStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => Ledger -> m ()
 reportStage ledger = do
-  options <- ask
-  report  <- createReport options ledger
-  liftIO $ print report
+  options           <- ask
+  Report { rItems } <- createReport options ledger
+  (liftIO . TIO.putStrLn . formatTable) rItems
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m Ledger

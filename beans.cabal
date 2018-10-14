@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 450c0be825e6c92a02f5d0a3b22a38fcebb26a7a96eb9e87e5f68db25d34625c
+-- hash: 7369b0e4564615867e42f85bc9f1f9470a994a02c4e542215f208139d14de2a7
 
 name:           beans
 version:        0.0.1.0
@@ -46,6 +46,7 @@ library
       Beans.Pretty
       Beans.Prices
       Beans.Report.Balance
+      Beans.Report.Journal
       Beans.Table
       Beans.Valuation
   other-modules:

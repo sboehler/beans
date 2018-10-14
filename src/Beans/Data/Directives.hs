@@ -7,6 +7,7 @@ module Beans.Data.Directives
   , mkBalancedTransaction
   , Posting
   , Include(..)
+  , sameDay
   , Option(..)
   , Tag(..)
   , Flag(..)
@@ -44,6 +45,9 @@ data Dated a =
     undate :: a
     }
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+
+sameDay :: Dated a1 -> Dated a2 -> Bool
+sameDay (Dated d1 _) (Dated d2 _) = d1 == d2
 
 between :: Date -> Date -> Dated a -> Bool
 between from to (Dated d _) = from <= d && d <= to

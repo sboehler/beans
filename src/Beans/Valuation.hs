@@ -17,6 +17,7 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           )
 import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
+                                                          , sameDay
                                                           , Flag(..)
                                                           , mkBalancedTransaction
                                                           )
@@ -54,8 +55,7 @@ data ValuationState = ValuationState
 
 valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
 valuateLedger (AtMarket target valuationAccount) ledger =
-  let sameDay (Dated d1 _) (Dated d2 _) = d1 == d2
-      groups = L.groupBy sameDay ledger
+  let groups = L.groupBy sameDay ledger
   in  concat <$> evalStateT
         (mapM valuateGroup groups)
         ValuationState

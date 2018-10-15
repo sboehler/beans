@@ -77,17 +77,21 @@ sectionToRows (label, Section _ subsections subtotals) =
 
 positionsToRows :: Text -> Positions -> [Row]
 positionsToRows title subtotals =
-  let positions    = flattenPositions subtotals
-      nbrRows      = maximum [1, length positions]
-      quantify     = take nbrRows . (++ repeat mempty)
-      accounts     = [title]
-      amounts      = formatStandard . (\(_, _, amount) -> amount) <$> positions
-      commodities =
-        (\(lot, commodity, _) ->
-            T.pack $ unwords [show commodity, maybe "" (show . pretty) lot]
-          )
-          <$> positions
-  in  zipWith3 Row (quantify accounts) (quantify amounts) (quantify commodities)
+  let
+    positions = flattenPositions subtotals
+    nbrRows   = maximum [1, length positions]
+    quantify  = take nbrRows . (++ repeat mempty)
+    accounts  = [title]
+    amounts   = formatStandard . (\(_, _, amount) -> amount) <$> positions
+    commodities =
+      T.pack
+        .   unwords
+        .   (\(lot, commodity, _) ->
+              [show commodity, maybe "" (show . pretty) lot]
+            )
+        <$> positions
+  in
+    zipWith3 Row (quantify accounts) (quantify amounts) (quantify commodities)
 
 flattenPositions :: Positions -> [(Maybe Lot, Commodity, Amount)]
 flattenPositions positions = do

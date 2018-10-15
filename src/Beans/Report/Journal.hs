@@ -64,9 +64,9 @@ data Item = Item {
 
 accountsToItem :: Filter -> Date -> Accounts -> Item
 accountsToItem (Filter regex) date accounts =
-  let postings =
+  let filteredAccounts =
         List.filter ((=~ regex) . show . pAccount . fst) $ M.toList accounts
-      amounts = concat $ M.toList . snd <$> postings
+      amounts = M.toList $ mconcat (snd <$> filteredAccounts)
   in  Item
         { iDate            = date
         , eDescription     = "Total"
@@ -94,14 +94,13 @@ toItem _ _ = Nothing
 
 -- Formatting a report into rows
 data Row = Row
-  {
-    rDate :: Text
-  , rAmount    :: Text
+  { rDate :: Text
+  , rAmount :: Text
   , rCommodity :: Text
-  , rDescription :: Text,
-    rAccount :: Text,
-    rOtherAmount :: Text,
-    rOtherCommodity :: Text
+  , rDescription :: Text
+  , rAccount :: Text
+  , rOtherAmount :: Text
+  , rOtherCommodity :: Text
   } deriving (Show)
 
 

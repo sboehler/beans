@@ -119,6 +119,7 @@ Available options:
 Available commands:
   balance                  Print a balance sheet
   import                   Import data
+  journal                  Print a journal
 #+end_example
 
 Use ~beans balance --help~ to get further help on available options.
@@ -210,7 +211,7 @@ statement to transactions is a simple command:
 
 #+NAME: beans-import
 #+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
-  beans import -i ch.postfinance examples/postfinance.rules -a Assets:Checking examples/postfinance.csv
+  beans import -i ch.postfinance -c examples/postfinance.rules -a Assets:Checking examples/postfinance.csv
 #+END_SRC
 
 ~import~ outputs a simple list of transactions to stdout, in a format
@@ -289,7 +290,7 @@ The simplest command is
 
 #+NAME: beans-balance
 #+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
-  beans balance examples/example1.bean
+  beans balance -j examples/example1.bean
 #+END_SRC
 
 This outputs a balance for all accounts without any currency conversions.
@@ -308,7 +309,6 @@ Account            Amount    Commodity
     OpeningBalance -10000.00 USD
   Income           -12000.00 USD
     Salary         -12000.00 USD
------------------- --------- ----------
 
 #+end_example
 
@@ -316,29 +316,26 @@ There are some formatting options available:
 
 #+NAME: beans-balance-with-options
 #+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
-  beans balance examples/example1.bean --report-type flat --depth 0
+  beans balance -j examples/example1.bean --flat --depth 0
 #+END_SRC
 
 #+RESULTS: beans-balance-with-options
-#+begin_example
-Account  Amount    Commodity
--------- --------- ----------
-            100.00 SomeStock
-          -1015.00 USD
-  Assets    100.00 SomeStock
-          20985.00 USD
-  Equity -10000.00 USD
-  Income -12000.00 USD
--------- --------- ----------
-
-#+end_example
+: Account  Amount    Commodity
+: -------- --------- ----------
+:             100.00 SomeStock
+:           -1015.00 USD
+:   Assets    100.00 SomeStock
+:           20985.00 USD
+:   Equity -10000.00 USD
+:   Income -12000.00 USD
+:
 
 
 But how much is this worth in USD?
 
 #+NAME: beans-balance-market1
 #+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
-  beans balance examples/example1.bean -c USD
+  beans balance -j examples/example1.bean -m USD
 #+END_SRC
 
 #+RESULTS: beans-balance-market1
@@ -354,7 +351,6 @@ Account            Amount    Commodity
     Valuation        -985.00 USD
   Income           -12000.00 USD
     Salary         -12000.00 USD
------------------- --------- ---------
 
 #+end_example
 
@@ -362,7 +358,7 @@ How about CHF?
 
 #+NAME: beans-balance-market-2
 #+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
-  beans balance examples/example1.bean -c CHF
+  beans balance -j examples/example1.bean -m CHF
 #+END_SRC
 
 #+RESULTS: beans-balance-market-2
@@ -378,7 +374,6 @@ Account            Amount    Commodity
     Valuation      -19970.00 CHF
   Income           -16000.00 CHF
     Salary         -16000.00 CHF
------------------- --------- ---------
 
 #+end_example
 
@@ -399,7 +394,7 @@ How did our portfolio perform in February, in USD?
 
 #+NAME: beans-balance-market-3
 #+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
-  beans balance examples/example1.bean -c USD -f Portfolio --from 2018-02-01 --to 2018-02-28
+  beans balance -j examples/example1.bean -m USD -f Portfolio --from 2018-02-01 --to 2018-02-28
 #+END_SRC
 
 Note that when you specify the ~--from~ parameter, only transactions
@@ -415,7 +410,6 @@ essentially shows the difference between the ~--from~ and ~--to~ dates
 :     Portfolio  500.00 USD
 :   Equity      -500.00 USD
 :     Valuation -500.00 USD
-: ------------- ------- ---------
 :
 
 The portfolio gained 500 USD due to market price changes - the balance

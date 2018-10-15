@@ -29,13 +29,10 @@ import qualified Beans.Data.Map                as M
 import           Data.Text                                ( Text )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Data.Maybe                               ( mapMaybe )
-import           Beans.Table                              ( Column(..)
+import           Beans.Table                              ( Cell(..)
                                                           , formatStandard
-                                                          , left
-                                                          , right
                                                           , showTable
                                                           )
-
 
 createReport :: MonadThrow m => JournalOptions -> Ledger -> m Report
 createReport JournalOptions {..} ledger = do
@@ -142,15 +139,18 @@ itemToRows Item {..}
                     otherAmounts
                     otherCommodities
 
+rowToCells :: Row -> [Cell]
+rowToCells Row {..} =
+  [ AlignLeft rDate
+  , AlignRight rAmount
+  , AlignLeft rCommodity
+  , AlignLeft rDescription
+  , AlignLeft rAccount
+  , AlignLeft rOtherAmount
+  , AlignLeft rOtherCommodity
+  ]
+
 
 -- formatting rows into a table
 formatTable :: [Row] -> Text
-formatTable = showTable
-  [ Column left "" left  rDate
-  , Column left "" right rAmount
-  , Column left "" left  rCommodity
-  , Column left "" left  rDescription
-  , Column left "" left  rAccount
-  , Column left "" right rOtherAmount
-  , Column left "" left  rOtherCommodity
-  ]
+formatTable = showTable . fmap rowToCells

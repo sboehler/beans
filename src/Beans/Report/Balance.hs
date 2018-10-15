@@ -76,27 +76,24 @@ sectionToRows (label, Section _ subsections subtotals) =
   positionRows   = positionsToRows label subtotals
 
 positionsToRows :: Text -> Positions -> [Row]
-positionsToRows title subtotals
-  = let
-      nbrSubtotals = M.size subtotals
-      nbrRows      = maximum [1, nbrSubtotals]
-      st           = flattenPositions subtotals
-        ++ replicate (nbrRows - nbrSubtotals) (Nothing, Nothing, Nothing)
-    in
-      do
-        (rAccount, (lot, commodity, amount)) <- zip (title : repeat "") st
-        pure Row
-          { rAccount
-          , rAmount    = maybe "" formatStandard amount
-          , rCommodity = T.pack
-            $ unwords [maybe "" show commodity, maybe "" (show . pretty) lot]
-          }
+positionsToRows title subtotals =
+  let positions    = flattenPositions subtotals
+      nbrRows      = maximum [1, length positions]
+      quantify     = take nbrRows . (++ repeat mempty)
+      accounts     = [title]
+      amounts      = formatStandard . (\(_, _, amount) -> amount) <$> positions
+      commodities =
+        (\(lot, commodity, _) ->
+            T.pack $ unwords [show commodity, maybe "" (show . pretty) lot]
+          )
+          <$> positions
+  in  zipWith3 Row (quantify accounts) (quantify amounts) (quantify commodities)
 
-flattenPositions :: Positions -> [(Maybe Lot, Maybe Commodity, Maybe Amount)]
+flattenPositions :: Positions -> [(Maybe Lot, Commodity, Amount)]
 flattenPositions positions = do
   (lot      , amounts) <- (M.toList . M.mapKeysM snd) positions
   (commodity, amount ) <- M.toList amounts
-  return (lot, Just commodity, Just amount)
+  return (lot, commodity, amount)
 
 indent :: Int -> Row -> Row
 indent n (Row first a b) = Row (indent' first) a b

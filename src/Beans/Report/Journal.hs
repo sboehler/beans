@@ -75,7 +75,6 @@ accountsToItem (Filter regex) date accounts =
         }
 accountsToItem _ _ _ = error "Fix this"
 
-
 toItem :: Filter -> Dated Command -> Maybe Item
 toItem (Filter regex) (Dated d Transaction {..}) =
   let (accountPostings, otherPostings) =
@@ -109,11 +108,12 @@ data Row = Row
 itemToRows :: Item -> [Row]
 itemToRows Item {..}
   = let
+      desc = T.chunksOf 40 eDescription
       quantify     = take nbrRows . (++ repeat "")
       dates        = quantify $ T.pack . show <$> [iDate]
       amounts      = quantify $ formatStandard . snd <$> eAccountPostings
       commodities  = quantify $ T.pack . show . fst <$> eAccountPostings
-      descriptions = quantify $ T.lines eDescription
+      descriptions = quantify desc
       otherAccounts =
         quantify
           $   T.pack
@@ -131,7 +131,7 @@ itemToRows Item {..}
           .   show
           .   (\(_, commodity, _) -> commodity)
           <$> eOtherPostings
-      nbrRows = maximum [length eAccountPostings, length eOtherPostings]
+      nbrRows = maximum [length eAccountPostings, length eOtherPostings, length desc]
     in
       List.zipWith7 Row
                     dates

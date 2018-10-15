@@ -108,7 +108,7 @@ data Row = Row
 itemToRows :: Item -> [Row]
 itemToRows Item {..}
   = let
-      desc = T.chunksOf 40 eDescription
+      desc         = T.chunksOf 40 eDescription
       quantify     = take nbrRows . (++ repeat "")
       dates        = quantify $ T.pack . show <$> [iDate]
       amounts      = quantify $ formatStandard . snd <$> eAccountPostings
@@ -131,7 +131,8 @@ itemToRows Item {..}
           .   show
           .   (\(_, commodity, _) -> commodity)
           <$> eOtherPostings
-      nbrRows = maximum [length eAccountPostings, length eOtherPostings, length desc]
+      nbrRows =
+        maximum [length eAccountPostings, length eOtherPostings, length desc]
     in
       List.zipWith7 Row
                     dates

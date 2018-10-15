@@ -3,6 +3,7 @@ module Beans.Balance
   )
 where
 
+import           Beans.Table                              ( showTable )
 import           Beans.Accounts                           ( calculateAccountsForDays
                                                           , checkLedger
                                                           )
@@ -14,7 +15,6 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           )
 import qualified Beans.Data.Map                as M
 import           Beans.Report.Balance                     ( createReport
-                                                          , formatTable
                                                           , reportToRows
                                                           )
 import qualified Beans.Ledger                  as L
@@ -81,7 +81,7 @@ printStage accounts = do
   let f = case reportType of
         Hierarchical -> hierarchical
         Flat         -> flat
-  (liftIO . TIO.putStrLn . formatTable . reportToRows . createReport f) accounts
+  (liftIO . TIO.putStrLn . showTable . reportToRows . createReport f) accounts
  where
   hierarchical Position { pAccount = Account { aType, aSegments } } =
     T.pack (show aType) : aSegments

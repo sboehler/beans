@@ -1,6 +1,5 @@
 module Beans.Report.Balance
   ( Section(..)
-  , formatTable
   , reportToRows
   , createReport
   )
@@ -15,15 +14,13 @@ import           Beans.Data.Accounts                      ( Accounts
                                                           )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                             ( )
-import           Beans.Table                              ( Column(..)
+import           Beans.Table                              ( Cell(..)
                                                           , formatStandard
-                                                          , left
-                                                          , right
-                                                          , showTable
                                                           )
 import           Data.Foldable                            ( fold )
 import           Data.Monoid                              ( (<>) )
 import           Data.Text                                ( Text )
+import qualified Data.List                     as L
 import qualified Data.Text                     as T
 import           Data.Text.Prettyprint.Doc                ( pretty )
 
@@ -59,39 +56,38 @@ splitSection = M.mapEntries f
   f ([]    , ps) = (mempty, M.singleton [] ps)
 
 -- Formatting a report into rows
-data Row = Row
-  { rAccount   :: Text
-  , rAmount    :: Text
-  , rCommodity :: Text
-  }
+reportToRows :: Section -> [[Cell]]
+reportToRows t =
+  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
+    : [Separator, Separator, Separator]
+    : sectionToRows ("", t)
 
-reportToRows :: Section -> [Row]
-reportToRows t = sectionToRows ("", t)
-
-sectionToRows :: (Text, Section) -> [Row]
+sectionToRows :: (Text, Section) -> [[Cell]]
 sectionToRows (label, Section _ subsections subtotals) =
   positionRows ++ subsectionRows
  where
   subsectionRows = indent 2 <$> (sectionToRows =<< M.toList subsections)
   positionRows   = positionsToRows label subtotals
 
-positionsToRows :: Text -> Positions -> [Row]
+positionsToRows :: Text -> Positions -> [[Cell]]
 positionsToRows title subtotals =
   let
     positions = flattenPositions subtotals
     nbrRows   = maximum [1, length positions]
-    quantify  = take nbrRows . (++ repeat mempty)
-    accounts  = [title]
-    amounts   = formatStandard . (\(_, _, amount) -> amount) <$> positions
+    quantify  = take nbrRows . (++ repeat Empty)
+    accounts  = [AlignLeft title]
+    amounts =
+      AlignRight . formatStandard . (\(_, _, amount) -> amount) <$> positions
     commodities =
-      T.pack
+      AlignLeft
+        .   T.pack
         .   unwords
         .   (\(lot, commodity, _) ->
               [show commodity, maybe "" (show . pretty) lot]
             )
         <$> positions
   in
-    zipWith3 Row (quantify accounts) (quantify amounts) (quantify commodities)
+    L.transpose [quantify accounts, quantify amounts, quantify commodities]
 
 flattenPositions :: Positions -> [(Maybe Lot, Commodity, Amount)]
 flattenPositions positions = do
@@ -99,14 +95,7 @@ flattenPositions positions = do
   (commodity, amount ) <- M.toList amounts
   return (lot, commodity, amount)
 
-indent :: Int -> Row -> Row
-indent n (Row first a b) = Row (indent' first) a b
-  where indent' t = T.replicate (fromIntegral n) " " <> t
-
--- formatting rows into a table
-formatTable :: [Row] -> Text
-formatTable = showTable
-  [ Column left "Account"   left  rAccount
-  , Column left "Amount"    right rAmount
-  , Column left "Commodity" left  rCommodity
-  ]
+indent :: Int -> [Cell] -> [Cell]
+indent n (AlignLeft t   : ts) = IndentBy n t : ts
+indent n (IndentBy n' t : ts) = IndentBy (n + n') t : ts
+indent _ cs                   = cs

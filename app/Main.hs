@@ -1,7 +1,10 @@
 module Main where
 
+import           Beans.Data.Accounts                      ( Account(..)
+                                                          , AccountType(Equity)
+                                                          , Date(..)
+                                                          )
 import           Beans.Lib                                ( runBeans )
-import           Beans.Data.Accounts                      ( Date(..), Account(..), AccountType(Equity))
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , Command(..)
                                                           , Filter(..)
@@ -49,14 +52,16 @@ filterParser =
     <|> pure NoFilter
 
 valuationParser :: Parser Valuation
-valuationParser = let
-  account = Account Equity ["Valuation"]
- in
-  (AtMarket <$> option
-      (toReadM P.commodity)
-      (long "at-market" <> metavar "COMMODITY" <> short 'm' <> help
-        "Valuation at market prices"
-      ) <*> pure account
+valuationParser =
+  let account = Account Equity ["Valuation"]
+  in
+    (   AtMarket
+    <$> option
+          (toReadM P.commodity)
+          (long "at-market" <> metavar "COMMODITY" <> short 'm' <> help
+            "Valuation at market prices"
+          )
+    <*> pure account
     )
     <|> (AtCost <$> option
           (toReadM P.commodity)
@@ -130,7 +135,11 @@ cmd =
                (info (Import <$> importOptions) (progDesc "Import data"))
     <> command
          "journal"
-         (info (Journal <$> journalOptions) (progDesc "Print a journal"))
+         (info
+           (Journal <$> journalOptions)
+           (progDesc "Show the changes in one or several accounts over a period"
+           )
+         )
 
 parserConfig :: ParserInfo Command
 parserConfig = info

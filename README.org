@@ -14,14 +14,13 @@ beans is a [[https://plaintextaccounting][plain text accounting tool]] in the tr
 have some objectives in mind which distinguish beans from similar
 tools:
 
-- Importing data should be easy :: The greatest pain of plain text
-     accounting is to import financial statements from financial
-     service providers such as banks and credit cards. beans strives
-     to include importers for known formats.
-- Assigning accounts should be easy :: beans provides a
-     domain-specific language (DSL) to specify rules for assigning
-     accounts based on transaction features such as amount,
-     description or dates.
+- Easy importing :: The greatest pain of plain text accounting is to
+                    import financial statements from financial service
+                    providers such as banks and credit cards. beans
+                    strives to include importers for known formats.
+- Rule-based categorization :: beans provides a domain-specific
+     language (DSL) to specify rules for assigning accounts based on
+     transaction features such as amount, description or dates.
 - Proper multi-commodity and valuation :: beans wants to make it
      simple to do both at-cost and at-market valuations of your
      assets, while maintaining correctness of the balance. Instead of

@@ -40,6 +40,7 @@ import           Control.Monad.State                      ( MonadState
                                                           )
 import           Data.Monoid                              ( Sum(Sum) )
 import qualified Data.List                     as L
+import qualified Data.Text as T
 
 
 data ValuationState = ValuationState
@@ -154,7 +155,8 @@ createValuationTransaction
   :: (MonadState ValuationState m) => Position -> Amount -> m Command
 createValuationTransaction position amount = do
   ValuationState { vsTarget, vsValuationAccount } <- get
-  return $ Transaction Complete "valuation" [] $ M.fromListM
+  let desc = T.pack ("Valuation " <> show (pCommodity position))
+  return $ Transaction Complete desc [] $ M.fromListM
     [ (position, M.singleton vsTarget amount)
     , ( position { pAccount = vsValuationAccount }
       , M.singleton vsTarget (-amount)

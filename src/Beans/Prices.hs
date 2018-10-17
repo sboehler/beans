@@ -41,16 +41,16 @@ updatePrices prices command =
   let prices' = addPrice prices command in addPrice prices' (invert command)
 
 addPrice :: Prices -> Command -> Prices
-addPrice prices Price { pCommodity, pPrice, pTargetCommodity } =
-  let p = M.findWithDefault mempty pCommodity prices
-  in  M.insert pCommodity (M.insert pTargetCommodity pPrice p) prices
+addPrice prices Price { prCommodity, prPrice, prTargetCommodity } =
+  let p = M.findWithDefault mempty prCommodity prices
+  in  M.insert prCommodity (M.insert prTargetCommodity prPrice p) prices
 addPrice prices _ = prices
 
 invert :: Command -> Command
-invert Price { pCommodity, pTargetCommodity, pPrice } = Price
-  { pCommodity       = pTargetCommodity
-  , pTargetCommodity = pCommodity
-  , pPrice           = 1 `sdiv` pPrice
+invert Price { prCommodity, prTargetCommodity, prPrice } = Price
+  { prCommodity       = prTargetCommodity
+  , prTargetCommodity = prCommodity
+  , prPrice           = 1 `sdiv` prPrice
   }
 invert c = c
 

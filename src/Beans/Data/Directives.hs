@@ -58,9 +58,9 @@ data Command
   , oRestriction :: Restriction
   }
   | Price {
-    pCommodity :: Commodity
-  , pPrice :: Scientific
-  , pTargetCommodity :: Commodity
+    prCommodity :: Commodity
+  , prPrice :: Scientific
+  , prTargetCommodity :: Commodity
   }
   | Transaction {
     tFlag :: Flag

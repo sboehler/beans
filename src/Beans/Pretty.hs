@@ -84,8 +84,8 @@ instance Pretty Command where
   pretty Open {oAccount, oRestriction} =
     "open" <+> pretty oAccount <+> pretty oRestriction
   pretty Close {cAccount} = "close" <+> pretty cAccount
-  pretty Price {pCommodity, pPrice, pTargetCommodity} =
-    "price" <+> pretty pCommodity <+> pretty pPrice <+> pretty pTargetCommodity
+  pretty Price {prCommodity, prPrice, prTargetCommodity} =
+    "price" <+> pretty prCommodity <+> pretty prPrice <+> pretty prTargetCommodity
 
 instance Pretty Restriction where
   pretty NoRestriction    = mempty

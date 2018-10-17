@@ -297,18 +297,20 @@ This outputs a balance for all accounts without any currency conversions.
 
 #+RESULTS: beans-balance
 #+begin_example
-Account            Amount    Commodity
------------------- --------- ----------
-                      100.00 SomeStock
-                    -1015.00 USD
-  Assets              100.00 SomeStock
-                    20985.00 USD
-    Checking        20985.00 USD
-    Portfolio         100.00 SomeStock
-  Equity           -10000.00 USD
-    OpeningBalance -10000.00 USD
-  Income           -12000.00 USD
-    Salary         -12000.00 USD
+|------------------+-----------+------------|
+| Account          | Amount    | Commodity  |
+|------------------+-----------+------------|
+|                  |    100.00 | SomeStock  |
+|                  |  -1015.00 | USD        |
+| Assets           |    100.00 | SomeStock  |
+|                  |  20985.00 | USD        |
+|   Checking       |  20985.00 | USD        |
+|   Portfolio      |    100.00 | SomeStock  |
+| Equity           | -10000.00 | USD        |
+|   OpeningBalance | -10000.00 | USD        |
+| Income           | -12000.00 | USD        |
+|   Salary         | -12000.00 | USD        |
+|------------------+-----------+------------|
 
 #+end_example
 
@@ -320,15 +322,19 @@ There are some formatting options available:
 #+END_SRC
 
 #+RESULTS: beans-balance-with-options
-: Account  Amount    Commodity
-: -------- --------- ----------
-:             100.00 SomeStock
-:           -1015.00 USD
-:   Assets    100.00 SomeStock
-:           20985.00 USD
-:   Equity -10000.00 USD
-:   Income -12000.00 USD
-:
+#+begin_example
+|---------+-----------+------------|
+| Account | Amount    | Commodity  |
+|---------+-----------+------------|
+|         |    100.00 | SomeStock  |
+|         |  -1015.00 | USD        |
+| Assets  |    100.00 | SomeStock  |
+|         |  20985.00 | USD        |
+| Equity  | -10000.00 | USD        |
+| Income  | -12000.00 | USD        |
+|---------+-----------+------------|
+
+#+end_example
 
 
 But how much is this worth in USD?
@@ -340,17 +346,19 @@ But how much is this worth in USD?
 
 #+RESULTS: beans-balance-market1
 #+begin_example
-Account            Amount    Commodity
------------------- --------- ---------
-                        0.00 USD
-  Assets            22985.00 USD
-    Checking        20985.00 USD
-    Portfolio        2000.00 USD
-  Equity           -10985.00 USD
-    OpeningBalance -10000.00 USD
-    Valuation        -985.00 USD
-  Income           -12000.00 USD
-    Salary         -12000.00 USD
+|------------------+-----------+-----------|
+| Account          | Amount    | Commodity |
+|------------------+-----------+-----------|
+|                  |      0.00 | USD       |
+| Assets           |  22985.00 | USD       |
+|   Checking       |  20985.00 | USD       |
+|   Portfolio      |   2000.00 | USD       |
+| Equity           | -10985.00 | USD       |
+|   OpeningBalance | -10000.00 | USD       |
+|   Valuation      |   -985.00 | USD       |
+| Income           | -12000.00 | USD       |
+|   Salary         | -12000.00 | USD       |
+|------------------+-----------+-----------|
 
 #+end_example
 
@@ -363,17 +371,19 @@ How about CHF?
 
 #+RESULTS: beans-balance-market-2
 #+begin_example
-Account            Amount    Commodity
------------------- --------- ---------
-                        0.00 CHF
-  Assets            45970.00 CHF
-    Checking        41970.00 CHF
-    Portfolio        4000.00 CHF
-  Equity           -29970.00 CHF
-    OpeningBalance -10000.00 CHF
-    Valuation      -19970.00 CHF
-  Income           -16000.00 CHF
-    Salary         -16000.00 CHF
+|------------------+-----------+-----------|
+| Account          | Amount    | Commodity |
+|------------------+-----------+-----------|
+|                  |      0.00 | CHF       |
+| Assets           |  45970.00 | CHF       |
+|   Checking       |  41970.00 | CHF       |
+|   Portfolio      |   4000.00 | CHF       |
+| Equity           | -29970.00 | CHF       |
+|   OpeningBalance | -10000.00 | CHF       |
+|   Valuation      | -19970.00 | CHF       |
+| Income           | -16000.00 | CHF       |
+|   Salary         | -16000.00 | CHF       |
+|------------------+-----------+-----------|
 
 #+end_example
 
@@ -403,20 +413,134 @@ essentially shows the difference between the ~--from~ and ~--to~ dates
 (the default for the latter being today).
 
 #+RESULTS: beans-balance-market-3
-: Account       Amount  Commodity
-: ------------- ------- ---------
-:                  0.00 USD
-:   Assets       500.00 USD
-:     Portfolio  500.00 USD
-:   Equity      -500.00 USD
-:     Valuation -500.00 USD
-:
+#+begin_example
+|-------------+---------+-----------|
+| Account     | Amount  | Commodity |
+|-------------+---------+-----------|
+|             |    0.00 | USD       |
+| Assets      |  500.00 | USD       |
+|   Portfolio |  500.00 | USD       |
+| Equity      | -500.00 | USD       |
+|   Valuation | -500.00 | USD       |
+|-------------+---------+-----------|
+
+#+end_example
 
 The portfolio gained 500 USD due to market price changes - the balance
 is booked in the Valuation account.
 
 At the moment, beans offers either no valuation or valuation at market
 prices. Valuation at cost is yet to be implemented.
+
+*** Tracking changes in accounts
+
+beans allows for sophisticated analysis and reconciliation of account
+balances. A simple use case is to reconcile start and ending balances
+of a specific account:
+
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+  beans journal -j ./examples/example1.bean --filter Assets:Checking
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+|------------+----------+-----+----------------------+-----------------------+-----------+-----------|
+| <MIN_DATE> |          |     | Assets:Checking      |                       |           |           |
+|------------+----------+-----+----------------------+-----------------------+-----------+-----------|
+| 2018-01-01 | 10000.00 | USD | Opening balance      | Equity:OpeningBalance | -10000.00 | USD       |
+|            |          |     |                      |                       |           |           |
+| 2018-01-10 | -1015.00 | USD | Investing in stock   | Assets:Portfolio      |    100.00 | SomeStock |
+|            |          |     |                      |                       |           |           |
+| 2018-01-25 |  4000.00 | USD | Salary January 2018  | Income:Salary         |  -4000.00 | USD       |
+|            |          |     |                      |                       |           |           |
+| 2018-02-25 |  4000.00 | USD | Salary February 2018 | Income:Salary         |  -4000.00 | USD       |
+|            |          |     |                      |                       |           |           |
+| 2018-03-25 |  4000.00 | USD | Salary March 2018    | Income:Salary         |  -4000.00 | USD       |
+|            |          |     |                      |                       |           |           |
+|------------+----------+-----+----------------------+-----------------------+-----------+-----------|
+| <MAX_DATE> | 20985.00 | USD | Assets:Checking      |                       |           |           |
+|------------+----------+-----+----------------------+-----------------------+-----------+-----------|
+
+#+end_example
+
+The table shows starting and ending balances of the selected account,
+as well as all transactions in between. Columns 2 - 4 show what
+happened in the selected accounts, columns 5 - 7 show the
+corresponding counterbookings and the respective amounts and units.
+
+But we are not restricted to selecting one account. The next example
+shows a combined journal for all Asset accounts:
+
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+  beans journal -j ./examples/example1.bean --filter Assets
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+|------------+----------+-----------+----------------------+-----------------------+-----------+-----|
+| <MIN_DATE> |          |           | Assets               |                       |           |     |
+|------------+----------+-----------+----------------------+-----------------------+-----------+-----|
+| 2018-01-01 | 10000.00 | USD       | Opening balance      | Equity:OpeningBalance | -10000.00 | USD |
+|            |          |           |                      |                       |           |     |
+| 2018-01-10 | -1015.00 | USD       | Investing in stock   |                       |           |     |
+|            |   100.00 | SomeStock |                      |                       |           |     |
+|            |          |           |                      |                       |           |     |
+| 2018-01-25 |  4000.00 | USD       | Salary January 2018  | Income:Salary         |  -4000.00 | USD |
+|            |          |           |                      |                       |           |     |
+| 2018-02-25 |  4000.00 | USD       | Salary February 2018 | Income:Salary         |  -4000.00 | USD |
+|            |          |           |                      |                       |           |     |
+| 2018-03-25 |  4000.00 | USD       | Salary March 2018    | Income:Salary         |  -4000.00 | USD |
+|            |          |           |                      |                       |           |     |
+|------------+----------+-----------+----------------------+-----------------------+-----------+-----|
+| <MAX_DATE> |   100.00 | SomeStock | Assets               |                       |           |     |
+|            | 20985.00 | USD       |                      |                       |           |     |
+|------------+----------+-----------+----------------------+-----------------------+-----------+-----|
+
+#+end_example
+
+We now see the ending balances in terms of USD and SomeStock
+units. However, economically, it is more interesting to see all values
+converted to USD. So let's do that, using the same syntax as for the
+balance command:
+
+#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+  beans journal -j ./examples/example1.bean --filter Assets -m USD
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+|------------+----------+-----+----------------------+-----------------------+-----------+-----|
+| <MIN_DATE> |          |     | Assets               |                       |           |     |
+|------------+----------+-----+----------------------+-----------------------+-----------+-----|
+| 2018-01-01 | 10000.00 | USD | Opening balance      | Equity:OpeningBalance | -10000.00 | USD |
+|            |          |     |                      |                       |           |     |
+| 2018-01-10 | -1015.00 | USD | Investing in stock   | Equity:Valuation      |     15.00 | USD |
+|            |  1000.00 | USD |                      |                       |           |     |
+|            |          |     |                      |                       |           |     |
+| 2018-01-25 |  4000.00 | USD | Salary January 2018  | Income:Salary         |  -4000.00 | USD |
+|            |          |     |                      |                       |           |     |
+| 2018-01-31 |   500.00 | USD | Valuation SomeStock  | Equity:Valuation      |   -500.00 | USD |
+|            |          |     |                      |                       |           |     |
+| 2018-02-25 |  4000.00 | USD | Salary February 2018 | Income:Salary         |  -4000.00 | USD |
+|            |          |     |                      |                       |           |     |
+| 2018-02-28 |   500.00 | USD | Valuation SomeStock  | Equity:Valuation      |   -500.00 | USD |
+|            |          |     |                      |                       |           |     |
+| 2018-03-25 |  4000.00 | USD | Salary March 2018    | Income:Salary         |  -4000.00 | USD |
+|            |          |     |                      |                       |           |     |
+|------------+----------+-----+----------------------+-----------------------+-----------+-----|
+| <MAX_DATE> | 22985.00 | USD | Assets               |                       |           |     |
+|------------+----------+-----+----------------------+-----------------------+-----------+-----|
+
+#+end_example
+
+The journal now not only shows explicit inflows and outflows, but also
+valuation corrections due to price changes at the specific date they occurred.
+
+As a general rule, use the balance command if you are interested in
+aggregates over a certain period. Use the journal command and suitable
+filtering to see the details by date. Together, those commands can
+answer almost any question about a journal.
+
 
 *** Transaction-level valuation
 
@@ -457,7 +581,7 @@ not have an explicit road map, but here are some ideas I'd like to be
 working on in the future:
 
 **** Shorter term
-- [ ] new command to print and filter the ledger (as-is or at market value)
+- [X] new command to print and filter transactions (as-is or at market value)
 - [ ] multi-period reports (yearly, monthly, weekly, daily, ...)
 - [ ] colored output
 - [ ] friendlier command line

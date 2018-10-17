@@ -58,15 +58,18 @@ splitSection = M.mapEntries f
 -- Formatting a report into rows
 reportToRows :: Section -> [[Cell]]
 reportToRows t =
-  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
-    : [Separator, Separator, Separator]
-    : sectionToRows ("", t)
+  [Separator, Separator, Separator]
+    :  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
+    :  [Separator, Separator, Separator]
+    :  sectionToRows 0 ("", t)
+    ++ [[Separator, Separator, Separator]]
 
-sectionToRows :: (Text, Section) -> [[Cell]]
-sectionToRows (label, Section _ subsections subtotals) =
+
+sectionToRows :: Int -> (Text, Section) -> [[Cell]]
+sectionToRows n (label, Section _ subsections subtotals) =
   positionRows ++ subsectionRows
  where
-  subsectionRows = indent 2 <$> (sectionToRows =<< M.toList subsections)
+  subsectionRows = indent n <$> (sectionToRows 2 =<< M.toList subsections)
   positionRows   = positionsToRows label subtotals
 
 positionsToRows :: Text -> Positions -> [[Cell]]

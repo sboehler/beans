@@ -21,9 +21,9 @@ import           Beans.Ledger                             ( Ledger )
 import           Beans.Accounts                           ( checkLedger )
 import           Beans.Valuation                          ( valuateLedger )
 import           Beans.Report.Journal                     ( createReport
-                                                          , formatTable
-                                                          , Report(..)
+                                                          , reportToTable
                                                           )
+import           Beans.Table                              ( showTable )
 import qualified Data.Text.IO                  as TIO
 
 
@@ -35,9 +35,9 @@ journalCommand =
 reportStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => Ledger -> m ()
 reportStage ledger = do
-  options           <- ask
-  Report { rItems } <- createReport options ledger
-  (liftIO . TIO.putStrLn . formatTable) rItems
+  options <- ask
+  report  <- createReport options ledger
+  (liftIO . TIO.putStrLn . showTable . reportToTable) report
 
 parseStage
   :: (MonadIO m, MonadThrow m, MonadReader JournalOptions m) => m Ledger

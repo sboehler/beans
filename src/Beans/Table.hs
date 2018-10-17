@@ -32,12 +32,8 @@ data Cell
 showTable :: [[Cell]] -> Text
 showTable rows =
   let columnWidths = [ maximum $ width <$> column | column <- transpose rows ]
-      separators =
-        [ T.replicate columnWidth "-" | columnWidth <- columnWidths ]
-  in  T.unlines
-      $   T.intercalate " "
-      .   zipWith3 format columnWidths separators
-      <$> rows
+      l            = pad "|" . foldl combine "" . zip columnWidths <$> rows
+  in  T.unlines l
 
 width :: Cell -> Int
 width Separator       = 0
@@ -47,13 +43,22 @@ width (AlignRight  t) = T.length t
 width (AlignCenter t) = T.length t
 width (IndentBy n t ) = n + T.length t
 
-format :: Int -> Text -> Cell -> Text
-format _ sep Separator       = sep
-format n _   (AlignLeft   t) = T.justifyLeft n ' ' t
-format n _   (AlignRight  t) = T.justifyRight n ' ' t
-format n _   (AlignCenter t) = T.center n ' ' t
-format n _   Empty           = T.replicate n " "
-format n _   (IndentBy i t)  = T.replicate i " " <> T.justifyLeft (n - i) ' ' t
+pad :: Text -> Text -> Text
+pad padding content = padding <> content <> padding
+
+combine :: Text -> (Int, Cell) -> Text
+combine "" b                = format b
+combine t  b@(_, Separator) = t <> "+" <> format b
+combine t  b                = t <> "|" <> format b
+
+format :: (Int, Cell) -> Text
+format (n, Separator    ) = pad "-" $ T.replicate n "-"
+format (n, AlignLeft t  ) = pad " " $ T.justifyLeft n ' ' t
+format (n, AlignRight t ) = pad " " $ T.justifyRight n ' ' t
+format (n, AlignCenter t) = pad " " $ T.center n ' ' t
+format (n, Empty        ) = pad " " $ T.replicate n " "
+format (n, IndentBy i t) =
+  pad " " (T.replicate i " " <> T.justifyLeft (n - i) ' ' t)
 
 formatStandard :: Sum Scientific -> Text
 formatStandard = T.pack . formatScientific Fixed (Just 2) . getSum

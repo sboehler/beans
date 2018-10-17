@@ -582,6 +582,7 @@ working on in the future:
 
 **** Shorter term
 - [X] new command to print and filter transactions (as-is or at market value)
+- [ ] provide a more realistic example file
 - [ ] multi-period reports (yearly, monthly, weekly, daily, ...)
 - [ ] colored output
 - [ ] friendlier command line

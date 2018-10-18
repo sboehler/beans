@@ -9,20 +9,18 @@ import           Beans.Data.Accounts                      ( Accounts
                                                           , Amount
                                                           , Amounts
                                                           , Commodity(..)
+                                                          , format
                                                           , Lot(..)
                                                           , Position(..)
                                                           )
 import qualified Beans.Data.Map                as M
-import           Beans.Pretty                             ( )
-import           Beans.Table                              ( Cell(..)
-                                                          , formatStandard
-                                                          )
+import           Beans.Pretty                             ( pretty )
+import           Beans.Table                              ( Cell(..) )
 import           Data.Foldable                            ( fold )
 import           Data.Monoid                              ( (<>) )
 import           Data.Text                                ( Text )
 import qualified Data.List                     as L
 import qualified Data.Text                     as T
-import           Data.Text.Prettyprint.Doc                ( pretty )
 
 type Positions = M.Map (Commodity, Maybe Lot) Amounts
 
@@ -79,8 +77,7 @@ positionsToRows title subtotals =
     nbrRows   = maximum [1, length positions]
     quantify  = take nbrRows . (++ repeat Empty)
     accounts  = [AlignLeft title]
-    amounts =
-      AlignRight . formatStandard . (\(_, _, amount) -> amount) <$> positions
+    amounts   = AlignRight . format . (\(_, _, amount) -> amount) <$> positions
     commodities =
       AlignLeft
         .   T.pack

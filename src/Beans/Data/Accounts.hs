@@ -10,6 +10,7 @@ module Beans.Data.Accounts
   , balance
   , summarize
   , eraseLots
+  , format
   , Account(..)
   )
 where
@@ -18,14 +19,24 @@ import qualified Beans.Data.Map                as M
 import           Data.Foldable                            ( fold )
 import qualified Data.List                     as L
 import           Data.Maybe                               ( catMaybes )
-import           Data.Monoid                              ( Sum )
-import           Data.Scientific                          ( Scientific )
+import           Data.Monoid                              ( Sum
+                                                          , getSum
+                                                          )
+import           Data.Scientific                          ( Scientific
+                                                          , formatScientific
+                                                          , FPFormat(Fixed)
+                                                          )
 import           Data.Text                                ( Text
                                                           , unpack
+                                                          , pack
                                                           )
 import           Data.Time.Calendar                       ( Day )
 
 type Amount = Sum Scientific
+
+format :: Amount -> Text
+format = pack . formatScientific Fixed (Just 2) . getSum
+
 
 data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord)
 

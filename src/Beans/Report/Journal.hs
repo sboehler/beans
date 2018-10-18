@@ -20,6 +20,7 @@ import           Beans.Data.Accounts                      ( Date(..)
                                                           , Commodity
                                                           , Position(..)
                                                           , Account
+                                                          , format
                                                           )
 import qualified Data.List                     as List
 import           Beans.Accounts                           ( calculateAccountsForDays
@@ -29,9 +30,7 @@ import qualified Beans.Data.Map                as M
 import           Data.Text                                ( Text )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Data.Maybe                               ( mapMaybe )
-import           Beans.Table                              ( Cell(..)
-                                                          , formatStandard
-                                                          )
+import           Beans.Table                              ( Cell(..) )
 
 createReport :: MonadThrow m => JournalOptions -> Ledger -> m Report
 createReport JournalOptions {..} ledger = do
@@ -119,15 +118,14 @@ itemToRows date Item {..} =
     dates    = take nbrRows $ date : repeat Empty
     desc     = T.chunksOf 40 eDescription
     quantify = take nbrRows . (++ repeat "")
-    amounts =
-      AlignRight <$> quantify (formatStandard . snd <$> eAccountPostings)
+    amounts  = AlignRight <$> quantify (format . snd <$> eAccountPostings)
     commodities =
       AlignLeft <$> quantify (T.pack . show . fst <$> eAccountPostings)
     descriptions  = AlignLeft <$> quantify desc
     otherAccounts = AlignLeft <$> quantify
       (T.pack . show . (\(account, _, _) -> account) <$> eOtherPostings)
-    otherAmounts = AlignRight <$> quantify
-      (formatStandard . (\(_, _, amount) -> amount) <$> eOtherPostings)
+    otherAmounts = AlignRight
+      <$> quantify (format . (\(_, _, amount) -> amount) <$> eOtherPostings)
     otherCommodities = AlignLeft <$> quantify
       (T.pack . show . (\(_, commodity, _) -> commodity) <$> eOtherPostings)
     nbrRows = maximum [1, length eAccountPostings, length eOtherPostings]--, length desc]

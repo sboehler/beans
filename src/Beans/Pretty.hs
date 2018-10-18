@@ -2,6 +2,7 @@
 
 module Beans.Pretty
   ( prettyPrint
+  , pretty
   , prettyPrintLedger
   )
 where
@@ -26,11 +27,14 @@ import qualified Beans.Data.Map                as M
 import           Beans.Data.Restrictions                  ( Restriction(..) )
 import           Beans.Ledger                             ( Ledger )
 import           Data.Monoid                              ( Sum(..) )
-import           Data.Scientific                          ( Scientific )
+import           Data.Scientific                          ( Scientific
+                                                          , formatScientific
+                                                          , FPFormat(Fixed)
+                                                          )
 import           Data.Text.Prettyprint.Doc
 
 instance Pretty Amount where
-  pretty (Sum a) = pretty $ show a
+  pretty = pretty . formatScientific Fixed (Just 2) . getSum
 
 instance Pretty Scientific where
   pretty = pretty . show

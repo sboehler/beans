@@ -1,6 +1,5 @@
 module Beans.Accounts
-  ( AccountsException(..)
-  , Accounts
+  ( Accounts
   , calculateAccountsForDays
   , checkLedger
   , check

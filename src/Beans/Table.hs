@@ -1,19 +1,11 @@
 module Beans.Table
   ( Cell(..)
   , showTable
-  , formatStandard
   )
 where
 
 import           Data.List                                ( transpose )
-import           Data.Monoid                              ( Sum
-                                                          , getSum
-                                                          , (<>)
-                                                          )
-import           Data.Scientific                          ( FPFormat(Fixed)
-                                                          , Scientific
-                                                          , formatScientific
-                                                          )
+import           Data.Monoid                              ( (<>) )
 import           Prelude                           hiding ( lines )
 import           Data.Text                                ( Text )
 import qualified Data.Text                     as T
@@ -59,6 +51,3 @@ format (n, AlignCenter t) = pad " " $ T.center n ' ' t
 format (n, Empty        ) = pad " " $ T.replicate n " "
 format (n, IndentBy i t) =
   pad " " (T.replicate i " " <> T.justifyLeft (n - i) ' ' t)
-
-formatStandard :: Sum Scientific -> Text
-formatStandard = T.pack . formatScientific Fixed (Just 2) . getSum

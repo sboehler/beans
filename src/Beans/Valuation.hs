@@ -40,7 +40,7 @@ import           Control.Monad.State                      ( MonadState
                                                           )
 import           Data.Monoid                              ( Sum(Sum) )
 import qualified Data.List                     as L
-import qualified Data.Text as T
+import qualified Data.Text                     as T
 
 
 data ValuationState = ValuationState

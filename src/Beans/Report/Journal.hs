@@ -96,26 +96,26 @@ toItem regex (Dated d Transaction { tDescription, tPostings })
 toItem _ _ = Nothing
 
 
--- Formatting a report into rows
+-- Formatting a report as a table
 reportToTable :: Report -> [[Cell]]
 reportToTable (Report (Dated t0 header) items (Dated t1 footer)) = concat
   [ [replicate 7 Separator]
-  , itemToRows ((AlignLeft . T.pack . show) t0) header
+  , itemToTable ((AlignLeft . T.pack . show) t0) header
   , [replicate 7 Separator]
-  , (concatMap datedItemToRows . M.toList) items
+  , (concatMap datedItemToTable . M.toList) items
   , [replicate 7 Separator]
-  , itemToRows ((AlignLeft . T.pack . show) t1) footer
+  , itemToTable ((AlignLeft . T.pack . show) t1) footer
   , [replicate 7 Separator]
   ]
 
-datedItemToRows :: (Date, [Item]) -> [[Cell]]
-datedItemToRows (d, items) =
+datedItemToTable :: (Date, [Item]) -> [[Cell]]
+datedItemToTable (d, items) =
   concat
-      (zipWith itemToRows ((AlignLeft . T.pack . show) d : repeat Empty) items)
+      (zipWith itemToTable ((AlignLeft . T.pack . show) d : repeat Empty) items)
     ++ [replicate 7 Empty]
 
-itemToRows :: Cell -> Item -> [[Cell]]
-itemToRows date Item {..} =
+itemToTable :: Cell -> Item -> [[Cell]]
+itemToTable date Item {..} =
   let
     dates    = take nbrRows $ date : repeat Empty
     desc     = T.chunksOf 40 eDescription
@@ -130,7 +130,7 @@ itemToRows date Item {..} =
       <$> quantify (format . (\(_, _, amount) -> amount) <$> eOtherPostings)
     otherCommodities = AlignLeft <$> quantify
       (T.pack . show . (\(_, commodity, _) -> commodity) <$> eOtherPostings)
-    nbrRows = maximum [1, length eAccountPostings, length eOtherPostings]--, length desc]
+    nbrRows = maximum [1, length eAccountPostings, length eOtherPostings]
   in
     List.transpose
       [ dates

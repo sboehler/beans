@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7369b0e4564615867e42f85bc9f1f9470a994a02c4e542215f208139d14de2a7
+-- hash: 081bedbbfd0d1bce8cfb20237a4cdcb4651caa910646e9ec5a2ad87f4f0c35d9
 
 name:           beans
-version:        0.0.1.0
+version:        0.0.2.0
 synopsis:       A plain text accounting tool
 description:    Please see the README on Github at <https://github.com/sboehler/beans#readme>
 category:       Finance
@@ -29,7 +29,6 @@ source-repository head
 library
   exposed-modules:
       Beans.Accounts
-      Beans.Balance
       Beans.Data.Accounts
       Beans.Data.Directives
       Beans.Data.Map
@@ -38,13 +37,13 @@ library
       Beans.Import.CH.Postfinance
       Beans.Import.Common
       Beans.Import.DSL
-      Beans.Journal
       Beans.Ledger
       Beans.Lib
       Beans.Options
       Beans.Parser
       Beans.Pretty
       Beans.Prices
+      Beans.Report
       Beans.Report.Balance
       Beans.Report.Journal
       Beans.Table

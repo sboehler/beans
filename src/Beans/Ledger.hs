@@ -1,6 +1,7 @@
 module Beans.Ledger
   ( Ledger
   , build
+  , fromFile
   , filter
   )
 where
@@ -16,11 +17,17 @@ import qualified Data.List                     as L
 import           Prelude                           hiding ( filter )
 import           Text.Regex.PCRE                          ( (=~) )
 import           Beans.Options                            ( Filter(..) )
+import           Beans.Parser                             ( parseFile )
+import           Control.Monad.Catch                      ( MonadThrow )
+import           Control.Monad.IO.Class                   ( MonadIO )
 
 type Ledger = [Dated Command]
 
 build :: [Directive] -> Ledger
 build = L.sort . f where f d = [ c | (DatedCommandDirective c) <- d ]
+
+fromFile :: (MonadIO m, MonadThrow m) => FilePath -> m Ledger
+fromFile path = build <$> parseFile path
 
 filter :: Filter -> Ledger -> Ledger
 filter (StrictFilter regex) =

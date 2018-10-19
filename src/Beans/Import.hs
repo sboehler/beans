@@ -23,6 +23,7 @@ import           Beans.Pretty                             ( )
 import           Control.Applicative                      ( ZipList(ZipList)
                                                           , getZipList
                                                           )
+import           Data.Text                                ( Text )
 import           Control.Exception                        ( Exception )
 import           Control.Monad.Catch                      ( MonadThrow
                                                           , throwM
@@ -30,25 +31,19 @@ import           Control.Monad.Catch                      ( MonadThrow
 import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
                                                           )
-import           Control.Monad.Reader                     ( MonadReader
-                                                          , ask
-                                                          , asks
-                                                          )
 import           Data.Monoid                              ( (<>) )
 import qualified Data.Text.Prettyprint.Doc     as P
-import           Debug.Trace
 
 data ImportException = NoAccountFound [Rule] Entry | InvalidImporter String deriving (Show)
 
 instance Exception ImportException
 
-importCommand :: (MonadReader ImportOptions m, MonadThrow m, MonadIO m) => m ()
-importCommand = do
-  parse                           <- getParser
-  entries                         <- asks impOptData >>= parse
-  rules                           <- asks impOptConfig >>= parseFile
-  ImportOptions { impOptAccount } <- ask
-  accounts                        <- mapM (eval rules) entries
+importCommand :: (MonadThrow m, MonadIO m) => ImportOptions -> m ()
+importCommand ImportOptions {..} = do
+  parse    <- getParser impOptImporter
+  entries  <- parse impOptData
+  rules    <- parseFile impOptConfig
+  accounts <- mapM (eval rules) entries
   let transactions =
         getZipList
           $   mkTransaction
@@ -73,14 +68,8 @@ mkTransaction Entry {..} account otherAccount =
     ]
 
 
-getParser
-  :: (MonadThrow m, MonadIO m, MonadReader ImportOptions m)
-  => m (FilePath -> m [Entry])
-getParser = do
-  name <- asks impOptImporter
-  select name
- where
-  select n
-    | traceShowId n == Beans.Import.CH.Postfinance.name = return
-      Beans.Import.CH.Postfinance.parseEntries
-    | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n
+getParser :: (MonadIO m, MonadThrow m) => Text -> m (FilePath -> m [Entry])
+getParser n
+  | n == Beans.Import.CH.Postfinance.name = return
+    Beans.Import.CH.Postfinance.parseEntries
+  | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n

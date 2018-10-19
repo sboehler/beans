@@ -51,6 +51,15 @@ filterParser =
         )
     <|> pure NoFilter
 
+regexParser :: Parser T.Text
+regexParser =
+  T.pack <$> (strOption
+      (long "filter" <> metavar "REGEX" <> short 'f' <> help
+        "Filter the accounts with the given regex."
+      )
+    )
+
+
 valuationParser :: Parser Valuation
 valuationParser =
   let account = Account Equity ["Valuation"]
@@ -123,7 +132,7 @@ journalOptions =
     <*> valuationParser
     <*> fromParser
     <*> toParser
-    <*> filterParser
+    <*> regexParser
 
 cmd :: Parser Command
 cmd =

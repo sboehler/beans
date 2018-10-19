@@ -30,7 +30,7 @@ data JournalOptions = JournalOptions
   , jrnOptMarket  :: Valuation
   , jrnOptFrom    :: Date
   , jrnOptTo      :: Date
-  , jrnOptFilter  :: Filter
+  , jrnOptRegex  :: Text
   } deriving (Show)
 
 

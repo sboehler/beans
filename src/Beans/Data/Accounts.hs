@@ -101,11 +101,13 @@ balance accountName commodityName =
   f Position { pAccount, pCommodity } =
     accountName == pAccount && commodityName == pCommodity
 
-summarize :: Int -> Accounts -> Accounts
-summarize d = M.mapKeysM $ \p -> p { pAccount = shorten d (pAccount p) }
+summarize :: Maybe Int -> Accounts -> Accounts
+summarize (Just d) = M.mapKeysM $ \p -> p { pAccount = shorten d (pAccount p) }
+summarize Nothing  = id
 
 shorten :: Int -> Account -> Account
 shorten d (Account t a) = Account t (take d a)
 
-eraseLots :: Accounts -> Accounts
-eraseLots = M.mapKeysM (\p -> p { pLot = Nothing })
+eraseLots :: Bool -> Accounts -> Accounts
+eraseLots True  = M.mapKeysM (\p -> p { pLot = Nothing })
+eraseLots False = id

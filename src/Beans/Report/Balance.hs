@@ -1,6 +1,6 @@
 module Beans.Report.Balance
-  ( Section(..)
-  , reportToRows
+  ( Report(..)
+  , reportToTable
   , createReport
   )
 where
@@ -12,50 +12,77 @@ import           Beans.Data.Accounts                      ( Accounts
                                                           , format
                                                           , Lot(..)
                                                           , Position(..)
+                                                          , eraseLots
+                                                          , summarize
                                                           )
+import           Beans.Accounts                           ( calculateAccountsForDays
+                                                          )
+import           Beans.Ledger                             ( Ledger )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                             ( pretty )
 import           Beans.Table                              ( Cell(..) )
+import           Beans.Options                            ( BalanceOptions(..)
+                                                          , ReportType(..)
+                                                          )
 import           Data.Foldable                            ( fold )
 import           Data.Monoid                              ( (<>) )
 import           Data.Text                                ( Text )
-import qualified Data.List                     as L
+import qualified Data.List                     as List
+import qualified Beans.Ledger                  as L
 import qualified Data.Text                     as T
+import           Control.Monad.Catch                      ( MonadThrow )
+
 
 type Positions = M.Map (Commodity, Maybe Lot) Amounts
 
-data Section = Section
+data Report = Report
   { sPositions :: Positions
-  , sSections  :: M.Map Text Section
+  , sReports  :: M.Map Text Report
   , sSubtotals :: Positions
   } deriving (Show)
 
 -- Creating a report
-createReport :: (Position -> [Text]) -> Accounts -> Section
-createReport label = groupLabeledPositions . M.mapEntries f
+createReport :: (MonadThrow m) => BalanceOptions -> Ledger -> m Report
+createReport BalanceOptions {..} ledger = do
+  let filtered = L.filter balOptFilter ledger
+  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
+  return
+    $ accountsToReport balOptReportType
+    . eraseLots balOptLots
+    . summarize balOptDepth
+    . M.filter (not . null)
+    . fmap (M.filter (/= 0))
+    $ (a1 `M.minus` a0)
+
+accountsToReport :: ReportType -> Accounts -> Report
+accountsToReport reportType = groupLabeledPositions . M.mapEntries f
  where
   f (k@Position { pCommodity, pLot }, amount) =
-    (label k, M.singleton (pCommodity, pLot) amount)
+    (labelFunction reportType k, M.singleton (pCommodity, pLot) amount)
 
-groupLabeledPositions :: M.Map [Text] Positions -> Section
-groupLabeledPositions labeledPositions = Section positions
-                                                 subsections
-                                                 (positions <> subtotals)
+labelFunction :: ReportType -> Position -> [Text]
+labelFunction Hierarchical = T.splitOn ":" . T.pack . show . pAccount
+labelFunction Flat         = pure . T.pack . show . pAccount
+
+groupLabeledPositions :: M.Map [Text] Positions -> Report
+groupLabeledPositions labeledPositions = Report positions
+                                                subsections
+                                                (positions <> subtotals)
  where
   positions = M.findWithDefaultM mempty labeledPositions
   subsections =
-    groupLabeledPositions <$> splitSection (M.delete mempty labeledPositions)
+    groupLabeledPositions <$> splitReport (M.delete mempty labeledPositions)
   subtotals = fold (sSubtotals <$> subsections)
 
-splitSection :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
-splitSection = M.mapEntries f
+splitReport :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
+splitReport = M.mapEntries f
  where
   f (n : ns, ps) = (n, M.singleton ns ps)
   f ([]    , ps) = (mempty, M.singleton [] ps)
 
--- Formatting a report into rows
-reportToRows :: Section -> [[Cell]]
-reportToRows t =
+-- Formatting a report into a table
+reportToTable :: Report -> [[Cell]]
+reportToTable t =
   [Separator, Separator, Separator]
     :  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
     :  [Separator, Separator, Separator]
@@ -63,8 +90,8 @@ reportToRows t =
     ++ [[Separator, Separator, Separator]]
 
 
-sectionToRows :: Int -> (Text, Section) -> [[Cell]]
-sectionToRows n (label, Section _ subsections subtotals) =
+sectionToRows :: Int -> (Text, Report) -> [[Cell]]
+sectionToRows n (label, Report _ subsections subtotals) =
   positionRows ++ subsectionRows
  where
   subsectionRows = indent n <$> (sectionToRows 2 =<< M.toList subsections)
@@ -87,7 +114,7 @@ positionsToRows title subtotals =
             )
         <$> positions
   in
-    L.transpose [quantify accounts, quantify amounts, quantify commodities]
+    List.transpose [quantify accounts, quantify amounts, quantify commodities]
 
 flattenPositions :: Positions -> [(Maybe Lot, Commodity, Amount)]
 flattenPositions positions = do

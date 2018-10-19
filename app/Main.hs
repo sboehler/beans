@@ -53,12 +53,10 @@ filterParser =
 
 regexParser :: Parser T.Text
 regexParser =
-  T.pack <$> (strOption
+  T.pack <$> strOption
       (long "filter" <> metavar "REGEX" <> short 'f' <> help
         "Filter the accounts with the given regex."
       )
-    )
-
 
 valuationParser :: Parser Valuation
 valuationParser =
@@ -139,7 +137,10 @@ cmd =
   hsubparser
     $  command
          "balance"
-         (info (Balance <$> balanceOptions) (progDesc "Print a balance sheet"))
+         (info (Balance <$> balanceOptions) (progDesc "Print a generic balance"))
+    <>  command
+         "incomeStatement"
+         (info (IncomeStatement <$> balanceOptions) (progDesc "Print a formatted income statement"))
     <> command "import"
                (info (Import <$> importOptions) (progDesc "Import data"))
     <> command

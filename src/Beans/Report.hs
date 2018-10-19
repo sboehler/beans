@@ -1,6 +1,7 @@
 module Beans.Report
   ( journal
   , balance
+  , incomeStatement
   )
 where
 
@@ -19,6 +20,8 @@ import qualified Beans.Report.Journal          as Journal
                                                           )
 import qualified Beans.Report.Balance          as Balance
                                                           ( createReport
+                                                          , incomeStatement
+                                                          , incomeStatementToTable
                                                           , reportToTable
                                                           )
 
@@ -44,6 +47,15 @@ balance options@BalanceOptions {..} =
     >>= Balance.createReport options
     >>= printTable
     .   Balance.reportToTable
+
+incomeStatement :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
+incomeStatement options@BalanceOptions {..} =
+  L.fromFile balOptJournal
+    >>= valuateLedger balOptMarket
+    >>= Balance.incomeStatement options
+    >>= printTable
+    .   Balance.incomeStatementToTable
+
 
 printTable :: MonadIO m => [[Cell]] -> m ()
 printTable = liftIO . TIO.putStrLn . showTable

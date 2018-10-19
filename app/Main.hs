@@ -4,7 +4,7 @@ import           Beans.Data.Accounts                      ( Account(..)
                                                           , AccountType(Equity)
                                                           , Date(..)
                                                           )
-import           Beans.Lib                                ( runBeans )
+import           Beans.Lib                                ( run )
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , Command(..)
                                                           , Filter(..)
@@ -156,4 +156,4 @@ parserConfig = info
   (fullDesc <> progDesc "A plain text accounting tool" <> header "beans")
 
 main :: IO ()
-main = execParser parserConfig >>= runBeans
+main = execParser parserConfig >>= run

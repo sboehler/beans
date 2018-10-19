@@ -4,7 +4,9 @@ module Beans.Table
   )
 where
 
-import           Data.List                                ( transpose )
+import           Data.List                                ( transpose
+                                                          , foldl'
+                                                          )
 import           Data.Monoid                              ( (<>) )
 import           Prelude                           hiding ( lines )
 import           Data.Text                                ( Text )
@@ -24,7 +26,7 @@ data Cell
 showTable :: [[Cell]] -> Text
 showTable rows =
   let columnWidths = [ maximum $ width <$> column | column <- transpose rows ]
-      l            = pad "|" . foldl combine "" . zip columnWidths <$> rows
+      l            = pad "|" . foldl' combine "" . zip columnWidths <$> rows
   in  T.unlines l
 
 width :: Cell -> Int

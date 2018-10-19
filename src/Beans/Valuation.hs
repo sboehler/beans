@@ -74,11 +74,10 @@ valuateLedger _ ledger = pure ledger
 
 valuateGroup
   :: (MonadThrow m, MonadState ValuationState m) => Ledger -> m Ledger
-valuateGroup dated@(c : _) = do
+valuateGroup dated@(Dated d _ : _) = do
   v@ValuationState {..} <- get
-  let vsDate'   = date c
-      commands  = undate <$> dated
-      vsPrices' = foldl updatePrices vsPrices commands
+  let commands  = undate <$> dated
+      vsPrices' = L.foldl' updatePrices vsPrices commands
   vsRestrictions' <- foldM check vsRestrictions commands
   vsAccounts'     <- foldM process vsAccounts commands
   put $ v { vsPrices               = vsPrices'
@@ -90,7 +89,7 @@ valuateGroup dated@(c : _) = do
           }
   valuationTransactions <- adjustValuationForAccounts
   commands'             <- mapM processCommand $ filter notBalance commands
-  return $ Dated vsDate' <$> (commands' ++ valuationTransactions)
+  return $ Dated d <$> (commands' ++ valuationTransactions)
 valuateGroup [] = pure []
 
 notBalance :: Command -> Bool

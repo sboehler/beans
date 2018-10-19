@@ -258,7 +258,6 @@ getIncludedFiles fp ast =
 
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
 parseFile filePath = do
-  source <- liftIO $ readFile filePath
-  ast    <- parseSource filePath source
+  ast    <- liftIO (readFile filePath) >>= parseSource filePath
   asts   <- concat <$> traverse parseFile (getIncludedFiles filePath ast)
   return $ ast ++ asts

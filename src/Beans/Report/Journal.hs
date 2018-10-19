@@ -32,18 +32,6 @@ import           Control.Monad.Catch                      ( MonadThrow )
 import           Data.Maybe                               ( mapMaybe )
 import           Beans.Table                              ( Cell(..) )
 
-createReport :: MonadThrow m => JournalOptions -> Ledger -> m Report
-createReport JournalOptions {..} ledger = do
-  let filtered     = L.filter jrnOptFilter ledger
-      transactions = L.filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
-      items        = mapMaybe (toItem jrnOptFilter) transactions
-  [a0, a1] <- calculateAccountsForDays filtered [jrnOptFrom, jrnOptTo] mempty
-  return $ Report
-    { rHeader = accountsToItem jrnOptFilter jrnOptFrom a0
-    , rItems  = M.fromListM items
-    , rFooter = accountsToItem jrnOptFilter jrnOptTo a1
-    }
-
 data Report = Report {
   rHeader :: Dated Item,
   rItems :: M.Map Date [Item],
@@ -56,25 +44,39 @@ data Item = Item {
   eOtherPostings :: [(Account, Commodity, Amount)]
   } deriving (Show)
 
-accountsToItem :: Filter -> Date -> Accounts -> Dated Item
-accountsToItem (Filter regex) date accounts =
+createReport :: MonadThrow m => JournalOptions -> Ledger -> m Report
+createReport JournalOptions {..} ledger = do
+  let filtered = L.filter (Filter (T.unpack jrnOptRegex)) ledger
+      items    = mapMaybe (toItem jrnOptRegex)
+        $ L.filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
+  [accounts0, accounts1] <- calculateAccountsForDays filtered
+                                                     [jrnOptFrom, jrnOptTo]
+                                                     mempty
+  return $ Report
+    { rHeader = accountsToItem jrnOptRegex jrnOptFrom accounts0
+    , rItems  = M.fromListM items
+    , rFooter = accountsToItem jrnOptRegex jrnOptTo accounts1
+    }
+
+accountsToItem :: Text -> Date -> Accounts -> Dated Item
+accountsToItem regex date accounts =
   let filteredAccounts =
-        List.filter ((=~ regex) . show . pAccount . fst) $ M.toList accounts
+        List.filter ((=~ T.unpack regex) . show . pAccount . fst)
+          $ M.toList accounts
       amounts = M.toList $ mconcat (snd <$> filteredAccounts)
   in  Dated
         date
         (Item
-          { eDescription     = T.pack regex
+          { eDescription     = regex
           , eAccountPostings = amounts
           , eOtherPostings   = []
           }
         )
-accountsToItem _ _ _ = error "Fix this"
 
-toItem :: Filter -> Dated Command -> Maybe (Date, [Item])
-toItem (Filter regex) (Dated d Transaction {..})
+toItem :: Text -> Dated Command -> Maybe (Date, [Item])
+toItem regex (Dated d Transaction { tDescription, tPostings })
   = let (accountPostings, otherPostings) =
-          List.partition ((=~ regex) . show . pAccount . fst)
+          List.partition ((=~ T.unpack regex) . show . pAccount . fst)
             $ M.toList tPostings
     in  Just
           ( d

@@ -42,7 +42,7 @@ data Report = Report
   } deriving (Show)
 
 -- Creating a report
-createReport :: (MonadThrow m) => BalanceOptions -> Ledger -> m Report
+createReport :: MonadThrow m => BalanceOptions -> Ledger -> m Report
 createReport BalanceOptions {..} ledger = do
   let filtered = L.filter balOptFilter ledger
   [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty

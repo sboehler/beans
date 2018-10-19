@@ -12,7 +12,6 @@ import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
                                                           )
 import qualified Beans.Ledger                  as L
-import           Beans.Accounts                           ( checkLedger )
 import           Beans.Valuation                          ( valuateLedger )
 import qualified Beans.Report.Journal          as Journal
                                                           ( createReport
@@ -33,7 +32,6 @@ import           Prelude                           hiding ( filter )
 journal :: (MonadIO m, MonadThrow m) => JournalOptions -> m ()
 journal options@JournalOptions {..} =
   L.fromFile jrnOptJournal
-    >>= checkLedger
     >>= valuateLedger jrnOptMarket
     >>= Journal.createReport options
     >>= printTable
@@ -42,12 +40,10 @@ journal options@JournalOptions {..} =
 balance :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 balance options@BalanceOptions {..} =
   L.fromFile balOptJournal
-    >>= checkLedger
     >>= valuateLedger balOptMarket
     >>= Balance.createReport options
     >>= printTable
     .   Balance.reportToTable
 
-
-printTable :: (MonadIO m, MonadThrow m) => [[Cell]] -> m ()
+printTable :: MonadIO m => [[Cell]] -> m ()
 printTable = liftIO . TIO.putStrLn . showTable

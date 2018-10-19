@@ -1,7 +1,6 @@
 module Beans.Accounts
   ( Accounts
   , calculateAccountsForDays
-  , checkLedger
   , check
   , process
   )
@@ -27,7 +26,6 @@ import qualified Beans.Data.Restrictions       as R
 import           Beans.Ledger                             ( Ledger )
 import           Control.Monad                            ( unless
                                                           , foldM
-                                                          , foldM_
                                                           , when
                                                           )
 import           Control.Monad.Catch                      ( Exception
@@ -50,9 +48,6 @@ data AccountsException
   deriving (Show)
 
 instance Exception AccountsException
-
-checkLedger :: (MonadThrow m) => Ledger -> m Ledger
-checkLedger l = foldM_ check mempty (fmap undate l) >> pure l
 
 calculateAccountsForDays
   :: (MonadThrow m) => Ledger -> [Date] -> Accounts -> m [Accounts]

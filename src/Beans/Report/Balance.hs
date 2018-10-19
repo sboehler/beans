@@ -1,13 +1,17 @@
 module Beans.Report.Balance
   ( Report(..)
   , reportToTable
+  , incomeStatement
   , createReport
+  , incomeStatementToTable
   )
 where
 
 import           Beans.Data.Accounts                      ( Accounts
+                                                          , Account(..)
                                                           , Amount
                                                           , Amounts
+                                                          , AccountType(..)
                                                           , Commodity(..)
                                                           , format
                                                           , Lot(..)
@@ -41,18 +45,59 @@ data Report = Report
   , sSubtotals :: Positions
   } deriving (Show)
 
+data IncomeStatement = IncomeStatement
+  { sIncome :: Report,
+    sExpenses :: Report,
+    sTotal :: Positions
+   } deriving(Show)
+
 -- Creating a report
 createReport :: MonadThrow m => BalanceOptions -> Ledger -> m Report
 createReport BalanceOptions {..} ledger = do
+  [a0, a1] <- calculateAccountsForDays (L.filter balOptFilter ledger)
+                                       [balOptFrom, balOptTo]
+                                       mempty
+  let balance =
+        eraseLots balOptLots
+          . summarize balOptDepth
+          . M.filter (not . null)
+          . fmap (M.filter (/= 0))
+          $ (a1 `M.minus` a0)
+  return $ accountsToReport balOptReportType balance
+
+
+-- Creating a report
+incomeStatement :: MonadThrow m => BalanceOptions -> Ledger -> m IncomeStatement
+incomeStatement BalanceOptions {..} ledger = do
   let filtered = L.filter balOptFilter ledger
   [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
-  return
-    $ accountsToReport balOptReportType
-    . eraseLots balOptLots
-    . summarize balOptDepth
-    . M.filter (not . null)
-    . fmap (M.filter (/= 0))
-    $ (a1 `M.minus` a0)
+  let balance =
+        eraseLots balOptLots
+          . summarize balOptDepth
+          . M.filter (not . null)
+          . fmap (M.filter (/= 0))
+          $ (a0 `M.minus` a1)
+      income = M.filterKeys ((`elem` [Income]) . aType . pAccount) balance
+      expenses = M.filterKeys ((`elem` [Expenses]) . aType . pAccount) balance
+      incomeSection = accountsToReport balOptReportType income
+      expensesSection = accountsToReport balOptReportType expenses
+      is = IncomeStatement
+        incomeSection { sSubtotals = mempty }
+        expensesSection { sSubtotals = mempty }
+        (sSubtotals incomeSection `mappend` sSubtotals expensesSection)
+  return is
+
+incomeStatementToTable :: IncomeStatement -> [[Cell]]
+incomeStatementToTable IncomeStatement {..} =
+  [Separator, Separator, Separator]
+    :  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
+    :  [Separator, Separator, Separator]
+    :  sectionToRows 0 ("", sIncome)
+    ++ [Separator, Separator, Separator]
+    :  sectionToRows 0 ("", sExpenses)
+    ++ [[Separator, Separator, Separator]]
+    ++ sectionToRows 0 ("Total", Report sTotal M.empty sTotal)
+    ++ [[Separator, Separator, Separator]]
 
 accountsToReport :: ReportType -> Accounts -> Report
 accountsToReport reportType = groupLabeledPositions . M.mapEntries f
@@ -101,7 +146,7 @@ positionsToRows :: Text -> Positions -> [[Cell]]
 positionsToRows title subtotals =
   let
     positions = flattenPositions subtotals
-    nbrRows   = maximum [1, length positions]
+    nbrRows   = maximum [if title == "" then 0 else 1, length positions]
     quantify  = take nbrRows . (++ repeat Empty)
     accounts  = [AlignLeft title]
     amounts   = AlignRight . format . (\(_, _, amount) -> amount) <$> positions

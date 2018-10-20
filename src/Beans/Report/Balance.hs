@@ -1,11 +1,8 @@
 module Beans.Report.Balance
   ( Balance(..)
-  , reportToTable
   , incomeStatement
   , balanceSheet
   , createBalance
-  , incomeStatementToTable
-  , balanceSheetToTable
   )
 where
 
@@ -27,7 +24,9 @@ import           Beans.Ledger                             ( Ledger )
 import           Data.Group                               ( invert )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                             ( pretty )
-import           Beans.Table                              ( Cell(..) )
+import           Beans.Table                              ( Cell(..)
+                                                          , Table(..)
+                                                          )
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , ReportType(..)
                                                           )
@@ -48,11 +47,17 @@ data Balance = Balance
   , sSubtotals :: Positions
   } deriving (Show)
 
+instance Table Balance where
+  toTable = balanceToTable
+
 data IncomeStatement = IncomeStatement
   { sIncome :: Balance,
     sExpenses :: Balance,
     sTotal :: Positions
    } deriving(Show)
+
+instance Table IncomeStatement where
+  toTable = incomeStatementToTable
 
 data BalanceSheet = BalanceSheet
   { bAssets :: Balance,
@@ -60,6 +65,8 @@ data BalanceSheet = BalanceSheet
     bEquity :: Balance
    } deriving(Show)
 
+instance Table BalanceSheet where
+  toTable = balanceSheetToTable
 
 -- Creating a report
 createBalance :: MonadThrow m => BalanceOptions -> Ledger -> m Balance
@@ -164,7 +171,8 @@ balanceSheetToTable BalanceSheet {..}
         )
       nbrRows = maximum [length aSide, length leSide]
       aSide'  = take nbrRows (aSide ++ filler) ++ [sep] ++ totalAssets
-      leSide' = take nbrRows (leSide ++ filler) ++ [sep] ++ totalLiabilitiesAndEquity
+      leSide' =
+        take nbrRows (leSide ++ filler) ++ [sep] ++ totalLiabilitiesAndEquity
     in
       zipWith (++) aSide' leSide' ++ [replicate 6 Separator]
 
@@ -184,8 +192,8 @@ labelFunction Flat =
 
 groupLabeledPositions :: M.Map [Text] Positions -> Balance
 groupLabeledPositions labeledPositions = Balance positions
-                                                subsections
-                                                (positions <> subtotals)
+                                                 subsections
+                                                 (positions <> subtotals)
  where
   positions = M.findWithDefaultM mempty labeledPositions
   subsections =
@@ -199,8 +207,8 @@ splitBalance = M.mapEntries f
   f ([]    , ps) = (mempty, M.singleton [] ps)
 
 -- Formatting a report into a table
-reportToTable :: Balance -> [[Cell]]
-reportToTable t =
+balanceToTable :: Balance -> [[Cell]]
+balanceToTable t =
   [Separator, Separator, Separator]
     :  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
     :  [Separator, Separator, Separator]

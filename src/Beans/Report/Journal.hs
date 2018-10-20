@@ -1,7 +1,7 @@
 module Beans.Report.Journal
-  ( createReport
-  , Report(..)
-  , reportToTable
+  ( createJournal
+  , Journal(..)
+  , journalToTable
   )
 where
 
@@ -30,13 +30,18 @@ import qualified Beans.Data.Map                as M
 import           Data.Text                                ( Text )
 import           Control.Monad.Catch                      ( MonadThrow )
 import           Data.Maybe                               ( mapMaybe )
-import           Beans.Table                              ( Cell(..) )
+import           Beans.Table                              ( Cell(..)
+                                                          , Table(..)
+                                                          )
 
-data Report = Report {
+data Journal = Journal {
   rHeader :: Dated Item,
   rItems :: M.Map Date [Item],
   rFooter :: Dated Item
   } deriving (Show)
+
+instance Table Journal where
+  toTable = journalToTable
 
 data Item = Item {
   eDescription :: Text,
@@ -44,15 +49,15 @@ data Item = Item {
   eOtherPostings :: [(Account, Commodity, Amount)]
   } deriving (Show)
 
-createReport :: MonadThrow m => JournalOptions -> Ledger -> m Report
-createReport JournalOptions {..} ledger = do
+createJournal :: MonadThrow m => JournalOptions -> Ledger -> m Journal
+createJournal JournalOptions {..} ledger = do
   let filtered = L.filter (Filter (T.unpack jrnOptRegex)) ledger
       items    = mapMaybe (toItem jrnOptRegex)
         $ L.filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
   [accounts0, accounts1] <- calculateAccountsForDays filtered
                                                      [jrnOptFrom, jrnOptTo]
                                                      mempty
-  return $ Report
+  return $ Journal
     { rHeader = accountsToItem jrnOptRegex jrnOptFrom accounts0
     , rItems  = M.fromListM items
     , rFooter = accountsToItem jrnOptRegex jrnOptTo accounts1
@@ -97,8 +102,8 @@ toItem _ _ = Nothing
 
 
 -- Formatting a report as a table
-reportToTable :: Report -> [[Cell]]
-reportToTable (Report (Dated t0 header) items (Dated t1 footer)) = concat
+journalToTable :: Journal -> [[Cell]]
+journalToTable (Journal (Dated t0 header) items (Dated t1 footer)) = concat
   [ [replicate 7 Separator]
   , itemToTable ((AlignLeft . T.pack . show) t0) header
   , [replicate 7 Separator]

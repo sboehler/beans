@@ -1,5 +1,6 @@
 module Beans.Table
   ( Cell(..)
+  , Table(..)
   , showTable
   )
 where
@@ -13,6 +14,9 @@ import           Data.Text                                ( Text )
 import qualified Data.Text                     as T
 
 
+class Table a where
+  toTable :: a -> [[Cell]]
+
 data Cell
   = AlignLeft Text
   | AlignRight Text
@@ -21,7 +25,6 @@ data Cell
   | IndentBy Int
              Text
   | Empty
-
 
 showTable :: [[Cell]] -> Text
 showTable rows =

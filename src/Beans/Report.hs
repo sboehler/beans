@@ -16,19 +16,15 @@ import           Control.Monad.IO.Class                   ( MonadIO
 import qualified Beans.Ledger                  as L
 import           Beans.Valuation                          ( valuateLedger )
 import qualified Beans.Report.Journal          as Journal
-                                                          ( createReport
-                                                          , reportToTable
-                                                          )
+                                                          ( createJournal )
 import qualified Beans.Report.Balance          as Balance
                                                           ( createBalance
                                                           , incomeStatement
-                                                          , incomeStatementToTable
                                                           , balanceSheet
-                                                          , balanceSheetToTable
-                                                          , reportToTable
                                                           )
 import           Beans.Table                              ( showTable
                                                           , Cell
+                                                          , Table(..)
                                                           )
 import qualified Data.Text.IO                  as TIO
 import           Prelude                           hiding ( filter )
@@ -38,9 +34,9 @@ journal :: (MonadIO m, MonadThrow m) => JournalOptions -> m ()
 journal options@JournalOptions {..} =
   L.fromFile jrnOptJournal
     >>= valuateLedger jrnOptMarket
-    >>= Journal.createReport options
+    >>= Journal.createJournal options
     >>= printTable
-    .   Journal.reportToTable
+    .   toTable
 
 balance :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 balance options@BalanceOptions {..} =
@@ -48,7 +44,7 @@ balance options@BalanceOptions {..} =
     >>= valuateLedger balOptMarket
     >>= Balance.createBalance options
     >>= printTable
-    .   Balance.reportToTable
+    .   toTable
 
 incomeStatement :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 incomeStatement options@BalanceOptions {..} =
@@ -56,7 +52,7 @@ incomeStatement options@BalanceOptions {..} =
     >>= valuateLedger balOptMarket
     >>= Balance.incomeStatement options
     >>= printTable
-    .   Balance.incomeStatementToTable
+    .   toTable
 
 balanceSheet :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 balanceSheet options@BalanceOptions {..} =
@@ -64,7 +60,7 @@ balanceSheet options@BalanceOptions {..} =
     >>= valuateLedger balOptMarket
     >>= Balance.balanceSheet options
     >>= printTable
-    .   Balance.balanceSheetToTable
+    .   toTable
 
 printTable :: MonadIO m => [[Cell]] -> m ()
 printTable = liftIO . TIO.putStrLn . showTable

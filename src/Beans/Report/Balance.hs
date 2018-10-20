@@ -1,9 +1,9 @@
 module Beans.Report.Balance
-  ( Report(..)
+  ( Balance(..)
   , reportToTable
   , incomeStatement
   , balanceSheet
-  , createReport
+  , createBalance
   , incomeStatementToTable
   , balanceSheetToTable
   )
@@ -42,28 +42,28 @@ import           Control.Monad.Catch                      ( MonadThrow )
 
 type Positions = M.Map (Commodity, Maybe Lot) Amounts
 
-data Report = Report
+data Balance = Balance
   { sPositions :: Positions
-  , sReports  :: M.Map Text Report
+  , sReports  :: M.Map Text Balance
   , sSubtotals :: Positions
   } deriving (Show)
 
 data IncomeStatement = IncomeStatement
-  { sIncome :: Report,
-    sExpenses :: Report,
+  { sIncome :: Balance,
+    sExpenses :: Balance,
     sTotal :: Positions
    } deriving(Show)
 
 data BalanceSheet = BalanceSheet
-  { bAssets :: Report,
-    bLiabilities :: Report,
-    bEquity :: Report
+  { bAssets :: Balance,
+    bLiabilities :: Balance,
+    bEquity :: Balance
    } deriving(Show)
 
 
 -- Creating a report
-createReport :: MonadThrow m => BalanceOptions -> Ledger -> m Report
-createReport BalanceOptions {..} ledger = do
+createBalance :: MonadThrow m => BalanceOptions -> Ledger -> m Balance
+createBalance BalanceOptions {..} ledger = do
   [a0, a1] <- calculateAccountsForDays (L.filter balOptFilter ledger)
                                        [balOptFrom, balOptTo]
                                        mempty
@@ -73,7 +73,7 @@ createReport BalanceOptions {..} ledger = do
           . M.filter (not . null)
           . fmap (M.filter (/= 0))
           $ (a1 `M.minus` a0)
-  return $ accountsToReport balOptReportType balance
+  return $ accountsToBalance balOptReportType balance
 
 
 -- Creating a report
@@ -89,8 +89,8 @@ incomeStatement BalanceOptions {..} ledger = do
           $ (a0 `M.minus` a1)
       income = M.filterKeys ((`elem` [Income]) . aType . pAccount) balance
       expenses = M.filterKeys ((`elem` [Expenses]) . aType . pAccount) balance
-      incomeSection = accountsToReport balOptReportType income
-      expensesSection = accountsToReport balOptReportType expenses
+      incomeSection = accountsToBalance balOptReportType income
+      expensesSection = accountsToBalance balOptReportType expenses
       is = IncomeStatement
         incomeSection { sSubtotals = mempty }
         expensesSection { sSubtotals = mempty }
@@ -122,9 +122,9 @@ balanceSheet BalanceOptions {..} ledger = do
       (\p -> p { pAccount = Account Equity ["RetainedEarnings"] })
       retainedEarnings
 
-    assetsSection      = accountsToReport balOptReportType assets
-    liabilitiesSection = accountsToReport balOptReportType liabilities
-    equitySection      = accountsToReport balOptReportType (equity <> retEarn)
+    assetsSection      = accountsToBalance balOptReportType assets
+    liabilitiesSection = accountsToBalance balOptReportType liabilities
+    equitySection      = accountsToBalance balOptReportType (equity <> retEarn)
     is = BalanceSheet assetsSection liabilitiesSection equitySection
   return is
 
@@ -138,7 +138,7 @@ incomeStatementToTable IncomeStatement {..} =
     ++ [Separator, Separator, Separator]
     :  sectionToRows 0 ("", sExpenses)
     ++ [[Separator, Separator, Separator]]
-    ++ sectionToRows 0 ("Total", Report sTotal M.empty sTotal)
+    ++ sectionToRows 0 ("Total", Balance sTotal M.empty sTotal)
     ++ [[Separator, Separator, Separator]]
 
 balanceSheetToTable :: BalanceSheet -> [[Cell]]
@@ -156,11 +156,11 @@ balanceSheetToTable BalanceSheet {..}
           ++ emptyLine
           ++ sectionToRows 0 ("", bEquity { sSubtotals = mempty })
       totalAssets =
-        sectionToRows 0 ("Total", Report mempty M.empty (sSubtotals bAssets))
+        sectionToRows 0 ("Total", Balance mempty M.empty (sSubtotals bAssets))
       totalLiabilitiesAndEquity = sectionToRows
         0
         ( "Total"
-        , Report mempty M.empty (sSubtotals bLiabilities <> sSubtotals bEquity)
+        , Balance mempty M.empty (sSubtotals bLiabilities <> sSubtotals bEquity)
         )
       nbrRows = maximum [length aSide, length leSide]
       aSide'  = take nbrRows (aSide ++ filler) ++ [sep] ++ totalAssets
@@ -171,8 +171,8 @@ balanceSheetToTable BalanceSheet {..}
 
 
 
-accountsToReport :: ReportType -> Accounts -> Report
-accountsToReport reportType = groupLabeledPositions . M.mapEntries f
+accountsToBalance :: ReportType -> Accounts -> Balance
+accountsToBalance reportType = groupLabeledPositions . M.mapEntries f
  where
   f (k@Position { pCommodity, pLot }, amount) =
     (labelFunction reportType k, M.singleton (pCommodity, pLot) amount)
@@ -182,24 +182,24 @@ labelFunction Hierarchical = T.splitOn ":" . T.pack . show . pAccount
 labelFunction Flat =
   (\(Account t a) -> [T.pack $ show t, T.intercalate ":" a]) . pAccount
 
-groupLabeledPositions :: M.Map [Text] Positions -> Report
-groupLabeledPositions labeledPositions = Report positions
+groupLabeledPositions :: M.Map [Text] Positions -> Balance
+groupLabeledPositions labeledPositions = Balance positions
                                                 subsections
                                                 (positions <> subtotals)
  where
   positions = M.findWithDefaultM mempty labeledPositions
   subsections =
-    groupLabeledPositions <$> splitReport (M.delete mempty labeledPositions)
+    groupLabeledPositions <$> splitBalance (M.delete mempty labeledPositions)
   subtotals = fold (sSubtotals <$> subsections)
 
-splitReport :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
-splitReport = M.mapEntries f
+splitBalance :: M.Map [Text] Positions -> M.Map Text (M.Map [Text] Positions)
+splitBalance = M.mapEntries f
  where
   f (n : ns, ps) = (n, M.singleton ns ps)
   f ([]    , ps) = (mempty, M.singleton [] ps)
 
 -- Formatting a report into a table
-reportToTable :: Report -> [[Cell]]
+reportToTable :: Balance -> [[Cell]]
 reportToTable t =
   [Separator, Separator, Separator]
     :  [AlignLeft "Account", AlignLeft "Amount", AlignLeft "Commodity"]
@@ -208,8 +208,8 @@ reportToTable t =
     ++ [[Separator, Separator, Separator]]
 
 
-sectionToRows :: Int -> (Text, Report) -> [[Cell]]
-sectionToRows n (label, Report _ subsections subtotals) =
+sectionToRows :: Int -> (Text, Balance) -> [[Cell]]
+sectionToRows n (label, Balance _ subsections subtotals) =
   positionRows ++ subsectionRows
  where
   subsectionRows = indent n <$> (sectionToRows 2 =<< M.toList subsections)

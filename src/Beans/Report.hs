@@ -20,14 +20,13 @@ import qualified Beans.Report.Journal          as Journal
                                                           , reportToTable
                                                           )
 import qualified Beans.Report.Balance          as Balance
-                                                          ( createReport
+                                                          ( createBalance
                                                           , incomeStatement
                                                           , incomeStatementToTable
                                                           , balanceSheet
                                                           , balanceSheetToTable
                                                           , reportToTable
                                                           )
-
 import           Beans.Table                              ( showTable
                                                           , Cell
                                                           )
@@ -47,7 +46,7 @@ balance :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 balance options@BalanceOptions {..} =
   L.fromFile balOptJournal
     >>= valuateLedger balOptMarket
-    >>= Balance.createReport options
+    >>= Balance.createBalance options
     >>= printTable
     .   Balance.reportToTable
 

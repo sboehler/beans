@@ -7,6 +7,7 @@ where
 import           Beans.Report                             ( balance
                                                           , journal
                                                           , incomeStatement
+                                                          , balanceSheet
                                                           )
 import           Beans.Import                             ( importCommand )
 import           Beans.Options                            ( Command(..) )
@@ -17,5 +18,6 @@ run :: (MonadIO m, MonadThrow m) => Command -> m ()
 run command = case command of
   Balance         options -> balance options
   IncomeStatement options -> incomeStatement options
+  BalanceSheet    options -> balanceSheet options
   Import          options -> importCommand options
   Journal         options -> journal options

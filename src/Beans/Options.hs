@@ -10,6 +10,7 @@ import           Data.Text                                ( Text )
 data Command
   = Balance BalanceOptions
   | IncomeStatement BalanceOptions
+  | BalanceSheet BalanceOptions
   | Import ImportOptions
   | Journal JournalOptions
   deriving (Show)

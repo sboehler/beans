@@ -141,6 +141,9 @@ cmd =
     <>  command
          "incomeStatement"
          (info (IncomeStatement <$> balanceOptions) (progDesc "Print a formatted income statement"))
+    <>  command
+         "balanceSheet"
+         (info (BalanceSheet <$> balanceOptions) (progDesc "Print a formatted balance sheet"))
     <> command "import"
                (info (Import <$> importOptions) (progDesc "Import data"))
     <> command

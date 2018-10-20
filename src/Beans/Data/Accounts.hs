@@ -109,5 +109,5 @@ shorten :: Int -> Account -> Account
 shorten d (Account t a) = Account t (take d a)
 
 eraseLots :: Bool -> Accounts -> Accounts
-eraseLots True  = M.mapKeysM (\p -> p { pLot = Nothing })
-eraseLots False = id
+eraseLots False = M.mapKeysM (\p -> p { pLot = Nothing })
+eraseLots True  = id

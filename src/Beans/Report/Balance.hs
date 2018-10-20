@@ -2,8 +2,10 @@ module Beans.Report.Balance
   ( Report(..)
   , reportToTable
   , incomeStatement
+  , balanceSheet
   , createReport
   , incomeStatementToTable
+  , balanceSheetToTable
   )
 where
 
@@ -22,6 +24,7 @@ import           Beans.Data.Accounts                      ( Accounts
 import           Beans.Accounts                           ( calculateAccountsForDays
                                                           )
 import           Beans.Ledger                             ( Ledger )
+import           Data.Group                               ( invert )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                             ( pretty )
 import           Beans.Table                              ( Cell(..) )
@@ -50,6 +53,13 @@ data IncomeStatement = IncomeStatement
     sExpenses :: Report,
     sTotal :: Positions
    } deriving(Show)
+
+data BalanceSheet = BalanceSheet
+  { bAssets :: Report,
+    bLiabilities :: Report,
+    bEquity :: Report
+   } deriving(Show)
+
 
 -- Creating a report
 createReport :: MonadThrow m => BalanceOptions -> Ledger -> m Report
@@ -87,6 +97,38 @@ incomeStatement BalanceOptions {..} ledger = do
         (sSubtotals incomeSection `mappend` sSubtotals expensesSection)
   return is
 
+balanceSheet :: MonadThrow m => BalanceOptions -> Ledger -> m BalanceSheet
+balanceSheet BalanceOptions {..} ledger = do
+  let filtered = L.filter balOptFilter ledger
+  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
+  let
+    balance =
+      eraseLots balOptLots
+        . summarize balOptDepth
+        . M.filter (not . null)
+        . fmap (M.filter (/= 0))
+        $ (a1 `M.minus` a0)
+    assets = M.filterKeys ((`elem` [Assets]) . aType . pAccount) balance
+    liabilities =
+      invert
+        <$> M.filterKeys ((`elem` [Liabilities]) . aType . pAccount) balance
+    equity =
+      invert <$> M.filterKeys ((`elem` [Equity]) . aType . pAccount) balance
+    retainedEarnings =
+      invert
+        <$> M.filterKeys ((`elem` [Income, Expenses]) . aType . pAccount)
+                         balance
+    retEarn = M.mapKeysM
+      (\p -> p { pAccount = Account Equity ["RetainedEarnings"] })
+      retainedEarnings
+
+    assetsSection      = accountsToReport balOptReportType assets
+    liabilitiesSection = accountsToReport balOptReportType liabilities
+    equitySection      = accountsToReport balOptReportType (equity <> retEarn)
+    is = BalanceSheet assetsSection liabilitiesSection equitySection
+  return is
+
+
 incomeStatementToTable :: IncomeStatement -> [[Cell]]
 incomeStatementToTable IncomeStatement {..} =
   [Separator, Separator, Separator]
@@ -99,6 +141,36 @@ incomeStatementToTable IncomeStatement {..} =
     ++ sectionToRows 0 ("Total", Report sTotal M.empty sTotal)
     ++ [[Separator, Separator, Separator]]
 
+balanceSheetToTable :: BalanceSheet -> [[Cell]]
+balanceSheetToTable BalanceSheet {..}
+  = let
+      header    = AlignLeft <$> ["Account", "Amount", "Commodity"]
+      sep       = replicate 3 Separator
+      header'   = sep : header : pure sep
+      filler    = repeat $ replicate 3 Empty
+      emptyLine = pure $ replicate 3 Empty
+      aSide = header' ++ sectionToRows 0 ("", bAssets { sSubtotals = mempty })
+      leSide =
+        header'
+          ++ sectionToRows 0 ("", bLiabilities { sSubtotals = mempty })
+          ++ emptyLine
+          ++ sectionToRows 0 ("", bEquity { sSubtotals = mempty })
+      totalAssets =
+        sectionToRows 0 ("Total", Report mempty M.empty (sSubtotals bAssets))
+      totalLiabilitiesAndEquity = sectionToRows
+        0
+        ( "Total"
+        , Report mempty M.empty (sSubtotals bLiabilities <> sSubtotals bEquity)
+        )
+      nbrRows = maximum [length aSide, length leSide]
+      aSide'  = take nbrRows (aSide ++ filler) ++ [sep] ++ totalAssets
+      leSide' = take nbrRows (leSide ++ filler) ++ [sep] ++ totalLiabilitiesAndEquity
+    in
+      zipWith (++) aSide' leSide' ++ [replicate 6 Separator]
+
+
+
+
 accountsToReport :: ReportType -> Accounts -> Report
 accountsToReport reportType = groupLabeledPositions . M.mapEntries f
  where
@@ -107,7 +179,8 @@ accountsToReport reportType = groupLabeledPositions . M.mapEntries f
 
 labelFunction :: ReportType -> Position -> [Text]
 labelFunction Hierarchical = T.splitOn ":" . T.pack . show . pAccount
-labelFunction Flat         = pure . T.pack . show . pAccount
+labelFunction Flat =
+  (\(Account t a) -> [T.pack $ show t, T.intercalate ":" a]) . pAccount
 
 groupLabeledPositions :: M.Map [Text] Positions -> Report
 groupLabeledPositions labeledPositions = Report positions

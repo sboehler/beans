@@ -23,7 +23,6 @@ import qualified Beans.Report.Balance          as Balance
                                                           , balanceSheet
                                                           )
 import           Beans.Table                              ( showTable
-                                                          , Cell
                                                           , Table(..)
                                                           )
 import qualified Data.Text.IO                  as TIO
@@ -36,7 +35,6 @@ journal options@JournalOptions {..} =
     >>= valuateLedger jrnOptMarket
     >>= Journal.createJournal options
     >>= printTable
-    .   toTable
 
 balance :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 balance options@BalanceOptions {..} =
@@ -44,7 +42,6 @@ balance options@BalanceOptions {..} =
     >>= valuateLedger balOptMarket
     >>= Balance.createBalance options
     >>= printTable
-    .   toTable
 
 incomeStatement :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 incomeStatement options@BalanceOptions {..} =
@@ -52,7 +49,6 @@ incomeStatement options@BalanceOptions {..} =
     >>= valuateLedger balOptMarket
     >>= Balance.incomeStatement options
     >>= printTable
-    .   toTable
 
 balanceSheet :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()
 balanceSheet options@BalanceOptions {..} =
@@ -60,7 +56,6 @@ balanceSheet options@BalanceOptions {..} =
     >>= valuateLedger balOptMarket
     >>= Balance.balanceSheet options
     >>= printTable
-    .   toTable
 
-printTable :: MonadIO m => [[Cell]] -> m ()
+printTable :: (MonadIO m, Table a) => a -> m ()
 printTable = liftIO . TIO.putStrLn . showTable

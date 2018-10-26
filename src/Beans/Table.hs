@@ -26,9 +26,10 @@ data Cell
              Text
   | Empty
 
-showTable :: [[Cell]] -> Text
-showTable rows =
-  let columnWidths = [ maximum $ width <$> column | column <- transpose rows ]
+showTable :: Table a => a -> Text
+showTable t =
+  let rows = toTable t
+      columnWidths = [ maximum $ width <$> column | column <- transpose rows ]
       l            = pad "|" . foldl' combine "" . zip columnWidths <$> rows
   in  T.unlines l
 

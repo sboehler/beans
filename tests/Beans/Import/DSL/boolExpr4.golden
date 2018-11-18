@@ -1,1 +1,3 @@
-((valueDate > 2018-01-01) && (valueDate <= 2018-10-01))
+boolExpr4:1:2:
+unexpected "valueDate >"
+expecting "amount", "date", "description", "false", "true", '"', '(', '+', '-', or digit

@@ -4,9 +4,11 @@ module Beans.Import.DSL where
 
 import           Beans.Data.Accounts                      ( Account(..)
                                                           , AccountType
+                                                          , Date(Date)
                                                           , Amount
+                                                          , Date
+                                                          , Commodity
                                                           )
-import           Beans.Import.Common                      ( Entry(..) )
 import           Control.Exception                        ( Exception )
 import           Control.Monad                            ( msum )
 import           Control.Monad.Catch                      ( MonadThrow
@@ -31,9 +33,7 @@ import           Data.Text                                ( Text
                                                           , unpack
                                                           )
 import           Data.Text.IO                             ( readFile )
-import           Data.Time.Calendar                       ( Day
-                                                          , fromGregorian
-                                                          )
+import           Data.Time.Calendar                       ( fromGregorian )
 import           Data.Void                                ( Void )
 import           Prelude                           hiding ( readFile )
 import           Text.Megaparsec                          ( Parsec
@@ -76,10 +76,9 @@ data Rule =
 data E a where
   EVarAmount :: E Amount
   EVarDescription :: E Text
-  EVarBookingDate :: E Day
-  EVarValueDate :: E Day
+  EVarDate :: E Date
   EVarImporter :: E Text
-  EDate :: Day -> E Day
+  EDate :: Date -> E Date
   EAmount :: Amount -> E Amount
   EText :: Text -> E Text
   EBool :: Bool -> E Bool
@@ -104,8 +103,7 @@ instance Show a => Show (E a) where
   show (EAmount a)     = show a
   show EVarAmount      = "amount"
   show EVarDescription = "description"
-  show EVarBookingDate = "bookingDate"
-  show EVarValueDate   = "valueDate"
+  show EVarDate = "date"
   show EVarImporter    = "importer"
   show (EAbs a)        = "abs(" <> show a <> ")"
   show (EAnd a b)      = "(" <> show a <> " && " <> show b <> ")"
@@ -123,6 +121,18 @@ instance Show a => Show (E a) where
 
 -- Evaluation
 
+
+data Entry = Entry
+  { eDate :: Date
+  , eType :: Text
+  , eDescription :: Text
+  , eAmount      :: Amount
+  , eCommodity   :: Commodity
+  , eImporter    :: Text
+  } deriving (Eq, Show)
+
+type Evaluator = Entry -> Maybe Account
+
 evaluate :: Traversable t => t Rule -> Entry -> Maybe Account
 evaluate r = runIdentity . runReaderT (evalRules r)
 
@@ -139,8 +149,7 @@ evalE (EDate   a)     = return a
 evalE (EAmount a)     = return a
 evalE EVarAmount      = asks eAmount
 evalE EVarDescription = asks eDescription
-evalE EVarBookingDate = asks eBookingDate
-evalE EVarValueDate   = asks eValueDate
+evalE EVarDate        = asks eDate
 evalE EVarImporter    = pack . show <$> asks eImporter
 evalE (EAbs a    )    = abs <$> evalE a
 evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
@@ -236,10 +245,12 @@ textLiteral = EText <$> lexeme quotedText
   quotedText = between q q (takeWhileP (Just "no quote") (/= '"'))
   q          = symbol "\""
 
-dateLiteral :: Parser (E Day)
+dateLiteral :: Parser (E Date)
 dateLiteral = EDate <$> lexeme date
  where
-  date = fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
+  date =
+    Date
+      <$> (fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2)
   dash = symbol "-"
   digits n = read <$> count n digitChar
 
@@ -252,14 +263,8 @@ textExpr = parens textExpr <|> textLiteral <|> "description" &> EVarDescription
 textRelation :: Parser (E Text -> E Text -> E Bool)
 textRelation = symbolOf [("==", EEQ), ("!=", ENE), ("=~", EMatch)]
 
-dateExpr :: Parser (E Day)
-dateExpr =
-  parens dateExpr
-    <|> dateLiteral
-    <|> "valueDate"
-    &>  EVarValueDate
-    <|> "bookingDate"
-    &>  EVarBookingDate
+dateExpr :: Parser (E Date)
+dateExpr = parens dateExpr <|> dateLiteral <|> "date" &> EVarDate
 
 amountExpr :: Parser (E Amount)
 amountExpr = makeExprParser amountTerm amountOperators

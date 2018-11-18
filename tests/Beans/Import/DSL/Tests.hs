@@ -1,10 +1,10 @@
 module Beans.Import.DSL.Tests where
 
 import           Beans.Data.Accounts                      ( Account(..)
+                                                          , Date(Date)
                                                           , AccountType(..)
                                                           , Commodity(..)
                                                           )
-import           Beans.Import.Common                      ( Entry(..) )
 import           Beans.Import.DSL
 import qualified Data.ByteString.Lazy.Char8    as BS
 import           Data.Semigroup                           ( (<>) )
@@ -81,13 +81,12 @@ parserTests = testGroup
 evaluationTests :: TestTree
 evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
  where
-  entry = Entry (fromGregorian 2018 1 1)
+  entry = Entry (Date $ fromGregorian 2018 1 1)
+                "expense"
                 "Purchasing Foos at Bar Inc"
                 (-100)
                 (Commodity "CHF")
-                (fromGregorian 2018 1 1)
                 "zz.bigbank"
-                (Just 500)
   account1 = Account Expenses ["Shopping"]
   account2 = Account Assets ["Bankaccount"]
   account3 = Account Liabilities ["Creditcard"]
@@ -113,10 +112,10 @@ evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
     , ([Rule (EOr (EBool False) (EBool False)) account3]      , Nothing)
     , ([Rule (EOr (EBool False) (EBool True)) account3]       , Just account3)
     , ([Rule (EOr (EBool True) (EBool True)) account3]        , Just account3)
-    , ( [Rule (EGT EVarBookingDate (EDate $ fromGregorian 2017 12 31)) account1]
+    , ( [Rule (EGT EVarDate (EDate $ Date $ fromGregorian 2017 12 31)) account1]
       , Just account1
       )
-    , ( [Rule (ELT EVarBookingDate (EDate $ fromGregorian 2017 12 31)) account1]
+    , ( [Rule (ELT EVarDate (EDate $ Date $ fromGregorian 2017 12 31)) account1]
       , Nothing
       )
     ]

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 081bedbbfd0d1bce8cfb20237a4cdcb4651caa910646e9ec5a2ad87f4f0c35d9
+-- hash: e0b6d2181049c32873faef53a86bf80047c68701281a086e657a033771d1ed9e
 
 name:           beans
 version:        0.0.2.0
@@ -107,6 +107,7 @@ test-suite test
     , megaparsec
     , mtl
     , pretty-simple
+    , prettyprinter
     , regex-pcre
     , tasty
     , tasty-golden

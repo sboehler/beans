@@ -1,11 +1,15 @@
-module Beans.Import.Common where
+module Beans.Import.Common
+  ( ImporterException(..)
+  , Entry(..)
+  , Config(..)
+  )
+where
 
-import           Beans.Data.Accounts                      ( Amount
-                                                          , Commodity
-                                                          )
+import           Beans.Data.Accounts                      ( Account )
 import           Control.Exception                        ( Exception )
-import           Data.Text                                ( Text )
-import           Data.Time.Calendar                       ( Day )
+import           Beans.Import.DSL                         ( Evaluator
+                                                          , Entry(..)
+                                                          )
 
 -- The exception exported by this module
 newtype ImporterException =
@@ -17,12 +21,8 @@ instance Show ImporterException where
 
 instance Exception ImporterException
 
-data Entry = Entry
-  { eBookingDate :: Day
-  , eDescription :: Text
-  , eAmount      :: Amount
-  , eCommodity   :: Commodity
-  , eValueDate   :: Day
-  , eImporter    :: Text
-  , eBalance     :: Maybe Amount
-  } deriving (Eq, Show)
+data Config = Config {
+  cEvaluator :: Evaluator,
+  cFile :: FilePath,
+  cAccount :: Account
+  }

@@ -1,8 +1,8 @@
 (description =~ "Acme") -> Expenses:Groceries;
 (description =~ "FOOBAR") -> Expenses:MobilePhone;
-(description =~ "(Bigbank|Bank 2000)") -> Assets:Investments;
-(description =~ "XERDS") -> Expenses:Cleaning;
+(description =~ "(Bigbank|Nextgen)") -> Assets:Investments;
+(description =~ "Clean.*") -> Expenses:Cleaning;
 (description =~ "Supermarket") -> Expenses:Groceries;
-(description =~ "Car Sales" and abs amount < 1000) -> Expenses:Car;
-(description =~ "Car Sales" and abs amount >= 1000) -> Assets:Car;
+(description =~ "Car" and abs amount < 1000) -> Expenses:Car;
+(description =~ "Car" and abs amount >= 1000) -> Assets:Car;
 (true) -> Expenses:ToBeEditedManually;

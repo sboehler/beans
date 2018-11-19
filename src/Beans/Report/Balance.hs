@@ -132,9 +132,7 @@ balanceSheet BalanceOptions {..} ledger = do
     assetsSection      = accountsToBalance balOptReportType assets
     liabilitiesSection = accountsToBalance balOptReportType liabilities
     equitySection      = accountsToBalance balOptReportType (equity <> retEarn)
-    is = BalanceSheet assetsSection liabilitiesSection equitySection
-  return is
-
+  return $ BalanceSheet assetsSection liabilitiesSection equitySection
 
 incomeStatementToTable :: IncomeStatement -> [[Cell]]
 incomeStatementToTable IncomeStatement {..} =
@@ -149,32 +147,34 @@ incomeStatementToTable IncomeStatement {..} =
     ++ [[Separator, Separator, Separator]]
 
 balanceSheetToTable :: BalanceSheet -> [[Cell]]
-balanceSheetToTable BalanceSheet {..}
-  = let
-      header    = AlignLeft <$> ["Account", "Amount", "Commodity"]
-      sep       = replicate 3 Separator
-      header'   = sep : header : pure sep
-      filler    = repeat $ replicate 3 Empty
-      emptyLine = pure $ replicate 3 Empty
-      aSide = header' ++ sectionToRows 0 ("", bAssets { sSubtotals = mempty })
-      leSide =
-        header'
-          ++ sectionToRows 0 ("", bLiabilities { sSubtotals = mempty })
-          ++ emptyLine
-          ++ sectionToRows 0 ("", bEquity { sSubtotals = mempty })
-      totalAssets =
-        sectionToRows 0 ("Total", Balance mempty M.empty (sSubtotals bAssets))
-      totalLiabilitiesAndEquity = sectionToRows
-        0
-        ( "Total"
-        , Balance mempty M.empty (sSubtotals bLiabilities <> sSubtotals bEquity)
-        )
-      nbrRows = maximum [length aSide, length leSide]
-      aSide'  = take nbrRows (aSide ++ filler) ++ [sep] ++ totalAssets
-      leSide' =
-        take nbrRows (leSide ++ filler) ++ [sep] ++ totalLiabilitiesAndEquity
-    in
-      zipWith (++) aSide' leSide' ++ [replicate 6 Separator]
+balanceSheetToTable BalanceSheet {..} =
+  let
+    header  = AlignLeft <$> ["Account", "Amount", "Commodity"]
+    sep     = replicate 3 Separator
+    header' = sep : header : pure sep
+    filler  = repeat $ replicate 3 Empty
+    aSide   = header' ++ sectionToRows 0 ("", bAssets { sSubtotals = mempty })
+    leSide =
+      header'
+        ++ sectionToRows 0 ("", bLiabilities { sSubtotals = mempty })
+        ++ sectionToRows 0 ("", bEquity { sSubtotals = mempty })
+    totalAssets =
+      sectionToRows 0 ("Total", Balance mempty M.empty (sSubtotals bAssets))
+    totalLiabilitiesAndEquity = sectionToRows
+      0
+      ( "Total"
+      , Balance mempty M.empty (sSubtotals bLiabilities <> sSubtotals bEquity)
+      )
+    nbrRows   = maximum [length aSide, length leSide]
+    nbrTotals = maximum [length totalAssets, length totalLiabilitiesAndEquity]
+    aSide'    = take nbrRows (aSide ++ filler) ++ [sep] ++ take
+      nbrTotals
+      (totalAssets ++ filler)
+    leSide' = take nbrRows (leSide ++ filler) ++ [sep] ++ take
+      nbrTotals
+      (totalLiabilitiesAndEquity ++ filler)
+  in
+    zipWith (++) aSide' leSide' ++ [replicate 6 Separator]
 
 
 

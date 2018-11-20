@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e0b6d2181049c32873faef53a86bf80047c68701281a086e657a033771d1ed9e
+-- hash: 07e3b276ce3d25acdfe212737370aa0bb65ee2dda28987110e43553f3dca278b
 
 name:           beans
 version:        0.0.2.0
@@ -37,6 +37,7 @@ library
       Beans.Import.CH.Postfinance
       Beans.Import.Common
       Beans.Import.DSL
+      Beans.Import.US.InteractiveBrokers
       Beans.Ledger
       Beans.Lib
       Beans.Options

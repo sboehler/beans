@@ -7,6 +7,8 @@ import           Beans.Data.Directives                    ( Command(..)
                                                           , Dated(..)
                                                           )
 import qualified Beans.Import.CH.Postfinance
+import qualified Beans.Import.US.InteractiveBrokers
+
 import           Beans.Import.Common                      ( Config(..) )
 import           Beans.Import.DSL                         ( Rule
                                                           , Entry(..)
@@ -52,4 +54,6 @@ getParser
 getParser n
   | n == Beans.Import.CH.Postfinance.name = return
     Beans.Import.CH.Postfinance.parseEntries
+  | n == Beans.Import.US.InteractiveBrokers.name = return
+    Beans.Import.US.InteractiveBrokers.parseEntries
   | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n

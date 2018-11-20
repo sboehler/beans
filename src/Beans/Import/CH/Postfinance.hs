@@ -4,7 +4,6 @@ module Beans.Import.CH.Postfinance
   )
 where
 
-import           Debug.Trace
 import           Data.Group                               ( invert )
 import           Beans.Data.Directives                    ( Dated(Dated)
                                                           , Command(Transaction)
@@ -106,7 +105,7 @@ command commodity = do
   let entry        = Entry d "Expense" desc (invert amt) commodity name
       otherAccount = evaluator entry
   case otherAccount of
-    Nothing -> customFailure $ AccountNotFound $ pack . traceId . show $ entry
+    Nothing -> customFailure $ AccountNotFound $ pack . show $ entry
     Just a ->
       let bookings = M.fromListM
             [ (Position account commodity Nothing, M.singleton commodity amt)

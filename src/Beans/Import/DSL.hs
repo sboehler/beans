@@ -76,6 +76,7 @@ data Rule =
 data E a where
   EVarAmount :: E Amount
   EVarDescription :: E Text
+  EVarType :: E Text
   EVarDate :: E Date
   EVarImporter :: E Text
   EDate :: Date -> E Date
@@ -102,6 +103,7 @@ instance Show a => Show (E a) where
   show (EDate a)       = show a
   show (EAmount a)     = show a
   show EVarAmount      = "amount"
+  show EVarType        = "type"
   show EVarDescription = "description"
   show EVarDate = "date"
   show EVarImporter    = "importer"
@@ -149,6 +151,7 @@ evalE (EDate   a)     = return a
 evalE (EAmount a)     = return a
 evalE EVarAmount      = asks eAmount
 evalE EVarDescription = asks eDescription
+evalE EVarType        = asks eType
 evalE EVarDate        = asks eDate
 evalE EVarImporter    = pack . show <$> asks eImporter
 evalE (EAbs a    )    = abs <$> evalE a

@@ -9,10 +9,6 @@ import           Data.Text                                ( Text
                                                           , pack
                                                           )
 import           Data.Monoid                              ( Sum(..) )
-import           Beans.Data.Directives                    ( Dated(Dated)
-                                                          , Flag(Complete)
-                                                          , Command(Transaction)
-                                                          )
 import           Control.Monad                            ( void )
 import           Control.Monad.Catch                      ( MonadThrow
                                                           , throwM
@@ -30,8 +26,12 @@ import           Data.Text.Encoding                       ( decodeLatin1 )
 
 import qualified Beans.Data.Map                as M
 import qualified Text.Megaparsec.Char.Lexer    as L
-import           Beans.Data.Accounts                      ( Commodity(..)
-                                                          , Date(Date)
+import           Beans.Model                              ( Commodity(..)
+                                                          , Dated(Dated)
+                                                          , Flag(Complete)
+                                                          , Command(Transaction)
+                                                          , Date
+                                                          , fromGreg
                                                           , Lot(Lot)
                                                           , Account
                                                           , Position(Position)
@@ -60,7 +60,6 @@ import           Text.Megaparsec                          ( Parsec
                                                           , (<|>)
                                                           )
 import           Data.Maybe                               ( catMaybes )
-import           Data.Time.Calendar                       ( fromGregorian )
 import           Control.Monad.Reader                     ( ReaderT
                                                           , asks
                                                           , MonadReader
@@ -204,10 +203,7 @@ constantField :: Text -> Parser Text
 constantField = field . string
 
 dateField :: Parser Date
-dateField =
-  field
-    $   Date
-    <$> (fromGregorian <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
+dateField = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
  where
   dash = char '-'
   int n = read <$> count n digitChar
@@ -216,9 +212,7 @@ dateTimeField :: Parser Date
 dateTimeField =
   field
     $  quote
-    >> (   Date
-       <$> (fromGregorian <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
-       )
+    >> (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
     <* skipManyTill anyChar quote
  where
   dash  = char '-'

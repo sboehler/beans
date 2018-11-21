@@ -1,7 +1,7 @@
 module Beans.Import.DSL.Tests where
 
-import           Beans.Data.Accounts                      ( Account(..)
-                                                          , Date(Date)
+import           Beans.Model                              ( Account(..)
+                                                          , fromGreg
                                                           , AccountType(..)
                                                           , Commodity(..)
                                                           )
@@ -9,7 +9,6 @@ import           Beans.Import.DSL
 import qualified Data.ByteString.Lazy.Char8    as BS
 import           Data.Semigroup                           ( (<>) )
 import           Data.Text                                ( Text )
-import           Data.Time.Calendar                       ( fromGregorian )
 import           System.FilePath.Posix                    ( (<.>)
                                                           , (</>)
                                                           )
@@ -81,7 +80,7 @@ parserTests = testGroup
 evaluationTests :: TestTree
 evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
  where
-  entry = Entry (Date $ fromGregorian 2018 1 1)
+  entry = Entry (fromGreg 2018 1 1)
                 "expense"
                 "Purchasing Foos at Bar Inc"
                 (-100)
@@ -92,30 +91,28 @@ evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
   account3 = Account Liabilities ["Creditcard"]
   mkTest (rs, e) = testCase (show rs)
     $ assertEqual (" should evaluate to " <> show e) e (evaluate rs entry)
-  evaluationTestCases =
-    [ ( [Rule (EMatch EVarDescription (EText "Bar Inc")) account1]
-      , Just account1
-      )
-    , ([Rule (EBool True) account2]                     , Just account2)
-    , ([Rule (EGT EVarAmount (EAmount (-110))) account3], Just account3)
-    , ([Rule (ELT EVarAmount (EAmount (-110))) account3], Nothing)
-    , ( [ Rule (EEQ EVarDescription (EText "Purchasing Foos at Bar Inc"))
-               account3
-        ]
-      , Just account3
-      )
-    , ( [Rule (EMatch EVarDescription (EText "^Purchasing")) account3]
-      , Just account3
-      )
-    , ([Rule (EMatch EVarDescription (EText "^Foo")) account3], Nothing)
-    , ([Rule (EOr (EBool True) (EBool False)) account3]       , Just account3)
-    , ([Rule (EOr (EBool False) (EBool False)) account3]      , Nothing)
-    , ([Rule (EOr (EBool False) (EBool True)) account3]       , Just account3)
-    , ([Rule (EOr (EBool True) (EBool True)) account3]        , Just account3)
-    , ( [Rule (EGT EVarDate (EDate $ Date $ fromGregorian 2017 12 31)) account1]
-      , Just account1
-      )
-    , ( [Rule (ELT EVarDate (EDate $ Date $ fromGregorian 2017 12 31)) account1]
-      , Nothing
-      )
-    ]
+  evaluationTestCases
+    = [ ( [Rule (EMatch EVarDescription (EText "Bar Inc")) account1]
+        , Just account1
+        )
+      , ([Rule (EBool True) account2]                     , Just account2)
+      , ([Rule (EGT EVarAmount (EAmount (-110))) account3], Just account3)
+      , ([Rule (ELT EVarAmount (EAmount (-110))) account3], Nothing)
+      , ( [ Rule (EEQ EVarDescription (EText "Purchasing Foos at Bar Inc"))
+                 account3
+          ]
+        , Just account3
+        )
+      , ( [Rule (EMatch EVarDescription (EText "^Purchasing")) account3]
+        , Just account3
+        )
+      , ([Rule (EMatch EVarDescription (EText "^Foo")) account3], Nothing)
+      , ([Rule (EOr (EBool True) (EBool False)) account3]       , Just account3)
+      , ([Rule (EOr (EBool False) (EBool False)) account3]      , Nothing)
+      , ([Rule (EOr (EBool False) (EBool True)) account3]       , Just account3)
+      , ([Rule (EOr (EBool True) (EBool True)) account3]        , Just account3)
+      , ( [Rule (EGT EVarDate (EDate $ fromGreg 2017 12 31)) account1]
+        , Just account1
+        )
+      , ([Rule (ELT EVarDate (EDate $ fromGreg 2017 12 31)) account1], Nothing)
+      ]

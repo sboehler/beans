@@ -7,14 +7,14 @@ where
 
 import qualified Data.Text                     as T
 import           Text.Regex.PCRE                          ( (=~) )
-import           Beans.Data.Directives                    ( Command(..)
-                                                          , Dated(..)
-                                                          )
+
 import           Beans.Options                            ( JournalOptions(..)
                                                           , Filter(..)
                                                           )
 import           Beans.Ledger                             ( Ledger )
-import           Beans.Data.Accounts                      ( Date(..)
+import           Beans.Model                              ( Date
+                                                          , Command(..)
+                                                          , Dated(..)
                                                           , Amount
                                                           , Accounts
                                                           , Commodity

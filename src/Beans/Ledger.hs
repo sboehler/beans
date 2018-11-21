@@ -6,8 +6,9 @@ module Beans.Ledger
   )
 where
 
-import           Beans.Data.Accounts                      ( Position(..) )
-import           Beans.Data.Directives                    ( Command(..)
+
+import           Beans.Model                              ( Command(..)
+                                                          , Position(..)
                                                           , Dated(..)
                                                           , between
                                                           , Directive(..)

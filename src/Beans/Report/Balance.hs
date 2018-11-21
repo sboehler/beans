@@ -6,7 +6,7 @@ module Beans.Report.Balance
   )
 where
 
-import           Beans.Data.Accounts                      ( Accounts
+import           Beans.Model                              ( Accounts
                                                           , Account(..)
                                                           , Amount
                                                           , Amounts

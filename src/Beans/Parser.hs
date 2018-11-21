@@ -1,25 +1,26 @@
 module Beans.Parser where
 
-import           Beans.Data.Accounts                      ( Account(..)
+import           Beans.Model                              ( Account(..)
                                                           , AccountType(..)
                                                           , Amount
                                                           , Amounts
-                                                          , Date(..)
+                                                          , Date
+                                                          , fromGreg
                                                           , Commodity(..)
                                                           , Lot(..)
                                                           , Position(..)
-                                                          )
-import           Beans.Data.Directives                    ( Command(..)
+                                                          , Command(..)
                                                           , Dated(..)
                                                           , Directive(..)
                                                           , Flag(..)
                                                           , Include(..)
                                                           , Option(..)
+                                                          , Restriction(..)
                                                           , Tag(..)
                                                           , mkBalancedTransaction
                                                           )
 import qualified Beans.Data.Map                as M
-import           Beans.Data.Restrictions                  ( Restriction(..) )
+
 import           Control.Monad                            ( void )
 import           Control.Monad.Catch                      ( Exception
                                                           , MonadThrow
@@ -36,9 +37,6 @@ import           Data.Text                                ( Text
                                                           , unpack
                                                           )
 import           Data.Text.IO                             ( readFile )
-import           Data.Time.Calendar                       ( Day
-                                                          , fromGregorian
-                                                          )
 import           Prelude                           hiding ( readFile )
 import           System.FilePath.Posix                    ( combine
                                                           , takeDirectory
@@ -117,15 +115,12 @@ lexeme = L.lexeme sc
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
-day :: Parser Day
-day =
-  lexeme $ fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
+pDate :: Parser Date
+pDate = lexeme $ fromGreg <$> digits 4 <* dash <*> digits 2 <* dash <*> digits
+  2
  where
   dash = symbol "-"
   digits n = read <$> count n digitChar
-
-pDate :: Parser Date
-pDate = Date <$> day
 
 identifier :: Parser Text
 identifier =

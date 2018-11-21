@@ -7,24 +7,24 @@ module Beans.Pretty
   )
 where
 
-import           Beans.Data.Accounts                      ( Account(..)
+import           Beans.Model                              ( Account(..)
                                                           , Accounts
                                                           , Amount
-                                                          , Date(..)
+                                                          , Date
                                                           , Commodity(..)
                                                           , Lot(..)
                                                           , Position(..)
-                                                          )
-import           Beans.Data.Directives                    ( Command(..)
+                                                          , Command(..)
                                                           , Dated(..)
                                                           , Directive(..)
                                                           , Flag(..)
                                                           , Include(..)
                                                           , Option(..)
                                                           , Tag(..)
+                                                          , Restriction(..)
                                                           )
 import qualified Beans.Data.Map                as M
-import           Beans.Data.Restrictions                  ( Restriction(..) )
+
 import           Beans.Ledger                             ( Ledger )
 import           Data.Monoid                              ( Sum(..) )
 import           Data.Scientific                          ( Scientific

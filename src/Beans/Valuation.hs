@@ -3,19 +3,19 @@ module Beans.Valuation
   )
 where
 
-import           Beans.Data.Restrictions                  ( Restrictions )
+
 import           Beans.Accounts                           ( check
                                                           , process
                                                           )
-import           Beans.Data.Accounts                      ( Account(..)
+import           Beans.Model                              ( Account(..)
+                                                          , Restrictions
                                                           , AccountType(..)
                                                           , Accounts
                                                           , Amount
                                                           , Amounts
                                                           , Commodity(..)
                                                           , Position(..)
-                                                          )
-import           Beans.Data.Directives                    ( Command(..)
+                                                          , Command(..)
                                                           , Dated(..)
                                                           , sameDay
                                                           , Flag(..)

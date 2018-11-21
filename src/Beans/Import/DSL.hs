@@ -2,9 +2,10 @@
 
 module Beans.Import.DSL where
 
-import           Beans.Data.Accounts                      ( Account(..)
+import           Beans.Model                              ( Account(..)
                                                           , AccountType
-                                                          , Date(Date)
+                                                          , Date
+                                                          , fromGreg
                                                           , Amount
                                                           , Date
                                                           , Commodity
@@ -33,7 +34,6 @@ import           Data.Text                                ( Text
                                                           , unpack
                                                           )
 import           Data.Text.IO                             ( readFile )
-import           Data.Time.Calendar                       ( fromGregorian )
 import           Data.Void                                ( Void )
 import           Prelude                           hiding ( readFile )
 import           Text.Megaparsec                          ( Parsec
@@ -251,9 +251,7 @@ textLiteral = EText <$> lexeme quotedText
 dateLiteral :: Parser (E Date)
 dateLiteral = EDate <$> lexeme date
  where
-  date =
-    Date
-      <$> (fromGregorian <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2)
+  date = fromGreg <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
   dash = symbol "-"
   digits n = read <$> count n digitChar
 

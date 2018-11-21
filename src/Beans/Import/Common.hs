@@ -5,7 +5,7 @@ module Beans.Import.Common
   )
 where
 
-import           Beans.Data.Accounts                      ( Account )
+import           Beans.Model                              ( Account )
 import           Control.Exception                        ( Exception )
 import           Beans.Import.DSL                         ( Evaluator
                                                           , Entry(..)

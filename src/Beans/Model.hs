@@ -8,6 +8,7 @@ module Beans.Model
   , Date(MinDate, MaxDate)
   , fromGreg
   , Lot(..)
+  , Filter(..)
   , Position(..)
   , balance
   , summarize
@@ -25,12 +26,18 @@ module Beans.Model
   , Option(..)
   , Tag(..)
   , Flag(..)
+  , Ledger
+  , build
+  , filter
   , Restrictions
   , Restriction(..)
   , isCompatible
   )
 where
 
+
+
+import           Prelude                           hiding ( filter )
 import           Control.Monad.Catch                      ( Exception
                                                           , MonadThrow
                                                           , throwM
@@ -44,6 +51,7 @@ import           Data.Maybe                               ( catMaybes )
 import           Data.Monoid                              ( Sum
                                                           , getSum
                                                           )
+import           Text.Regex.PCRE                          ( (=~) )
 import           Data.Scientific                          ( Scientific
                                                           , formatScientific
                                                           , FPFormat(Fixed)
@@ -247,6 +255,42 @@ balanceImbalances account = M.mapEntries g . fmap negate
   g (commodity, amount) =
     (Position account commodity Nothing, M.singleton commodity amount)
 
+-- Ledger
+
+type Ledger = [Dated Command]
+
+build :: [Directive] -> Ledger
+build = L.sort . f where f d = [ c | (DatedCommandDirective c) <- d ]
+
+data Filter =
+    NoFilter
+  | StrictFilter String
+  | Filter String
+  | PeriodFilter Date Date deriving (Eq, Show)
+
+
+filter :: Filter -> Ledger -> Ledger
+filter (StrictFilter regex) =
+  fmap (fmap (filterPostings regex)) . filter (Filter regex)
+filter (Filter regex        ) = L.filter (matchCommand regex . undate)
+filter (PeriodFilter from to) = L.filter (between from to)
+filter NoFilter               = id
+
+filterPostings :: String -> Command -> Command
+filterPostings regex Transaction { tPostings, ..} = Transaction
+  { tPostings = M.filterKeys ((=~ regex) . show . pAccount) tPostings
+  , ..
+  }
+filterPostings _ command = command
+
+matchCommand :: String -> Command -> Bool
+matchCommand regex Transaction { tPostings } = (any match . M.keys) tPostings
+  where match = (=~ regex) . show . pAccount
+matchCommand _ Balance {..} = False
+matchCommand _ _            = True
+
+
+-- Restrictions
 
 type Restrictions = M.Map Account Restriction
 

@@ -12,6 +12,7 @@ import           Beans.Model                              ( Account(..)
                                                           , Amount
                                                           , Date
                                                           , Commodity(..)
+                                                          , Ledger
                                                           , Lot(..)
                                                           , Position(..)
                                                           , Command(..)
@@ -24,8 +25,6 @@ import           Beans.Model                              ( Account(..)
                                                           , Restriction(..)
                                                           )
 import qualified Beans.Data.Map                as M
-
-import           Beans.Ledger                             ( Ledger )
 import           Data.Monoid                              ( Sum(..) )
 import           Data.Scientific                          ( Scientific
                                                           , formatScientific

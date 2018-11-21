@@ -10,6 +10,7 @@ import           Beans.Model                              ( Account
                                                           , Accounts
                                                           , Amount
                                                           , Date
+                                                          , Ledger
                                                           , Restriction
                                                           , Restrictions
                                                           , Commodity
@@ -21,7 +22,6 @@ import           Beans.Model                              ( Account
                                                           )
 import qualified Data.List                     as L
 import qualified Beans.Data.Map                as M
-import           Beans.Ledger                             ( Ledger )
 import           Control.Monad                            ( unless
                                                           , foldM
                                                           , when

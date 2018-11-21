@@ -3,6 +3,7 @@ module Beans.Options where
 import           Beans.Model                              ( Account
                                                           , Commodity(..)
                                                           , Date
+                                                          , Filter
                                                           )
 import           Data.Text                                ( Text )
 
@@ -34,13 +35,6 @@ data JournalOptions = JournalOptions
   , jrnOptTo      :: Date
   , jrnOptRegex   :: Text
   } deriving (Show)
-
-
-data Filter =
-    NoFilter
-  | StrictFilter String
-  | Filter String
-  | PeriodFilter Date Date deriving (Eq, Show)
 
 data Valuation = NoValuation | AtMarket Commodity Account | AtCost Commodity deriving (Eq, Show)
 

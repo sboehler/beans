@@ -2,12 +2,12 @@ module Main where
 
 import           Beans.Model                              ( Account(..)
                                                           , AccountType(Equity)
+                                                          , Filter(..)
                                                           , Date(..)
                                                           )
 import           Beans.Lib                                ( run )
 import           Beans.Options                            ( BalanceOptions(..)
                                                           , Command(..)
-                                                          , Filter(..)
                                                           , ImportOptions(..)
                                                           , JournalOptions(..)
                                                           , ReportType(..)

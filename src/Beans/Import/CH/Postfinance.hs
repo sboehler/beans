@@ -1,54 +1,40 @@
 module Beans.Import.CH.Postfinance
-  ( parseEntries
+  ( parse
   , name
   )
 where
 
-import           Data.Group                               ( invert )
 import qualified Beans.Data.Map                as M
-import           Beans.Model                              ( Dated(Dated)
+import           Beans.Import.Common                      ( Config(..)
+                                                          , Context(..)
+                                                          , Parser
+                                                          , askAccount
+                                                          , parseLatin1
+                                                          )
+import           Beans.Model                              ( Amount
                                                           , Command(Transaction)
-                                                          , Flag(Complete)
-                                                          , Amount
                                                           , Commodity(Commodity)
-                                                          , Position(Position)
                                                           , Date
+                                                          , Dated(Dated)
+                                                          , Flag(Complete)
+                                                          , Position(Position)
                                                           , fromGreg
                                                           )
-import           Beans.Import.Common                      ( Context(..)
-                                                          , Config(..)
-                                                          , ImporterException(..)
-                                                          )
 import           Control.Monad                            ( void )
-import           Control.Monad.Reader                     ( ReaderT
+import           Control.Monad.Catch                      ( MonadThrow )
+import           Control.Monad.IO.Class                   ( MonadIO )
+import           Control.Monad.Reader                     ( MonadReader
                                                           , asks
-                                                          , MonadReader
-                                                          , ask
-                                                          , runReaderT
                                                           )
-import           Control.Monad.Catch                      ( MonadThrow
-                                                          , throwM
-                                                          )
-import           Control.Monad.IO.Class                   ( MonadIO
-                                                          , liftIO
-                                                          )
-import qualified Data.ByteString               as BS
+import           Data.Group                               ( invert )
 import           Data.Monoid                              ( Sum(Sum) )
-import           Data.Text                                ( Text
-                                                          , pack
-                                                          )
+import           Data.Text                                ( Text )
 import qualified Data.Text                     as T
-import           Data.Text.Encoding                       ( decodeLatin1 )
-import           Text.Megaparsec                          ( Parsec
-                                                          , ShowErrorComponent(..)
+import           Text.Megaparsec                          ( (<|>)
                                                           , count
                                                           , manyTill
-                                                          , parse
-                                                          , parseErrorPretty
-                                                          , customFailure
                                                           , skipManyTill
                                                           , some
-                                                          , (<|>)
                                                           )
 import           Text.Megaparsec.Char                     ( alphaNumChar
                                                           , anyChar
@@ -56,35 +42,13 @@ import           Text.Megaparsec.Char                     ( alphaNumChar
                                                           , digitChar
                                                           , eol
                                                           )
-import           Control.Exception                        ( Exception )
 import qualified Text.Megaparsec.Char.Lexer    as L
-
 
 name :: Text
 name = "ch.postfinance" :: Text
 
-parseEntries
-  :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parseEntries = do
-  c@Config { cFile } <- ask
-  source             <- liftIO $ decodeLatin1 <$> BS.readFile cFile
-  case parse (runReaderT postfinanceData c) cFile source of
-    Left  e -> (throwM . ImporterException . parseErrorPretty) e
-    Right d -> return d
-
-type Parser = ReaderT Config (Parsec ParserException Text)
-
--- parser exception
-newtype ParserException =
-  AccountNotFound Text
-  deriving (Eq, Show, Ord)
-
-instance Exception ParserException
-
-instance ShowErrorComponent ParserException where
-  showErrorComponent (AccountNotFound t) =
-    "Account not found: " ++ show t
-
+parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
+parse = parseLatin1 postfinanceData
 
 postfinanceData :: Parser [Dated Command]
 postfinanceData = do
@@ -95,44 +59,41 @@ postfinanceData = do
 
 command :: Commodity -> Parser (Dated Command)
 command commodity = do
-  d         <- date
-  desc      <- description
-  amt       <- entryAmount
-  account   <- asks cAccount
-  evaluator <- asks cEvaluator
-  _         <- ignoreField >> ignoreField
-  let entry        = Context d "Expense" desc (invert amt) commodity name
-      otherAccount = evaluator entry
-  case otherAccount of
-    Nothing -> customFailure $ AccountNotFound $ pack . show $ entry
-    Just a ->
-      let bookings = M.fromListM
-            [ (Position account commodity Nothing, M.singleton commodity amt)
-            , (Position a commodity Nothing, M.singleton commodity (invert amt))
-            ]
-      in  return $ Dated d $ Transaction Complete desc [] bookings
+  date         <- dateField
+  description  <- descriptionField
+  amount       <- entryAmount <* count 2 ignoreField
+  account      <- asks cAccount
+  otherAccount <- askAccount
+    $ Context date "expense" description (invert amount) commodity name
+  let bookings = M.fromListM
+        [ (Position account commodity Nothing, M.singleton commodity amount)
+        , ( Position otherAccount commodity Nothing
+          , M.singleton commodity (-amount)
+          )
+        ]
+  return $ Dated date $ Transaction Complete description [] bookings
 
 entryAmount :: Parser Amount
 entryAmount = field $ credit <|> debit
  where
-  debit  = amount <* separator
-  credit = separator *> amount
+  debit  = amountField <* separator
+  credit = separator *> amountField
 
 currency :: Parser Commodity
 currency = field $ Commodity . T.pack <$> some alphaNumChar
 
-date :: Parser Date
-date = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
+dateField :: Parser Date
+dateField = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
  where
   dash = char '-'
   int n = read <$> count n digitChar
 
-description :: Parser Text
-description = quote >> T.pack <$> manyTill anyChar (quote >> separator)
+descriptionField :: Parser Text
+descriptionField = quote >> T.pack <$> manyTill anyChar (quote >> separator)
   where quote = char '"'
 
-amount :: Parser Amount
-amount = Sum <$> L.signed (pure ()) L.scientific
+amountField :: Parser Amount
+amountField = Sum <$> L.signed (pure ()) L.scientific
 
 ignoreLine :: Parser ()
 ignoreLine = void $ skipManyTill anyChar eol

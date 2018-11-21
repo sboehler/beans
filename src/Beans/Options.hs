@@ -1,8 +1,8 @@
 module Beans.Options where
 
-import           Beans.Data.Accounts                      ( Account
+import           Beans.Model                              ( Account
                                                           , Commodity(..)
-                                                          , Date(..)
+                                                          , Date
                                                           )
 import           Data.Text                                ( Text )
 

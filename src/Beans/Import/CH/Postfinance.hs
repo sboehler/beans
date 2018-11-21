@@ -5,15 +5,15 @@ module Beans.Import.CH.Postfinance
 where
 
 import           Data.Group                               ( invert )
-import           Beans.Data.Directives                    ( Dated(Dated)
+import qualified Beans.Data.Map                as M
+import           Beans.Model                              ( Dated(Dated)
                                                           , Command(Transaction)
                                                           , Flag(Complete)
-                                                          )
-import qualified Beans.Data.Map                as M
-import           Beans.Data.Accounts                      ( Amount
+                                                          , Amount
                                                           , Commodity(Commodity)
                                                           , Position(Position)
-                                                          , Date(Date)
+                                                          , Date
+                                                          , fromGreg
                                                           )
 import           Beans.Import.Common                      ( Entry(..)
                                                           , Config(..)
@@ -39,7 +39,6 @@ import           Data.Text                                ( Text
                                                           )
 import qualified Data.Text                     as T
 import           Data.Text.Encoding                       ( decodeLatin1 )
-import           Data.Time.Calendar                       ( fromGregorian )
 import           Text.Megaparsec                          ( Parsec
                                                           , ShowErrorComponent(..)
                                                           , count
@@ -123,8 +122,7 @@ currency :: Parser Commodity
 currency = field $ Commodity . T.pack <$> some alphaNumChar
 
 date :: Parser Date
-date = Date
-  <$> field (fromGregorian <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
+date = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
  where
   dash = char '-'
   int n = read <$> count n digitChar

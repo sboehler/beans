@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 07e3b276ce3d25acdfe212737370aa0bb65ee2dda28987110e43553f3dca278b
+-- hash: a45e83f334b6e57a045d09eefc2e300b6992e0cf02e87df6d71a2d004edb8fc2
 
 name:           beans
 version:        0.0.2.0
@@ -29,10 +29,7 @@ source-repository head
 library
   exposed-modules:
       Beans.Accounts
-      Beans.Data.Accounts
-      Beans.Data.Directives
       Beans.Data.Map
-      Beans.Data.Restrictions
       Beans.Import
       Beans.Import.CH.Postfinance
       Beans.Import.Common
@@ -40,6 +37,7 @@ library
       Beans.Import.US.InteractiveBrokers
       Beans.Ledger
       Beans.Lib
+      Beans.Model
       Beans.Options
       Beans.Parser
       Beans.Pretty

@@ -6,23 +6,21 @@ module Beans.Accounts
   )
 where
 
-import qualified Data.List                     as L
-import           Beans.Data.Accounts                      ( Account
+import           Beans.Model                              ( Account
                                                           , Accounts
                                                           , Amount
                                                           , Date
+                                                          , Restriction
+                                                          , Restrictions
                                                           , Commodity
                                                           , Position(..)
-                                                          )
-import qualified Beans.Data.Accounts           as A
-import           Beans.Data.Directives                    ( Command(..)
+                                                          , Command(..)
                                                           , Dated(..)
+                                                          , balance
+                                                          , isCompatible
                                                           )
+import qualified Data.List                     as L
 import qualified Beans.Data.Map                as M
-import           Beans.Data.Restrictions                  ( Restriction
-                                                          , Restrictions
-                                                          )
-import qualified Beans.Data.Restrictions       as R
 import           Beans.Ledger                             ( Ledger )
 import           Control.Monad                            ( unless
                                                           , foldM
@@ -74,7 +72,7 @@ check restrictions Transaction { tPostings } = do
   g r (Position { pAccount, pCommodity }, s) = case M.lookup pAccount r of
     Nothing -> throwM $ BookingErrorAccountNotOpen pAccount
     Just r' -> unless
-      (R.isCompatible r' pCommodity)
+      (isCompatible r' pCommodity)
       (throwM $ BookingErrorCommodityIncompatible
         pAccount
         pCommodity
@@ -95,7 +93,7 @@ process accounts command@Close { cAccount } = do
 process accounts Transaction { tPostings } =
   return $ accounts `mappend` tPostings
 process accounts bal@Balance { bAccount, bAmount, bCommodity } = do
-  let s = A.balance bAccount bCommodity accounts
+  let s = balance bAccount bCommodity accounts
   unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
   return accounts
 process accounts _ = pure accounts

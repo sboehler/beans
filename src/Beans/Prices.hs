@@ -8,8 +8,9 @@ module Beans.Prices
   )
 where
 
-import           Beans.Data.Accounts                      ( Commodity(..) )
-import           Beans.Data.Directives                    ( Command(..) )
+import           Beans.Model                              ( Command(..)
+                                                          , Commodity(..)
+                                                          )
 import           Control.Monad.Catch                      ( Exception
                                                           , MonadThrow
                                                           , throwM

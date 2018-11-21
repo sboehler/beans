@@ -1,6 +1,6 @@
 module Main where
 
-import           Beans.Data.Accounts                      ( Account(..)
+import           Beans.Model                              ( Account(..)
                                                           , AccountType(Equity)
                                                           , Date(..)
                                                           )
@@ -52,11 +52,10 @@ filterParser =
     <|> pure NoFilter
 
 regexParser :: Parser T.Text
-regexParser =
-  T.pack <$> strOption
-      (long "filter" <> metavar "REGEX" <> short 'f' <> help
-        "Filter the accounts with the given regex."
-      )
+regexParser = T.pack <$> strOption
+  (long "filter" <> metavar "REGEX" <> short 'f' <> help
+    "Filter the accounts with the given regex."
+  )
 
 valuationParser :: Parser Valuation
 valuationParser =
@@ -138,12 +137,16 @@ cmd =
     $  command
          "balance"
          (info (Balance <$> balanceOptions) (progDesc "Print a generic balance"))
-    <>  command
+    <> command
          "incomeStatement"
-         (info (IncomeStatement <$> balanceOptions) (progDesc "Print a formatted income statement"))
-    <>  command
+         (info (IncomeStatement <$> balanceOptions)
+               (progDesc "Print a formatted income statement")
+         )
+    <> command
          "balanceSheet"
-         (info (BalanceSheet <$> balanceOptions) (progDesc "Print a formatted balance sheet"))
+         (info (BalanceSheet <$> balanceOptions)
+               (progDesc "Print a formatted balance sheet")
+         )
     <> command "import"
                (info (Import <$> importOptions) (progDesc "Import data"))
     <> command

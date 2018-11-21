@@ -3,7 +3,7 @@ module Beans.Import.CH.Postfinance.Tests
   )
 where
 
-import           Beans.Data.Accounts                      ( Account(Account)
+import           Beans.Model                              ( Account(Account)
                                                           , AccountType(..)
                                                           )
 import           Beans.Import.CH.Postfinance              ( name

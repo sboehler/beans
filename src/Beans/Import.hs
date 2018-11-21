@@ -3,7 +3,7 @@ module Beans.Import
   )
 where
 
-import           Beans.Data.Directives                    ( Command(..)
+import           Beans.Model                              ( Command(..)
                                                           , Dated(..)
                                                           )
 import qualified Beans.Import.CH.Postfinance

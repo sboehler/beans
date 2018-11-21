@@ -80,12 +80,12 @@ parserTests = testGroup
 evaluationTests :: TestTree
 evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)
  where
-  entry = Entry (fromGreg 2018 1 1)
-                "expense"
-                "Purchasing Foos at Bar Inc"
-                (-100)
-                (Commodity "CHF")
-                "zz.bigbank"
+  entry = Context (fromGreg 2018 1 1)
+                  "expense"
+                  "Purchasing Foos at Bar Inc"
+                  (-100)
+                  (Commodity "CHF")
+                  "zz.bigbank"
   account1 = Account Expenses ["Shopping"]
   account2 = Account Assets ["Bankaccount"]
   account3 = Account Liabilities ["Creditcard"]

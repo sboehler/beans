@@ -11,9 +11,9 @@ import qualified Beans.Import.US.InteractiveBrokers
 
 import           Beans.Import.Common                      ( Config(..) )
 import           Beans.Import.DSL                         ( Rule
-                                                          , Entry(..)
+                                                          , Context(..)
                                                           , evaluate
-                                                          , Entry
+                                                          , Context
                                                           , parseFile
                                                           )
 import           Beans.Options                            ( ImportOptions(..) )
@@ -32,7 +32,7 @@ import           Control.Monad.IO.Class                   ( MonadIO
 import           Data.Monoid                              ( (<>) )
 import qualified Data.Text.Prettyprint.Doc     as P
 
-data ImportException = NoAccountFound [Rule] Entry | InvalidImporter String deriving (Show)
+data ImportException = NoAccountFound [Rule] Context | InvalidImporter String deriving (Show)
 
 instance Exception ImportException
 

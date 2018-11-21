@@ -124,7 +124,7 @@ instance Show a => Show (E a) where
 -- Evaluation
 
 
-data Entry = Entry
+data Context = Context
   { eDate :: Date
   , eType :: Text
   , eDescription :: Text
@@ -133,18 +133,18 @@ data Entry = Entry
   , eImporter    :: Text
   } deriving (Eq, Show)
 
-type Evaluator = Entry -> Maybe Account
+type Evaluator = Context -> Maybe Account
 
-evaluate :: Traversable t => t Rule -> Entry -> Maybe Account
+evaluate :: Traversable t => t Rule -> Context -> Maybe Account
 evaluate r = runIdentity . runReaderT (evalRules r)
 
-evalRules :: Traversable t => t Rule -> Reader Entry (Maybe Account)
+evalRules :: Traversable t => t Rule -> Reader Context (Maybe Account)
 evalRules rs = msum <$> sequence (evalRule <$> rs)
 
-evalRule :: Rule -> Reader Entry (Maybe Account)
+evalRule :: Rule -> Reader Context (Maybe Account)
 evalRule (Rule e c) = bool Nothing (Just c) <$> evalE e
 
-evalE :: E a -> Reader Entry a
+evalE :: E a -> Reader Context a
 evalE (EBool   a)     = return a
 evalE (EText   a)     = return a
 evalE (EDate   a)     = return a

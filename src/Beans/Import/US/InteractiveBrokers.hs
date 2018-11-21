@@ -6,6 +6,7 @@ where
 
 import           Prelude                           hiding ( unwords )
 import           Data.Char                                ( isAlphaNum )
+import           Data.List                                ( sort )
 import           Data.Text                                ( Text
                                                           , pack
                                                           , unwords
@@ -97,14 +98,16 @@ parseEntries = do
   source             <- liftIO $ decodeLatin1 <$> B.readFile cFile
   case parse (runReaderT (many line) c) mempty source of
     Left  e -> (throwM . ImporterException . parseErrorPretty) e
-    Right d -> catMaybes <$> return d
+    Right d -> sort . catMaybes <$> return d
 
 
 line :: Parser (Maybe (Dated Command))
 line =
-  (Just <$> try depositOrWithdrawal)
-    <|> (Just <$> try trade)
-    <|> (Just <$> try dividendOrWithholdingTax)
+  Just
+    <$> (   try depositWithdrawalOrFee
+        <|> try trade
+        <|> try dividendOrWithholdingTax
+        )
     <|> (skipLine >> pure Nothing)
 
 askAccount :: Context -> Parser Account
@@ -115,28 +118,29 @@ askAccount entry = do
     Nothing      -> customFailure $ AccountNotFound $ pack . show $ entry
 
 
-depositOrWithdrawal :: Parser (Dated Command)
-depositOrWithdrawal = do
-  currency <-
-    constantField "Deposits & Withdrawals"
-    >> constantField "Data"
-    >> commodityField
+depositWithdrawalOrFee :: Parser (Dated Command)
+depositWithdrawalOrFee = do
+  t <-
+    try (constantField "Deposits & Withdrawals" <* constantField "Data")
+      <|> try
+            (constantField "Fees" >> constantField "Data" >> constantField
+              "Other Fees"
+            )
+  currency    <- commodityField
   date        <- dateField
   description <- textField
   amount      <- amountField <* skipRestOfLine
   account     <- asks cAccount
-  other       <- askAccount $ Context
-    date
-    (if amount > 0 then "deposit" else "withdrawal")
-    description
-    (-amount)
-    currency
-    name
+  other       <- askAccount
+    $ Context date (toLower t) description amount currency name
   let bookings = M.fromListM
         [ (Position account currency Nothing, M.singleton currency amount)
         , (Position other currency Nothing  , M.singleton currency (-amount))
         ]
-  return $ Dated date $ Transaction Complete description [] bookings
+  return $ Dated date $ Transaction Complete
+                                    (unwords [t, "-" :: Text, description])
+                                    []
+                                    bookings
 
 trade :: Parser (Dated Command)
 trade = do

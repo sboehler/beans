@@ -1,12 +1,11 @@
 module Beans.Import.US.InteractiveBrokers
   ( name
-  , parseEntries
+  , parse
   )
 where
 
 import           Prelude                           hiding ( unwords )
 import           Data.Char                                ( isAlphaNum )
-import           Data.List                                ( sort )
 import           Data.Text                                ( Text
                                                           , pack
                                                           , unwords
@@ -14,20 +13,15 @@ import           Data.Text                                ( Text
                                                           )
 import           Data.Monoid                              ( Sum(..) )
 import           Control.Monad                            ( void )
-import           Control.Monad.Catch                      ( MonadThrow
-                                                          , throwM
-                                                          )
-import           Control.Monad.IO.Class                   ( MonadIO
-                                                          , liftIO
-                                                          )
+import           Control.Monad.Catch                      ( MonadThrow )
+import           Control.Monad.IO.Class                   ( MonadIO )
 
 import           Beans.Import.Common                      ( Context(..)
-                                                          , ImporterException(..)
+                                                          , Parser
+                                                          , askAccount
+                                                          , parseLatin1
                                                           , Config(..)
                                                           )
-import qualified Data.ByteString               as B
-import           Data.Text.Encoding                       ( decodeLatin1 )
-
 import qualified Beans.Data.Map                as M
 import qualified Text.Megaparsec.Char.Lexer    as L
 import           Beans.Model                              ( Commodity(..)
@@ -37,7 +31,6 @@ import           Beans.Model                              ( Commodity(..)
                                                           , Date
                                                           , fromGreg
                                                           , Lot(Lot)
-                                                          , Account
                                                           , Position(Position)
                                                           , Amount
                                                           )
@@ -49,15 +42,8 @@ import           Text.Megaparsec.Char                     ( alphaNumChar
                                                           , digitChar
                                                           , eol
                                                           )
-import           Control.Exception                        ( Exception )
-import           Text.Megaparsec                          ( Parsec
-                                                          , ShowErrorComponent
-                                                          , showErrorComponent
-                                                          , customFailure
-                                                          , count
+import           Text.Megaparsec                          ( count
                                                           , skipManyTill
-                                                          , parse
-                                                          , parseErrorPretty
                                                           , takeWhile1P
                                                           , some
                                                           , many
@@ -65,41 +51,19 @@ import           Text.Megaparsec                          ( Parsec
                                                           , (<|>)
                                                           )
 import           Data.Maybe                               ( catMaybes )
-import           Control.Monad.Reader                     ( ReaderT
-                                                          , asks
+import           Control.Monad.Reader                     ( asks
                                                           , MonadReader
-                                                          , ask
-                                                          , runReaderT
                                                           )
-
-
-
-type Parser = ReaderT Config (Parsec ParserException Text)
-
--- parser exception
-newtype ParserException =
-  AccountNotFound Text
-  deriving (Eq, Show, Ord)
-
-instance Exception ParserException
-
-instance ShowErrorComponent ParserException where
-  showErrorComponent (AccountNotFound t) =
-    "Account not found: " ++ show t
-
 
 name :: Text
 name = "us.interactivebrokers"
 
-parseEntries
-  :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parseEntries = do
-  c@Config { cFile } <- ask
-  source             <- liftIO $ decodeLatin1 <$> B.readFile cFile
-  case parse (runReaderT (many line) c) mempty source of
-    Left  e -> (throwM . ImporterException . parseErrorPretty) e
-    Right d -> sort . catMaybes <$> return d
+parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
+parse = parseLatin1 parseIBData
 
+
+parseIBData :: Parser [Dated Command]
+parseIBData = catMaybes <$> many line
 
 line :: Parser (Maybe (Dated Command))
 line =
@@ -109,14 +73,6 @@ line =
         <|> try dividendOrWithholdingTax
         )
     <|> (skipLine >> pure Nothing)
-
-askAccount :: Context -> Parser Account
-askAccount entry = do
-  evaluator <- asks cEvaluator
-  case evaluator entry of
-    Just account -> return account
-    Nothing      -> customFailure $ AccountNotFound $ pack . show $ entry
-
 
 depositWithdrawalOrFee :: Parser (Dated Command)
 depositWithdrawalOrFee = do

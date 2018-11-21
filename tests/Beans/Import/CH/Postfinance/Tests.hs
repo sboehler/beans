@@ -7,7 +7,7 @@ import           Beans.Model                              ( Account(Account)
                                                           , AccountType(..)
                                                           )
 import           Beans.Import.CH.Postfinance              ( name
-                                                          , parseEntries
+                                                          , parse
                                                           )
 import           Beans.Import.Common                      ( Config(..) )
 import qualified Data.ByteString.Lazy.Char8    as BS
@@ -35,7 +35,7 @@ test1 = goldenVsString "Postfinance" goldenFile action
   sourceFile = path </> "postfinance1.csv"
   goldenFile = path </> "postfinance1.golden"
   action     = BS.pack . show . P.sep . fmap P.pretty <$> runReaderT
-    parseEntries
+    parse
     (Config evaluate sourceFile (Account Assets ["Checking"]))
 
 

@@ -45,15 +45,13 @@ importCommand ImportOptions {..} = do
     (Config (evaluate rules) impOptData impOptAccount)
   liftIO $ print $ P.sep (P.pretty <$> transactions)
 
-
-
 getParser
   :: (MonadThrow n, MonadIO m, MonadThrow m, MonadReader Config m)
   => Text
   -> n (m [Dated Command])
 getParser n
   | n == Beans.Import.CH.Postfinance.name = return
-    Beans.Import.CH.Postfinance.parseEntries
+    Beans.Import.CH.Postfinance.parse
   | n == Beans.Import.US.InteractiveBrokers.name = return
-    Beans.Import.US.InteractiveBrokers.parseEntries
+    Beans.Import.US.InteractiveBrokers.parse
   | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n

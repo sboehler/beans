@@ -5,17 +5,18 @@ module Beans.Report.Journal
   )
 where
 
+import           Prelude                           hiding ( filter )
 import qualified Data.Text                     as T
 import           Text.Regex.PCRE                          ( (=~) )
 
-import           Beans.Options                            ( JournalOptions(..)
-                                                          , Filter(..)
-                                                          )
-import           Beans.Ledger                             ( Ledger )
+import           Beans.Options                            ( JournalOptions(..) )
 import           Beans.Model                              ( Date
                                                           , Command(..)
+                                                          , Filter(..)
+                                                          , filter
                                                           , Dated(..)
                                                           , Amount
+                                                          , Ledger
                                                           , Accounts
                                                           , Commodity
                                                           , Position(..)
@@ -25,7 +26,6 @@ import           Beans.Model                              ( Date
 import qualified Data.List                     as List
 import           Beans.Accounts                           ( calculateAccountsForDays
                                                           )
-import qualified Beans.Ledger                  as L
 import qualified Beans.Data.Map                as M
 import           Data.Text                                ( Text )
 import           Control.Monad.Catch                      ( MonadThrow )
@@ -51,9 +51,9 @@ data Item = Item {
 
 createJournal :: MonadThrow m => JournalOptions -> Ledger -> m Journal
 createJournal JournalOptions {..} ledger = do
-  let filtered = L.filter (Filter (T.unpack jrnOptRegex)) ledger
+  let filtered = filter (Filter (T.unpack jrnOptRegex)) ledger
       items    = mapMaybe (toItem jrnOptRegex)
-        $ L.filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
+        $ filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
   [accounts0, accounts1] <- calculateAccountsForDays filtered
                                                      [jrnOptFrom, jrnOptTo]
                                                      mempty

@@ -14,6 +14,7 @@ import           Beans.Model                              ( Account(..)
                                                           , Amount
                                                           , Amounts
                                                           , Commodity(..)
+                                                          , Ledger
                                                           , Position(..)
                                                           , Command(..)
                                                           , Dated(..)
@@ -23,7 +24,6 @@ import           Beans.Model                              ( Account(..)
                                                           )
 import           Beans.Options                            ( Valuation(..) )
 import qualified Beans.Data.Map                as M
-import           Beans.Ledger                             ( Ledger )
 import           Beans.Prices                             ( NormalizedPrices
                                                           , Prices
                                                           , lookupPrice

@@ -6,12 +6,15 @@ module Beans.Report.Balance
   )
 where
 
+import           Prelude                           hiding ( filter )
 import           Beans.Model                              ( Accounts
                                                           , Account(..)
                                                           , Amount
                                                           , Amounts
                                                           , AccountType(..)
                                                           , Commodity(..)
+                                                          , Ledger
+                                                          , filter
                                                           , format
                                                           , Lot(..)
                                                           , Position(..)
@@ -20,7 +23,6 @@ import           Beans.Model                              ( Accounts
                                                           )
 import           Beans.Accounts                           ( calculateAccountsForDays
                                                           )
-import           Beans.Ledger                             ( Ledger )
 import           Data.Group                               ( invert )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                             ( pretty )
@@ -34,7 +36,6 @@ import           Data.Foldable                            ( fold )
 import           Data.Monoid                              ( (<>) )
 import           Data.Text                                ( Text )
 import qualified Data.List                     as List
-import qualified Beans.Ledger                  as L
 import qualified Data.Text                     as T
 import           Control.Monad.Catch                      ( MonadThrow )
 
@@ -71,7 +72,7 @@ instance Table BalanceSheet where
 -- Creating a report
 createBalance :: MonadThrow m => BalanceOptions -> Ledger -> m Balance
 createBalance BalanceOptions {..} ledger = do
-  [a0, a1] <- calculateAccountsForDays (L.filter balOptFilter ledger)
+  [a0, a1] <- calculateAccountsForDays (filter balOptFilter ledger)
                                        [balOptFrom, balOptTo]
                                        mempty
   let balance =
@@ -86,7 +87,7 @@ createBalance BalanceOptions {..} ledger = do
 -- Creating a report
 incomeStatement :: MonadThrow m => BalanceOptions -> Ledger -> m IncomeStatement
 incomeStatement BalanceOptions {..} ledger = do
-  let filtered = L.filter balOptFilter ledger
+  let filtered = filter balOptFilter ledger
   [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
   let balance =
         eraseLots balOptLots
@@ -106,7 +107,7 @@ incomeStatement BalanceOptions {..} ledger = do
 
 balanceSheet :: MonadThrow m => BalanceOptions -> Ledger -> m BalanceSheet
 balanceSheet BalanceOptions {..} ledger = do
-  let filtered = L.filter balOptFilter ledger
+  let filtered = filter balOptFilter ledger
   [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
   let
     balance =

@@ -15,7 +15,7 @@ import           Beans.Model                              ( Dated(Dated)
                                                           , Date
                                                           , fromGreg
                                                           )
-import           Beans.Import.Common                      ( Entry(..)
+import           Beans.Import.Common                      ( Context(..)
                                                           , Config(..)
                                                           , ImporterException(..)
                                                           )
@@ -101,7 +101,7 @@ command commodity = do
   account   <- asks cAccount
   evaluator <- asks cEvaluator
   _         <- ignoreField >> ignoreField
-  let entry        = Entry d "Expense" desc (invert amt) commodity name
+  let entry        = Context d "Expense" desc (invert amt) commodity name
       otherAccount = evaluator entry
   case otherAccount of
     Nothing -> customFailure $ AccountNotFound $ pack . show $ entry

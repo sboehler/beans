@@ -17,7 +17,7 @@ import           Control.Monad.IO.Class                   ( MonadIO
                                                           , liftIO
                                                           )
 
-import           Beans.Import.Common                      ( Entry(..)
+import           Beans.Import.Common                      ( Context(..)
                                                           , ImporterException(..)
                                                           , Config(..)
                                                           )
@@ -104,7 +104,7 @@ line =
     <|> (Just <$> try withholdingTax)
     <|> (skipLine >> pure Nothing)
 
-askAccount :: Entry -> Parser Account
+askAccount :: Context -> Parser Account
 askAccount entry = do
   evaluator <- asks cEvaluator
   case evaluator entry of
@@ -122,12 +122,13 @@ depositOrWithdrawal = do
   description <- textField
   amount      <- amountField <* skipRestOfLine
   account     <- asks cAccount
-  other <- askAccount $ Entry date
-                              (if amount > 0 then "deposit" else "withdrawal")
-                              description
-                              (-amount)
-                              currency
-                              name
+  other       <- askAccount $ Context
+    date
+    (if amount > 0 then "deposit" else "withdrawal")
+    description
+    (-amount)
+    currency
+    name
   let bookings = M.fromListM
         [ (Position account currency Nothing, M.singleton currency amount)
         , (Position other currency Nothing  , M.singleton currency (-amount))
@@ -149,7 +150,7 @@ trade = do
   purchaseAmount <- amountField
   feeAmount      <- amountField <* skipRestOfLine
   account        <- asks cAccount
-  feeAccount <- askAccount $ Entry date "fee" category feeAmount currency name
+  feeAccount <- askAccount $ Context date "fee" category feeAmount currency name
   let
     lot      = Lot price currency date Nothing
     bookings = M.fromListM
@@ -168,7 +169,7 @@ dividend = do
   amount          <- amountField
   account         <- asks cAccount
   dividendAccount <- askAccount
-    $ Entry date "dividend" description amount currency name
+    $ Context date "dividend" description amount currency name
   let bookings = M.fromListM
         [ (Position account currency Nothing, M.singleton currency amount)
         , ( Position dividendAccount currency Nothing
@@ -186,7 +187,7 @@ withholdingTax = do
   amount                <- amountField
   account               <- asks cAccount
   withholdingTaxAccount <- askAccount
-    $ Entry date "withholding tax" description amount currency name
+    $ Context date "withholding tax" description amount currency name
   let bookings = M.fromListM
         [ (Position account currency Nothing, M.singleton currency amount)
         , ( Position withholdingTaxAccount currency Nothing

@@ -1,6 +1,6 @@
 module Beans.Import.Common
   ( ImporterException(..)
-  , Entry(..)
+  , Context(..)
   , Config(..)
   )
 where
@@ -8,7 +8,7 @@ where
 import           Beans.Model                              ( Account )
 import           Control.Exception                        ( Exception )
 import           Beans.Import.DSL                         ( Evaluator
-                                                          , Entry(..)
+                                                          , Context(..)
                                                           )
 
 -- The exception exported by this module

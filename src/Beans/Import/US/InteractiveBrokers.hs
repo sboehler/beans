@@ -121,11 +121,9 @@ askAccount entry = do
 depositWithdrawalOrFee :: Parser (Dated Command)
 depositWithdrawalOrFee = do
   t <-
-    try (constantField "Deposits & Withdrawals" <* constantField "Data")
-      <|> try
-            (constantField "Fees" >> constantField "Data" >> constantField
-              "Other Fees"
-            )
+    try (cField "Deposits & Withdrawals" <* cField "Data")
+    <|> try (cField "Interest" <* cField "Data")
+    <|> try (cField "Fees" <* (cField "Data" >> cField "Other Fees"))
   currency    <- commodityField
   date        <- dateField
   description <- textField
@@ -144,11 +142,7 @@ depositWithdrawalOrFee = do
 
 trade :: Parser (Dated Command)
 trade = do
-  category <-
-    constantField "Trades"
-    >> constantField "Data"
-    >> constantField "Order"
-    >> textField
+  category <- cField "Trades" >> cField "Data" >> cField "Order" >> textField
   currency       <- commodityField
   symbol         <- commodityField
   date           <- dateTimeField
@@ -169,8 +163,8 @@ trade = do
 
 dividendOrWithholdingTax :: Parser (Dated Command)
 dividendOrWithholdingTax = do
-  t        <- constantField "Dividends" <|> constantField "Withholding Tax"
-  currency <- constantField "Data" >> commodityField
+  t        <- cField "Dividends" <|> cField "Withholding Tax"
+  currency <- cField "Data" >> commodityField
   date     <- dateField
   --description     <- textField
   symbol   <-
@@ -196,8 +190,8 @@ dividendOrWithholdingTax = do
 textField :: Parser Text
 textField = field $ takeWhile1P Nothing (/= ',')
 
-constantField :: Text -> Parser Text
-constantField = field . string
+cField :: Text -> Parser Text
+cField = field . string
 
 dateField :: Parser Date
 dateField = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))

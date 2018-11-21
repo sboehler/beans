@@ -4,9 +4,12 @@ module Beans.Import.US.InteractiveBrokers
   )
 where
 
-import qualified Data.Text                     as T
+import           Prelude                           hiding ( unwords )
+import           Data.Char                                ( isAlphaNum )
 import           Data.Text                                ( Text
                                                           , pack
+                                                          , unwords
+                                                          , toLower
                                                           )
 import           Data.Monoid                              ( Sum(..) )
 import           Control.Monad                            ( void )
@@ -40,6 +43,7 @@ import           Beans.Model                              ( Commodity(..)
 import           Text.Megaparsec.Char                     ( alphaNumChar
                                                           , char
                                                           , anyChar
+                                                          , space
                                                           , string
                                                           , digitChar
                                                           , eol
@@ -100,8 +104,7 @@ line :: Parser (Maybe (Dated Command))
 line =
   (Just <$> try depositOrWithdrawal)
     <|> (Just <$> try trade)
-    <|> (Just <$> try dividend)
-    <|> (Just <$> try withholdingTax)
+    <|> (Just <$> try dividendOrWithholdingTax)
     <|> (skipLine >> pure Nothing)
 
 askAccount :: Context -> Parser Account
@@ -160,42 +163,31 @@ trade = do
       ]
   return $ Dated date $ Transaction Complete category [] bookings
 
-dividend :: Parser (Dated Command)
-dividend = do
-  currency <-
-    constantField "Dividends" >> constantField "Data" >> commodityField
-  date            <- dateField
-  description     <- textField
-  amount          <- amountField
-  account         <- asks cAccount
+dividendOrWithholdingTax :: Parser (Dated Command)
+dividendOrWithholdingTax = do
+  t        <- constantField "Dividends" <|> constantField "Withholding Tax"
+  currency <- constantField "Data" >> commodityField
+  date     <- dateField
+  --description     <- textField
+  symbol   <-
+    Commodity <$> takeWhile1P (Just "Commodity name") isAlphaNum <* space
+  isin <-
+    char '(' >> takeWhile1P (Just "ISIN") isAlphaNum <* (char ')' >> space)
+  description <- field $ takeWhile1P Nothing (/= ',')
+  amount      <- amountField
+  account     <- asks cAccount
+  let desc = unwords [t, (pack . show) symbol, isin, description]
   dividendAccount <- askAccount
-    $ Context date "dividend" description amount currency name
-  let bookings = M.fromListM
-        [ (Position account currency Nothing, M.singleton currency amount)
-        , ( Position dividendAccount currency Nothing
-          , M.singleton currency (-amount)
-          )
-        ]
-  return $ Dated date $ Transaction Complete description [] bookings
-
-withholdingTax :: Parser (Dated Command)
-withholdingTax = do
-  currency <-
-    constantField "Withholding Tax" >> constantField "Data" >> commodityField
-  date                  <- dateField
-  description           <- textField
-  amount                <- amountField
-  account               <- asks cAccount
-  withholdingTaxAccount <- askAccount
-    $ Context date "withholding tax" description amount currency name
-  let bookings = M.fromListM
-        [ (Position account currency Nothing, M.singleton currency amount)
-        , ( Position withholdingTaxAccount currency Nothing
-          , M.singleton currency (-amount)
-          )
-        ]
-  return $ Dated date $ Transaction Complete description [] bookings
-
+    $ Context date (toLower t) desc amount currency name
+  let
+    bookings = M.fromListM
+      [ (Position account currency Nothing, M.singleton currency amount)
+      , (Position account symbol Nothing  , M.singleton symbol 0)
+      , ( Position dividendAccount currency Nothing
+        , M.singleton currency (-amount)
+        )
+      ]
+  return $ Dated date $ Transaction Complete desc [] bookings
 
 textField :: Parser Text
 textField = field $ takeWhile1P Nothing (/= ',')
@@ -220,10 +212,8 @@ dateTimeField =
   quote = char '"'
   int n = read <$> count n digitChar
 
-
-
 commodityField :: Parser Commodity
-commodityField = field $ Commodity . T.pack <$> some alphaNumChar
+commodityField = field $ Commodity . pack <$> some alphaNumChar
 
 amountField :: Parser Amount
 amountField = field $ Sum <$> L.signed (pure ()) L.scientific

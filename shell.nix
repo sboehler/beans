@@ -1,6 +1,6 @@
 {
   nixpkgs ? import <nixpkgs> {},
-  compiler ? "ghc843",
+  compiler ? "ghc844",
   withHoogle ? true
 }:
 
@@ -11,6 +11,12 @@ let
   f = import ./default.nix;
 
   haskellPackages = pkgs.haskell.packages.${compiler};
+
+  # Haskell IDE Engine
+  hies = (import (builtins.fetchTarball {
+    url = "https://github.com/domenkozar/hie-nix/tarball/master";
+    sha256 = "0hilxgmh5aaxg37cbdwixwnnripvjqxbvi8cjzqrk7rpfafv352q";
+  }) {}).hies;
 
   hspkgs = (
       if withHoogle then
@@ -27,6 +33,7 @@ let
   drv = hspkgs.callPackage f {};
 
   drvWithTools = pkgs.haskell.lib.addBuildDepends drv [
+    hies
     hspkgs.ghcid
     hspkgs.cabal-install
     hspkgs.brittany

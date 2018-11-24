@@ -4,56 +4,56 @@ module Beans.Import.US.InteractiveBrokers
   )
 where
 
-import           Prelude                           hiding ( unwords )
-import           Data.Char                                ( isAlphaNum )
-import           Data.Text                                ( Text
-                                                          , pack
-                                                          , unwords
-                                                          , toLower
-                                                          )
-import           Data.Monoid                              ( Sum(..) )
-import           Control.Monad                            ( void )
-import           Control.Monad.Catch                      ( MonadThrow )
-import           Control.Monad.IO.Class                   ( MonadIO )
+import           Prelude                 hiding ( unwords )
+import           Data.Char                      ( isAlphaNum )
+import           Data.Text                      ( Text
+                                                , pack
+                                                , unwords
+                                                , toLower
+                                                )
+import           Data.Monoid                    ( Sum(..) )
+import           Control.Monad                  ( void )
+import           Control.Monad.Catch            ( MonadThrow )
+import           Control.Monad.IO.Class         ( MonadIO )
 
-import           Beans.Import.Common                      ( Context(..)
-                                                          , Parser
-                                                          , askAccount
-                                                          , parseLatin1
-                                                          , Config(..)
-                                                          )
+import           Beans.Import.Common            ( Context(..)
+                                                , Parser
+                                                , askAccount
+                                                , parseLatin1
+                                                , Config(..)
+                                                )
 import qualified Beans.Data.Map                as M
 import qualified Text.Megaparsec.Char.Lexer    as L
-import           Beans.Model                              ( Commodity(..)
-                                                          , Dated(Dated)
-                                                          , Flag(Complete)
-                                                          , Command(Transaction)
-                                                          , Date
-                                                          , fromGreg
-                                                          , Lot(Lot)
-                                                          , Position(Position)
-                                                          , Amount
-                                                          )
-import           Text.Megaparsec.Char                     ( alphaNumChar
-                                                          , char
-                                                          , anyChar
-                                                          , space
-                                                          , string
-                                                          , digitChar
-                                                          , eol
-                                                          )
-import           Text.Megaparsec                          ( count
-                                                          , skipManyTill
-                                                          , takeWhile1P
-                                                          , some
-                                                          , many
-                                                          , try
-                                                          , (<|>)
-                                                          )
-import           Data.Maybe                               ( catMaybes )
-import           Control.Monad.Reader                     ( asks
-                                                          , MonadReader
-                                                          )
+import           Beans.Model                    ( Commodity(..)
+                                                , Dated(Dated)
+                                                , Flag(Complete)
+                                                , Command(Transaction)
+                                                , Date
+                                                , fromGreg
+                                                , Lot(Lot)
+                                                , Position(Position)
+                                                , Amount
+                                                )
+import           Text.Megaparsec.Char           ( alphaNumChar
+                                                , char
+                                                , anyChar
+                                                , space
+                                                , string
+                                                , digitChar
+                                                , eol
+                                                )
+import           Text.Megaparsec                ( count
+                                                , skipManyTill
+                                                , takeWhile1P
+                                                , some
+                                                , many
+                                                , try
+                                                , (<|>)
+                                                )
+import           Data.Maybe                     ( catMaybes )
+import           Control.Monad.Reader           ( asks
+                                                , MonadReader
+                                                )
 
 name :: Text
 name = "us.interactivebrokers"

@@ -1,26 +1,26 @@
 module Main where
 
-import           Beans.Model                              ( Account(..)
-                                                          , AccountType(Equity)
-                                                          , Filter(..)
-                                                          , Date(..)
-                                                          )
-import           Beans.Lib                                ( run )
-import           Beans.Options                            ( BalanceOptions(..)
-                                                          , Command(..)
-                                                          , ImportOptions(..)
-                                                          , JournalOptions(..)
-                                                          , ReportType(..)
-                                                          , Valuation(..)
-                                                          )
+import           Beans.Model                    ( Account(..)
+                                                , AccountType(Equity)
+                                                , Filter(..)
+                                                , Date(..)
+                                                )
+import           Beans.Lib                      ( run )
+import           Beans.Options                  ( BalanceOptions(..)
+                                                , Command(..)
+                                                , ImportOptions(..)
+                                                , JournalOptions(..)
+                                                , ReportType(..)
+                                                , Valuation(..)
+                                                )
 import qualified Beans.Parser                  as P
-import           Data.Bifunctor                           ( first )
-import           Data.Semigroup                           ( (<>) )
+import           Data.Bifunctor                 ( first )
+import           Data.Semigroup                 ( (<>) )
 import qualified Data.Text                     as T
 import           Options.Applicative
-import           Text.Megaparsec                          ( parse
-                                                          , parseErrorPretty
-                                                          )
+import           Text.Megaparsec                ( parse
+                                                , parseErrorPretty
+                                                )
 
 
 toReadM :: P.Parser a -> ReadM a

@@ -5,43 +5,43 @@ module Beans.Import.CH.Postfinance
 where
 
 import qualified Beans.Data.Map                as M
-import           Beans.Import.Common                      ( Config(..)
-                                                          , Context(..)
-                                                          , Parser
-                                                          , askAccount
-                                                          , parseLatin1
-                                                          )
-import           Beans.Model                              ( Amount
-                                                          , Command(Transaction)
-                                                          , Commodity(Commodity)
-                                                          , Date
-                                                          , Dated(Dated)
-                                                          , Flag(Complete)
-                                                          , Position(Position)
-                                                          , fromGreg
-                                                          )
-import           Control.Monad                            ( void )
-import           Control.Monad.Catch                      ( MonadThrow )
-import           Control.Monad.IO.Class                   ( MonadIO )
-import           Control.Monad.Reader                     ( MonadReader
-                                                          , asks
-                                                          )
-import           Data.Group                               ( invert )
-import           Data.Monoid                              ( Sum(Sum) )
-import           Data.Text                                ( Text )
+import           Beans.Import.Common            ( Config(..)
+                                                , Context(..)
+                                                , Parser
+                                                , askAccount
+                                                , parseLatin1
+                                                )
+import           Beans.Model                    ( Amount
+                                                , Command(Transaction)
+                                                , Commodity(Commodity)
+                                                , Date
+                                                , Dated(Dated)
+                                                , Flag(Complete)
+                                                , Position(Position)
+                                                , fromGreg
+                                                )
+import           Control.Monad                  ( void )
+import           Control.Monad.Catch            ( MonadThrow )
+import           Control.Monad.IO.Class         ( MonadIO )
+import           Control.Monad.Reader           ( MonadReader
+                                                , asks
+                                                )
+import           Data.Group                     ( invert )
+import           Data.Monoid                    ( Sum(Sum) )
+import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
-import           Text.Megaparsec                          ( (<|>)
-                                                          , count
-                                                          , manyTill
-                                                          , skipManyTill
-                                                          , some
-                                                          )
-import           Text.Megaparsec.Char                     ( alphaNumChar
-                                                          , anyChar
-                                                          , char
-                                                          , digitChar
-                                                          , eol
-                                                          )
+import           Text.Megaparsec                ( (<|>)
+                                                , count
+                                                , manyTill
+                                                , skipManyTill
+                                                , some
+                                                )
+import           Text.Megaparsec.Char           ( alphaNumChar
+                                                , anyChar
+                                                , char
+                                                , digitChar
+                                                , eol
+                                                )
 import qualified Text.Megaparsec.Char.Lexer    as L
 
 name :: Text

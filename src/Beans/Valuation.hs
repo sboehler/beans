@@ -4,41 +4,41 @@ module Beans.Valuation
 where
 
 
-import           Beans.Accounts                           ( check
-                                                          , process
-                                                          )
-import           Beans.Model                              ( Account(..)
-                                                          , Restrictions
-                                                          , AccountType(..)
-                                                          , Accounts
-                                                          , Amount
-                                                          , Amounts
-                                                          , Commodity(..)
-                                                          , Ledger
-                                                          , Position(..)
-                                                          , Command(..)
-                                                          , Dated(..)
-                                                          , sameDay
-                                                          , Flag(..)
-                                                          , mkBalancedTransaction
-                                                          )
-import           Beans.Options                            ( Valuation(..) )
+import           Beans.Accounts                 ( check
+                                                , process
+                                                )
+import           Beans.Model                    ( Account(..)
+                                                , Restrictions
+                                                , AccountType(..)
+                                                , Accounts
+                                                , Amount
+                                                , Amounts
+                                                , Commodity(..)
+                                                , Ledger
+                                                , Position(..)
+                                                , Command(..)
+                                                , Dated(..)
+                                                , sameDay
+                                                , Flag(..)
+                                                , mkBalancedTransaction
+                                                )
+import           Beans.Options                  ( Valuation(..) )
 import qualified Beans.Data.Map                as M
-import           Beans.Prices                             ( NormalizedPrices
-                                                          , Prices
-                                                          , lookupPrice
-                                                          , normalize
-                                                          , updatePrices
-                                                          )
-import           Control.Monad                            ( foldM )
-import           Control.Monad.Catch                      ( MonadThrow )
-import           Control.Monad.State                      ( MonadState
-                                                          , evalStateT
-                                                          , get
-                                                          , gets
-                                                          , put
-                                                          )
-import           Data.Monoid                              ( Sum(Sum) )
+import           Beans.Prices                   ( NormalizedPrices
+                                                , Prices
+                                                , lookupPrice
+                                                , normalize
+                                                , updatePrices
+                                                )
+import           Control.Monad                  ( foldM )
+import           Control.Monad.Catch            ( MonadThrow )
+import           Control.Monad.State            ( MonadState
+                                                , evalStateT
+                                                , get
+                                                , gets
+                                                , put
+                                                )
+import           Data.Monoid                    ( Sum(Sum) )
 import qualified Data.List                     as L
 import qualified Data.Text                     as T
 

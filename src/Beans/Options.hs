@@ -1,11 +1,11 @@
 module Beans.Options where
 
-import           Beans.Model                              ( Account
-                                                          , Commodity(..)
-                                                          , Date
-                                                          , Filter
-                                                          )
-import           Data.Text                                ( Text )
+import           Beans.Model                    ( Account
+                                                , Commodity(..)
+                                                , Date
+                                                , Filter
+                                                )
+import           Data.Text                      ( Text )
 
 
 data Command

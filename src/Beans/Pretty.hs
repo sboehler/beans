@@ -7,29 +7,29 @@ module Beans.Pretty
   )
 where
 
-import           Beans.Model                              ( Account(..)
-                                                          , Accounts
-                                                          , Amount
-                                                          , Date
-                                                          , Commodity(..)
-                                                          , Ledger
-                                                          , Lot(..)
-                                                          , Position(..)
-                                                          , Command(..)
-                                                          , Dated(..)
-                                                          , Directive(..)
-                                                          , Flag(..)
-                                                          , Include(..)
-                                                          , Option(..)
-                                                          , Tag(..)
-                                                          , Restriction(..)
-                                                          )
+import           Beans.Model                    ( Account(..)
+                                                , Accounts
+                                                , Amount
+                                                , Date
+                                                , Commodity(..)
+                                                , Ledger
+                                                , Lot(..)
+                                                , Position(..)
+                                                , Command(..)
+                                                , Dated(..)
+                                                , Directive(..)
+                                                , Flag(..)
+                                                , Include(..)
+                                                , Option(..)
+                                                , Tag(..)
+                                                , Restriction(..)
+                                                )
 import qualified Beans.Data.Map                as M
-import           Data.Monoid                              ( Sum(..) )
-import           Data.Scientific                          ( Scientific
-                                                          , formatScientific
-                                                          , FPFormat(Fixed)
-                                                          )
+import           Data.Monoid                    ( Sum(..) )
+import           Data.Scientific                ( Scientific
+                                                , formatScientific
+                                                , FPFormat(Fixed)
+                                                )
 import           Data.Text.Prettyprint.Doc
 
 instance Pretty Amount where

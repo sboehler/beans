@@ -37,32 +37,32 @@ where
 
 
 
-import           Prelude                           hiding ( filter )
-import           Control.Monad.Catch                      ( Exception
-                                                          , MonadThrow
-                                                          , throwM
-                                                          )
+import           Prelude                 hiding ( filter )
+import           Control.Monad.Catch            ( Exception
+                                                , MonadThrow
+                                                , throwM
+                                                )
 import qualified Text.Megaparsec.Pos           as P
 
 import qualified Beans.Data.Map                as M
-import           Data.Foldable                            ( fold )
+import           Data.Foldable                  ( fold )
 import qualified Data.List                     as L
-import           Data.Maybe                               ( catMaybes )
-import           Data.Monoid                              ( Sum
-                                                          , getSum
-                                                          )
-import           Text.Regex.PCRE                          ( (=~) )
-import           Data.Scientific                          ( Scientific
-                                                          , formatScientific
-                                                          , FPFormat(Fixed)
-                                                          )
-import           Data.Text                                ( Text
-                                                          , unpack
-                                                          , pack
-                                                          )
-import           Data.Time.Calendar                       ( Day
-                                                          , fromGregorian
-                                                          )
+import           Data.Maybe                     ( catMaybes )
+import           Data.Monoid                    ( Sum
+                                                , getSum
+                                                )
+import           Text.Regex.PCRE                ( (=~) )
+import           Data.Scientific                ( Scientific
+                                                , formatScientific
+                                                , FPFormat(Fixed)
+                                                )
+import           Data.Text                      ( Text
+                                                , unpack
+                                                , pack
+                                                )
+import           Data.Time.Calendar             ( Day
+                                                , fromGregorian
+                                                )
 
 type Amount = Sum Scientific
 

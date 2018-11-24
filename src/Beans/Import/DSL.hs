@@ -2,68 +2,65 @@
 
 module Beans.Import.DSL where
 
-import           Beans.Model                              ( Account(..)
-                                                          , AccountType
-                                                          , Date
-                                                          , fromGreg
-                                                          , Amount
-                                                          , Date
-                                                          , Commodity
-                                                          )
-import           Control.Exception                        ( Exception )
-import           Control.Monad                            ( msum )
-import           Control.Monad.Catch                      ( MonadThrow
-                                                          , throwM
-                                                          )
-import           Control.Monad.IO.Class                   ( MonadIO
-                                                          , liftIO
-                                                          )
-import           Control.Monad.Reader                     ( Reader
-                                                          , asks
-                                                          , runReaderT
-                                                          )
-import           Data.Bool                                ( bool )
-import           Data.Char                                ( isAlphaNum )
-import           Data.Functor.Identity                    ( runIdentity )
-import           Data.Monoid                              ( Sum(Sum)
-                                                          , (<>)
-                                                          )
-import           Data.Text                                ( Text
-                                                          , cons
-                                                          , pack
-                                                          , unpack
-                                                          )
-import           Data.Text.IO                             ( readFile )
-import           Data.Void                                ( Void )
-import           Prelude                           hiding ( readFile )
-import           Text.Megaparsec                          ( Parsec
-                                                          , between
-                                                          , choice
-                                                          , count
-                                                          , empty
-                                                          , eof
-                                                          , many
-                                                          , parse
-                                                          , parseErrorPretty
-                                                          , sepBy
-                                                          , takeWhileP
-                                                          , try
-                                                          , (<|>)
-                                                          )
-import           Text.Megaparsec.Char                     ( char
-                                                          , digitChar
-                                                          , letterChar
-                                                          , space1
-                                                          , string
-                                                          )
+import           Beans.Model                    ( Account(..)
+                                                , AccountType
+                                                , Date
+                                                , fromGreg
+                                                , Amount
+                                                , Date
+                                                , Commodity
+                                                )
+import           Control.Exception              ( Exception )
+import           Control.Monad                  ( msum )
+import           Control.Monad.Catch            ( MonadThrow
+                                                , throwM
+                                                )
+import           Control.Monad.IO.Class         ( MonadIO
+                                                , liftIO
+                                                )
+import           Control.Monad.Reader           ( Reader
+                                                , asks
+                                                , runReaderT
+                                                )
+import           Data.Bool                      ( bool )
+import           Data.Char                      ( isAlphaNum )
+import           Data.Functor.Identity          ( runIdentity )
+import           Data.Monoid                    ( Sum(Sum)
+                                                , (<>)
+                                                )
+import           Data.Text                      ( Text
+                                                , cons
+                                                , pack
+                                                , unpack
+                                                )
+import           Data.Text.IO                   ( readFile )
+import           Data.Void                      ( Void )
+import           Prelude                 hiding ( readFile )
+import           Text.Megaparsec                ( Parsec
+                                                , between
+                                                , choice
+                                                , count
+                                                , empty
+                                                , eof
+                                                , many
+                                                , parse
+                                                , parseErrorPretty
+                                                , sepBy
+                                                , takeWhileP
+                                                , try
+                                                , (<|>)
+                                                )
+import           Text.Megaparsec.Char           ( char
+                                                , digitChar
+                                                , letterChar
+                                                , space1
+                                                , string
+                                                )
 import qualified Text.Megaparsec.Char.Lexer    as L
-import           Text.Megaparsec.Expr                     ( Operator
-                                                            ( InfixL
-                                                            , Prefix
-                                                            )
-                                                          , makeExprParser
-                                                          )
-import           Text.Regex.PCRE                          ( (=~) )
+import           Text.Megaparsec.Expr           ( Operator(InfixL, Prefix)
+                                                , makeExprParser
+                                                )
+import           Text.Regex.PCRE                ( (=~) )
 
 -- Abstract Syntax Tree
 type Rules = [Rule]

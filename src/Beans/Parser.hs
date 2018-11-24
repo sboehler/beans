@@ -1,72 +1,72 @@
 module Beans.Parser where
 
-import           Beans.Model                              ( Account(..)
-                                                          , AccountType(..)
-                                                          , Amount
-                                                          , Amounts
-                                                          , Date
-                                                          , fromGreg
-                                                          , Commodity(..)
-                                                          , Lot(..)
-                                                          , Position(..)
-                                                          , Command(..)
-                                                          , Dated(..)
-                                                          , Directive(..)
-                                                          , Flag(..)
-                                                          , Include(..)
-                                                          , Option(..)
-                                                          , Restriction(..)
-                                                          , Tag(..)
-                                                          , mkBalancedTransaction
-                                                          )
+import           Beans.Model                    ( Account(..)
+                                                , AccountType(..)
+                                                , Amount
+                                                , Amounts
+                                                , Date
+                                                , fromGreg
+                                                , Commodity(..)
+                                                , Lot(..)
+                                                , Position(..)
+                                                , Command(..)
+                                                , Dated(..)
+                                                , Directive(..)
+                                                , Flag(..)
+                                                , Include(..)
+                                                , Option(..)
+                                                , Restriction(..)
+                                                , Tag(..)
+                                                , mkBalancedTransaction
+                                                )
 import qualified Beans.Data.Map                as M
 
-import           Control.Monad                            ( void )
-import           Control.Monad.Catch                      ( Exception
-                                                          , MonadThrow
-                                                          , throwM
-                                                          )
-import           Control.Monad.IO.Class                   ( MonadIO )
-import           Control.Monad.Trans                      ( liftIO )
-import           Data.Char                                ( isAlphaNum )
-import           Data.Functor                             ( ($>) )
-import           Data.Monoid                              ( Sum(Sum) )
+import           Control.Monad                  ( void )
+import           Control.Monad.Catch            ( Exception
+                                                , MonadThrow
+                                                , throwM
+                                                )
+import           Control.Monad.IO.Class         ( MonadIO )
+import           Control.Monad.Trans            ( liftIO )
+import           Data.Char                      ( isAlphaNum )
+import           Data.Functor                   ( ($>) )
+import           Data.Monoid                    ( Sum(Sum) )
 import qualified Data.Set                      as S
-import           Data.Text                                ( Text
-                                                          , cons
-                                                          , unpack
-                                                          )
-import           Data.Text.IO                             ( readFile )
-import           Prelude                           hiding ( readFile )
-import           System.FilePath.Posix                    ( combine
-                                                          , takeDirectory
-                                                          )
-import           Text.Megaparsec                          ( ErrorFancy(..)
-                                                          , Parsec
-                                                          , ShowErrorComponent(..)
-                                                          , between
-                                                          , count
-                                                          , empty
-                                                          , eof
-                                                          , fancyFailure
-                                                          , getPosition
-                                                          , many
-                                                          , optional
-                                                          , parse
-                                                          , parseErrorPretty
-                                                          , sepBy
-                                                          , sepBy1
-                                                          , some
-                                                          , takeWhile1P
-                                                          , takeWhileP
-                                                          , try
-                                                          , (<|>)
-                                                          )
-import           Text.Megaparsec.Char                     ( char
-                                                          , digitChar
-                                                          , letterChar
-                                                          , space1
-                                                          )
+import           Data.Text                      ( Text
+                                                , cons
+                                                , unpack
+                                                )
+import           Data.Text.IO                   ( readFile )
+import           Prelude                 hiding ( readFile )
+import           System.FilePath.Posix          ( combine
+                                                , takeDirectory
+                                                )
+import           Text.Megaparsec                ( ErrorFancy(..)
+                                                , Parsec
+                                                , ShowErrorComponent(..)
+                                                , between
+                                                , count
+                                                , empty
+                                                , eof
+                                                , fancyFailure
+                                                , getPosition
+                                                , many
+                                                , optional
+                                                , parse
+                                                , parseErrorPretty
+                                                , sepBy
+                                                , sepBy1
+                                                , some
+                                                , takeWhile1P
+                                                , takeWhileP
+                                                , try
+                                                , (<|>)
+                                                )
+import           Text.Megaparsec.Char           ( char
+                                                , digitChar
+                                                , letterChar
+                                                , space1
+                                                )
 import qualified Text.Megaparsec.Char.Lexer    as L
 import qualified Text.Megaparsec.Pos           as P
 

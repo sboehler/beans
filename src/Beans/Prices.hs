@@ -8,19 +8,19 @@ module Beans.Prices
   )
 where
 
-import           Beans.Model                              ( Command(..)
-                                                          , Commodity(..)
-                                                          )
-import           Control.Monad.Catch                      ( Exception
-                                                          , MonadThrow
-                                                          , throwM
-                                                          )
+import           Beans.Model                    ( Command(..)
+                                                , Commodity(..)
+                                                )
+import           Control.Monad.Catch            ( Exception
+                                                , MonadThrow
+                                                , throwM
+                                                )
 import qualified Data.Map.Strict               as M
-import           Data.Scientific                          ( Scientific
-                                                          , fromFloatDigits
-                                                          , toRealFloat
-                                                          )
-import           Data.Time.Calendar                       ( Day )
+import           Data.Scientific                ( Scientific
+                                                , fromFloatDigits
+                                                , toRealFloat
+                                                )
+import           Data.Time.Calendar             ( Day )
 
 type PricesHistory = M.Map Day Prices
 

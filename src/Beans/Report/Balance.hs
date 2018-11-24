@@ -6,38 +6,37 @@ module Beans.Report.Balance
   )
 where
 
-import           Prelude                           hiding ( filter )
-import           Beans.Model                              ( Accounts
-                                                          , Account(..)
-                                                          , Amount
-                                                          , Amounts
-                                                          , AccountType(..)
-                                                          , Commodity(..)
-                                                          , Ledger
-                                                          , filter
-                                                          , format
-                                                          , Lot(..)
-                                                          , Position(..)
-                                                          , eraseLots
-                                                          , summarize
-                                                          )
-import           Beans.Accounts                           ( calculateAccountsForDays
-                                                          )
-import           Data.Group                               ( invert )
+import           Prelude                 hiding ( filter )
+import           Beans.Model                    ( Accounts
+                                                , Account(..)
+                                                , Amount
+                                                , Amounts
+                                                , AccountType(..)
+                                                , Commodity(..)
+                                                , Ledger
+                                                , filter
+                                                , format
+                                                , Lot(..)
+                                                , Position(..)
+                                                , eraseLots
+                                                , summarize
+                                                )
+import           Beans.Accounts                 ( calculateAccountsForDays )
+import           Data.Group                     ( invert )
 import qualified Beans.Data.Map                as M
-import           Beans.Pretty                             ( pretty )
-import           Beans.Table                              ( Cell(..)
-                                                          , Table(..)
-                                                          )
-import           Beans.Options                            ( BalanceOptions(..)
-                                                          , ReportType(..)
-                                                          )
-import           Data.Foldable                            ( fold )
-import           Data.Monoid                              ( (<>) )
-import           Data.Text                                ( Text )
+import           Beans.Pretty                   ( pretty )
+import           Beans.Table                    ( Cell(..)
+                                                , Table(..)
+                                                )
+import           Beans.Options                  ( BalanceOptions(..)
+                                                , ReportType(..)
+                                                )
+import           Data.Foldable                  ( fold )
+import           Data.Monoid                    ( (<>) )
+import           Data.Text                      ( Text )
 import qualified Data.List                     as List
 import qualified Data.Text                     as T
-import           Control.Monad.Catch                      ( MonadThrow )
+import           Control.Monad.Catch            ( MonadThrow )
 
 
 type Positions = M.Map (Commodity, Maybe Lot) Amounts

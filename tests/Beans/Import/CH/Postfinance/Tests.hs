@@ -3,26 +3,26 @@ module Beans.Import.CH.Postfinance.Tests
   )
 where
 
-import           Beans.Model                              ( Account(Account)
-                                                          , AccountType(..)
-                                                          )
-import           Beans.Import.CH.Postfinance              ( name
-                                                          , parse
-                                                          )
-import           Beans.Import.Common                      ( Config(..) )
+import           Beans.Model                    ( Account(Account)
+                                                , AccountType(..)
+                                                )
+import           Beans.Import.CH.Postfinance    ( name
+                                                , parse
+                                                )
+import           Beans.Import.Common            ( Config(..) )
 import qualified Data.ByteString.Lazy.Char8    as BS
-import           Data.Text                                ( pack )
-import           System.FilePath.Posix                    ( (</>) )
-import           Test.Tasty                               ( TestTree
-                                                          , testGroup
-                                                          )
-import           Test.Tasty.Golden                        ( goldenVsString )
-import           Control.Monad.Reader                     ( runReaderT )
-import           Test.Tasty.HUnit                         ( assertEqual
-                                                          , testCase
-                                                          )
+import           Data.Text                      ( pack )
+import           System.FilePath.Posix          ( (</>) )
+import           Test.Tasty                     ( TestTree
+                                                , testGroup
+                                                )
+import           Test.Tasty.Golden              ( goldenVsString )
+import           Control.Monad.Reader           ( runReaderT )
+import           Test.Tasty.HUnit               ( assertEqual
+                                                , testCase
+                                                )
 import qualified Data.Text.Prettyprint.Doc     as P
-import           Beans.Pretty                             ( )
+import           Beans.Pretty                   ( )
 
 
 tests :: TestTree

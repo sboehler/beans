@@ -1,27 +1,27 @@
 module Beans.Import.DSL.Tests where
 
-import           Beans.Model                              ( Account(..)
-                                                          , fromGreg
-                                                          , AccountType(..)
-                                                          , Commodity(..)
-                                                          )
+import           Beans.Model                    ( Account(..)
+                                                , fromGreg
+                                                , AccountType(..)
+                                                , Commodity(..)
+                                                )
 import           Beans.Import.DSL
 import qualified Data.ByteString.Lazy.Char8    as BS
-import           Data.Semigroup                           ( (<>) )
-import           Data.Text                                ( Text )
-import           System.FilePath.Posix                    ( (<.>)
-                                                          , (</>)
-                                                          )
-import           Test.Tasty                               ( TestTree
-                                                          , testGroup
-                                                          )
-import           Test.Tasty.Golden                        ( goldenVsString )
-import           Test.Tasty.HUnit                         ( assertEqual
-                                                          , testCase
-                                                          )
-import           Text.Megaparsec                          ( parse
-                                                          , parseErrorPretty
-                                                          )
+import           Data.Semigroup                 ( (<>) )
+import           Data.Text                      ( Text )
+import           System.FilePath.Posix          ( (<.>)
+                                                , (</>)
+                                                )
+import           Test.Tasty                     ( TestTree
+                                                , testGroup
+                                                )
+import           Test.Tasty.Golden              ( goldenVsString )
+import           Test.Tasty.HUnit               ( assertEqual
+                                                , testCase
+                                                )
+import           Text.Megaparsec                ( parse
+                                                , parseErrorPretty
+                                                )
 
 mkParserTest :: (Show a) => String -> Parser a -> Text -> TestTree
 mkParserTest testName parser input = goldenVsString testName fileName action

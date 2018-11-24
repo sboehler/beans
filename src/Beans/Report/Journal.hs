@@ -5,34 +5,33 @@ module Beans.Report.Journal
   )
 where
 
-import           Prelude                           hiding ( filter )
+import           Prelude                 hiding ( filter )
 import qualified Data.Text                     as T
-import           Text.Regex.PCRE                          ( (=~) )
+import           Text.Regex.PCRE                ( (=~) )
 
-import           Beans.Options                            ( JournalOptions(..) )
-import           Beans.Model                              ( Date
-                                                          , Command(..)
-                                                          , Filter(..)
-                                                          , filter
-                                                          , Dated(..)
-                                                          , Amount
-                                                          , Ledger
-                                                          , Accounts
-                                                          , Commodity
-                                                          , Position(..)
-                                                          , Account
-                                                          , format
-                                                          )
+import           Beans.Options                  ( JournalOptions(..) )
+import           Beans.Model                    ( Date
+                                                , Command(..)
+                                                , Filter(..)
+                                                , filter
+                                                , Dated(..)
+                                                , Amount
+                                                , Ledger
+                                                , Accounts
+                                                , Commodity
+                                                , Position(..)
+                                                , Account
+                                                , format
+                                                )
 import qualified Data.List                     as List
-import           Beans.Accounts                           ( calculateAccountsForDays
-                                                          )
+import           Beans.Accounts                 ( calculateAccountsForDays )
 import qualified Beans.Data.Map                as M
-import           Data.Text                                ( Text )
-import           Control.Monad.Catch                      ( MonadThrow )
-import           Data.Maybe                               ( mapMaybe )
-import           Beans.Table                              ( Cell(..)
-                                                          , Table(..)
-                                                          )
+import           Data.Text                      ( Text )
+import           Control.Monad.Catch            ( MonadThrow )
+import           Data.Maybe                     ( mapMaybe )
+import           Beans.Table                    ( Cell(..)
+                                                , Table(..)
+                                                )
 
 data Journal = Journal {
   rHeader :: Dated Item,

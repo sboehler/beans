@@ -9,36 +9,36 @@ module Beans.Import.Common
   )
 where
 
-import           Control.Monad.IO.Class                   ( MonadIO
-                                                          , liftIO
-                                                          )
-import           Control.Monad.Catch                      ( MonadThrow
-                                                          , throwM
-                                                          )
-import           Beans.Model                              ( Account
-                                                          , Dated
-                                                          , Command
-                                                          )
-import           Control.Exception                        ( Exception )
-import           Beans.Import.DSL                         ( Evaluator
-                                                          , Context(..)
-                                                          )
-import           Text.Megaparsec                          ( Parsec
-                                                          , ShowErrorComponent(..)
-                                                          , parse
-                                                          , parseErrorPretty
-                                                          , customFailure
-                                                          )
-import           Control.Monad.Reader                     ( ReaderT
-                                                          , asks
-                                                          , ask
-                                                          , runReaderT
-                                                          , MonadReader
-                                                          )
-import           Data.Text                                ( Text
-                                                          , pack
-                                                          )
-import           Data.Text.Encoding                       ( decodeLatin1 )
+import           Control.Monad.IO.Class         ( MonadIO
+                                                , liftIO
+                                                )
+import           Control.Monad.Catch            ( MonadThrow
+                                                , throwM
+                                                )
+import           Beans.Model                    ( Account
+                                                , Dated
+                                                , Command
+                                                )
+import           Control.Exception              ( Exception )
+import           Beans.Import.DSL               ( Evaluator
+                                                , Context(..)
+                                                )
+import           Text.Megaparsec                ( Parsec
+                                                , ShowErrorComponent(..)
+                                                , parse
+                                                , parseErrorPretty
+                                                , customFailure
+                                                )
+import           Control.Monad.Reader           ( ReaderT
+                                                , asks
+                                                , ask
+                                                , runReaderT
+                                                , MonadReader
+                                                )
+import           Data.Text                      ( Text
+                                                , pack
+                                                )
+import           Data.Text.Encoding             ( decodeLatin1 )
 
 import qualified Data.ByteString               as B
 

@@ -6,30 +6,30 @@ module Beans.Accounts
   )
 where
 
-import           Beans.Model                              ( Account
-                                                          , Accounts
-                                                          , Amount
-                                                          , Date
-                                                          , Ledger
-                                                          , Restriction
-                                                          , Restrictions
-                                                          , Commodity
-                                                          , Position(..)
-                                                          , Command(..)
-                                                          , Dated(..)
-                                                          , balance
-                                                          , isCompatible
-                                                          )
+import           Beans.Model                    ( Account
+                                                , Accounts
+                                                , Amount
+                                                , Date
+                                                , Ledger
+                                                , Restriction
+                                                , Restrictions
+                                                , Commodity
+                                                , Position(..)
+                                                , Command(..)
+                                                , Dated(..)
+                                                , balance
+                                                , isCompatible
+                                                )
 import qualified Data.List                     as L
 import qualified Beans.Data.Map                as M
-import           Control.Monad                            ( unless
-                                                          , foldM
-                                                          , when
-                                                          )
-import           Control.Monad.Catch                      ( Exception
-                                                          , MonadThrow
-                                                          , throwM
-                                                          )
+import           Control.Monad                  ( unless
+                                                , foldM
+                                                , when
+                                                )
+import           Control.Monad.Catch            ( Exception
+                                                , MonadThrow
+                                                , throwM
+                                                )
 
 data AccountsException
   = AccountIsNotOpen Command

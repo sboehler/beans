@@ -3,33 +3,33 @@ module Beans.Import
   )
 where
 
-import           Beans.Model                              ( Command(..)
-                                                          , Dated(..)
-                                                          )
+import           Beans.Model                    ( Command(..)
+                                                , Dated(..)
+                                                )
 import qualified Beans.Import.CH.Postfinance
 import qualified Beans.Import.US.InteractiveBrokers
 
-import           Beans.Import.Common                      ( Config(..) )
-import           Beans.Import.DSL                         ( Rule
-                                                          , Context(..)
-                                                          , evaluate
-                                                          , Context
-                                                          , parseFile
-                                                          )
-import           Beans.Options                            ( ImportOptions(..) )
-import           Beans.Pretty                             ( )
-import           Data.Text                                ( Text )
-import           Control.Exception                        ( Exception )
-import           Control.Monad.Catch                      ( MonadThrow
-                                                          , throwM
-                                                          )
-import           Control.Monad.Reader                     ( MonadReader
-                                                          , runReaderT
-                                                          )
-import           Control.Monad.IO.Class                   ( MonadIO
-                                                          , liftIO
-                                                          )
-import           Data.Monoid                              ( (<>) )
+import           Beans.Import.Common            ( Config(..) )
+import           Beans.Import.DSL               ( Rule
+                                                , Context(..)
+                                                , evaluate
+                                                , Context
+                                                , parseFile
+                                                )
+import           Beans.Options                  ( ImportOptions(..) )
+import           Beans.Pretty                   ( )
+import           Data.Text                      ( Text )
+import           Control.Exception              ( Exception )
+import           Control.Monad.Catch            ( MonadThrow
+                                                , throwM
+                                                )
+import           Control.Monad.Reader           ( MonadReader
+                                                , runReaderT
+                                                )
+import           Control.Monad.IO.Class         ( MonadIO
+                                                , liftIO
+                                                )
+import           Data.Monoid                    ( (<>) )
 import qualified Data.Text.Prettyprint.Doc     as P
 
 data ImportException = NoAccountFound [Rule] Context | InvalidImporter String deriving (Show)

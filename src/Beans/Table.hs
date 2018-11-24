@@ -5,12 +5,12 @@ module Beans.Table
   )
 where
 
-import           Data.List                                ( transpose
-                                                          , foldl'
-                                                          )
-import           Data.Monoid                              ( (<>) )
-import           Prelude                           hiding ( lines )
-import           Data.Text                                ( Text )
+import           Data.List                      ( transpose
+                                                , foldl'
+                                                )
+import           Data.Monoid                    ( (<>) )
+import           Prelude                 hiding ( lines )
+import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 
 

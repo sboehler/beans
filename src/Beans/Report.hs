@@ -6,26 +6,26 @@ module Beans.Report
   )
 where
 
-import           Beans.Options                            ( JournalOptions(..)
-                                                          , BalanceOptions(..)
-                                                          )
-import           Control.Monad.Catch                      ( MonadThrow )
-import           Control.Monad.IO.Class                   ( MonadIO
-                                                          , liftIO
-                                                          )
-import           Beans.Valuation                          ( valuateLedger )
+import           Beans.Options                  ( JournalOptions(..)
+                                                , BalanceOptions(..)
+                                                )
+import           Control.Monad.Catch            ( MonadThrow )
+import           Control.Monad.IO.Class         ( MonadIO
+                                                , liftIO
+                                                )
+import           Beans.Valuation                ( valuateLedger )
 import qualified Beans.Report.Journal          as Journal
-                                                          ( createJournal )
-import           Beans.Model                              ( build )
-import           Beans.Parser                             ( parseFile )
+                                                ( createJournal )
+import           Beans.Model                    ( build )
+import           Beans.Parser                   ( parseFile )
 import qualified Beans.Report.Balance          as Balance
-                                                          ( createBalance
-                                                          , incomeStatement
-                                                          , balanceSheet
-                                                          )
-import           Beans.Table                              ( showTable
-                                                          , Table(..)
-                                                          )
+                                                ( createBalance
+                                                , incomeStatement
+                                                , balanceSheet
+                                                )
+import           Beans.Table                    ( showTable
+                                                , Table(..)
+                                                )
 import qualified Data.Text.IO                  as TIO
 
 

@@ -7,6 +7,7 @@ import           Beans.Model                    ( Command(..)
                                                 , Dated(..)
                                                 )
 import qualified Beans.Import.CH.Postfinance
+import qualified Beans.Import.CH.SupercardPlus
 import qualified Beans.Import.US.InteractiveBrokers
 
 import           Beans.Import.Common            ( Config(..) )
@@ -54,4 +55,6 @@ getParser n
     Beans.Import.CH.Postfinance.parse
   | n == Beans.Import.US.InteractiveBrokers.name = return
     Beans.Import.US.InteractiveBrokers.parse
+  | n == Beans.Import.CH.SupercardPlus.name = return
+    Beans.Import.CH.SupercardPlus.parse
   | otherwise = throwM $ InvalidImporter $ "Invalid importer: " <> show n

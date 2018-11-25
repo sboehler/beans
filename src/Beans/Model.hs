@@ -7,6 +7,7 @@ module Beans.Model
   , Commodity(..)
   , Date(MinDate, MaxDate)
   , fromGreg
+  , parseDate
   , Lot(..)
   , Filter(..)
   , Position(..)
@@ -63,6 +64,9 @@ import           Data.Text                      ( Text
 import           Data.Time.Calendar             ( Day
                                                 , fromGregorian
                                                 )
+import           Data.Time.Format               ( defaultTimeLocale
+                                                , parseTimeM
+                                                )
 
 type Amount = Sum Scientific
 
@@ -74,6 +78,9 @@ data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord)
 
 fromGreg :: Integer -> Int -> Int -> Date
 fromGreg y m d = Date $ fromGregorian y m d
+
+parseDate :: String -> String -> Maybe Date
+parseDate fmt input = Date <$> parseTimeM False defaultTimeLocale fmt input
 
 instance Show Date where
   show MinDate = "<MIN_DATE>"

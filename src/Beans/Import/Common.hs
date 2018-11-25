@@ -36,9 +36,7 @@ import           Control.Monad.Reader           ( ReaderT
                                                 , runReaderT
                                                 , MonadReader
                                                 )
-import           Data.Text                      ( Text
-                                                , pack
-                                                )
+import           Data.Text                      ( Text )
 import           Data.Text.Encoding             ( decodeLatin1
                                                 , decodeUtf8
                                                 )
@@ -63,22 +61,24 @@ data Config = Config {
 
 type Parser = ReaderT Config (Parsec ParserException Text)
 
-newtype ParserException =
-  AccountNotFound Text
+data ParserException = AccountNotFound String
+  | ParseError String
   deriving (Eq, Show, Ord)
 
 instance Exception ParserException
 
 instance ShowErrorComponent ParserException where
   showErrorComponent (AccountNotFound t) =
-    "Account not found: " ++ show t
+    "Account not found: " ++ t
+  showErrorComponent (ParseError t) =
+    "Parse error: " ++ t
 
 askAccount :: Context -> Parser Account
 askAccount entry = do
   evaluator <- asks cEvaluator
   case evaluator entry of
     Just account -> return account
-    Nothing      -> customFailure $ AccountNotFound $ pack . show $ entry
+    Nothing      -> customFailure $ AccountNotFound $ show entry
 
 parseCommands
   :: (MonadIO m, MonadThrow m, MonadReader Config m)

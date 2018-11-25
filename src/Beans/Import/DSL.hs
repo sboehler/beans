@@ -188,7 +188,8 @@ parseFile filePath = (liftIO . readFile) filePath >>= parseSource
                              (parse rules filePath input)
 
 sc :: Parser ()
-sc = L.space space1 empty empty
+sc = L.space space1 lineComment empty
+  where lineComment = L.skipLineComment "#"
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc

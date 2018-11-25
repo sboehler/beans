@@ -6,6 +6,7 @@ module Beans.Import.Common
   , askAccount
   , ParserException(..)
   , parseLatin1
+  , parseUtf8
   )
 where
 
@@ -38,7 +39,9 @@ import           Control.Monad.Reader           ( ReaderT
 import           Data.Text                      ( Text
                                                 , pack
                                                 )
-import           Data.Text.Encoding             ( decodeLatin1 )
+import           Data.Text.Encoding             ( decodeLatin1
+                                                , decodeUtf8
+                                                )
 
 import qualified Data.ByteString               as B
 
@@ -94,3 +97,10 @@ parseLatin1
   -> m [Dated Command]
 parseLatin1 parser =
   asks cFile >>= liftIO . B.readFile >>= parseCommands parser . decodeLatin1
+
+parseUtf8
+  :: (MonadIO m, MonadThrow m, MonadReader Config m)
+  => Parser [Dated Command]
+  -> m [Dated Command]
+parseUtf8 parser =
+  asks cFile >>= liftIO . B.readFile >>= parseCommands parser . decodeUtf8

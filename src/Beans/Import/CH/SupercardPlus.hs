@@ -4,7 +4,6 @@ module Beans.Import.CH.SupercardPlus
   )
 where
 
-import           Data.Void                      ( Void )
 import           Data.Monoid                    ( Sum(Sum) )
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
@@ -27,6 +26,7 @@ import           Control.Monad                  ( void )
 import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.IO.Class         ( MonadIO )
 import           Control.Monad.Reader           ( MonadReader
+                                                , runReaderT
                                                 , asks
                                                 )
 import           Data.Text                      ( Text )
@@ -43,7 +43,6 @@ import           Text.Megaparsec                ( (<|>)
                                                 , takeWhileP
                                                 , option
                                                 , eof
-                                                , Parsec
                                                 , sepEndBy
                                                 , parseMaybe
                                                 )
@@ -106,12 +105,13 @@ amountField = do
   sign      <- option mempty $ string "-"
   commodity <- Commodity <$> takeWhile1P (Just "Currency") isUpper
   number    <- T.filter (/= '\'') <$> textField "Amount"
-  case parseMaybe amountP (sign <> number) of
+  p         <- asks $ runReaderT amountP
+  case parseMaybe p (sign <> number) of
     Just amount -> return (commodity, amount)
     Nothing     -> customFailure $ ParseError $ unwords
       ["Invalid amount:", T.unpack $ sign <> number]
 
-amountP :: Parsec Void Text Amount
+amountP :: Parser Amount
 amountP = Sum <$> L.signed (pure ()) L.scientific
 
 quotedField :: Parser Text

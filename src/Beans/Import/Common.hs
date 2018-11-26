@@ -4,7 +4,6 @@ module Beans.Import.Common
   , Config(..)
   , Parser
   , askAccount
-  , ParserException(..)
   , parseLatin1
   , parseUtf8
   )
@@ -25,10 +24,8 @@ import           Beans.Import.DSL               ( Evaluator
                                                 , Context(..)
                                                 )
 import           Text.Megaparsec                ( Parsec
-                                                , ShowErrorComponent(..)
                                                 , parse
                                                 , parseErrorPretty
-                                                , customFailure
                                                 )
 import           Control.Monad.Reader           ( ReaderT
                                                 , asks
@@ -37,6 +34,7 @@ import           Control.Monad.Reader           ( ReaderT
                                                 , MonadReader
                                                 )
 import           Data.Text                      ( Text )
+import           Data.Void                      ( Void )
 import           Data.Text.Encoding             ( decodeLatin1
                                                 , decodeUtf8
                                                 )
@@ -59,26 +57,14 @@ data Config = Config {
   cAccount :: Account
   }
 
-type Parser = ReaderT Config (Parsec ParserException Text)
-
-data ParserException = AccountNotFound String
-  | ParseError String
-  deriving (Eq, Show, Ord)
-
-instance Exception ParserException
-
-instance ShowErrorComponent ParserException where
-  showErrorComponent (AccountNotFound t) =
-    "Account not found: " ++ t
-  showErrorComponent (ParseError t) =
-    "Parse error: " ++ t
+type Parser = ReaderT Config (Parsec Void Text)
 
 askAccount :: Context -> Parser Account
 askAccount entry = do
   evaluator <- asks cEvaluator
   case evaluator entry of
     Just account -> return account
-    Nothing      -> customFailure $ AccountNotFound $ show entry
+    Nothing      -> fail $ "Account not found: " <> show entry
 
 parseCommands
   :: (MonadIO m, MonadThrow m, MonadReader Config m)

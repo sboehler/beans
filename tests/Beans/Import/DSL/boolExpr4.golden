@@ -1,3 +1,1 @@
-boolExpr4:1:2:
-unexpected "valueDate >"
-expecting "amount", "date", "description", "false", "true", '"', '(', '+', '-', or digit
+((date > 2018-01-01) && (date <= 2018-10-01))

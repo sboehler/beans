@@ -47,13 +47,13 @@ parserTests = testGroup
   boolExprTests = mkParserTestGroup
     "boolExpr"
     boolExpr
-    [ (1, "true")
-    , (2, "false")
-    , (3, "(true)")
-    , (4, "(valueDate > 2018-01-01) and (valueDate\n <= \n2018-10-01)")
-    , (5, "(amount <= 4.0) and (amount >= 2) or (40 < 50)")
+    [ (1, "True")
+    , (2, "False")
+    , (3, "(True)")
+    , (4, "date > 2018-01-01 && date\n <= \n2018-10-01")
+    , (5, "(amount <= 4.0) && (amount >= 2) || (40 < 50)")
     , (6, "description ~=~ \"asdf.*\"")
-    , (7, "not true or false and not false")
+    , (7, "! True || False && ! False")
     ]
   amountExprTests = mkParserTestGroup
     "amountExpr"
@@ -75,7 +75,7 @@ parserTests = testGroup
   rulesTests = mkParserTestGroup
     "rules"
     rules
-    [(1, "true-> Assets:Account;"), (2, "false -> Assets:Account;")]
+    [(1, "True-> Assets:Account"), (2, "False -> Assets:Account")]
 
 evaluationTests :: TestTree
 evaluationTests = testGroup "evaluation tests" (mkTest <$> evaluationTestCases)

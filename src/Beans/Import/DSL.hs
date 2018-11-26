@@ -5,7 +5,7 @@ module Beans.Import.DSL where
 import           Beans.Model                    ( Account(..)
                                                 , AccountType
                                                 , Date
-                                                , fromGreg
+                                                , parseDate
                                                 , Amount
                                                 , Date
                                                 , Commodity
@@ -22,11 +22,14 @@ import           Control.Monad.Reader           ( Reader
                                                 , asks
                                                 , runReaderT
                                                 )
+import           Control.Applicative            ( (<**>) )
 import           Data.Bool                      ( bool )
-import           Data.Char                      ( isAlphaNum )
 import           Data.Functor.Identity          ( runIdentity )
 import           Data.Monoid                    ( Sum(Sum)
                                                 , (<>)
+                                                )
+import           Data.Char                      ( isDigit
+                                                , isAlphaNum
                                                 )
 import           Data.Text                      ( Text
                                                 , cons
@@ -39,20 +42,21 @@ import           Prelude                 hiding ( readFile )
 import           Text.Megaparsec                ( Parsec
                                                 , between
                                                 , choice
-                                                , count
                                                 , empty
+                                                , notFollowedBy
                                                 , eof
                                                 , many
                                                 , parse
                                                 , parseErrorPretty
                                                 , sepBy
                                                 , takeWhileP
+                                                , takeWhile1P
+                                                , takeP
                                                 , try
-                                                , (<|>)
                                                 )
 import           Text.Megaparsec.Char           ( char
-                                                , digitChar
                                                 , letterChar
+                                                , symbolChar
                                                 , space1
                                                 , string
                                                 )
@@ -194,11 +198,11 @@ sc = L.space space1 lineComment empty
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc
 
-symbol :: Text -> Parser Text
-symbol = L.symbol sc
+sym :: Text -> Parser Text
+sym = L.symbol sc
 
 parens :: Parser a -> Parser a
-parens = between (symbol "(") (symbol ")")
+parens = between (sym "(") (sym ")")
 
 identifier :: Parser Text
 identifier =
@@ -215,85 +219,86 @@ accountType = read . unpack <$> choice
 
 account :: Parser Account
 account =
-  lexeme $ Account <$> accountType <* colon <*> (identifier `sepBy` colon)
-  where colon = char ':'
-
-symbolOf :: (Functor t, Foldable t) => t (Text, a) -> Parser a
-symbolOf = msum . fmap (uncurry (&>))
-
-sym :: a -> Text -> Parser a
-sym a b = a <$ symbol b
-
-(<&) :: a -> Text -> Parser a
-a <& b = a <$ symbol b
-
-(&>) :: Text -> a -> Parser a
-(&>) = flip (<&)
+  lexeme $ Account <$> accountType <* char ':' <*> (identifier `sepBy` char ':')
 
 rules :: Parser Rules
 rules = between sc eof (many rule)
 
 rule :: Parser Rule
-rule = Rule <$> boolExpr <* symbol "->" <*> account <* symbol ";"
+rule = Rule <$> boolExpr <* sym "->" <*> account
 
 amountLiteral :: Parser (E Amount)
-amountLiteral = EAmount <$> lexeme amount
-  where amount = Sum <$> L.signed sc L.scientific
+amountLiteral = EAmount . Sum <$> lexeme (L.signed sc L.scientific)
 
 textLiteral :: Parser (E Text)
 textLiteral = EText <$> lexeme quotedText
  where
-  quotedText = between q q (takeWhileP (Just "no quote") (/= '"'))
-  q          = symbol "\""
+  quotedText = between quote quote (takeWhileP (Just "no quote") (/= '"'))
+  quote      = char '"'
 
 dateLiteral :: Parser (E Date)
-dateLiteral = EDate <$> lexeme date
+dateLiteral = (try . lexeme . fmap EDate) date
  where
-  date = fromGreg <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
-  dash = symbol "-"
-  digits n = read <$> count n digitChar
+  date = do
+    inp <-
+      takeWhile1P (Just "year") isDigit
+      <> string "-"
+      <> takeP (Just "month") 2
+      <> string "-"
+      <> takeP (Just "day") 2
+    case parseDate "%Y-%-m-%-d" (unpack inp) of
+      Just d  -> return d
+      Nothing -> fail $ unwords ["Invalid date:", show $ unpack inp]
 
 boolLiteral :: Parser (E Bool)
-boolLiteral = EBool <$> ("true" &> True <|> "false" &> False)
+boolLiteral = EBool <$> choice [True <$ sym "True", False <$ sym "False"]
 
 textExpr :: Parser (E Text)
-textExpr = parens textExpr <|> textLiteral <|> "description" &> EVarDescription
+textExpr =
+  choice [parens textExpr, textLiteral, EVarDescription <$ sym "description"]
 
 textRelation :: Parser (E Text -> E Text -> E Bool)
-textRelation = symbolOf [("==", EEQ), ("!=", ENE), ("=~", EMatch)]
+textRelation = choice [EEQ <$ sym "==", ENE <$ sym "!=", EMatch <$ sym "=~"]
 
 dateExpr :: Parser (E Date)
-dateExpr = parens dateExpr <|> dateLiteral <|> "date" &> EVarDate
+dateExpr = choice [parens dateExpr, dateLiteral, EVarDate <$ sym "date"]
 
 amountExpr :: Parser (E Amount)
 amountExpr = makeExprParser amountTerm amountOperators
  where
-  amountTerm = parens amountExpr <|> amountLiteral <|> "amount" &> EVarAmount
+  amountTerm =
+    choice [parens amountExpr, amountLiteral, EVarAmount <$ sym "amount"]
   amountOperators =
-    [[InfixL ("+" &> EPlus), InfixL ("-" &> EMinus), Prefix ("abs" &> EAbs)]]
+    [ [Prefix (EAbs <$ sym "abs")]
+    , [InfixL (EPlus <$ sym "+"), InfixL (EMinus <$ op "-")]
+    ]
+
+op :: Text -> Parser Text
+op n = (lexeme . try) (string n <* notFollowedBy symbolChar)
 
 boolExpr :: Parser (E Bool)
 boolExpr = makeExprParser boolTerm boolOperators
  where
-  boolTerm =
-    parens boolExpr
-      <|> boolLiteral
-      <|> try dateRelExpr
-      <|> amountRelExpr
-      <|> textRelExpr
+  boolTerm = choice
+    [parens boolExpr, boolLiteral, dateRelExpr, amountRelExpr, textRelExpr]
   boolOperators =
-    [[Prefix ("not" &> ENot)], [InfixL ("and" &> EAnd), InfixL ("or" &> EOr)]]
+    [ [Prefix (ENot <$ sym "!")]
+    , [InfixL (EAnd <$ sym "&&")]
+    , [InfixL (EOr <$ sym "||")]
+    ]
   amountRelExpr = comparison amountExpr relation
   textRelExpr   = comparison textExpr textRelation
   dateRelExpr   = comparison dateExpr relation
 
 comparison :: (Applicative f) => f a -> f (a -> a -> b) -> f b
-comparison expr rel = do
-  e1 <- expr
-  r  <- rel
-  e2 <- expr
-  return $ e1 `r` e2
+comparison expr rel = expr <**> rel <*> expr
 
 relation :: (Show a, Ord a) => Parser (E a -> E a -> E Bool)
-relation = symbolOf
-  [("<=", ELE), (">=", EGE), (">", EGT), ("<", ELT), ("==", EEQ), ("!=", ENE)]
+relation = choice
+  [ ELE <$ sym "<="
+  , EGE <$ sym ">="
+  , EGT <$ sym ">"
+  , ELT <$ sym "<"
+  , EEQ <$ sym "=="
+  , ENE <$ sym "!="
+  ]

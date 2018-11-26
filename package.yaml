@@ -32,6 +32,7 @@ default-extensions:
 
 ghc-options:
   - -Wall
+  - -j
   - -fwarn-incomplete-record-updates
 
 executables:

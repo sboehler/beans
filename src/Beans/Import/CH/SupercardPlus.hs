@@ -7,7 +7,6 @@ where
 import           Data.Monoid                    ( Sum(Sum) )
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
-                                                , ParserException(ParseError)
                                                 , Parser
                                                 , askAccount
                                                 , parseUtf8
@@ -38,7 +37,6 @@ import           Text.Megaparsec                ( (<|>)
                                                 , between
                                                 , skipManyTill
                                                 , many
-                                                , customFailure
                                                 , takeWhile1P
                                                 , takeWhileP
                                                 , option
@@ -98,7 +96,7 @@ dateField = do
   inp <- T.unpack <$> textField "Date"
   case parseDate "%-d.%-m.%Y" inp of
     Just d  -> return d
-    Nothing -> customFailure $ ParseError $ unwords ["Invalid date:", inp]
+    Nothing -> fail $ unwords ["Invalid date:", show inp]
 
 amountField :: Parser (Commodity, Amount)
 amountField = do
@@ -108,8 +106,7 @@ amountField = do
   p         <- asks $ runReaderT amountP
   case parseMaybe p (sign <> number) of
     Just amount -> return (commodity, amount)
-    Nothing     -> customFailure $ ParseError $ unwords
-      ["Invalid amount:", T.unpack $ sign <> number]
+    Nothing     -> fail $ unwords ["Invalid amount:", show $ sign <> number]
 
 amountP :: Parser Amount
 amountP = Sum <$> L.signed (pure ()) L.scientific

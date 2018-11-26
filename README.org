@@ -177,18 +177,19 @@ cat ./examples/postfinance.rules
 #+END_SRC
 
 #+RESULTS:
-: (description =~ "Acme") -> Expenses:Groceries;
-: (description =~ "FOOBAR") -> Expenses:MobilePhone;
-: (description =~ "(Bigbank|Nextgen)") -> Assets:Investments;
-: (description =~ "Clean.*") -> Expenses:Cleaning;
-: (description =~ "Supermarket") -> Expenses:Groceries;
-: (description =~ "Car" and abs amount < 1000) -> Expenses:Car;
-: (description =~ "Car" and abs amount >= 1000) -> Assets:Car;
-: (true) -> Expenses:ToBeEditedManually;
+: description =~ "Acme" -> Expenses:Groceries
+: description =~ "FOOBAR" -> Expenses:MobilePhone
+: description =~ "(Bigbank|Nextgen)" -> Assets:Investments
+: description =~ "Clean.*" -> Expenses:Cleaning
+: description =~ "Supermarket" -> Expenses:Groceries
+: description =~ "Car" && abs amount < 1000 -> Expenses:Car
+: description =~ "Zapote" && abs amount == 21.80 -> Assets:Car
+: date == 2018-06-14 -> Assets:Something
+: True -> Expenses:ToBeEditedManually
 
 Rules are meant to be reusable across different sources of
 information. Various standardized variables from the importer's output
-are available, as well as boolean ("not", "and", "or"), arithmetic
+are available, as well as boolean ("!", "&&", "||"), arithmetic
 ("+", "-", "abs") and string (most useful: the regex match (=~)
 operator) expressions.
 
@@ -208,40 +209,10 @@ statement to transactions is a simple command:
 
 ~import~ outputs a simple list of transactions to stdout, in a format
 parseable by beans and with correct accounts assigned. It is up to the
-user to pipe them into a journal or a temporary file for further,
-manual editing.
+user to pipe them into a journal or a temporary file for further
+editing.
 
 #+RESULTS: beans-import
-#+begin_example
-2017-06-01 * "Acme Corp"
-  Assets:Checking -135.00 CHF
-  Expenses:Groceries 135.00 CHF
-
-2017-05-31 * "FOOBAR COMMUNICATIONS"
-  Assets:Checking -52.60 CHF
-  Expenses:MobilePhone 52.60 CHF
-
-2017-05-29 * "Transfer 01-45-06 Bigbank"
-  Assets:Checking -1040.00 CHF
-  Assets:Investments 1040.00 CHF
-
-2017-05-26 * "Cleaning Service"
-  Assets:Checking -300.00 CHF
-  Expenses:Cleaning 300.00 CHF
-
-2017-05-26 * "Supermarket Fine Foods"
-  Assets:Checking -115.20 CHF
-  Expenses:Groceries 115.20 CHF
-
-2017-05-26 * "Bank Nextgen "
-  Assets:Checking -250.00 CHF
-  Assets:Investments 250.00 CHF
-
-2017-05-26 * "Tire Car Sales"
-  Assets:Checking -95.85 CHF
-  Expenses:Car 95.85 CHF
-
-#+end_example
 
 The importing functionality of beans can of course also be used if you
 use another plain-text accounting tool. beancount's syntax is largely

@@ -28,10 +28,10 @@ import           Control.Monad.Catch            ( Exception
                                                 )
 import           Control.Monad.IO.Class         ( MonadIO )
 import           Control.Monad.Trans            ( liftIO )
+import           Data.Void                      ( Void )
 import           Data.Char                      ( isAlphaNum )
 import           Data.Functor                   ( ($>) )
 import           Data.Monoid                    ( Sum(Sum) )
-import qualified Data.Set                      as S
 import           Data.Text                      ( Text
                                                 , cons
                                                 , unpack
@@ -41,14 +41,11 @@ import           Prelude                 hiding ( readFile )
 import           System.FilePath.Posix          ( combine
                                                 , takeDirectory
                                                 )
-import           Text.Megaparsec                ( ErrorFancy(..)
-                                                , Parsec
-                                                , ShowErrorComponent(..)
+import           Text.Megaparsec                ( Parsec
                                                 , between
                                                 , count
                                                 , empty
                                                 , eof
-                                                , fancyFailure
                                                 , getPosition
                                                 , many
                                                 , optional
@@ -80,22 +77,8 @@ instance Show ParserException where
 
 instance Exception ParserException
 
--- Internal exception to indicate unbalanced transactions
-newtype VerifyException =
-  UnbalancedTransaction P.SourcePos
-  deriving (Eq, Show, Ord)
-
-instance Exception VerifyException
-
-instance ShowErrorComponent VerifyException where
-  showErrorComponent (UnbalancedTransaction pos) =
-    "Unbalanced transaction: " ++ show pos
-
-verifyError :: P.SourcePos -> Parser a
-verifyError = fancyFailure . S.singleton . ErrorCustom . UnbalancedTransaction
-
 -- The parser type
-type Parser = Parsec VerifyException Text
+type Parser = Parsec Void Text
 
 -- parsers
 lineComment :: Parser ()
@@ -189,9 +172,8 @@ transaction d = do
   w      <- optional $ try (L.indentGuard scn EQ indent *> account)
   case mkBalancedTransaction f desc t (M.fromListM p) w of
     Just t' -> return t'
-    Nothing -> do
-      pos <- getPosition
-      verifyError pos
+    Nothing -> fail "Unbalanced transaction"
+
 
 open :: Parser Command
 open = Open <$ symbol "open" <*> account <*> restriction

@@ -11,14 +11,15 @@ import           Beans.Import.Common            ( Config(..)
                                                 , askAccount
                                                 , parseLatin1
                                                 )
+import           Data.Char                      ( isAlphaNum )
 import           Beans.Model                    ( Amount
                                                 , Command(Transaction)
                                                 , Commodity(Commodity)
                                                 , Date
+                                                , parseDate
                                                 , Dated(Dated)
                                                 , Flag(Complete)
                                                 , Position(Position)
-                                                , fromGreg
                                                 )
 import           Control.Monad                  ( void )
 import           Control.Monad.Catch            ( MonadThrow )
@@ -29,17 +30,22 @@ import           Control.Monad.Reader           ( MonadReader
 import           Data.Group                     ( invert )
 import           Data.Monoid                    ( Sum(Sum) )
 import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import           Text.Megaparsec                ( (<|>)
+import           Text.Megaparsec                ( (<?>)
                                                 , count
+                                                , try
                                                 , manyTill
+                                                , optional
+                                                , choice
+                                                , takeWhileP
+                                                , takeWhile1P
                                                 , skipManyTill
+                                                , between
                                                 , some
+                                                , eof
                                                 )
-import           Text.Megaparsec.Char           ( alphaNumChar
-                                                , anyChar
+import           Text.Megaparsec.Char           ( anyChar
                                                 , char
-                                                , digitChar
+                                                , string
                                                 , eol
                                                 )
 import qualified Text.Megaparsec.Char.Lexer    as L
@@ -52,10 +58,19 @@ parse = parseLatin1 postfinanceData
 
 postfinanceData :: Parser [Dated Command]
 postfinanceData = do
-  commodity <- count 3 ignoreLine >> ignoreField >> currency
-  commands  <- ignoreLine >> some (command commodity)
-  _         <- eol >> ignoreLine >> ignoreLine
-  return commands
+  commodity <-
+    optional (constField ["Datum von:", "Date from:"] *> ignoreField)
+    *> constField ["Buchungsart:", "Entry type:"]
+    *> ignoreField
+    *> constField ["Konto:", "Account:"]
+    *> ignoreField
+    *> constField ["Währung:", "Currency:"]
+    *> currencyField
+    <* count 6 ignoreField
+  some (command commodity)
+    <* ignoreField
+    <* constField ["Disclaimer:"]
+    <* skipManyTill anyChar eof
 
 command :: Commodity -> Parser (Dated Command)
 command commodity = do
@@ -74,35 +89,38 @@ command commodity = do
   return $ Dated date $ Transaction Complete description [] bookings
 
 entryAmount :: Parser Amount
-entryAmount = field $ credit <|> debit
+entryAmount = field $ choice [credit, debit]
  where
   debit  = amountField <* separator
   credit = separator *> amountField
 
-currency :: Parser Commodity
-currency = field $ Commodity . T.pack <$> some alphaNumChar
+currencyField :: Parser Commodity
+currencyField = field $ Commodity <$> takeWhile1P (Just "Currency") isAlphaNum
+
+constField :: [Text] -> Parser Text
+constField = field . choice . fmap string
 
 dateField :: Parser Date
-dateField = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
- where
-  dash = char '-'
-  int n = read <$> count n digitChar
+dateField = try $ do
+  inp <- manyTill anyChar separator <?> "Date"
+  case parseDate "%Y-%-m-%-d" inp of
+    Just d  -> return d
+    Nothing -> fail $ unwords ["Invalid date:", show inp]
 
 descriptionField :: Parser Text
-descriptionField = quote >> T.pack <$> manyTill anyChar (quote >> separator)
+descriptionField = field $ between quote quote $ takeWhileP
+  (Just "Quoted text")
+  (/= '"')
   where quote = char '"'
 
 amountField :: Parser Amount
 amountField = Sum <$> L.signed (pure ()) L.scientific
 
-ignoreLine :: Parser ()
-ignoreLine = void $ skipManyTill anyChar eol
-
 ignoreField :: Parser ()
 ignoreField = void $ skipManyTill anyChar separator
 
 separator :: Parser ()
-separator = void semicolon <|> void eol where semicolon = char ';'
+separator = void $ choice [string ";", eol]
 
 field :: Parser a -> Parser a
 field = L.lexeme separator

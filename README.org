@@ -1,5 +1,7 @@
 # -*- org-confirm-babel-evaluate: nil -*-
 
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/setup/theme-readtheorg.setup
+
 #+STARTUP: content
 #+OPTIONS: toc:nil
 

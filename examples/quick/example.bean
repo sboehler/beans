@@ -1,0 +1,115 @@
+; -*- mode: Org; eval: (beancount-mode 1); -*-
+
+option "operating_currency" "USD"
+
+** Accounts
+
+2018-01-01 open Equity:Valuation
+2018-01-01 open Equity:OpeningBalance
+2018-01-01 open Income:Salary USD
+2018-01-01 open Expenses:Rent USD
+2018-01-01 open Expenses:Groceries USD
+2018-01-01 open Expenses:Books USD
+
+2018-01-01 open Assets:Checking USD
+2018-01-01 open Assets:Portfolio AAPL
+2018-01-01 open Assets:Wallet BTC
+
+** Some Transactions
+
+*** Initial balances
+
+2018-01-01 * "Opening balance"
+  Assets:Checking 15000 USD
+  Equity:OpeningBalance
+
+2018-01-01 * "Opening balance"
+  Assets:Portfolio 0 AAPL
+  Equity:OpeningBalance
+
+2018-01-01 * "Opening balance"
+  Assets:Wallet 0 BTC
+  Equity:OpeningBalance
+
+*** Checking account
+
+2018-01-02 * "Rent January"
+  Assets:Checking -2000 USD
+  Expenses:Rent
+
+2018-01-10 * "Food"
+  Assets:Checking -300 USD
+  Expenses:Groceries
+
+2018-01-25 * "Salary January"
+  Assets:Checking 4000 USD
+  Income:Salary
+
+2018-02-01 * "Rent February"
+  Assets:Checking -2000 USD
+  Expenses:Rent
+
+2018-01-12 * "Hungry again"
+  Assets:Checking -200 USD
+  Expenses:Groceries
+
+2018-01-20 * "Something to read"
+  Assets:Checking -100 USD
+  Expenses:Books
+
+
+2018-02-25 * "Salary February"
+  Assets:Checking 4000 USD
+  Income:Salary
+
+2018-03-01 * "Rent March"
+  Assets:Checking -2000 USD
+  Expenses:Rent
+
+2018-03-02 * "Yet more food"
+  Assets:Checking -200 USD
+  Expenses:Groceries
+
+2018-03-20 * "More food"
+  Assets:Checking -400 USD
+  Expenses:Groceries
+
+2018-03-25 * "Salary March"
+  Assets:Checking 4000 USD
+  Income:Salary
+
+*** Investments
+
+2018-01-10 * "Investing in stock"
+  Assets:Portfolio +10 AAPL
+  Assets:Checking -1700 USD
+
+2018-01-14 * "I want to be part of this!"
+  Assets:Wallet 0.25 BTC
+  Assets:Checking -3500 USD
+
+** Prices
+
+2018-01-01 price BTC 13412 USD
+2018-02-01 price BTC 9052 USD
+2018-03-01 price BTC 10907 USD
+2018-04-01 price BTC 6816 USD
+2018-05-01 price BTC 9067 USD
+2018-06-01 price BTC 7518 USD
+2018-07-01 price BTC 6347 USD
+2018-08-01 price BTC 7603 USD
+2018-09-01 price BTC 7192 USD
+2018-10-01 price BTC 6578 USD
+2018-11-01 price BTC 6358 USD
+
+2018-01-01 price AAPL 169 USD
+2018-02-01 price AAPL 167 USD
+2018-03-01 price AAPL 175 USD
+2018-04-01 price AAPL 166 USD
+2018-05-01 price AAPL 169 USD
+2018-06-01 price AAPL 190 USD
+2018-07-01 price AAPL 185 USD
+2018-08-01 price AAPL 201 USD
+2018-09-01 price AAPL 227 USD
+2018-10-01 price AAPL 225 USD
+2018-11-01 price AAPL 222 USD

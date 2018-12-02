@@ -1,14 +1,6 @@
-2017-06-01 * "Acme Corp Three Monkeys" 
-  Assets:Checking -135.00 CHF 
-  Expenses:Errands 135.00 CHF 
-
-2017-05-31 * "FOOBAR COMMUNICATIONS INC" 
-  Assets:Checking -52.60 CHF 
-  Expenses:Errands 52.60 CHF 
-
-2017-05-29 * "Transfer 01-45-06 Bigbank" 
-  Assets:Checking -1040.00 CHF 
-  Expenses:Errands 1040.00 CHF 
+2017-05-26 * "Bank 2000" 
+  Assets:Checking -250.00 CHF 
+  Expenses:Errands 250.00 CHF 
 
 2017-05-26 * "Cleaning XERDS" 
   Assets:Checking -300.00 CHF 
@@ -18,10 +10,18 @@
   Assets:Checking -115.20 CHF 
   Expenses:Errands 115.20 CHF 
 
-2017-05-26 * "Bank 2000" 
-  Assets:Checking -250.00 CHF 
-  Expenses:Errands 250.00 CHF 
-
 2017-05-26 * "Tire Car Sales" 
   Assets:Checking -95.85 CHF 
   Expenses:Errands 95.85 CHF 
+
+2017-05-29 * "Transfer 01-45-06 Bigbank" 
+  Assets:Checking -1040.00 CHF 
+  Expenses:Errands 1040.00 CHF 
+
+2017-05-31 * "FOOBAR COMMUNICATIONS INC" 
+  Assets:Checking -52.60 CHF 
+  Expenses:Errands 52.60 CHF 
+
+2017-06-01 * "Acme Corp Three Monkeys" 
+  Assets:Checking -135.00 CHF 
+  Expenses:Errands 135.00 CHF 

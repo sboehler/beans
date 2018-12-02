@@ -4,7 +4,11 @@ module Beans.Import.CH.Postfinance
   )
 where
 
+import qualified Data.List                     as List
 import qualified Beans.Data.Map                as M
+import           Data.Text                      ( pack
+                                                , Text
+                                                )
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
                                                 , Parser
@@ -29,17 +33,14 @@ import           Control.Monad.Reader           ( MonadReader
                                                 )
 import           Data.Group                     ( invert )
 import           Data.Monoid                    ( Sum(Sum) )
-import           Data.Text                      ( Text )
 import           Text.Megaparsec                ( (<?>)
                                                 , count
                                                 , try
                                                 , manyTill
                                                 , optional
                                                 , choice
-                                                , takeWhileP
                                                 , takeWhile1P
                                                 , skipManyTill
-                                                , between
                                                 , some
                                                 , eof
                                                 )
@@ -54,7 +55,7 @@ name :: Text
 name = "ch.postfinance" :: Text
 
 parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parse = parseLatin1 postfinanceData
+parse = List.sort <$> parseLatin1 postfinanceData
 
 postfinanceData :: Parser [Dated Command]
 postfinanceData = do
@@ -108,9 +109,8 @@ dateField = try $ do
     Nothing -> fail $ unwords ["Invalid date:", show inp]
 
 descriptionField :: Parser Text
-descriptionField = field $ between quote quote $ takeWhileP
-  (Just "Quoted text")
-  (/= '"')
+descriptionField =
+  quote >> (pack <$> manyTill anyChar (try (quote >> separator)))
   where quote = char '"'
 
 amountField :: Parser Amount

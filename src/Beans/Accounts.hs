@@ -47,14 +47,23 @@ data AccountsException
 
 instance Exception AccountsException
 
-calculateAccountsForDays
+calculateAccountsForDays :: (MonadThrow m) => Ledger -> [Date] -> m [Accounts]
+calculateAccountsForDays ledger days =
+  calculateAccountsForDays' ledger days mempty
+
+calculateAccountsForDays'
   :: (MonadThrow m) => Ledger -> [Date] -> Accounts -> m [Accounts]
-calculateAccountsForDays ledger (day : days) initialAccounts = do
+calculateAccountsForDays' ledger (day : days) accounts = do
+  (accounts', later) <- sumUntil ledger day accounts
+  (accounts' :) <$> calculateAccountsForDays' later days accounts'
+calculateAccountsForDays' _ [] _ = return []
+
+sumUntil :: (MonadThrow m) => Ledger -> Date -> Accounts -> m (Accounts, Ledger)
+sumUntil ledger day accounts = do
   let (previous, later) = L.span ((<= day) . date) ledger
-  currAccounts <- foldM process initialAccounts (undate <$> previous)
-  rest         <- calculateAccountsForDays later days currAccounts
-  return $ currAccounts : rest
-calculateAccountsForDays _ [] _ = return []
+  accounts' <- foldM process accounts . fmap undate $ previous
+  return (accounts', later)
+
 
 check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
 check restrictions open@Open { oAccount, oRestriction } = do

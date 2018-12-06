@@ -55,7 +55,6 @@ createJournal JournalOptions {..} ledger = do
         $ filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
   [accounts0, accounts1] <- calculateAccountsForDays filtered
                                                      [jrnOptFrom, jrnOptTo]
-                                                     mempty
   return $ Journal
     { rHeader = accountsToItem jrnOptRegex jrnOptFrom accounts0
     , rItems  = M.fromListM items

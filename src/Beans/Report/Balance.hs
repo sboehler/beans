@@ -73,7 +73,6 @@ createBalance :: MonadThrow m => BalanceOptions -> Ledger -> m Balance
 createBalance BalanceOptions {..} ledger = do
   [a0, a1] <- calculateAccountsForDays (filter balOptFilter ledger)
                                        [balOptFrom, balOptTo]
-                                       mempty
   let balance =
         eraseLots balOptLots
           . summarize balOptDepth
@@ -87,7 +86,7 @@ createBalance BalanceOptions {..} ledger = do
 incomeStatement :: MonadThrow m => BalanceOptions -> Ledger -> m IncomeStatement
 incomeStatement BalanceOptions {..} ledger = do
   let filtered = filter balOptFilter ledger
-  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
+  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo]
   let balance =
         eraseLots balOptLots
           . summarize balOptDepth
@@ -107,7 +106,7 @@ incomeStatement BalanceOptions {..} ledger = do
 balanceSheet :: MonadThrow m => BalanceOptions -> Ledger -> m BalanceSheet
 balanceSheet BalanceOptions {..} ledger = do
   let filtered = filter balOptFilter ledger
-  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo] mempty
+  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo]
   let
     balance =
       eraseLots balOptLots

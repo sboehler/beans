@@ -267,7 +267,7 @@ balanceImbalances account = M.mapEntries g . fmap negate
 type Ledger = [Dated Command]
 
 build :: [Directive] -> Ledger
-build = L.sort . f where f d = [ c | (DatedCommandDirective c) <- d ]
+build = L.sort . \d -> [ c | DatedCommandDirective c <- d ]
 
 data Filter =
     NoFilter

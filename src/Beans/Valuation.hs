@@ -54,7 +54,7 @@ data ValuationState = ValuationState
 
 valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
 valuateLedger (AtMarket target valuationAccount) ledger = evalStateT
-  (mapM valuateGroup ledger)
+  (mapM valuate ledger)
   ValuationState
     { vsPrices               = mempty
     , vsPrevNormalizedPrices = mempty
@@ -68,9 +68,9 @@ valuateLedger (AtMarket target valuationAccount) ledger = evalStateT
 valuateLedger _ ledger = pure ledger
 
 
-valuateGroup
+valuate
   :: (MonadThrow m, MonadState ValuationState m) => [Command] -> m [Command]
-valuateGroup commands = do
+valuate commands = do
   v@ValuationState {..} <- get
   let vsPrices' = L.foldl' updatePrices vsPrices commands
   vsRestrictions' <- foldM check vsRestrictions commands

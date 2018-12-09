@@ -1,5 +1,5 @@
 { mkDerivation, base, bifunctors, bytestring, containers
-, exceptions, filepath, groups, hpack, megaparsec, mtl
+, exceptions, filepath, groups, hpack, lens, megaparsec, mtl
 , optparse-applicative, pretty-simple, prettyprinter, regex-pcre
 , scientific, stdenv, tasty, tasty-golden, tasty-hunit
 , tasty-quickcheck, tasty-smallcheck, text, time
@@ -12,7 +12,7 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     base bifunctors bytestring containers exceptions filepath groups
-    megaparsec mtl prettyprinter regex-pcre scientific text time
+    lens megaparsec mtl prettyprinter regex-pcre scientific text time
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [

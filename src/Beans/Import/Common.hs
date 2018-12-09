@@ -52,16 +52,16 @@ instance Show ImporterException where
 instance Exception ImporterException
 
 data Config = Config {
-  cEvaluator :: Evaluator,
-  cFile :: FilePath,
-  cAccount :: Account
+  _configEvaluator :: Evaluator,
+  _configFile :: FilePath,
+  _configAccount :: Account
   }
 
 type Parser = ReaderT Config (Parsec Void Text)
 
 askAccount :: Context -> Parser Account
 askAccount entry = do
-  evaluator <- asks cEvaluator
+  evaluator <- asks _configEvaluator
   case evaluator entry of
     Just account -> return account
     Nothing      -> fail $ "Account not found: " <> show entry
@@ -72,8 +72,8 @@ parseCommands
   -> Text
   -> m [Dated Command]
 parseCommands parser source = do
-  c@Config { cFile } <- ask
-  case parse (runReaderT parser c) cFile source of
+  c@Config { _configFile } <- ask
+  case parse (runReaderT parser c) _configFile source of
     Left  e -> (throwM . ImporterException . parseErrorPretty) e
     Right d -> return d
 
@@ -82,11 +82,11 @@ parseLatin1
   => Parser [Dated Command]
   -> m [Dated Command]
 parseLatin1 parser =
-  asks cFile >>= liftIO . B.readFile >>= parseCommands parser . decodeLatin1
+  asks _configFile >>= liftIO . B.readFile >>= parseCommands parser . decodeLatin1
 
 parseUtf8
   :: (MonadIO m, MonadThrow m, MonadReader Config m)
   => Parser [Dated Command]
   -> m [Dated Command]
 parseUtf8 parser =
-  asks cFile >>= liftIO . B.readFile >>= parseCommands parser . decodeUtf8
+  asks _configFile >>= liftIO . B.readFile >>= parseCommands parser . decodeUtf8

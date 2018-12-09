@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 88876422848d9b42daed96863ef2265d10272516cc66b2a8e32b97aefd8d4dc0
+-- hash: c4f1997da8573b1cdcc2de0b594c3383fc11388f8c9f40ac2ba34b2565d73fb7
 
 name:           beans
 version:        0.0.2.0
@@ -51,7 +51,7 @@ library
       Paths_beans
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
       base >=4.7 && <5
@@ -61,6 +61,7 @@ library
     , exceptions
     , filepath
     , groups
+    , lens
     , megaparsec ==6.*
     , mtl
     , prettyprinter
@@ -76,7 +77,7 @@ executable beans
       Paths_beans
   hs-source-dirs:
       app
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -96,7 +97,7 @@ test-suite test
       Paths_beans
   hs-source-dirs:
       tests
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies TupleSections ScopedTypeVariables FlexibleInstances
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
       base >=4.7 && <5

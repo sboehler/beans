@@ -15,9 +15,8 @@ import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.IO.Class         ( MonadIO )
 
 run :: (MonadIO m, MonadThrow m) => Command -> m ()
-run command = case command of
-  Balance         options -> balance options
-  IncomeStatement options -> incomeStatement options
-  BalanceSheet    options -> balanceSheet options
-  Import          options -> importCommand options
-  Journal         options -> journal options
+run (Balance         options) = balance options
+run (IncomeStatement options) = incomeStatement options
+run (BalanceSheet    options) = balanceSheet options
+run (Import          options) = importCommand options
+run (Journal         options) = journal options

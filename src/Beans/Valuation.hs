@@ -96,10 +96,10 @@ processCommand
   :: (MonadThrow m, MonadState ValuationState m) => Command -> m Command
 processCommand (CmdTransaction Transaction {..}) = do
   ValuationState { vsValuationAccount } <- get
-  postings                              <- mapM valuateAmounts tPostings
-  CmdTransaction <$> mkBalancedTransaction tFlag
-                                           tDescription
-                                           tTags
+  postings <- mapM valuateAmounts _transactionPostings
+  CmdTransaction <$> mkBalancedTransaction _transactionFlag
+                                           _transactionDescription
+                                           _transactionTags
                                            postings
                                            (Just vsValuationAccount)
 processCommand c = pure c
@@ -141,7 +141,10 @@ adjustValuationForAmount
 adjustValuationForAmount k (commodity, amount) = do
   v0 <- gets vsPrevNormalizedPrices >>= lookupPrice commodity
   v1 <- gets vsNormalizedPrices >>= lookupPrice commodity
-  if v0 /= v1 && (aType . pAccount) k `elem` [Assets, Liabilities]
+  if v0
+       /=     v1
+       &&     (_accountAccountType . _positionAccount) k
+       `elem` [Assets, Liabilities]
     then pure <$> createValuationTransaction k (amount * Sum (v1 - v0))
     else return []
 
@@ -149,10 +152,10 @@ createValuationTransaction
   :: (MonadState ValuationState m) => Position -> Amount -> m Command
 createValuationTransaction position amount = do
   ValuationState { vsTarget, vsValuationAccount } <- get
-  let desc = T.pack ("Valuation " <> show (pCommodity position))
+  let desc = T.pack ("Valuation " <> show (_positionCommodity position))
   return $ CmdTransaction $ Transaction Complete desc [] $ M.fromListM
     [ (position, M.singleton vsTarget amount)
-    , ( position { pAccount = vsValuationAccount }
+    , ( position { _positionAccount = vsValuationAccount }
       , M.singleton vsTarget (-amount)
       )
     ]

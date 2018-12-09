@@ -126,12 +126,12 @@ instance Show a => Show (E a) where
 
 
 data Context = Context
-  { eDate :: Date
-  , eType :: Text
-  , eDescription :: Text
-  , eAmount      :: Amount
-  , eCommodity   :: Commodity
-  , eImporter    :: Text
+  { _contextDate :: Date
+  , _contextBookingType :: Text
+  , _contextDescription :: Text
+  , _contextAmount      :: Amount
+  , _contextCommodity   :: Commodity
+  , _contextImporter    :: Text
   } deriving (Eq, Show)
 
 type Evaluator = Context -> Maybe Account
@@ -150,11 +150,11 @@ evalE (EBool   a)     = return a
 evalE (EText   a)     = return a
 evalE (EDate   a)     = return a
 evalE (EAmount a)     = return a
-evalE EVarAmount      = asks eAmount
-evalE EVarDescription = asks eDescription
-evalE EVarType        = asks eType
-evalE EVarDate        = asks eDate
-evalE EVarImporter    = pack . show <$> asks eImporter
+evalE EVarAmount      = asks _contextAmount
+evalE EVarDescription = asks _contextDescription
+evalE EVarType        = asks _contextBookingType
+evalE EVarDate        = asks _contextDate
+evalE EVarImporter    = pack . show <$> asks _contextImporter
 evalE (EAbs a    )    = abs <$> evalE a
 evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
 evalE (EOr  a b  )    = (||) <$> evalE a <*> evalE b

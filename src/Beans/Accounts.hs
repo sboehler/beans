@@ -41,44 +41,47 @@ sumUntil date ledger accounts = do
   return (accounts', later)
 
 check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
-check restrictions (CmdOpen open@Open { oAccount, oRestriction }) = do
-  when (oAccount `M.member` restrictions) (throwM $ AccountIsAlreadyOpen open)
-  return $ M.insert oAccount oRestriction restrictions
-check restrictions (CmdClose closing@Close { cAccount }) = do
-  let (restriction, remainingRestrictions) =
-        M.partitionWithKey (const . (== cAccount)) restrictions
-  when (null restriction) (throwM $ AccountIsNotOpen closing)
+check restrictions (CmdOpen open@Open { _openAccount, _openRestriction }) = do
+  when (_openAccount `M.member` restrictions)
+       (throwM $ AccountIsAlreadyOpen open)
+  return $ M.insert _openAccount _openRestriction restrictions
+check restrictions (CmdClose closing@Close { _closeAccount }) = do
+  let (r, remainingRestrictions) =
+        M.partitionWithKey (const . (== _closeAccount)) restrictions
+  when (null r) (throwM $ AccountIsNotOpen closing)
   return remainingRestrictions
-check restrictions (CmdTransaction Transaction { tPostings }) = do
-  mapM_ (g restrictions) $ M.toList tPostings
+check restrictions (CmdTransaction Transaction { _transactionPostings }) = do
+  mapM_ (g restrictions) $ M.toList _transactionPostings
   return restrictions
  where
-  g r (Position { pAccount, pCommodity }, s) = case M.lookup pAccount r of
-    Nothing -> throwM $ BookingErrorAccountNotOpen pAccount
-    Just r' -> unless
-      (isCompatible r' pCommodity)
-      (throwM $ BookingErrorCommodityIncompatible
-        pAccount
-        pCommodity
-        (M.findWithDefaultM pCommodity s)
-        r'
-      )
-check restrictions (CmdBalance bal@Balance { bAccount }) = do
-  unless (bAccount `M.member` restrictions) $ throwM (AccountDoesNotExist bal)
+  g r (Position { _positionAccount, _positionCommodity }, s) =
+    case M.lookup _positionAccount r of
+      Nothing -> throwM $ BookingErrorAccountNotOpen _positionAccount
+      Just r' -> unless
+        (isCompatible r' _positionCommodity)
+        (throwM $ BookingErrorCommodityIncompatible
+          _positionAccount
+          _positionCommodity
+          (M.findWithDefaultM _positionCommodity s)
+          r'
+        )
+check restrictions (CmdBalance bal@Balance { _balanceAccount }) = do
+  unless (_balanceAccount `M.member` restrictions)
+    $ throwM (AccountDoesNotExist bal)
   return restrictions
 check restrictions _ = pure restrictions
 
 process :: (MonadThrow m) => Accounts -> Command -> m Accounts
-process accounts (CmdClose command@Close { cAccount }) = do
+process accounts (CmdClose command@Close { _closeAccount }) = do
   let (deletedAccount, remainingAccounts) =
-        M.partitionKeys ((== cAccount) . pAccount) accounts
+        M.partitionKeys ((== _closeAccount) . _positionAccount) accounts
   unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero command)
   return remainingAccounts
-process accounts (CmdTransaction Transaction { tPostings }) =
-  return $ accounts `mappend` tPostings
-process accounts (CmdBalance bal@Balance { bAccount, bAmount, bCommodity }) =
-  do
-    let s = balance bAccount bCommodity accounts
-    unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
+process accounts (CmdTransaction Transaction { _transactionPostings }) =
+  return $ accounts `mappend` _transactionPostings
+process accounts (CmdBalance bal@Balance { _balanceAccount, _balanceAmount, _balanceCommodity })
+  = do
+    let s = balance _balanceAccount _balanceCommodity accounts
+    unless (s == _balanceAmount) (throwM $ BalanceDoesNotMatch bal s)
     return accounts
 process accounts _ = pure accounts

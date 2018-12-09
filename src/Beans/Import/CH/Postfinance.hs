@@ -79,7 +79,7 @@ command commodity = do
   date         <- dateField
   description  <- descriptionField
   amount       <- entryAmount <* count 2 ignoreField
-  account      <- asks cAccount
+  account      <- asks _configAccount
   otherAccount <- askAccount
     $ Context date "expense" description (invert amount) commodity name
   let bookings = M.fromListM

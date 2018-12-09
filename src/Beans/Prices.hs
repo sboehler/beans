@@ -44,15 +44,17 @@ updatePrices prices (CmdPrice p) =
 updatePrices p _ = p
 
 addPrice :: Prices -> Price -> Prices
-addPrice prices Price { prCommodity, prPrice, prTargetCommodity } =
-  let p = M.findWithDefault mempty prCommodity prices
-  in  M.insert prCommodity (M.insert prTargetCommodity prPrice p) prices
+addPrice prices Price { _priceCommodity, _pricePrice, _priceTargetCommodity } =
+  let p = M.findWithDefault mempty _priceCommodity prices
+  in  M.insert _priceCommodity
+               (M.insert _priceTargetCommodity _pricePrice p)
+               prices
 
 invert :: Price -> Price
-invert Price { prCommodity, prTargetCommodity, prPrice } = Price
-  { prCommodity       = prTargetCommodity
-  , prTargetCommodity = prCommodity
-  , prPrice           = 1 `sdiv` prPrice
+invert Price { _priceCommodity, _priceTargetCommodity, _pricePrice } = Price
+  { _priceCommodity       = _priceTargetCommodity
+  , _priceTargetCommodity = _priceCommodity
+  , _pricePrice           = 1 `sdiv` _pricePrice
   }
 
 normalize :: Prices -> Commodity -> NormalizedPrices

@@ -85,7 +85,7 @@ depositWithdrawalOrFee = do
   date        <- dateField
   description <- textField
   amount      <- amountField <* skipRestOfLine
-  account     <- asks cAccount
+  account     <- asks _configAccount
   other       <- askAccount
     $ Context date (toLower t) description amount currency name
   let bookings = M.fromListM
@@ -101,22 +101,26 @@ depositWithdrawalOrFee = do
 trade :: Parser (Dated Command)
 trade = do
   category <- cField "Trades" >> cField "Data" >> cField "Order" >> textField
-  currency       <- commodityField
-  symbol         <- commodityField
-  date           <- dateTimeField
-  amount         <- amountField
-  price          <- amountField <* skipField
-  purchaseAmount <- amountField
-  feeAmount      <- amountField <* skipRestOfLine
-  account        <- asks cAccount
-  feeAccount <- askAccount $ Context date "fee" category feeAmount currency name
-  let
-    lot      = Lot price currency date Nothing
-    bookings = M.fromListM
-      [ (Position account symbol (Just lot), M.singleton symbol amount)
-      , (Position account currency Nothing, M.singleton currency purchaseAmount)
-      , (Position feeAccount currency Nothing, M.singleton currency feeAmount)
-      ]
+  currency              <- commodityField
+  symbol                <- commodityField
+  date                  <- dateTimeField
+  amount                <- amountField
+  price                 <- amountField <* skipField
+  purchas_contextAmount <- amountField
+  fe_contextAmount      <- amountField <* skipRestOfLine
+  account               <- asks _configAccount
+  feeAccount            <- askAccount
+    $ Context date "fee" category fe_contextAmount currency name
+  let lot      = Lot price currency date Nothing
+      bookings = M.fromListM
+        [ (Position account symbol (Just lot), M.singleton symbol amount)
+        , ( Position account currency Nothing
+          , M.singleton currency purchas_contextAmount
+          )
+        , ( Position feeAccount currency Nothing
+          , M.singleton currency fe_contextAmount
+          )
+        ]
   return $ Dated date $ CmdTransaction $ Transaction Complete
                                                      category
                                                      []
@@ -134,7 +138,7 @@ dividendOrWithholdingTax = do
     char '(' >> takeWhile1P (Just "ISIN") isAlphaNum <* (char ')' >> space)
   description <- field $ takeWhile1P Nothing (/= ',')
   amount      <- amountField
-  account     <- asks cAccount
+  account     <- asks _configAccount
   let desc = unwords [t, (pack . show) symbol, isin, description]
   dividendAccount <- askAccount
     $ Context date (toLower t) desc amount currency name

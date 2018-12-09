@@ -27,7 +27,8 @@ import qualified Text.Megaparsec.Char.Lexer    as L
 import           Beans.Model                    ( Commodity(..)
                                                 , Dated(Dated)
                                                 , Flag(Complete)
-                                                , Command(Transaction)
+                                                , Command(CmdTransaction)
+                                                , Transaction(..)
                                                 , Date
                                                 , fromGreg
                                                 , Lot(Lot)
@@ -91,10 +92,11 @@ depositWithdrawalOrFee = do
         [ (Position account currency Nothing, M.singleton currency amount)
         , (Position other currency Nothing  , M.singleton currency (-amount))
         ]
-  return $ Dated date $ Transaction Complete
-                                    (unwords [t, "-" :: Text, description])
-                                    []
-                                    bookings
+  return $ Dated date $ CmdTransaction $ Transaction
+    Complete
+    (unwords [t, "-" :: Text, description])
+    []
+    bookings
 
 trade :: Parser (Dated Command)
 trade = do
@@ -115,7 +117,10 @@ trade = do
       , (Position account currency Nothing, M.singleton currency purchaseAmount)
       , (Position feeAccount currency Nothing, M.singleton currency feeAmount)
       ]
-  return $ Dated date $ Transaction Complete category [] bookings
+  return $ Dated date $ CmdTransaction $ Transaction Complete
+                                                     category
+                                                     []
+                                                     bookings
 
 dividendOrWithholdingTax :: Parser (Dated Command)
 dividendOrWithholdingTax = do
@@ -141,7 +146,7 @@ dividendOrWithholdingTax = do
         , M.singleton currency (-amount)
         )
       ]
-  return $ Dated date $ Transaction Complete desc [] bookings
+  return $ Dated date $ CmdTransaction $ Transaction Complete desc [] bookings
 
 textField :: Parser Text
 textField = field $ takeWhile1P Nothing (/= ',')

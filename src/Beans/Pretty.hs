@@ -7,23 +7,7 @@ module Beans.Pretty
   )
 where
 
-import           Beans.Model                    ( Account(..)
-                                                , Accounts
-                                                , Amount
-                                                , Date
-                                                , Commodity(..)
-                                                , Ledger
-                                                , Lot(..)
-                                                , Position(..)
-                                                , Command(..)
-                                                , Dated(..)
-                                                , Directive(..)
-                                                , Flag(..)
-                                                , Include(..)
-                                                , Option(..)
-                                                , Tag(..)
-                                                , Restriction(..)
-                                                )
+import           Beans.Model
 import qualified Beans.Data.Map                as M
 import           Data.Monoid                    ( Sum(..) )
 import           Data.Scientific                ( Scientific
@@ -78,15 +62,26 @@ instance Pretty a => Pretty (Dated a) where
   pretty (Dated day x) = pretty day <+> pretty x
 
 instance Pretty Command where
+  pretty (CmdTransaction t) = pretty t
+  pretty (CmdPrice t) = pretty t
+  pretty (CmdOpen t) = pretty t
+  pretty (CmdClose t) = pretty t
+  pretty (CmdBalance t) = pretty t
+
+instance Pretty Transaction where
   pretty Transaction {..} =
     pretty tFlag <+>
     dquotes (pretty tDescription) <+>
     cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings) <> hardline
+instance Pretty Balance where
   pretty Balance {bAccount, bAmount, bCommodity} =
     "balance" <+> pretty bAccount <+> pretty bAmount <+> pretty bCommodity
+instance Pretty Open where
   pretty Open {oAccount, oRestriction} =
     "open" <+> pretty oAccount <+> pretty oRestriction
+instance Pretty Close where
   pretty Close {cAccount} = "close" <+> pretty cAccount
+instance Pretty Price where
   pretty Price {prCommodity, prPrice, prTargetCommodity} =
     "price" <+> pretty prCommodity <+> pretty prPrice <+> pretty prTargetCommodity
 

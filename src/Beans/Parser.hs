@@ -1,23 +1,7 @@
 module Beans.Parser where
 
-import           Beans.Model                    ( Account(..)
-                                                , AccountType(..)
-                                                , Amount
-                                                , Amounts
-                                                , Date
-                                                , fromGreg
-                                                , Commodity(..)
-                                                , Lot(..)
-                                                , Position(..)
-                                                , Command(..)
-                                                , Dated(..)
-                                                , Directive(..)
-                                                , Flag(..)
-                                                , Include(..)
-                                                , Option(..)
-                                                , Restriction(..)
-                                                , Tag(..)
-                                                , mkBalancedTransaction
+import           Beans.Model             hiding ( between
+                                                , balance
                                                 )
 import qualified Beans.Data.Map                as M
 
@@ -162,7 +146,7 @@ flag = complete <|> incomplete
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)
 
-transaction :: Date -> Parser Command
+transaction :: Date -> Parser Transaction
 transaction d = do
   f      <- flag
   desc   <- quotedString
@@ -175,25 +159,35 @@ transaction d = do
     Nothing -> fail "Unbalanced transaction"
 
 
-open :: Parser Command
+open :: Parser Open
 open = Open <$ symbol "open" <*> account <*> restriction
 
 restriction :: Parser Restriction
 restriction =
   RestrictedTo <$> (commodity `sepBy1` symbol ",") <|> return NoRestriction
 
-close :: Parser Command
+close :: Parser Close
 close = Close <$ symbol "close" <*> account
 
-balance :: Parser Command
+balance :: Parser Balance
 balance = Balance <$ symbol "balance" <*> account <*> amount <*> commodity
 
-price :: Parser Command
+price :: Parser Price
 price = Price <$ symbol "price" <*> commodity <*> p <*> commodity
   where p = lexeme $ L.signed sc L.scientific
 
 command :: Date -> Parser Command
-command d = transaction d <|> open <|> close <|> balance <|> price
+command d =
+  CmdTransaction
+    <$> transaction d
+    <|> CmdOpen
+    <$> open
+    <|> CmdClose
+    <$> close
+    <|> CmdBalance
+    <$> balance
+    <|> CmdPrice
+    <$> price
 
 include :: Parser Include
 include =

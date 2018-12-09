@@ -6,19 +6,7 @@ module Beans.Accounts
   )
 where
 
-import           Beans.Model                    ( Account
-                                                , Accounts
-                                                , Amount
-                                                , Date
-                                                , Ledger
-                                                , Restriction
-                                                , Restrictions
-                                                , Commodity
-                                                , Position(..)
-                                                , Command(..)
-                                                , balance
-                                                , isCompatible
-                                                )
+import           Beans.Model
 import           Data.Monoid                    ( mconcat )
 import qualified Beans.Data.Map                as M
 import           Control.Monad                  ( unless
@@ -31,16 +19,16 @@ import           Control.Monad.Catch            ( Exception
                                                 )
 
 data AccountsException
-  = AccountIsNotOpen Command
+  = AccountIsNotOpen Close
   | BookingErrorAccountNotOpen Account
   | BookingErrorCommodityIncompatible Account
                                       Commodity
                                       Amount
                                       Restriction
-  | AccountIsAlreadyOpen Command
-  | BalanceIsNotZero Command
-  | AccountDoesNotExist Command
-  | BalanceDoesNotMatch Command
+  | AccountIsAlreadyOpen Open
+  | BalanceIsNotZero Close
+  | AccountDoesNotExist Balance
+  | BalanceDoesNotMatch Balance
                         Amount
   deriving (Show)
 
@@ -53,15 +41,15 @@ sumUntil date ledger accounts = do
   return (accounts', later)
 
 check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
-check restrictions open@Open { oAccount, oRestriction } = do
+check restrictions (CmdOpen open@Open { oAccount, oRestriction }) = do
   when (oAccount `M.member` restrictions) (throwM $ AccountIsAlreadyOpen open)
   return $ M.insert oAccount oRestriction restrictions
-check restrictions closing@Close { cAccount } = do
+check restrictions (CmdClose closing@Close { cAccount }) = do
   let (restriction, remainingRestrictions) =
         M.partitionWithKey (const . (== cAccount)) restrictions
   when (null restriction) (throwM $ AccountIsNotOpen closing)
   return remainingRestrictions
-check restrictions Transaction { tPostings } = do
+check restrictions (CmdTransaction Transaction { tPostings }) = do
   mapM_ (g restrictions) $ M.toList tPostings
   return restrictions
  where
@@ -75,21 +63,22 @@ check restrictions Transaction { tPostings } = do
         (M.findWithDefaultM pCommodity s)
         r'
       )
-check restrictions bal@Balance { bAccount } = do
+check restrictions (CmdBalance bal@Balance { bAccount }) = do
   unless (bAccount `M.member` restrictions) $ throwM (AccountDoesNotExist bal)
   return restrictions
 check restrictions _ = pure restrictions
 
 process :: (MonadThrow m) => Accounts -> Command -> m Accounts
-process accounts command@Close { cAccount } = do
+process accounts (CmdClose command@Close { cAccount }) = do
   let (deletedAccount, remainingAccounts) =
         M.partitionKeys ((== cAccount) . pAccount) accounts
   unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero command)
   return remainingAccounts
-process accounts Transaction { tPostings } =
+process accounts (CmdTransaction Transaction { tPostings }) =
   return $ accounts `mappend` tPostings
-process accounts bal@Balance { bAccount, bAmount, bCommodity } = do
-  let s = balance bAccount bCommodity accounts
-  unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
-  return accounts
+process accounts (CmdBalance bal@Balance { bAccount, bAmount, bCommodity }) =
+  do
+    let s = balance bAccount bCommodity accounts
+    unless (s == bAmount) (throwM $ BalanceDoesNotMatch bal s)
+    return accounts
 process accounts _ = pure accounts

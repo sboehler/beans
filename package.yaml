@@ -26,6 +26,9 @@ default-extensions:
 - LambdaCase
 - FlexibleContexts
 - TypeFamilies
+- MultiParamTypeClasses
+- FunctionalDependencies
+- TemplateHaskell
 - TupleSections
 - ScopedTypeVariables
 - FlexibleInstances
@@ -63,6 +66,7 @@ library:
   - exceptions
   - filepath
   - groups
+  - lens
   - megaparsec == 6.*
   - mtl
   - prettyprinter

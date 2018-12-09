@@ -73,7 +73,7 @@ command = do
   zipCode             <- textField "Merchant Zip Code"
   transactionNumber   <- quotedField
   transactionType     <- field upperChar <* many digitChar
-  account             <- asks cAccount
+  account             <- asks _configAccount
   let desc = T.unwords
         [ card
         , description

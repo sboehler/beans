@@ -1,30 +1,28 @@
 {-# LANGUAGE DeriveTraversable #-}
+
 module Beans.Model where
 
-
-
-import           Prelude                 hiding ( filter )
 import           Control.Monad.Catch            ( Exception
                                                 , MonadThrow
                                                 , throwM
                                                 )
+import           Prelude                 hiding ( filter )
 import qualified Text.Megaparsec.Pos           as P
-
 import qualified Beans.Data.Map                as M
+import           Control.Lens
 import           Data.Foldable                  ( fold )
 import qualified Data.List                     as L
 import           Data.Maybe                     ( catMaybes )
 import           Data.Monoid                    ( Sum
                                                 , getSum
                                                 )
-import           Text.Regex.PCRE                ( (=~) )
-import           Data.Scientific                ( Scientific
+import           Data.Scientific                ( FPFormat(Fixed)
+                                                , Scientific
                                                 , formatScientific
-                                                , FPFormat(Fixed)
                                                 )
 import           Data.Text                      ( Text
-                                                , unpack
                                                 , pack
+                                                , unpack
                                                 )
 import           Data.Time.Calendar             ( Day
                                                 , fromGregorian
@@ -32,14 +30,18 @@ import           Data.Time.Calendar             ( Day
 import           Data.Time.Format               ( defaultTimeLocale
                                                 , parseTimeM
                                                 )
+import           Text.Regex.PCRE                ( (=~) )
 
 type Amount = Sum Scientific
 
 format :: Amount -> Text
 format = pack . formatScientific Fixed (Just 2) . getSum
 
-
-data Date = MinDate | Date Day | MaxDate deriving (Eq, Ord)
+data Date
+  = MinDate
+  | Date Day
+  | MaxDate
+  deriving (Eq, Ord)
 
 fromGreg :: Integer -> Int -> Int -> Date
 fromGreg y m d = Date $ fromGregorian y m d
@@ -54,12 +56,11 @@ instance Show Date where
 
 type Amounts = M.Map Commodity Amount
 
-data Position = Position {
-  pAccount :: Account,
-  pCommodity :: Commodity,
-  pLot :: Maybe Lot
-  }
-  deriving (Eq, Ord, Show)
+data Position = Position
+  { _positionAccount :: Account
+  , _positionCommodity :: Commodity
+  , _positionLot :: Maybe Lot
+  } deriving (Eq, Ord, Show)
 
 type Accounts = M.Map Position Amounts
 
@@ -71,12 +72,10 @@ data AccountType
   | Expenses
   deriving (Eq, Ord, Read, Show)
 
-data Account =
-  Account {
-  aType :: AccountType,
-  aSegments :: [Text]
-  }
-  deriving (Eq, Ord)
+data Account = Account
+  { _accountAccountType :: AccountType
+  , _accountSegments :: [Text]
+  } deriving (Eq, Ord)
 
 instance Show Account where
   show (Account t n) = L.intercalate ":" (show t : (unpack <$> n))
@@ -89,36 +88,36 @@ instance Show Commodity where
   show (Commodity n) = unpack n
 
 data Lot = Lot
-  { lPrice           :: Amount
-  , lTargetCommodity :: Commodity
-  , lDate            :: Date
-  , lLabel           :: Maybe Text
+  { _lotPrice :: Amount
+  , _lotTargetCommodity :: Commodity
+  , _lotDate :: Date
+  , _lotLabel :: Maybe Text
   } deriving (Eq, Ord)
 
 instance Show Lot where
-  show Lot {lPrice, lTargetCommodity, lDate, lLabel} =
-    let price = show lPrice ++ " " ++ show lTargetCommodity
-        elems = catMaybes [Just price, Just $ show lDate, show <$> lLabel]
+  show Lot {_lotPrice, _lotTargetCommodity, _lotDate, _lotLabel} =
+    let price = show _lotPrice ++ " " ++ show _lotTargetCommodity
+        elems = catMaybes [Just price, Just $ show _lotDate, show <$> _lotLabel]
      in "{ " ++ L.intercalate ", " elems ++ " }"
 
 balance :: Account -> Commodity -> Accounts -> Amount
 balance accountName commodityName =
   M.findWithDefaultM commodityName . fold . M.filterKeys f
  where
-  f Position { pAccount, pCommodity } =
-    accountName == pAccount && commodityName == pCommodity
+  f Position { _positionAccount, _positionCommodity } =
+    accountName == _positionAccount && commodityName == _positionCommodity
 
 summarize :: Maybe Int -> Accounts -> Accounts
-summarize (Just d) = M.mapKeysM $ \p -> p { pAccount = shorten d (pAccount p) }
-summarize Nothing  = id
+summarize (Just d) =
+  M.mapKeysM $ \p -> p { _positionAccount = shorten d (_positionAccount p) }
+summarize Nothing = id
 
 shorten :: Int -> Account -> Account
 shorten d (Account t a) = Account t (take d a)
 
 eraseLots :: Bool -> Accounts -> Accounts
-eraseLots False = M.mapKeysM (\p -> p { pLot = Nothing })
+eraseLots False = M.mapKeysM (\p -> p { _positionLot = Nothing })
 eraseLots True  = id
-
 
 data Directive
   = DatedCommandDirective (Dated Command)
@@ -126,15 +125,13 @@ data Directive
   | IncludeDirective Include
   deriving (Eq, Ord, Show)
 
-data Dated a =
-  Dated {
-    date :: Date,
-    undate :: a
-    }
-  deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+data Dated a = Dated
+  { date :: Date
+  , undate :: a
+  } deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 between :: Date -> Date -> Date -> Bool
-between from to d = from <= d && d <= to
+between dateFrom dateTo d = dateFrom <= d && d <= dateTo
 
 data Command
   = CmdOpen Open
@@ -144,33 +141,33 @@ data Command
   | CmdClose Close
   deriving (Eq, Show, Ord)
 
-data Open  = Open {
-    oAccount :: Account
-  , oRestriction :: Restriction
+data Open = Open
+  { _openAccount :: Account
+  , _openRestriction :: Restriction
   } deriving (Eq, Show, Ord)
 
-data Price =  Price {
-    prCommodity :: Commodity
-  , prPrice :: Scientific
-  , prTargetCommodity :: Commodity
+data Price = Price
+  { _priceCommodity :: Commodity
+  , _pricePrice :: Scientific
+  , _priceTargetCommodity :: Commodity
   } deriving (Eq, Show, Ord)
 
-data Transaction = Transaction {
-    tFlag :: Flag
-  , tDescription :: Text
-  , tTags :: [Tag]
-  , tPostings :: Accounts
+data Transaction = Transaction
+  { _transactionFlag :: Flag
+  , _transactionDescription :: Text
+  , _transactionTags :: [Tag]
+  , _transactionPostings :: Accounts
   } deriving (Eq, Show, Ord)
 
-data Balance = Balance {
-    bAccount :: Account
-  , bAmount :: Amount
-  , bCommodity :: Commodity
-  }deriving (Eq, Show, Ord)
+data Balance = Balance
+  { _balanceAccount :: Account
+  , _balanceAmount :: Amount
+  , _balanceCommodity :: Commodity
+  } deriving (Eq, Show, Ord)
 
-newtype Close = Close {
-    cAccount :: Account
-  }  deriving (Eq, Show, Ord)
+newtype Close = Close
+  { _closeAccount :: Account
+  } deriving (Eq, Show, Ord)
 
 data Flag
   = Complete
@@ -182,8 +179,8 @@ newtype Tag =
   deriving (Eq, Ord, Show)
 
 data Include = Include
-  { iPos      :: P.SourcePos
-  , iFilePath :: FilePath
+  { _includePosition :: P.SourcePos
+  , _includeFilePath :: FilePath
   } deriving (Eq, Ord, Show)
 
 data Option =
@@ -234,7 +231,6 @@ balanceImbalances account = M.mapEntries g . fmap negate
     (Position account commodity Nothing, M.singleton commodity amount)
 
 -- Ledger
-
 type Ledger = M.Map Date [Command]
 
 build :: [Directive] -> Ledger
@@ -242,40 +238,42 @@ build d =
   let l = [ (dt, [co]) | DatedCommandDirective (Dated dt co) <- d ]
   in  L.sort <$> M.fromListM l
 
-data Filter =
-    NoFilter
+data Filter
+  = NoFilter
   | StrictFilter String
   | Filter String
-  | PeriodFilter Date Date deriving (Eq, Show)
-
+  | PeriodFilter Date
+                 Date
+  deriving (Eq, Show)
 
 filter :: Filter -> Ledger -> Ledger
 filter (StrictFilter regex) =
   fmap (fmap (filterPostings regex)) . filter (Filter regex)
 filter (Filter regex) =
   M.filter (/= mempty) . fmap (L.filter (matchCommand regex))
-filter (PeriodFilter from to) = M.filterWithKey (const . between from to)
-filter NoFilter               = id
+filter (PeriodFilter dateFrom dateTo) =
+  M.filterWithKey (const . between dateFrom dateTo)
+filter NoFilter = id
 
 filterPostings :: String -> Command -> Command
-filterPostings regex (CmdTransaction Transaction { tPostings, ..}) =
+filterPostings regex (CmdTransaction Transaction { _transactionPostings, ..}) =
   CmdTransaction $ Transaction
-    { tPostings = M.filterKeys ((=~ regex) . show . pAccount) tPostings
+    { _transactionPostings = M.filterKeys
+      ((=~ regex) . show . _positionAccount)
+      _transactionPostings
     , ..
     }
 filterPostings _ command = command
 
 matchCommand :: String -> Command -> Bool
-matchCommand regex (CmdTransaction Transaction { tPostings }) =
-  (any match . M.keys) tPostings
-  where match = (=~ regex) . show . pAccount
+matchCommand regex (CmdTransaction Transaction { _transactionPostings }) =
+  (any match . M.keys) _transactionPostings
+  where match = (=~ regex) . show . _positionAccount
 matchCommand _ (CmdBalance _) = False
 matchCommand _ (CmdPrice   _) = False
 matchCommand _ _              = True
 
-
 -- Restrictions
-
 type Restrictions = M.Map Account Restriction
 
 data Restriction
@@ -293,6 +291,14 @@ instance Monoid Restriction where
   _ `mappend` _ = NoRestriction
 
 isCompatible :: Restriction -> Commodity -> Bool
-isCompatible r c = case r of
-  NoRestriction     -> True
-  (RestrictedTo cs) -> c `elem` cs
+isCompatible NoRestriction     = const True
+isCompatible (RestrictedTo cs) = (`elem` cs)
+
+makePrisms ''Command
+makeFields ''Transaction
+makeFields ''Open
+makeFields ''Close
+makeFields ''Price
+makeFields ''Balance
+makeFields ''Account
+makeFields ''Position

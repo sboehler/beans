@@ -93,11 +93,15 @@ incomeStatement BalanceOptions {..} ledger = do
           . M.filter (not . null)
           . fmap (M.filter (/= 0))
           $ (a0 `M.minus` a1)
-      income = M.filterKeys ((`elem` [Income]) . aType . pAccount) balance
-      expenses = M.filterKeys ((`elem` [Expenses]) . aType . pAccount) balance
-      incomeSection = accountsToBalance balOptReportType income
+      income = M.filterKeys
+        ((`elem` [Income]) . _accountAccountType . _positionAccount)
+        balance
+      expenses = M.filterKeys
+        ((`elem` [Expenses]) . _accountAccountType . _positionAccount)
+        balance
+      incomeSection   = accountsToBalance balOptReportType income
       expensesSection = accountsToBalance balOptReportType expenses
-      is = IncomeStatement
+      is              = IncomeStatement
         incomeSection { sSubtotals = mempty }
         expensesSection { sSubtotals = mempty }
         (sSubtotals incomeSection `mappend` sSubtotals expensesSection)
@@ -114,18 +118,29 @@ balanceSheet BalanceOptions {..} ledger = do
         . M.filter (not . null)
         . fmap (M.filter (/= 0))
         $ (a1 `M.minus` a0)
-    assets = M.filterKeys ((`elem` [Assets]) . aType . pAccount) balance
+    assets = M.filterKeys
+      ((`elem` [Assets]) . _accountAccountType . _positionAccount)
+      balance
     liabilities =
       invert
-        <$> M.filterKeys ((`elem` [Liabilities]) . aType . pAccount) balance
+        <$> M.filterKeys
+              ((`elem` [Liabilities]) . _accountAccountType . _positionAccount)
+              balance
     equity =
-      invert <$> M.filterKeys ((`elem` [Equity]) . aType . pAccount) balance
+      invert
+        <$> M.filterKeys
+              ((`elem` [Equity]) . _accountAccountType . _positionAccount)
+              balance
     retainedEarnings =
       invert
-        <$> M.filterKeys ((`elem` [Income, Expenses]) . aType . pAccount)
-                         balance
+        <$> M.filterKeys
+              ( (`elem` [Income, Expenses])
+              . _accountAccountType
+              . _positionAccount
+              )
+              balance
     retEarn = M.mapKeysM
-      (\p -> p { pAccount = Account Equity ["RetainedEarnings"] })
+      (\p -> p { _positionAccount = Account Equity ["RetainedEarnings"] })
       retainedEarnings
 
     assetsSection      = accountsToBalance balOptReportType assets
@@ -176,18 +191,18 @@ balanceSheetToTable BalanceSheet {..} =
     zipWith (++) aSide' leSide' ++ [replicate 6 Separator]
 
 
-
-
 accountsToBalance :: ReportType -> Accounts -> Balance
 accountsToBalance reportType = groupLabeledPositions . M.mapEntries f
  where
-  f (k@Position { pCommodity, pLot }, amount) =
-    (labelFunction reportType k, M.singleton (pCommodity, pLot) amount)
+  f (k@Position { _positionCommodity, _positionLot }, amount) =
+    ( labelFunction reportType k
+    , M.singleton (_positionCommodity, _positionLot) amount
+    )
 
 labelFunction :: ReportType -> Position -> [Text]
-labelFunction Hierarchical = T.splitOn ":" . T.pack . show . pAccount
+labelFunction Hierarchical = T.splitOn ":" . T.pack . show . _positionAccount
 labelFunction Flat =
-  (\(Account t a) -> [T.pack $ show t, T.intercalate ":" a]) . pAccount
+  (\(Account t a) -> [T.pack $ show t, T.intercalate ":" a]) . _positionAccount
 
 groupLabeledPositions :: M.Map [Text] Positions -> Balance
 groupLabeledPositions labeledPositions = Balance positions

@@ -46,10 +46,10 @@ instance Pretty Tag where
   pretty (Tag t) = pretty t
 
 instance Pretty Lot where
-  pretty Lot {lLabel, lPrice, lTargetCommodity, lDate} =
+  pretty Lot {_lotLabel, _lotPrice, _lotTargetCommodity, _lotDate} =
     encloseSep "{" "}" "," $
-    [pretty lPrice, pretty lTargetCommodity, pretty lDate] ++
-    case lLabel of
+    [pretty _lotPrice, pretty _lotTargetCommodity, pretty _lotDate] ++
+    case _lotLabel of
       Nothing -> []
       Just l  -> [pretty l]
 
@@ -70,20 +70,20 @@ instance Pretty Command where
 
 instance Pretty Transaction where
   pretty Transaction {..} =
-    pretty tFlag <+>
-    dquotes (pretty tDescription) <+>
-    cat (pretty <$> tTags) <> line <> (indent 2 . vcat) (prettyAccounts tPostings) <> hardline
+    pretty _transactionFlag <+>
+    dquotes (pretty _transactionDescription) <+>
+    cat (pretty <$> _transactionTags) <> line <> (indent 2 . vcat) (prettyAccounts _transactionPostings) <> hardline
 instance Pretty Balance where
-  pretty Balance {bAccount, bAmount, bCommodity} =
-    "balance" <+> pretty bAccount <+> pretty bAmount <+> pretty bCommodity
+  pretty Balance {_balanceAccount, _balanceAmount, _balanceCommodity} =
+    "balance" <+> pretty _balanceAccount <+> pretty _balanceAmount <+> pretty _balanceCommodity
 instance Pretty Open where
-  pretty Open {oAccount, oRestriction} =
-    "open" <+> pretty oAccount <+> pretty oRestriction
+  pretty Open {_openAccount, _openRestriction} =
+    "open" <+> pretty _openAccount <+> pretty _openRestriction
 instance Pretty Close where
-  pretty Close {cAccount} = "close" <+> pretty cAccount
+  pretty Close {_closeAccount} = "close" <+> pretty _closeAccount
 instance Pretty Price where
-  pretty Price {prCommodity, prPrice, prTargetCommodity} =
-    "price" <+> pretty prCommodity <+> pretty prPrice <+> pretty prTargetCommodity
+  pretty Price {_priceCommodity, _pricePrice, _priceTargetCommodity} =
+    "price" <+> pretty _priceCommodity <+> pretty _pricePrice <+> pretty _priceTargetCommodity
 
 instance Pretty Restriction where
   pretty NoRestriction    = mempty

@@ -17,8 +17,6 @@ import           Beans.Model                    ( Account(..)
                                                 , Ledger
                                                 , Position(..)
                                                 , Command(..)
-                                                , Dated(..)
-                                                , sameDay
                                                 , Flag(..)
                                                 , mkBalancedTransaction
                                                 )
@@ -55,29 +53,26 @@ data ValuationState = ValuationState
   }
 
 valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
-valuateLedger (AtMarket target valuationAccount) ledger =
-  let groups = L.groupBy sameDay ledger
-  in  concat <$> evalStateT
-        (mapM valuateGroup groups)
-        ValuationState
-          { vsPrices               = mempty
-          , vsPrevNormalizedPrices = mempty
-          , vsNormalizedPrices     = mempty
-          , vsPrevAccounts         = mempty
-          , vsAccounts             = mempty
-          , vsTarget               = target
-          , vsValuationAccount     = valuationAccount
-          , vsRestrictions         = mempty
-          }
+valuateLedger (AtMarket target valuationAccount) ledger = evalStateT
+  (mapM valuateGroup ledger)
+  ValuationState
+    { vsPrices               = mempty
+    , vsPrevNormalizedPrices = mempty
+    , vsNormalizedPrices     = mempty
+    , vsPrevAccounts         = mempty
+    , vsAccounts             = mempty
+    , vsTarget               = target
+    , vsValuationAccount     = valuationAccount
+    , vsRestrictions         = mempty
+    }
 valuateLedger _ ledger = pure ledger
 
 
 valuateGroup
-  :: (MonadThrow m, MonadState ValuationState m) => Ledger -> m Ledger
-valuateGroup dated@(Dated d _ : _) = do
+  :: (MonadThrow m, MonadState ValuationState m) => [Command] -> m [Command]
+valuateGroup commands = do
   v@ValuationState {..} <- get
-  let commands  = undate <$> dated
-      vsPrices' = L.foldl' updatePrices vsPrices commands
+  let vsPrices' = L.foldl' updatePrices vsPrices commands
   vsRestrictions' <- foldM check vsRestrictions commands
   vsAccounts'     <- foldM process vsAccounts commands
   put $ v { vsPrices               = vsPrices'
@@ -89,8 +84,7 @@ valuateGroup dated@(Dated d _ : _) = do
           }
   valuationTransactions <- adjustValuationForAccounts
   commands'             <- mapM processCommand $ filter notBalance commands
-  return $ Dated d <$> (commands' ++ valuationTransactions)
-valuateGroup [] = pure []
+  return $ commands' ++ valuationTransactions
 
 notBalance :: Command -> Bool
 notBalance Balance{} = False

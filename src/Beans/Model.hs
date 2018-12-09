@@ -23,7 +23,6 @@ module Beans.Model
   , mkBalancedTransaction
   , Posting
   , Include(..)
-  , sameDay
   , Option(..)
   , Tag(..)
   , Flag(..)
@@ -168,11 +167,8 @@ data Dated a =
     }
   deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
 
-sameDay :: Dated a1 -> Dated a2 -> Bool
-sameDay (Dated d1 _) (Dated d2 _) = d1 == d2
-
-between :: Date -> Date -> Dated a -> Bool
-between from to (Dated d _) = from <= d && d <= to
+between :: Date -> Date -> Date -> Bool
+between from to d = from <= d && d <= to
 
 data Command
   = Open {
@@ -264,10 +260,12 @@ balanceImbalances account = M.mapEntries g . fmap negate
 
 -- Ledger
 
-type Ledger = [Dated Command]
+type Ledger = M.Map Date [Command]
 
 build :: [Directive] -> Ledger
-build = L.sort . \d -> [ c | DatedCommandDirective c <- d ]
+build d =
+  let l = [ (dt, [co]) | DatedCommandDirective (Dated dt co) <- d ]
+  in  L.sort <$> M.fromListM l
 
 data Filter =
     NoFilter
@@ -279,8 +277,9 @@ data Filter =
 filter :: Filter -> Ledger -> Ledger
 filter (StrictFilter regex) =
   fmap (fmap (filterPostings regex)) . filter (Filter regex)
-filter (Filter regex        ) = L.filter (matchCommand regex . undate)
-filter (PeriodFilter from to) = L.filter (between from to)
+filter (Filter regex) =
+  M.filter (/= mempty) . fmap (L.filter (matchCommand regex))
+filter (PeriodFilter from to) = M.filterWithKey (const . between from to)
 filter NoFilter               = id
 
 filterPostings :: String -> Command -> Command
@@ -294,6 +293,7 @@ matchCommand :: String -> Command -> Bool
 matchCommand regex Transaction { tPostings } = (any match . M.keys) tPostings
   where match = (=~ regex) . show . pAccount
 matchCommand _ Balance {..} = False
+matchCommand _ Price {..}   = False
 matchCommand _ _            = True
 
 

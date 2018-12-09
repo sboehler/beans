@@ -23,12 +23,13 @@ import           Beans.Model                    ( Date
                                                 , Account
                                                 , format
                                                 )
+
 import qualified Data.List                     as List
-import           Beans.Accounts                 ( calculateAccountsForDays )
+import           Beans.Accounts                 ( sumUntil )
 import qualified Beans.Data.Map                as M
 import           Data.Text                      ( Text )
 import           Control.Monad.Catch            ( MonadThrow )
-import           Data.Maybe                     ( mapMaybe )
+import           Data.Maybe                     ( catMaybes )
 import           Beans.Table                    ( Cell(..)
                                                 , Table(..)
                                                 )
@@ -51,13 +52,14 @@ data Item = Item {
 createJournal :: MonadThrow m => JournalOptions -> Ledger -> m Journal
 createJournal JournalOptions {..} ledger = do
   let filtered = filter (Filter (T.unpack jrnOptRegex)) ledger
-      items    = mapMaybe (toItem jrnOptRegex)
-        $ filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
-  [accounts0, accounts1] <- calculateAccountsForDays filtered
-                                                     [jrnOptFrom, jrnOptTo]
+      items =
+        toItem' jrnOptRegex
+          <$> filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
+  (accounts0, l') <- sumUntil jrnOptFrom filtered mempty
+  (accounts1, _ ) <- sumUntil jrnOptTo l' accounts0
   return $ Journal
     { rHeader = accountsToItem jrnOptRegex jrnOptFrom accounts0
-    , rItems  = M.fromListM items
+    , rItems  = items
     , rFooter = accountsToItem jrnOptRegex jrnOptTo accounts1
     }
 
@@ -76,22 +78,19 @@ accountsToItem regex date accounts =
           }
         )
 
-toItem :: Text -> Dated Command -> Maybe (Date, [Item])
-toItem regex (Dated d Transaction { tDescription, tPostings })
-  = let (accountPostings, otherPostings) =
-          List.partition ((=~ T.unpack regex) . show . pAccount . fst)
-            $ M.toList tPostings
-    in  Just
-          ( d
-          , [ Item
-                { eDescription     = tDescription
-                , eAccountPostings = concat
-                  $   toAccountPostings
-                  <$> accountPostings
-                , eOtherPostings   = concat $ toOtherPostings <$> otherPostings
-                }
-            ]
-          )
+toItem' :: Text -> [Command] -> [Item]
+toItem' regex cmds = catMaybes $ fmap (toItem regex) cmds
+
+toItem :: Text -> Command -> Maybe Item
+toItem regex Transaction { tDescription, tPostings } =
+  let (accountPostings, otherPostings) =
+        List.partition ((=~ T.unpack regex) . show . pAccount . fst)
+          $ M.toList tPostings
+  in  Just $ Item
+        { eDescription     = tDescription
+        , eAccountPostings = concat $ toAccountPostings <$> accountPostings
+        , eOtherPostings   = concat $ toOtherPostings <$> otherPostings
+        }
  where
   toAccountPostings (_, amounts) = M.toList amounts
   toOtherPostings (Position {..}, amounts) = f pAccount <$> M.toList amounts

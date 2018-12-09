@@ -1,6 +1,6 @@
 module Beans.Accounts
   ( Accounts
-  , calculateAccountsForDays
+  , sumUntil
   , check
   , process
   )
@@ -16,11 +16,10 @@ import           Beans.Model                    ( Account
                                                 , Commodity
                                                 , Position(..)
                                                 , Command(..)
-                                                , Dated(..)
                                                 , balance
                                                 , isCompatible
                                                 )
-import qualified Data.List                     as L
+import           Data.Monoid                    ( mconcat )
 import qualified Beans.Data.Map                as M
 import           Control.Monad                  ( unless
                                                 , foldM
@@ -47,23 +46,11 @@ data AccountsException
 
 instance Exception AccountsException
 
-calculateAccountsForDays :: (MonadThrow m) => Ledger -> [Date] -> m [Accounts]
-calculateAccountsForDays ledger days =
-  calculateAccountsForDays' ledger days mempty
-
-calculateAccountsForDays'
-  :: (MonadThrow m) => Ledger -> [Date] -> Accounts -> m [Accounts]
-calculateAccountsForDays' ledger (day : days) accounts = do
-  (accounts', later) <- sumUntil ledger day accounts
-  (accounts' :) <$> calculateAccountsForDays' later days accounts'
-calculateAccountsForDays' _ [] _ = return []
-
-sumUntil :: (MonadThrow m) => Ledger -> Date -> Accounts -> m (Accounts, Ledger)
-sumUntil ledger day accounts = do
-  let (previous, later) = L.span ((<= day) . date) ledger
-  accounts' <- foldM process accounts . fmap undate $ previous
+sumUntil :: (MonadThrow m) => Date -> Ledger -> Accounts -> m (Accounts, Ledger)
+sumUntil date ledger accounts = do
+  let (previous, later) = M.partitionWithKey (const . (<= date)) ledger
+  accounts' <- foldM process accounts (mconcat $ M.elems previous)
   return (accounts', later)
-
 
 check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
 check restrictions open@Open { oAccount, oRestriction } = do

@@ -17,6 +17,7 @@ import           Beans.Model                    ( Account(..)
                                                 , Ledger
                                                 , Position(..)
                                                 , Command(..)
+                                                , Transaction(..)
                                                 , Flag(..)
                                                 , mkBalancedTransaction
                                                 )
@@ -87,20 +88,20 @@ valuate commands = do
   return $ commands' ++ valuationTransactions
 
 notBalance :: Command -> Bool
-notBalance Balance{} = False
-notBalance _         = True
+notBalance (CmdBalance _) = False
+notBalance _              = True
 
 
 processCommand
   :: (MonadThrow m, MonadState ValuationState m) => Command -> m Command
-processCommand Transaction {..} = do
+processCommand (CmdTransaction Transaction {..}) = do
   ValuationState { vsValuationAccount } <- get
   postings                              <- mapM valuateAmounts tPostings
-  mkBalancedTransaction tFlag
-                        tDescription
-                        tTags
-                        postings
-                        (Just vsValuationAccount)
+  CmdTransaction <$> mkBalancedTransaction tFlag
+                                           tDescription
+                                           tTags
+                                           postings
+                                           (Just vsValuationAccount)
 processCommand c = pure c
 
 valuateAmounts
@@ -149,7 +150,7 @@ createValuationTransaction
 createValuationTransaction position amount = do
   ValuationState { vsTarget, vsValuationAccount } <- get
   let desc = T.pack ("Valuation " <> show (pCommodity position))
-  return $ Transaction Complete desc [] $ M.fromListM
+  return $ CmdTransaction $ Transaction Complete desc [] $ M.fromListM
     [ (position, M.singleton vsTarget amount)
     , ( position { pAccount = vsValuationAccount }
       , M.singleton vsTarget (-amount)

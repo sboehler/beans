@@ -1,39 +1,5 @@
 {-# LANGUAGE DeriveTraversable #-}
-module Beans.Model
-  ( Accounts
-  , Amount
-  , Amounts
-  , AccountType(..)
-  , Commodity(..)
-  , Date(MinDate, MaxDate)
-  , fromGreg
-  , parseDate
-  , Lot(..)
-  , Filter(..)
-  , Position(..)
-  , balance
-  , summarize
-  , eraseLots
-  , format
-  , Account(..)
-  , Command(..)
-  , Dated(..)
-  , between
-  , Directive(..)
-  , mkBalancedTransaction
-  , Posting
-  , Include(..)
-  , Option(..)
-  , Tag(..)
-  , Flag(..)
-  , Ledger
-  , build
-  , filter
-  , Restrictions
-  , Restriction(..)
-  , isCompatible
-  )
-where
+module Beans.Model where
 
 
 
@@ -171,31 +137,40 @@ between :: Date -> Date -> Date -> Bool
 between from to d = from <= d && d <= to
 
 data Command
-  = Open {
+  = CmdOpen Open
+  | CmdPrice Price
+  | CmdTransaction Transaction
+  | CmdBalance Balance
+  | CmdClose Close
+  deriving (Eq, Show, Ord)
+
+data Open  = Open {
     oAccount :: Account
   , oRestriction :: Restriction
-  }
-  | Price {
+  } deriving (Eq, Show, Ord)
+
+data Price =  Price {
     prCommodity :: Commodity
   , prPrice :: Scientific
   , prTargetCommodity :: Commodity
-  }
-  | Transaction {
+  } deriving (Eq, Show, Ord)
+
+data Transaction = Transaction {
     tFlag :: Flag
   , tDescription :: Text
   , tTags :: [Tag]
   , tPostings :: Accounts
-  }
-  | Balance {
+  } deriving (Eq, Show, Ord)
+
+data Balance = Balance {
     bAccount :: Account
   , bAmount :: Amount
   , bCommodity :: Commodity
-  }
-  | Close {
-    cAccount :: Account
-  }
-  deriving (Eq, Show, Ord)
+  }deriving (Eq, Show, Ord)
 
+newtype Close = Close {
+    cAccount :: Account
+  }  deriving (Eq, Show, Ord)
 
 data Flag
   = Complete
@@ -233,7 +208,7 @@ mkBalancedTransaction
   -> [Tag]
   -> Accounts
   -> Maybe Account
-  -> m Command
+  -> m Transaction
 mkBalancedTransaction flag desc tags postings wildcard =
   Transaction flag desc tags <$> completePostings wildcard postings
 
@@ -283,18 +258,20 @@ filter (PeriodFilter from to) = M.filterWithKey (const . between from to)
 filter NoFilter               = id
 
 filterPostings :: String -> Command -> Command
-filterPostings regex Transaction { tPostings, ..} = Transaction
-  { tPostings = M.filterKeys ((=~ regex) . show . pAccount) tPostings
-  , ..
-  }
+filterPostings regex (CmdTransaction Transaction { tPostings, ..}) =
+  CmdTransaction $ Transaction
+    { tPostings = M.filterKeys ((=~ regex) . show . pAccount) tPostings
+    , ..
+    }
 filterPostings _ command = command
 
 matchCommand :: String -> Command -> Bool
-matchCommand regex Transaction { tPostings } = (any match . M.keys) tPostings
+matchCommand regex (CmdTransaction Transaction { tPostings }) =
+  (any match . M.keys) tPostings
   where match = (=~ regex) . show . pAccount
-matchCommand _ Balance {..} = False
-matchCommand _ Price {..}   = False
-matchCommand _ _            = True
+matchCommand _ (CmdBalance _) = False
+matchCommand _ (CmdPrice   _) = False
+matchCommand _ _              = True
 
 
 -- Restrictions

@@ -9,6 +9,7 @@ module Beans.Prices
 where
 
 import           Beans.Model                    ( Command(..)
+                                                , Price(..)
                                                 , Commodity(..)
                                                 )
 import           Control.Monad.Catch            ( Exception
@@ -38,22 +39,21 @@ data PriceException
 instance Exception PriceException
 
 updatePrices :: Prices -> Command -> Prices
-updatePrices prices command =
-  let prices' = addPrice prices command in addPrice prices' (invert command)
+updatePrices prices (CmdPrice p) =
+  let prices' = addPrice prices p in addPrice prices' (invert p)
+updatePrices p _ = p
 
-addPrice :: Prices -> Command -> Prices
+addPrice :: Prices -> Price -> Prices
 addPrice prices Price { prCommodity, prPrice, prTargetCommodity } =
   let p = M.findWithDefault mempty prCommodity prices
   in  M.insert prCommodity (M.insert prTargetCommodity prPrice p) prices
-addPrice prices _ = prices
 
-invert :: Command -> Command
+invert :: Price -> Price
 invert Price { prCommodity, prTargetCommodity, prPrice } = Price
   { prCommodity       = prTargetCommodity
   , prTargetCommodity = prCommodity
   , prPrice           = 1 `sdiv` prPrice
   }
-invert c = c
 
 normalize :: Prices -> Commodity -> NormalizedPrices
 normalize prices current = normalize' prices mempty (M.singleton current 1.0)

@@ -11,6 +11,7 @@ import           Text.Regex.PCRE                ( (=~) )
 
 import           Beans.Options                  ( JournalOptions(..) )
 import           Beans.Model                    ( Date
+                                                , Transaction(..)
                                                 , Command(..)
                                                 , Filter(..)
                                                 , filter
@@ -82,7 +83,7 @@ toItem' :: Text -> [Command] -> [Item]
 toItem' regex cmds = catMaybes $ fmap (toItem regex) cmds
 
 toItem :: Text -> Command -> Maybe Item
-toItem regex Transaction { tDescription, tPostings } =
+toItem regex (CmdTransaction Transaction { tDescription, tPostings }) =
   let (accountPostings, otherPostings) =
         List.partition ((=~ T.unpack regex) . show . pAccount . fst)
           $ M.toList tPostings

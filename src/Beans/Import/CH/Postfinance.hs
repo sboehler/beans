@@ -17,7 +17,8 @@ import           Beans.Import.Common            ( Config(..)
                                                 )
 import           Data.Char                      ( isAlphaNum )
 import           Beans.Model                    ( Amount
-                                                , Command(Transaction)
+                                                , Command(CmdTransaction)
+                                                , Transaction(..)
                                                 , Commodity(Commodity)
                                                 , Date
                                                 , parseDate
@@ -87,7 +88,9 @@ command commodity = do
           , M.singleton commodity (-amount)
           )
         ]
-  return $ Dated date $ Transaction Complete description [] bookings
+  return $ Dated
+    date
+    (CmdTransaction (Transaction Complete description [] bookings))
 
 entryAmount :: Parser Amount
 entryAmount = field $ choice [credit, debit]

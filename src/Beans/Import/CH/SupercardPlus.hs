@@ -13,7 +13,8 @@ import           Beans.Import.Common            ( Config(..)
                                                 )
 import qualified Beans.Data.Map                as M
 import           Beans.Model                    ( Amount
-                                                , Command(Transaction)
+                                                , Command(CmdTransaction)
+                                                , Transaction(..)
                                                 , Commodity(Commodity)
                                                 , Date
                                                 , parseDate
@@ -89,7 +90,7 @@ command = do
           , M.singleton commodity (-amount)
           )
         ]
-  return $ Dated date $ Transaction Complete desc [] bookings
+  return $ Dated date $ CmdTransaction $ Transaction Complete desc [] bookings
 
 dateField :: Parser Date
 dateField = do

@@ -10,6 +10,7 @@ module Beans.Data.Map
   , empty
   , lookup
   , keys
+  , elems
   , minus
   , filterKeys
   , findWithDefaultM
@@ -134,3 +135,6 @@ delete k = Map . M.delete k . unmap
 
 keys :: Map k a -> [k]
 keys = M.keys . unmap
+
+elems :: Map k a -> [a]
+elems = M.elems . unmap

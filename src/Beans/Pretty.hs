@@ -105,4 +105,4 @@ prettyPrint :: [Directive] -> IO ()
 prettyPrint = print . vsep . map ((<> hardline) . pretty)
 
 prettyPrintLedger :: Ledger -> IO ()
-prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty)
+prettyPrintLedger = print . vsep . fmap ((<> hardline) . pretty) . M.toList

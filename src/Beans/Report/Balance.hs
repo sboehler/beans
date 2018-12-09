@@ -21,7 +21,7 @@ import           Beans.Model                    ( Accounts
                                                 , eraseLots
                                                 , summarize
                                                 )
-import           Beans.Accounts                 ( calculateAccountsForDays )
+import           Beans.Accounts                 ( sumUntil )
 import           Data.Group                     ( invert )
 import qualified Beans.Data.Map                as M
 import           Beans.Pretty                   ( pretty )
@@ -71,8 +71,8 @@ instance Table BalanceSheet where
 -- Creating a report
 createBalance :: MonadThrow m => BalanceOptions -> Ledger -> m Balance
 createBalance BalanceOptions {..} ledger = do
-  [a0, a1] <- calculateAccountsForDays (filter balOptFilter ledger)
-                                       [balOptFrom, balOptTo]
+  (a0, l1) <- sumUntil balOptFrom (filter balOptFilter ledger) mempty
+  (a1, _ ) <- sumUntil balOptTo l1 a0
   let balance =
         eraseLots balOptLots
           . summarize balOptDepth
@@ -85,8 +85,8 @@ createBalance BalanceOptions {..} ledger = do
 -- Creating a report
 incomeStatement :: MonadThrow m => BalanceOptions -> Ledger -> m IncomeStatement
 incomeStatement BalanceOptions {..} ledger = do
-  let filtered = filter balOptFilter ledger
-  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo]
+  (a0, l1) <- sumUntil balOptFrom (filter balOptFilter ledger) mempty
+  (a1, _ ) <- sumUntil balOptTo l1 a0
   let balance =
         eraseLots balOptLots
           . summarize balOptDepth
@@ -105,8 +105,8 @@ incomeStatement BalanceOptions {..} ledger = do
 
 balanceSheet :: MonadThrow m => BalanceOptions -> Ledger -> m BalanceSheet
 balanceSheet BalanceOptions {..} ledger = do
-  let filtered = filter balOptFilter ledger
-  [a0, a1] <- calculateAccountsForDays filtered [balOptFrom, balOptTo]
+  (a0, l1) <- sumUntil balOptFrom (filter balOptFilter ledger) mempty
+  (a1, _ ) <- sumUntil balOptTo l1 a0
   let
     balance =
       eraseLots balOptLots

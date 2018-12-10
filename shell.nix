@@ -13,9 +13,9 @@ let
   haskellPackages = pkgs.haskell.packages.${compiler};
 
   # Haskell IDE Engine
-  hies = (import (builtins.fetchTarball {
-    url = "https://github.com/domenkozar/hie-nix/tarball/master";
-    sha256 = "0hilxgmh5aaxg37cbdwixwnnripvjqxbvi8cjzqrk7rpfafv352q";
+  hies = (import (builtins.fetchGit {
+    url = "https://github.com/domenkozar/hie-nix/";
+    rev = "a7ef4c4ceef1dbf46aabff68a4b9bd86d41d0886";
   }) {}).hies;
 
   hspkgs = (
@@ -32,14 +32,15 @@ let
 
   drv = hspkgs.callPackage f {};
 
-  drvWithTools = pkgs.haskell.lib.addBuildDepends drv [
+  drvWithTools = pkgs.haskell.lib.addBuildDepends drv (with hspkgs; [
     hies
-    hspkgs.ghcid
-    hspkgs.cabal-install
-    hspkgs.brittany
-    hspkgs.hlint
-    hspkgs.stylish-haskell
-  ];
+    ghcid
+    cabal-install
+    brittany
+    Cabal_2_4_1_0
+    hlint
+    stylish-haskell
+  ]);
 
 in
 

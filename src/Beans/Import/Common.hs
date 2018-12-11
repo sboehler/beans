@@ -82,7 +82,11 @@ parseLatin1
   => Parser [Dated Command]
   -> m [Dated Command]
 parseLatin1 parser =
-  asks _configFile >>= liftIO . B.readFile >>= parseCommands parser . decodeLatin1
+  asks _configFile
+    >>= liftIO
+    .   B.readFile
+    >>= parseCommands parser
+    .   decodeLatin1
 
 parseUtf8
   :: (MonadIO m, MonadThrow m, MonadReader Config m)

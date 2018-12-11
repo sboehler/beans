@@ -31,6 +31,11 @@ module Beans.Data.Map
   )
 where
 
+import           Control.Lens                   ( FunctorWithIndex
+                                                , FoldableWithIndex
+                                                , TraversableWithIndex
+                                                , itraverse
+                                                )
 import           Data.Foldable                  ( Foldable )
 import           Data.Group                     ( Group(..) )
 import qualified Data.Map.Strict               as M
@@ -55,6 +60,11 @@ instance (Group v, Ord k) => Group (Map k v) where
 
 instance (Show k, Show v) => Show (Map k v) where
   show = show . unmap
+
+instance FunctorWithIndex k (Map k)
+instance FoldableWithIndex k (Map k)
+instance TraversableWithIndex k (Map k) where
+  itraverse f (Map m) = Map <$> M.traverseWithKey f m
 
 minus :: (Group v, Ord k) => Map k v -> Map k v -> Map k v
 minus m1 m2 = m1 `mappend` (invert <$> m2)

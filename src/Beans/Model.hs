@@ -50,8 +50,8 @@ parseDate :: String -> String -> Maybe Date
 parseDate fmt input = Date <$> parseTimeM False defaultTimeLocale fmt input
 
 instance Show Date where
-  show MinDate = "<MIN_DATE>"
-  show MaxDate = "<MAX_DATE>"
+  show MinDate  = "<MIN_DATE>"
+  show MaxDate  = "<MAX_DATE>"
   show (Date d) = show d
 
 type Amounts = M.Map Commodity Amount
@@ -95,29 +95,12 @@ data Lot = Lot
   } deriving (Eq, Ord)
 
 instance Show Lot where
-  show Lot {_lotPrice, _lotTargetCommodity, _lotDate, _lotLabel} =
+  show Lot { _lotPrice, _lotTargetCommodity, _lotDate, _lotLabel } =
     let price = show _lotPrice ++ " " ++ show _lotTargetCommodity
-        elems = catMaybes [Just price, Just $ show _lotDate, show <$> _lotLabel]
-     in "{ " ++ L.intercalate ", " elems ++ " }"
+        elems =
+          catMaybes [Just price, Just $ show _lotDate, show <$> _lotLabel]
+    in  "{ " ++ L.intercalate ", " elems ++ " }"
 
-balance :: Account -> Commodity -> Accounts -> Amount
-balance accountName commodityName =
-  M.findWithDefaultM commodityName . fold . M.filterKeys f
- where
-  f Position { _positionAccount, _positionCommodity } =
-    accountName == _positionAccount && commodityName == _positionCommodity
-
-summarize :: Maybe Int -> Accounts -> Accounts
-summarize (Just d) =
-  M.mapKeysM $ \p -> p { _positionAccount = shorten d (_positionAccount p) }
-summarize Nothing = id
-
-shorten :: Int -> Account -> Account
-shorten d (Account t a) = Account t (take d a)
-
-eraseLots :: Bool -> Accounts -> Accounts
-eraseLots False = M.mapKeysM (\p -> p { _positionLot = Nothing })
-eraseLots True  = id
 
 data Directive
   = DatedCommandDirective (Dated Command)
@@ -246,32 +229,7 @@ data Filter
                  Date
   deriving (Eq, Show)
 
-filter :: Filter -> Ledger -> Ledger
-filter (StrictFilter regex) =
-  fmap (fmap (filterPostings regex)) . filter (Filter regex)
-filter (Filter regex) =
-  M.filter (/= mempty) . fmap (L.filter (matchCommand regex))
-filter (PeriodFilter dateFrom dateTo) =
-  M.filterWithKey (const . between dateFrom dateTo)
-filter NoFilter = id
 
-filterPostings :: String -> Command -> Command
-filterPostings regex (CmdTransaction Transaction { _transactionPostings, ..}) =
-  CmdTransaction $ Transaction
-    { _transactionPostings = M.filterKeys
-      ((=~ regex) . show . _positionAccount)
-      _transactionPostings
-    , ..
-    }
-filterPostings _ command = command
-
-matchCommand :: String -> Command -> Bool
-matchCommand regex (CmdTransaction Transaction { _transactionPostings }) =
-  (any match . M.keys) _transactionPostings
-  where match = (=~ regex) . show . _positionAccount
-matchCommand _ (CmdBalance _) = False
-matchCommand _ (CmdPrice   _) = False
-matchCommand _ _              = True
 
 -- Restrictions
 type Restrictions = M.Map Account Restriction
@@ -283,12 +241,12 @@ data Restriction
 
 instance Semigroup Restriction where
   RestrictedTo x <> RestrictedTo y = RestrictedTo (x `L.union` y)
-  _ <> _ = NoRestriction
+  _              <> _              = NoRestriction
 
 instance Monoid Restriction where
   mempty = RestrictedTo []
   RestrictedTo x `mappend` RestrictedTo y = RestrictedTo (x `L.union` y)
-  _ `mappend` _ = NoRestriction
+  _              `mappend` _              = NoRestriction
 
 isCompatible :: Restriction -> Commodity -> Bool
 isCompatible NoRestriction     = const True
@@ -302,3 +260,53 @@ makeFields ''Price
 makeFields ''Balance
 makeFields ''Account
 makeFields ''Position
+
+
+balance :: Account -> Commodity -> Accounts -> Amount
+balance accountName commodityName =
+  M.findWithDefaultM commodityName . fold . M.filterKeys
+    (\pos -> pos ^. account == accountName && pos ^. commodity == commodityName)
+
+
+filter :: Filter -> Ledger -> Ledger
+filter (StrictFilter regex) =
+--  fmap (fmap (filterPostings regex)) . filter (Filter regex)
+  (mapped . mapped . _CmdTransaction . postings %~ M.filterKeys
+      (matchAccount regex)
+    )
+    . filter (Filter regex)
+filter (Filter regex) =
+  M.filter (not . null) . fmap (L.filter (matchCommand regex))
+filter (PeriodFilter dateFrom dateTo) =
+  M.filterWithKey (const . between dateFrom dateTo)
+filter NoFilter = id
+
+filterPostings :: String -> Command -> Command
+filterPostings r = _CmdTransaction . postings %~ M.filterKeys (matchAccount r)
+
+matchCommand :: String -> Command -> Bool
+matchCommand regex (CmdTransaction t) =
+  anyOf (postings . ifolded . asIndex) (matchAccount regex) t
+matchCommand _ (CmdBalance _) = False
+matchCommand _ (CmdPrice   _) = False
+matchCommand _ _              = True
+
+
+
+matchAccount :: String -> Position -> Bool
+matchAccount regex = match regex . _positionAccount
+
+match :: Show s => String -> s -> Bool
+match regex = (=~ regex) . show
+
+
+summarize :: Maybe Int -> Accounts -> Accounts
+summarize (Just d) = M.mapKeysM $ account %~ shorten d
+summarize Nothing  = id
+
+shorten :: Int -> Account -> Account
+shorten d = segments %~ take d
+
+eraseLots :: Bool -> Accounts -> Accounts
+eraseLots False = M.mapKeysM $ lot .~ Nothing
+eraseLots True  = id

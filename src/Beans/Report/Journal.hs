@@ -30,7 +30,7 @@ import           Beans.Accounts                 ( sumUntil )
 import qualified Beans.Data.Map                as M
 import           Data.Text                      ( Text )
 import           Control.Monad.Catch            ( MonadThrow )
-import           Data.Maybe                     ( catMaybes )
+import           Data.Maybe                     ( mapMaybe )
 import           Beans.Table                    ( Cell(..)
                                                 , Table(..)
                                                 )
@@ -80,7 +80,7 @@ accountsToItem regex date accounts =
         )
 
 toItem' :: Text -> [Command] -> [Item]
-toItem' regex cmds = catMaybes $ fmap (toItem regex) cmds
+toItem' regex = mapMaybe (toItem regex)
 
 toItem :: Text -> Command -> Maybe Item
 toItem regex (CmdTransaction Transaction { _transactionDescription, _transactionPostings })

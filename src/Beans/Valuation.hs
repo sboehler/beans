@@ -70,10 +70,9 @@ valuate commands = do
   valuationTransactions <- adjustValuationForAccounts
   commands'             <- mapM processCommand $ filter notBalance commands
   return $ commands' ++ valuationTransactions
-
-notBalance :: Command -> Bool
-notBalance (CmdBalance _) = False
-notBalance _              = True
+ where
+  notBalance (CmdBalance _) = False
+  notBalance _              = True
 
 
 processCommand
@@ -100,33 +99,31 @@ valuateAmount (c, a) = do
   tc <- use target
   if tc == c
     then return (c, a)
-    else do
-      p <- use normalizedPrices >>= lookupPrice c
-      return (tc, a * Sum p)
+    else use normalizedPrices >>= lookupPrice c >>= \p -> return (tc, a * Sum p)
 
 adjustValuationForAccounts
   :: (MonadThrow m, MonadState ValuationState m) => m [Command]
-adjustValuationForAccounts = do
-  a <- M.toList <$> use prevAccounts
-  concat <$> sequence (adjustValuationForAccount <$> a)
+adjustValuationForAccounts = concat <$> do
+  uses prevAccounts M.toList >>= mapM (uncurry adjustValuationForAccount)
 
 adjustValuationForAccount
   :: (MonadThrow m, MonadState ValuationState m)
-  => (Position, Amounts)
+  => Position
+  -> Amounts
   -> m [Command]
-adjustValuationForAccount (k, amounts) =
-  catMaybes <$> mapM (adjustValuationForAmount k) (M.toList amounts)
+adjustValuationForAccount position amounts =
+  catMaybes <$> mapM (adjustValuationForAmount position) (M.toList amounts)
 
 adjustValuationForAmount
   :: (MonadThrow m, Monad m, MonadState ValuationState m)
   => Position
   -> (Commodity, Amount)
   -> m (Maybe Command)
-adjustValuationForAmount k (c, a) = do
+adjustValuationForAmount pos (c, a) = do
   v0 <- use prevNormalizedPrices >>= lookupPrice c
   v1 <- use normalizedPrices >>= lookupPrice c
-  if v0 /= v1 && k ^. account . accountType `elem` [Assets, Liabilities]
-    then Just <$> createValuationTransaction k (a * Sum (v1 - v0))
+  if v0 /= v1 && pos ^. account . accountType `elem` [Assets, Liabilities]
+    then Just <$> createValuationTransaction pos (a * Sum (v1 - v0))
     else return Nothing
 
 createValuationTransaction

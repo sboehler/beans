@@ -7,20 +7,7 @@ where
 import           Beans.Accounts                 ( check
                                                 , process
                                                 )
-import           Beans.Model                    ( Account(..)
-                                                , Restrictions
-                                                , AccountType(..)
-                                                , Accounts
-                                                , Amount
-                                                , Amounts
-                                                , Commodity(..)
-                                                , Ledger
-                                                , Position(..)
-                                                , Command(..)
-                                                , Transaction(..)
-                                                , Flag(..)
-                                                , mkBalancedTransaction
-                                                )
+import           Beans.Model             hiding ( filter )
 import           Beans.Options                  ( Valuation(..) )
 import qualified Beans.Data.Map                as M
 import           Beans.Prices                   ( NormalizedPrices
@@ -29,60 +16,57 @@ import           Beans.Prices                   ( NormalizedPrices
                                                 , normalize
                                                 , updatePrices
                                                 )
-import           Control.Monad                  ( foldM )
 import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.State            ( MonadState
                                                 , evalStateT
+                                                , StateT
                                                 , get
-                                                , gets
-                                                , put
                                                 )
+import           Data.Maybe                     ( catMaybes )
 import           Data.Monoid                    ( Sum(Sum) )
-import qualified Data.List                     as L
 import qualified Data.Text                     as T
+import           Control.Lens
 
 
 data ValuationState = ValuationState
-  { vsPrices               :: Prices
-  , vsPrevNormalizedPrices :: NormalizedPrices
-  , vsNormalizedPrices     :: NormalizedPrices
-  , vsPrevAccounts         :: Accounts
-  , vsAccounts             :: Accounts
-  , vsTarget               :: Commodity
-  , vsValuationAccount     :: Account
-  , vsRestrictions :: Restrictions
+  { _valuationStatePrices               :: Prices
+  , _valuationStatePrevNormalizedPrices :: NormalizedPrices
+  , _valuationStateNormalizedPrices     :: NormalizedPrices
+  , _valuationStatePrevAccounts         :: Accounts
+  , _valuationStateAccounts             :: Accounts
+  , _valuationStateTarget               :: Commodity
+  , _valuationStateValuationAccount     :: Account
+  , _valuationStateRestrictions :: Restrictions
   }
 
+makeFields ''ValuationState
+
 valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
-valuateLedger (AtMarket target valuationAccount) ledger = evalStateT
+valuateLedger (AtMarket t v) ledger = evalStateT
   (mapM valuate ledger)
-  ValuationState
-    { vsPrices               = mempty
-    , vsPrevNormalizedPrices = mempty
-    , vsNormalizedPrices     = mempty
-    , vsPrevAccounts         = mempty
-    , vsAccounts             = mempty
-    , vsTarget               = target
-    , vsValuationAccount     = valuationAccount
-    , vsRestrictions         = mempty
-    }
+  ValuationState { _valuationStatePrices               = mempty
+                 , _valuationStatePrevNormalizedPrices = mempty
+                 , _valuationStateNormalizedPrices     = mempty
+                 , _valuationStatePrevAccounts         = mempty
+                 , _valuationStateAccounts             = mempty
+                 , _valuationStateTarget               = t
+                 , _valuationStateValuationAccount     = v
+                 , _valuationStateRestrictions         = mempty
+                 }
 valuateLedger _ ledger = pure ledger
 
 
-valuate
-  :: (MonadThrow m, MonadState ValuationState m) => [Command] -> m [Command]
+valuate :: (MonadThrow m) => [Command] -> StateT ValuationState m [Command]
 valuate commands = do
-  v@ValuationState {..} <- get
-  let vsPrices' = L.foldl' updatePrices vsPrices commands
-  vsRestrictions' <- foldM check vsRestrictions commands
-  vsAccounts'     <- foldM process vsAccounts commands
-  put $ v { vsPrices               = vsPrices'
-          , vsAccounts             = vsAccounts'
-          , vsRestrictions         = vsRestrictions'
-          , vsPrevNormalizedPrices = vsNormalizedPrices
-          , vsNormalizedPrices     = normalize vsPrices' vsTarget
-          , vsPrevAccounts         = vsAccounts
-          }
+  prevNormalizedPrices <~ use normalizedPrices
+  prevAccounts <~ use accounts
+
+  zoom restrictions $ mapM_ check commands
+  zoom accounts $ mapM process commands
+  zoom prices $ mapM_ updatePrices commands >> get
+
+  normalizedPrices <~ normalize <$> use prices <*> use target
+
   valuationTransactions <- adjustValuationForAccounts
   commands'             <- mapM processCommand $ filter notBalance commands
   return $ commands' ++ valuationTransactions
@@ -94,14 +78,14 @@ notBalance _              = True
 
 processCommand
   :: (MonadThrow m, MonadState ValuationState m) => Command -> m Command
-processCommand (CmdTransaction Transaction {..}) = do
-  ValuationState { vsValuationAccount } <- get
-  postings <- mapM valuateAmounts _transactionPostings
-  CmdTransaction <$> mkBalancedTransaction _transactionFlag
-                                           _transactionDescription
-                                           _transactionTags
-                                           postings
-                                           (Just vsValuationAccount)
+processCommand (CmdTransaction t) = do
+  p <- mapM valuateAmounts $ t ^. postings
+  v <- use valuationAccount
+  CmdTransaction <$> mkBalancedTransaction (t ^. flag)
+                                           (t ^. description)
+                                           (t ^. tags)
+                                           p
+                                           (Just v)
 processCommand c = pure c
 
 valuateAmounts
@@ -112,18 +96,18 @@ valuateAmount
   :: (MonadThrow m, MonadState ValuationState m)
   => (Commodity, Amount)
   -> m (Commodity, Amount)
-valuateAmount a@(commodity, amount) = do
-  tc <- gets vsTarget
-  if tc == commodity
-    then return a
+valuateAmount (c, a) = do
+  tc <- use target
+  if tc == c
+    then return (c, a)
     else do
-      price <- gets vsNormalizedPrices >>= lookupPrice commodity
-      return (tc, amount * Sum price)
+      p <- use normalizedPrices >>= lookupPrice c
+      return (tc, a * Sum p)
 
 adjustValuationForAccounts
   :: (MonadThrow m, MonadState ValuationState m) => m [Command]
 adjustValuationForAccounts = do
-  a <- M.toList <$> gets vsPrevAccounts
+  a <- M.toList <$> use prevAccounts
   concat <$> sequence (adjustValuationForAccount <$> a)
 
 adjustValuationForAccount
@@ -131,31 +115,25 @@ adjustValuationForAccount
   => (Position, Amounts)
   -> m [Command]
 adjustValuationForAccount (k, amounts) =
-  concat <$> mapM (adjustValuationForAmount k) (M.toList amounts)
+  catMaybes <$> mapM (adjustValuationForAmount k) (M.toList amounts)
 
 adjustValuationForAmount
-  :: (MonadThrow m, MonadState ValuationState m)
+  :: (MonadThrow m, Monad m, MonadState ValuationState m)
   => Position
   -> (Commodity, Amount)
-  -> m [Command]
-adjustValuationForAmount k (commodity, amount) = do
-  v0 <- gets vsPrevNormalizedPrices >>= lookupPrice commodity
-  v1 <- gets vsNormalizedPrices >>= lookupPrice commodity
-  if v0
-       /=     v1
-       &&     (_accountAccountType . _positionAccount) k
-       `elem` [Assets, Liabilities]
-    then pure <$> createValuationTransaction k (amount * Sum (v1 - v0))
-    else return []
+  -> m (Maybe Command)
+adjustValuationForAmount k (c, a) = do
+  v0 <- use prevNormalizedPrices >>= lookupPrice c
+  v1 <- use normalizedPrices >>= lookupPrice c
+  if v0 /= v1 && k ^. account . accountType `elem` [Assets, Liabilities]
+    then Just <$> createValuationTransaction k (a * Sum (v1 - v0))
+    else return Nothing
 
 createValuationTransaction
-  :: (MonadState ValuationState m) => Position -> Amount -> m Command
-createValuationTransaction position amount = do
-  ValuationState { vsTarget, vsValuationAccount } <- get
-  let desc = T.pack ("Valuation " <> show (_positionCommodity position))
+  :: (Monad m, MonadState ValuationState m) => Position -> Amount -> m Command
+createValuationTransaction p a = do
+  t <- use target
+  v <- use valuationAccount
+  let desc = T.pack ("Valuation " <> p ^. (commodity . to show))
   return $ CmdTransaction $ Transaction Complete desc [] $ M.fromListM
-    [ (position, M.singleton vsTarget amount)
-    , ( position { _positionAccount = vsValuationAccount }
-      , M.singleton vsTarget (-amount)
-      )
-    ]
+    [(p, M.singleton t a), (p & account .~ v, M.singleton t (-a))]

@@ -261,7 +261,6 @@ makeFields ''Balance
 makeFields ''Account
 makeFields ''Position
 
-
 balance :: Account -> Commodity -> Accounts -> Amount
 balance accountName commodityName =
   M.findWithDefaultM commodityName . fold . M.filterKeys

@@ -11,8 +11,12 @@ module Beans.Data.Map
   , lookup
   , keys
   , elems
+  , union
+  , difference
   , minus
   , filterKeys
+  , lookupMin
+  , findWithDefault
   , findWithDefaultM
   , foldlWithKey
   , fromListM
@@ -119,6 +123,9 @@ lookup k = M.lookup k . unmap
 findWithDefaultM :: (Ord k, Monoid a) => k -> Map k a -> a
 findWithDefaultM k = M.findWithDefault mempty k . unmap
 
+findWithDefault :: (Ord k) => a -> k -> Map k a -> a
+findWithDefault d k = M.findWithDefault d k . unmap
+
 lookupLEM :: (Monoid v, Ord k) => k -> Map k v -> v
 lookupLEM k = maybe mempty snd . M.lookupLE k . unmap
 
@@ -148,3 +155,12 @@ keys = M.keys . unmap
 
 elems :: Map k a -> [a]
 elems = M.elems . unmap
+
+union :: Ord k => Map k v -> Map k v -> Map k v
+union (Map m) (Map n) = Map $ n `M.union` m
+
+difference :: Ord k => Map k v -> Map k v -> Map k v
+difference (Map m) (Map n) = Map $ n `M.difference` m
+
+lookupMin :: Map k a -> Maybe (k, a)
+lookupMin (Map m) = M.lookupMin m

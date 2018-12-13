@@ -10,8 +10,14 @@ import           Beans.Model
 import           Data.Monoid                    ( mconcat )
 import qualified Beans.Data.Map                as M
 import           Control.Monad                  ( unless
-                                                , foldM
                                                 , when
+                                                )
+import           Control.Monad.State            ( MonadState
+                                                , get
+                                                , gets
+                                                , put
+                                                , modify
+                                                , evalStateT
                                                 )
 import           Control.Monad.Catch            ( Exception
                                                 , MonadThrow
@@ -37,24 +43,26 @@ instance Exception AccountsException
 sumUntil :: (MonadThrow m) => Date -> Ledger -> Accounts -> m (Accounts, Ledger)
 sumUntil date ledger accounts = do
   let (previous, later) = M.partitionWithKey (const . (<= date)) ledger
-  accounts' <- foldM process accounts (mconcat $ M.elems previous)
+  accounts' <- evalStateT (mapM_ process (mconcat $ M.elems previous) >> get)
+                          accounts
   return (accounts', later)
 
-check :: (MonadThrow m) => Restrictions -> Command -> m Restrictions
-check restrictions (CmdOpen open@Open { _openAccount, _openRestriction }) = do
+check :: (MonadState Restrictions m, MonadThrow m) => Command -> m ()
+check (CmdOpen open@Open { _openAccount, _openRestriction }) = do
+  restrictions <- get
   when (_openAccount `M.member` restrictions)
        (throwM $ AccountIsAlreadyOpen open)
-  return $ M.insert _openAccount _openRestriction restrictions
-check restrictions (CmdClose closing@Close { _closeAccount }) = do
-  let (r, remainingRestrictions) =
-        M.partitionWithKey (const . (== _closeAccount)) restrictions
+  put $ M.insert _openAccount _openRestriction restrictions
+check (CmdClose closing@Close { _closeAccount }) = do
+  (r, remainingRestrictions) <- gets
+    $ M.partitionWithKey (const . (== _closeAccount))
   when (null r) (throwM $ AccountIsNotOpen closing)
-  return remainingRestrictions
-check restrictions (CmdTransaction Transaction { _transactionPostings }) = do
-  mapM_ (g restrictions) $ M.toList _transactionPostings
-  return restrictions
+  put remainingRestrictions
+check (CmdTransaction Transaction { _transactionPostings }) =
+  mapM_ g (M.toList _transactionPostings)
  where
-  g r (Position { _positionAccount, _positionCommodity }, s) =
+  g (Position { _positionAccount, _positionCommodity }, s) = do
+    r <- get
     case M.lookup _positionAccount r of
       Nothing -> throwM $ BookingErrorAccountNotOpen _positionAccount
       Just r' -> unless
@@ -65,23 +73,23 @@ check restrictions (CmdTransaction Transaction { _transactionPostings }) = do
           (M.findWithDefaultM _positionCommodity s)
           r'
         )
-check restrictions (CmdBalance bal@Balance { _balanceAccount }) = do
+check (CmdBalance bal@Balance { _balanceAccount }) = do
+  restrictions <- get
   unless (_balanceAccount `M.member` restrictions)
     $ throwM (AccountDoesNotExist bal)
-  return restrictions
-check restrictions _ = pure restrictions
+check _ = pure ()
 
-process :: (MonadThrow m) => Accounts -> Command -> m Accounts
-process accounts (CmdClose command@Close { _closeAccount }) = do
-  let (deletedAccount, remainingAccounts) =
-        M.partitionKeys ((== _closeAccount) . _positionAccount) accounts
-  unless ((all . all) (== 0) deletedAccount) (throwM $ BalanceIsNotZero command)
-  return remainingAccounts
-process accounts (CmdTransaction Transaction { _transactionPostings }) =
-  return $ accounts `mappend` _transactionPostings
-process accounts (CmdBalance bal@Balance { _balanceAccount, _balanceAmount, _balanceCommodity })
+process :: (MonadState Accounts m, MonadThrow m) => Command -> m ()
+process (CmdClose command@Close { _closeAccount }) = do
+  (deletedAccounts, remainingAccounts) <-
+    gets $ M.partitionKeys ((== _closeAccount) . _positionAccount)
+  unless ((all . all) (== 0) deletedAccounts)
+         (throwM $ BalanceIsNotZero command)
+  put remainingAccounts
+process (CmdTransaction Transaction { _transactionPostings }) =
+  modify (mappend _transactionPostings)
+process (CmdBalance bal@Balance { _balanceAccount, _balanceAmount, _balanceCommodity })
   = do
-    let s = balance _balanceAccount _balanceCommodity accounts
+    s <- gets $ balance _balanceAccount _balanceCommodity
     unless (s == _balanceAmount) (throwM $ BalanceDoesNotMatch bal s)
-    return accounts
-process accounts _ = pure accounts
+process _ = pure ()

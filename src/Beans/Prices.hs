@@ -12,6 +12,10 @@ import           Beans.Model                    ( Command(..)
                                                 , Price(..)
                                                 , Commodity(..)
                                                 )
+import           Control.Monad.State            ( StateT
+                                                , get
+                                                , put
+                                                )
 import           Control.Monad.Catch            ( Exception
                                                 , MonadThrow
                                                 , throwM
@@ -38,10 +42,13 @@ data PriceException
 
 instance Exception PriceException
 
-updatePrices :: Prices -> Command -> Prices
-updatePrices prices (CmdPrice p) =
-  let prices' = addPrice prices p in addPrice prices' (invert p)
-updatePrices p _ = p
+updatePrices :: Monad m => Command -> StateT Prices m ()
+updatePrices (CmdPrice p) = do
+  prices <- get
+  let prices'  = addPrice prices p
+      prices'' = addPrice prices' (invert p)
+  put prices''
+updatePrices _ = pure ()
 
 addPrice :: Prices -> Price -> Prices
 addPrice prices Price { _priceCommodity, _pricePrice, _priceTargetCommodity } =

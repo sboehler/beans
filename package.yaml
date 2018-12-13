@@ -26,6 +26,7 @@ default-extensions:
 - LambdaCase
 - FlexibleContexts
 - TypeFamilies
+- StandaloneDeriving
 - MultiParamTypeClasses
 - FunctionalDependencies
 - TemplateHaskell

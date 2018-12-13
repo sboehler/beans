@@ -209,7 +209,7 @@ groupLabeledPositions labeledPositions = Balance positions
                                                  subsections
                                                  (positions <> subtotals)
  where
-  positions = M.findWithDefaultM mempty labeledPositions
+  positions = M.findWithDefaultM [] labeledPositions
   subsections =
     groupLabeledPositions <$> splitBalance (M.delete mempty labeledPositions)
   subtotals = fold (sSubtotals <$> subsections)

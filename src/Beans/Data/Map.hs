@@ -39,6 +39,13 @@ import           Control.Lens                   ( FunctorWithIndex
                                                 , FoldableWithIndex
                                                 , TraversableWithIndex
                                                 , itraverse
+                                                , At
+                                                , at
+                                                , Ixed
+                                                , IxValue
+                                                , ix
+                                                , (<&>)
+                                                , Index
                                                 )
 import           Data.Foldable                  ( Foldable )
 import           Data.Group                     ( Group(..) )
@@ -51,7 +58,7 @@ import           Prelude                 hiding ( filter
 
 newtype Map k v = Map
   { unmap :: M.Map k v
-  } deriving (Eq, Ord, Functor, Traversable, Foldable)
+  } deriving (Eq, Ord, Show, Functor, Traversable, Foldable)
 
 instance (Semigroup v, Ord k) => Semigroup (Map k v) where
   (Map m1) <> (Map m2) = Map (M.unionWith (<>) m1 m2)
@@ -62,13 +69,21 @@ instance (Monoid v, Ord k) => Monoid (Map k v) where
 instance (Group v, Ord k) => Group (Map k v) where
   invert = fmap invert
 
-instance (Show k, Show v) => Show (Map k v) where
-  show = show . unmap
-
 instance FunctorWithIndex k (Map k)
 instance FoldableWithIndex k (Map k)
 instance TraversableWithIndex k (Map k) where
   itraverse f (Map m) = Map <$> M.traverseWithKey f m
+
+type instance IxValue (Map k a) = a
+type instance Index (Map k a) = k
+
+instance Ord k => Ixed (Map k a) where
+  ix k f m = case lookup k m of
+    Just v  -> f v <&> \v' -> insert k v' m
+    Nothing -> pure m
+
+instance Ord k => At (Map k a) where
+  at k f (Map m) = Map <$> M.alterF f k m
 
 minus :: (Group v, Ord k) => Map k v -> Map k v -> Map k v
 minus m1 m2 = m1 `mappend` (invert <$> m2)

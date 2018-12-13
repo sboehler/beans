@@ -8,13 +8,10 @@ module Beans.Prices
   )
 where
 
-import           Beans.Model                    ( Command(..)
-                                                , Price(..)
-                                                , Commodity(..)
-                                                )
+import           Beans.Model
 import           Control.Monad.State            ( StateT
-                                                , get
-                                                , put
+                                                , modify
+                                                , gets
                                                 )
 import           Control.Monad.Catch            ( Exception
                                                 , MonadThrow
@@ -26,6 +23,7 @@ import           Data.Scientific                ( Scientific
                                                 , toRealFloat
                                                 )
 import           Data.Time.Calendar             ( Day )
+import           Control.Lens
 
 type PricesHistory = M.Map Day Prices
 
@@ -43,19 +41,14 @@ data PriceException
 instance Exception PriceException
 
 updatePrices :: Monad m => Command -> StateT Prices m ()
-updatePrices (CmdPrice p) = do
-  prices <- get
-  let prices'  = addPrice prices p
-      prices'' = addPrice prices' (invert p)
-  put prices''
-updatePrices _ = pure ()
+updatePrices (CmdPrice p) = addPrice p >> addPrice (invert p)
+updatePrices _            = pure ()
 
-addPrice :: Prices -> Price -> Prices
-addPrice prices Price { _priceCommodity, _pricePrice, _priceTargetCommodity } =
-  let p = M.findWithDefault mempty _priceCommodity prices
-  in  M.insert _priceCommodity
-               (M.insert _priceTargetCommodity _pricePrice p)
-               prices
+addPrice :: Monad m => Price -> StateT Prices m ()
+addPrice p = do
+  inner <- gets $ M.findWithDefault mempty (p ^. commodity)
+  let inner' = M.insert (p ^. targetCommodity) (p ^. price) inner
+  modify $ M.insert (p ^. commodity) inner'
 
 invert :: Price -> Price
 invert Price { _priceCommodity, _priceTargetCommodity, _pricePrice } = Price
@@ -70,13 +63,13 @@ normalize prices current = normalize' prices mempty (M.singleton current 1.0)
 normalize' :: Prices -> NormalizedPrices -> NormalizedPrices -> NormalizedPrices
 normalize' prices done todo = case M.lookupMin todo of
   Nothing -> done
-  Just (commodity, price) ->
-    let done' = M.insert commodity price done
-    in  case M.lookup commodity prices of
+  Just (c, p) ->
+    let done' = M.insert c p done
+    in  case M.lookup c prices of
           Nothing -> done'
           Just neighbors ->
-            let neighbors' = (* price) <$> (neighbors `M.difference` done')
-                todo'      = M.delete commodity todo `M.union` neighbors'
+            let neighbors' = (* p) <$> (neighbors `M.difference` done')
+                todo'      = M.delete c todo `M.union` neighbors'
             in  normalize' prices done' todo'
 
 lookupPrice :: (MonadThrow m) => Commodity -> NormalizedPrices -> m Scientific

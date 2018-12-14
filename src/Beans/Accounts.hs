@@ -27,11 +27,8 @@ import           Control.Lens
 
 data AccountsException
   = AccountIsNotOpen Close
-  | BookingErrorAccountNotOpen Account
-  | BookingErrorCommodityIncompatible Account
-                                      Commodity
-                                      Amount
-                                      Restriction
+  | BookingErrorAccountNotOpen Position
+  | BookingErrorCommodityIncompatible Position
   | AccountIsAlreadyOpen Open
   | BalanceIsNotZero Close
   | AccountDoesNotExist Balance
@@ -44,34 +41,28 @@ instance Exception AccountsException
 sumUntil :: (MonadThrow m) => Date -> Ledger -> Accounts -> m (Accounts, Ledger)
 sumUntil date ledger accounts = do
   let (previous, later) = M.partitionWithKey (const . (<= date)) ledger
-  accounts' <- evalStateT (mapM_ process (mconcat $ M.elems previous) >> get)
-                          accounts
+      commands          = mconcat $ M.elems previous
+  accounts' <- evalStateT (mapM_ process commands >> get) accounts
   return (accounts', later)
 
 check :: (MonadState Restrictions m, MonadThrow m) => Command -> m ()
 check (CmdOpen open) = do
   alreadyOpen <- gets $ M.member (open ^. account)
-  when alreadyOpen (throwM $ AccountIsAlreadyOpen open)
+  when alreadyOpen $ throwM $ AccountIsAlreadyOpen open
   modify $ M.insert (open ^. account) (open ^. restriction)
 check (CmdClose closing) = do
   (r, remainingRestrictions) <- gets
     $ M.partitionWithKey (const . (== closing ^. account))
   when (null r) (throwM $ AccountIsNotOpen closing)
   put remainingRestrictions
-check (CmdTransaction t) = mapM_ g (M.toList (t ^. postings))
+check (CmdTransaction t) = mapM_ checkPosition (t ^. postings . to M.keys)
  where
-  g (position, s) = do
-    r <- get
-    case M.lookup (position ^. account) r of
-      Nothing -> throwM $ BookingErrorAccountNotOpen (position ^. account)
-      Just r' -> unless
-        (isCompatible r' (position ^. commodity))
-        (throwM $ BookingErrorCommodityIncompatible
-          (position ^. account)
-          (position ^. commodity)
-          (M.findWithDefaultM (position ^. commodity) s)
-          r'
-        )
+  checkPosition position = do
+    r <- gets $ M.lookup (position ^. account)
+    case r of
+      Nothing -> throwM $ BookingErrorAccountNotOpen position
+      Just r' -> unless (isCompatible r' (position ^. commodity))
+                        (throwM $ BookingErrorCommodityIncompatible position)
 check (CmdBalance bal) = do
   isOpen <- gets $ M.member (bal ^. account)
   unless isOpen $ throwM (AccountDoesNotExist bal)

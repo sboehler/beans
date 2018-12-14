@@ -6,6 +6,7 @@ where
 
 import qualified Data.List                     as List
 import qualified Beans.Data.Map                as M
+import qualified Data.Text                     as T
 import           Data.Text                      ( pack
                                                 , Text
                                                 )
@@ -15,7 +16,11 @@ import           Beans.Import.Common            ( Config(..)
                                                 , askAccount
                                                 , parseLatin1
                                                 )
-import           Data.Char                      ( isAlphaNum )
+import           Data.Char                      ( isAlphaNum
+                                                , isSpace
+                                                , ord
+                                                , chr
+                                                )
 import           Beans.Model                    ( Amount
                                                 , Command(CmdTransaction)
                                                 , Transaction(..)
@@ -113,7 +118,11 @@ dateField = try $ do
 
 descriptionField :: Parser Text
 descriptionField =
-  quote >> (pack <$> manyTill anyChar (try (quote >> separator)))
+  quote
+    >> (T.unwords . filter (/= "") . T.split isSpace . pack <$> manyTill
+         anyChar
+         (try (quote >> separator))
+       )
   where quote = char '"'
 
 amountField :: Parser Amount

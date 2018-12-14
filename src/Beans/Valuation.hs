@@ -44,15 +44,16 @@ makeFields ''ValuationState
 valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
 valuateLedger (AtMarket t v) ledger = evalStateT
   (mapM valuate ledger)
-  ValuationState { _valuationStatePrices               = mempty
-                 , _valuationStatePrevNormalizedPrices = mempty
-                 , _valuationStateNormalizedPrices     = mempty
-                 , _valuationStatePrevAccounts         = mempty
-                 , _valuationStateAccounts             = mempty
-                 , _valuationStateTarget               = t
-                 , _valuationStateValuationAccount     = v
-                 , _valuationStateRestrictions         = mempty
-                 }
+  ValuationState
+    { _valuationStatePrices               = mempty
+    , _valuationStatePrevNormalizedPrices = mempty
+    , _valuationStateNormalizedPrices     = mempty
+    , _valuationStatePrevAccounts         = mempty
+    , _valuationStateAccounts             = mempty
+    , _valuationStateTarget               = t
+    , _valuationStateValuationAccount     = v
+    , _valuationStateRestrictions         = mempty
+    }
 valuateLedger _ ledger = pure ledger
 
 

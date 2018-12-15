@@ -39,6 +39,7 @@ import           Data.Functor                   ( ($>) )
 import           Data.Monoid                    ( Sum(Sum) )
 import           Data.Text                      ( Text
                                                 , cons
+                                                , pack
                                                 , unpack
                                                 )
 import           Data.Text.IO                   ( readFile )
@@ -53,6 +54,7 @@ import           Text.Megaparsec                ( Parsec
                                                 , eof
                                                 , getPosition
                                                 , many
+                                                , manyTill
                                                 , optional
                                                 , parse
                                                 , parseErrorPretty
@@ -65,6 +67,7 @@ import           Text.Megaparsec                ( Parsec
                                                 , (<|>)
                                                 )
 import           Text.Megaparsec.Char           ( char
+                                                , anyChar
                                                 , digitChar
                                                 , letterChar
                                                 , space1
@@ -132,9 +135,10 @@ braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
 
 quotedString :: Parser Text
-quotedString = lexeme
-  $ between quote quote (takeWhileP (Just "no quote") (/= '"'))
-  where quote = char '"'
+quotedString = lexeme $ quote >> t
+  where
+    quote = char '"'
+    t = pack <$> manyTill ((char '\\' >> anyChar) <|> anyChar) quote
 
 lot :: Date -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)

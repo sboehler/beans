@@ -16,11 +16,7 @@ import           Beans.Import.Common            ( Config(..)
                                                 , askAccount
                                                 , parseLatin1
                                                 )
-import           Data.Char                      ( isAlphaNum
-                                                , isSpace
-                                                , ord
-                                                , chr
-                                                )
+import           Data.Char                      ( isAlphaNum )
 import           Beans.Model                    ( Amount
                                                 , Command(CmdTransaction)
                                                 , Transaction(..)
@@ -119,11 +115,15 @@ dateField = try $ do
 descriptionField :: Parser Text
 descriptionField =
   quote
-    >> (T.unwords . filter (/= "") . T.split isSpace . pack <$> manyTill
+    >> (T.concatMap replace . pack <$> manyTill
          anyChar
          (try (quote >> separator))
        )
   where quote = char '"'
+        replace '\n' = " "
+        replace '\r' = ""
+        replace '"' = "\\\""
+        replace c = T.singleton c
 
 amountField :: Parser Amount
 amountField = Sum <$> L.signed (pure ()) L.scientific

@@ -9,7 +9,7 @@ where
 
 import           Beans.Model
 import qualified Beans.Data.Map                as M
-import qualified Data.Text as T
+import qualified Data.Text                     as T
 import           Data.Monoid                    ( Sum(..) )
 import           Data.Scientific                ( Scientific
                                                 , formatScientific

@@ -9,6 +9,7 @@ where
 
 import           Beans.Model
 import qualified Beans.Data.Map                as M
+import qualified Data.Text as T
 import           Data.Monoid                    ( Sum(..) )
 import           Data.Scientific                ( Scientific
                                                 , formatScientific
@@ -71,8 +72,12 @@ instance Pretty Command where
 instance Pretty Transaction where
   pretty Transaction {..} =
     pretty _transactionFlag <+>
-    dquotes (pretty _transactionDescription) <+>
+    dquotes (pretty $ quote _transactionDescription) <+>
     cat (pretty <$> _transactionTags) <> line <> (indent 2 . vcat) (prettyAccounts _transactionPostings) <> hardline
+
+quote :: T.Text -> T.Text
+quote = T.replace "\"" "\\\""
+
 instance Pretty Balance where
   pretty Balance {_balanceAccount, _balanceAmount, _balanceCommodity} =
     "balance" <+> pretty _balanceAccount <+> pretty _balanceAmount <+> pretty _balanceCommodity

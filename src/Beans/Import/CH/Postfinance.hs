@@ -122,7 +122,7 @@ descriptionField =
   where quote = char '"'
         replace '\n' = " "
         replace '\r' = ""
-        replace '"' = "\\\""
+        replace '"' = "\""
         replace c = T.singleton c
 
 amountField :: Parser Amount

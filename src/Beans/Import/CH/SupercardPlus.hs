@@ -85,9 +85,9 @@ command = do
         ]
   otherAccount <- askAccount $ Context date "expense" desc amount commodity name
   let bookings = M.fromListM
-        [ (Position account commodity Nothing, M.singleton commodity amount)
+        [ (Position account commodity Nothing, M.singleton commodity (-amount))
         , ( Position otherAccount commodity Nothing
-          , M.singleton commodity (-amount)
+          , M.singleton commodity amount
           )
         ]
   return $ Dated date $ CmdTransaction $ Transaction Complete desc [] bookings

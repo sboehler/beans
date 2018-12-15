@@ -39,8 +39,8 @@ data AccountsException
 instance Exception AccountsException
 
 sumUntil :: (MonadThrow m) => Date -> Ledger -> Accounts -> m (Accounts, Ledger)
-sumUntil date ledger accounts = do
-  let (previous, later) = M.partitionWithKey (const . (<= date)) ledger
+sumUntil d ledger accounts = do
+  let (previous, later) = M.partitionWithKey (const . (<= d)) ledger
       commands          = mconcat $ M.elems previous
   accounts' <- evalStateT (mapM_ process commands >> get) accounts
   return (accounts', later)

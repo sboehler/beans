@@ -115,15 +115,15 @@ dateField = try $ do
 descriptionField :: Parser Text
 descriptionField =
   quote
-    >> (T.concatMap replace . pack <$> manyTill
-         anyChar
-         (try (quote >> separator))
+    >> (T.concatMap replace . pack <$> manyTill anyChar
+                                                (try (quote >> separator))
        )
-  where quote = char '"'
-        replace '\n' = " "
-        replace '\r' = ""
-        replace '"' = "\""
-        replace c = T.singleton c
+ where
+  quote = char '"'
+  replace '\n' = " "
+  replace '\r' = ""
+  replace '"'  = "\""
+  replace c    = T.singleton c
 
 amountField :: Parser Amount
 amountField = Sum <$> L.signed (pure ()) L.scientific

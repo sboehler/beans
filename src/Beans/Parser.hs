@@ -136,9 +136,9 @@ braces = between (symbol "{") (symbol "}")
 
 quotedString :: Parser Text
 quotedString = lexeme $ quote >> t
-  where
-    quote = char '"'
-    t = pack <$> manyTill ((char '\\' >> anyChar) <|> anyChar) quote
+ where
+  quote = char '"'
+  t     = pack <$> manyTill ((char '\\' >> anyChar) <|> anyChar) quote
 
 lot :: Date -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)

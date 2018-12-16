@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 58769838d6faa0b0a2476a3fdcb587ab409a9065aae440b9c2e2a652f3c0d0ab
+-- hash: 7fbdac822daad8a40541a4e470c33f0e58fca9cdd7a04bbf03cd3c8c611cddb5
 
 name:           beans
 version:        0.0.2.0
@@ -38,6 +38,7 @@ library
       Beans.Import.DSL
       Beans.Import.US.InteractiveBrokers
       Beans.Lib
+      Beans.Megaparsec
       Beans.Model
       Beans.Options
       Beans.Parser
@@ -55,7 +56,8 @@ library
   default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
-      base >=4.7 && <5
+      Decimal
+    , base >=4.7 && <5
     , bifunctors
     , bytestring
     , containers

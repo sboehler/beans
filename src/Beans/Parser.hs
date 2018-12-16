@@ -25,7 +25,6 @@ import           Beans.Model                    ( Account(..)
                                                 , Price(..)
                                                 )
 import qualified Beans.Data.Map                as M
-
 import           Control.Monad                  ( void )
 import           Control.Monad.Catch            ( Exception
                                                 , MonadThrow
@@ -36,7 +35,6 @@ import           Control.Monad.Trans            ( liftIO )
 import           Data.Void                      ( Void )
 import           Data.Char                      ( isAlphaNum )
 import           Data.Functor                   ( ($>) )
-import           Data.Monoid                    ( Sum(Sum) )
 import           Data.Text                      ( Text
                                                 , cons
                                                 , pack
@@ -47,7 +45,7 @@ import           Prelude                 hiding ( readFile )
 import           System.FilePath.Posix          ( combine
                                                 , takeDirectory
                                                 )
-import           Text.Megaparsec                ( Parsec
+import           Beans.Megaparsec               ( Parsec
                                                 , between
                                                 , count
                                                 , empty
@@ -58,6 +56,8 @@ import           Text.Megaparsec                ( Parsec
                                                 , optional
                                                 , parse
                                                 , parseErrorPretty
+                                                , parseAmount
+                                                , parseDecimal
                                                 , sepBy
                                                 , sepBy1
                                                 , some
@@ -65,8 +65,7 @@ import           Text.Megaparsec                ( Parsec
                                                 , takeWhileP
                                                 , try
                                                 , (<|>)
-                                                )
-import           Text.Megaparsec.Char           ( char
+                                                , char
                                                 , anyChar
                                                 , digitChar
                                                 , letterChar
@@ -129,7 +128,7 @@ commodity :: Parser Commodity
 commodity = lexeme $ Commodity <$> identifier
 
 amount :: Parser Amount
-amount = lexeme $ Sum <$> L.signed sc L.scientific
+amount = lexeme $ parseAmount sc
 
 braces :: Parser a -> Parser a
 braces = between (symbol "{") (symbol "}")
@@ -199,7 +198,7 @@ balance = Balance <$ symbol "balance" <*> account <*> amount <*> commodity
 
 price :: Parser Price
 price = Price <$ symbol "price" <*> commodity <*> p <*> commodity
-  where p = lexeme $ L.signed sc L.scientific
+  where p = lexeme $ parseDecimal sc
 
 command :: Date -> Parser Command
 command d =

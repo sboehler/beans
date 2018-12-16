@@ -10,17 +10,13 @@ where
 import           Beans.Model
 import qualified Beans.Data.Map                as M
 import qualified Data.Text                     as T
-import           Data.Monoid                    ( Sum(..) )
-import           Data.Scientific                ( Scientific
-                                                , formatScientific
-                                                , FPFormat(Fixed)
-                                                )
+import qualified Data.Decimal                  as D
 import           Data.Text.Prettyprint.Doc
 
 instance Pretty Amount where
-  pretty = pretty . formatScientific Fixed (Just 2) . getSum
+  pretty = pretty . format
 
-instance Pretty Scientific where
+instance Pretty D.Decimal where
   pretty = pretty . show
 
 instance Pretty Account where

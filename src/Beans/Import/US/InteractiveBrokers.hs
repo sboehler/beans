@@ -11,7 +11,6 @@ import           Data.Text                      ( Text
                                                 , unwords
                                                 , toLower
                                                 )
-import           Data.Monoid                    ( Sum(..) )
 import           Control.Monad                  ( void )
 import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.IO.Class         ( MonadIO )
@@ -35,15 +34,15 @@ import           Beans.Model                    ( Commodity(..)
                                                 , Position(Position)
                                                 , Amount
                                                 )
-import           Text.Megaparsec.Char           ( alphaNumChar
+import           Beans.Megaparsec               ( alphaNumChar
                                                 , char
                                                 , anyChar
+                                                , parseAmount
                                                 , space
                                                 , string
                                                 , digitChar
                                                 , eol
-                                                )
-import           Text.Megaparsec                ( count
+                                                , count
                                                 , skipManyTill
                                                 , takeWhile1P
                                                 , some
@@ -179,7 +178,7 @@ commodityField :: Parser Commodity
 commodityField = field $ Commodity . pack <$> some alphaNumChar
 
 amountField :: Parser Amount
-amountField = field $ Sum <$> L.signed (pure ()) L.scientific
+amountField = field $ parseAmount (pure ())
 
 skipLine :: Parser ()
 skipLine = void $ skipManyTill anyChar eol

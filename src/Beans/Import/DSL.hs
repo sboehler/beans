@@ -25,9 +25,7 @@ import           Control.Monad.Reader           ( Reader
 import           Control.Applicative            ( (<**>) )
 import           Data.Bool                      ( bool )
 import           Data.Functor.Identity          ( runIdentity )
-import           Data.Monoid                    ( Sum(Sum)
-                                                , (<>)
-                                                )
+import           Data.Monoid                    ( (<>) )
 import           Data.Char                      ( isDigit
                                                 , isAlphaNum
                                                 )
@@ -39,7 +37,7 @@ import           Data.Text                      ( Text
 import           Data.Text.IO                   ( readFile )
 import           Data.Void                      ( Void )
 import           Prelude                 hiding ( readFile )
-import           Text.Megaparsec                ( Parsec
+import           Beans.Megaparsec               ( Parsec
                                                 , between
                                                 , choice
                                                 , empty
@@ -48,13 +46,13 @@ import           Text.Megaparsec                ( Parsec
                                                 , many
                                                 , parse
                                                 , parseErrorPretty
+                                                , parseAmount
                                                 , sepBy
                                                 , takeWhileP
                                                 , takeWhile1P
                                                 , takeP
                                                 , try
-                                                )
-import           Text.Megaparsec.Char           ( char
+                                                , char
                                                 , letterChar
                                                 , symbolChar
                                                 , space1
@@ -99,27 +97,27 @@ data E a where
   EMatch :: E Text -> E Text -> E Bool
 
 instance Show a => Show (E a) where
-  show (EBool a)       = show a
-  show (EText a)       = show a
-  show (EDate a)       = show a
+  show (EBool   a)     = show a
+  show (EText   a)     = show a
+  show (EDate   a)     = show a
   show (EAmount a)     = show a
   show EVarAmount      = "amount"
   show EVarType        = "type"
   show EVarDescription = "description"
-  show EVarDate = "date"
+  show EVarDate        = "date"
   show EVarImporter    = "importer"
-  show (EAbs a)        = "abs(" <> show a <> ")"
-  show (EAnd a b)      = "(" <> show a <> " && " <> show b <> ")"
-  show (EOr a b)       = "(" <> show a <> " || " <> show b <> ")"
-  show (ENot a)        = "!" <> show a
-  show (EPlus x y)     = "(" <> show x <> " + " <> show y <> ")"
+  show (EAbs a    )    = "abs(" <> show a <> ")"
+  show (EAnd a b  )    = "(" <> show a <> " && " <> show b <> ")"
+  show (EOr  a b  )    = "(" <> show a <> " || " <> show b <> ")"
+  show (ENot a    )    = "!" <> show a
+  show (EPlus  x y)    = "(" <> show x <> " + " <> show y <> ")"
   show (EMinus x y)    = "(" <> show x <> " - " <> show y <> ")"
-  show (ELT a b)       = "(" <> show a <> " < " <> show b <> ")"
-  show (ELE a b)       = "(" <> show a <> " <= " <> show b <> ")"
-  show (EEQ a b)       = "(" <> show a <> " == " <> show b <> ")"
-  show (EGE a b)       = "(" <> show a <> " >= " <> show b <> ")"
-  show (EGT a b)       = "(" <> show a <> " > " <> show b <> ")"
-  show (ENE a b)       = "(" <> show a <> " <> " <> show b <> ")"
+  show (ELT    a b)    = "(" <> show a <> " < " <> show b <> ")"
+  show (ELE    a b)    = "(" <> show a <> " <= " <> show b <> ")"
+  show (EEQ    a b)    = "(" <> show a <> " == " <> show b <> ")"
+  show (EGE    a b)    = "(" <> show a <> " >= " <> show b <> ")"
+  show (EGT    a b)    = "(" <> show a <> " > " <> show b <> ")"
+  show (ENE    a b)    = "(" <> show a <> " <> " <> show b <> ")"
   show (EMatch a b)    = "(" <> show a <> " =~ " <> show b <> ")"
 
 -- Evaluation
@@ -228,7 +226,7 @@ rule :: Parser Rule
 rule = Rule <$> boolExpr <* sym "->" <*> account
 
 amountLiteral :: Parser (E Amount)
-amountLiteral = EAmount . Sum <$> lexeme (L.signed sc L.scientific)
+amountLiteral = lexeme $ EAmount <$> parseAmount sc
 
 textLiteral :: Parser (E Text)
 textLiteral = EText <$> lexeme quotedText

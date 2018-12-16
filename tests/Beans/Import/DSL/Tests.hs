@@ -61,7 +61,7 @@ parserTests = testGroup
     [ (1, "amount")
     , (2, "4")
     , (3, "(4.0)")
-    , (4, "((amount + 4) - 4.0)")
+    , (4, "((amount + 4) - 3.1)")
     , (5, "(amount - amount + amount)")
     , (6, "(abs amount + 100)")
     ]

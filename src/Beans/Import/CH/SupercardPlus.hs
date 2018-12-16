@@ -4,7 +4,6 @@ module Beans.Import.CH.SupercardPlus
   )
 where
 
-import           Data.Monoid                    ( Sum(Sum) )
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
                                                 , Parser
@@ -34,7 +33,7 @@ import qualified Data.Text                     as T
 import           Data.Char                      ( isDigit
                                                 , isUpper
                                                 )
-import           Text.Megaparsec                ( (<|>)
+import           Beans.Megaparsec               ( (<|>)
                                                 , between
                                                 , skipManyTill
                                                 , many
@@ -44,8 +43,8 @@ import           Text.Megaparsec                ( (<|>)
                                                 , eof
                                                 , sepEndBy
                                                 , parseMaybe
-                                                )
-import           Text.Megaparsec.Char           ( anyChar
+                                                , parseAmount
+                                                , anyChar
                                                 , char
                                                 , upperChar
                                                 , digitChar
@@ -110,7 +109,7 @@ amountField = do
     Nothing     -> fail $ unwords ["Invalid amount:", show $ sign <> number]
 
 amountP :: Parser Amount
-amountP = Sum <$> L.signed (pure ()) L.scientific
+amountP = parseAmount (pure ())
 
 quotedField :: Parser Text
 quotedField = field

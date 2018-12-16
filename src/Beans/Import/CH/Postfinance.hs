@@ -34,8 +34,7 @@ import           Control.Monad.Reader           ( MonadReader
                                                 , asks
                                                 )
 import           Data.Group                     ( invert )
-import           Data.Monoid                    ( Sum(Sum) )
-import           Text.Megaparsec                ( (<?>)
+import           Beans.Megaparsec               ( (<?>)
                                                 , count
                                                 , try
                                                 , manyTill
@@ -45,8 +44,8 @@ import           Text.Megaparsec                ( (<?>)
                                                 , skipManyTill
                                                 , some
                                                 , eof
-                                                )
-import           Text.Megaparsec.Char           ( anyChar
+                                                , parseAmount
+                                                , anyChar
                                                 , char
                                                 , string
                                                 , eol
@@ -126,7 +125,7 @@ descriptionField =
   replace c    = T.singleton c
 
 amountField :: Parser Amount
-amountField = Sum <$> L.signed (pure ()) L.scientific
+amountField = parseAmount (pure ())
 
 ignoreField :: Parser ()
 ignoreField = void $ skipManyTill anyChar separator

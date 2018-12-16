@@ -18,7 +18,7 @@ import           Data.Bifunctor                 ( first )
 import           Data.Semigroup                 ( (<>) )
 import qualified Data.Text                     as T
 import           Options.Applicative
-import           Text.Megaparsec                ( parse
+import           Beans.Megaparsec               ( parse
                                                 , parseErrorPretty
                                                 )
 

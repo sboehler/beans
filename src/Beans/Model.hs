@@ -13,13 +13,10 @@ import           Control.Lens
 import           Data.Foldable                  ( fold )
 import qualified Data.List                     as L
 import           Data.Maybe                     ( catMaybes )
-import           Data.Monoid                    ( Sum
+import           Data.Monoid                    ( Sum(Sum)
                                                 , getSum
                                                 )
-import           Data.Scientific                ( FPFormat(Fixed)
-                                                , Scientific
-                                                , formatScientific
-                                                )
+import qualified Data.Decimal                  as D
 import           Data.Text                      ( Text
                                                 , pack
                                                 , unpack
@@ -32,10 +29,13 @@ import           Data.Time.Format               ( defaultTimeLocale
                                                 )
 import           Text.Regex.PCRE                ( (=~) )
 
-type Amount = Sum Scientific
+type Amount = Sum D.Decimal
 
 format :: Amount -> Text
-format = pack . formatScientific Fixed (Just 2) . getSum
+format = pack . show . D.roundTo 2 . getSum
+
+realFracToAmount :: RealFrac n => n -> Amount
+realFracToAmount = Sum . D.realFracToDecimal 4
 
 data Date
   = MinDate
@@ -131,7 +131,7 @@ data Open = Open
 
 data Price = Price
   { _priceCommodity :: Commodity
-  , _pricePrice :: Scientific
+  , _pricePrice :: D.Decimal
   , _priceTargetCommodity :: Commodity
   } deriving (Eq, Show, Ord)
 

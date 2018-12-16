@@ -4,7 +4,6 @@ module Beans.Import.CH.Cumulus
   )
 where
 
-import           Data.Monoid                    ( Sum(Sum) )
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
                                                 , Parser
@@ -30,17 +29,17 @@ import           Control.Monad.Reader           ( MonadReader
                                                 )
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
-import           Text.Megaparsec                ( (<|>)
+import           Beans.Megaparsec               ( (<|>)
                                                 , between
                                                 , choice
                                                 , manyTill
                                                 , skipManyTill
                                                 , try
                                                 , takeWhileP
+                                                , parseAmount
                                                 , eof
                                                 , many
-                                                )
-import           Text.Megaparsec.Char           ( anyChar
+                                                , anyChar
                                                 , eol
                                                 , char
                                                 , eol
@@ -89,7 +88,7 @@ entryAmount = choice [credit, debit]
   credit = separator *> amountField
 
 amountField :: Parser Amount
-amountField = field $ Sum <$> L.signed (pure ()) L.scientific
+amountField = field $ parseAmount (pure ())
 
 quotedField :: Parser Text
 quotedField = field

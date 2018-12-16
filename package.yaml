@@ -64,6 +64,7 @@ library:
   - bifunctors
   - bytestring
   - containers
+  - Decimal
   - exceptions
   - filepath
   - groups

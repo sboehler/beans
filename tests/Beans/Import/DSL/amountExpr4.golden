@@ -1,1 +1,1 @@
-((amount + Sum {getSum = 4.0}) - Sum {getSum = 4.0})
+((amount + Sum {getSum = 4}) - Sum {getSum = 3.100})

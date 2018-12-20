@@ -4,7 +4,6 @@ module Beans.Import.DSL where
 
 import           Beans.Model                    ( Account(..)
                                                 , Date
-                                                , parseDate
                                                 , Amount
                                                 , Date
                                                 , Commodity
@@ -25,9 +24,7 @@ import           Control.Applicative            ( (<**>) )
 import           Data.Bool                      ( bool )
 import           Data.Functor.Identity          ( runIdentity )
 import           Data.Monoid                    ( (<>) )
-import           Data.Char                      ( isDigit
-                                                , isAlphaNum
-                                                )
+import           Data.Char                      ( isAlphaNum )
 import           Data.Text                      ( Text
                                                 , cons
                                                 , pack
@@ -46,10 +43,9 @@ import           Beans.Megaparsec               ( Parsec
                                                 , parse
                                                 , parseErrorPretty
                                                 , parseAmount
+                                                , parseISODate
                                                 , parseAccount
                                                 , takeWhileP
-                                                , takeWhile1P
-                                                , takeP
                                                 , try
                                                 , char
                                                 , letterChar
@@ -224,18 +220,7 @@ textLiteral = EText <$> lexeme quotedText
   quote      = char '"'
 
 dateLiteral :: Parser (E Date)
-dateLiteral = (try . lexeme . fmap EDate) date
- where
-  date = do
-    inp <-
-      takeWhile1P (Just "year") isDigit
-      <> string "-"
-      <> takeP (Just "month") 2
-      <> string "-"
-      <> takeP (Just "day") 2
-    case parseDate "%Y-%-m-%-d" (unpack inp) of
-      Just d  -> return d
-      Nothing -> fail $ unwords ["Invalid date:", show $ unpack inp]
+dateLiteral = (try . lexeme . fmap EDate) parseISODate
 
 boolLiteral :: Parser (E Bool)
 boolLiteral = EBool <$> choice [True <$ sym "True", False <$ sym "False"]

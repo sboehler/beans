@@ -16,7 +16,6 @@ import           Beans.Model                    ( Amount
                                                 , Transaction(..)
                                                 , Commodity(Commodity)
                                                 , Date
-                                                , parseDate
                                                 , Dated(Dated)
                                                 , Flag(Complete)
                                                 , Position(Position)
@@ -44,6 +43,7 @@ import           Beans.Megaparsec               ( (<|>)
                                                 , sepEndBy
                                                 , parseMaybe
                                                 , parseAmount
+                                                , parseFormattedDate
                                                 , anyChar
                                                 , char
                                                 , upperChar
@@ -92,11 +92,7 @@ command = do
   return $ Dated date $ CmdTransaction $ Transaction Complete desc [] bookings
 
 dateField :: Parser Date
-dateField = do
-  inp <- T.unpack <$> textField "Date"
-  case parseDate "%-d.%-m.%Y" inp of
-    Just d  -> return d
-    Nothing -> fail $ unwords ["Invalid date:", show inp]
+dateField = parseFormattedDate "%-d.%-m.%Y" (T.unpack <$> textField "Date")
 
 amountField :: Parser (Commodity, Amount)
 amountField = do

@@ -1,11 +1,9 @@
 module Beans.Parser where
 
 import           Beans.Model                    ( Account(..)
-                                                , AccountType(..)
                                                 , Amount
                                                 , Amounts
                                                 , Date
-                                                , fromGreg
                                                 , Commodity(..)
                                                 , Lot(..)
                                                 , Position(..)
@@ -47,7 +45,6 @@ import           System.FilePath.Posix          ( combine
                                                 )
 import           Beans.Megaparsec               ( Parsec
                                                 , between
-                                                , count
                                                 , empty
                                                 , eof
                                                 , getPosition
@@ -57,18 +54,17 @@ import           Beans.Megaparsec               ( Parsec
                                                 , parse
                                                 , parseErrorPretty
                                                 , parseAmount
+                                                , parseISODate
+                                                , parseAccount
+                                                , parseCommodity
                                                 , parseDecimal
-                                                , sepBy
                                                 , sepBy1
                                                 , some
                                                 , takeWhile1P
-                                                , takeWhileP
                                                 , try
                                                 , (<|>)
                                                 , char
                                                 , anyChar
-                                                , digitChar
-                                                , letterChar
                                                 , space1
                                                 )
 import qualified Text.Megaparsec.Char.Lexer    as L
@@ -105,27 +101,11 @@ lexeme = L.lexeme sc
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
-pDate :: Parser Date
-pDate = lexeme $ fromGreg <$> digits 4 <* dash <*> digits 2 <* dash <*> digits
-  2
- where
-  dash = symbol "-"
-  digits n = read <$> count n digitChar
-
-identifier :: Parser Text
-identifier =
-  cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
-
-accountType :: Parser AccountType
-accountType = read . unpack <$> identifier
-
 account :: Parser Account
-account =
-  lexeme $ Account <$> accountType <* colon <*> identifier `sepBy` colon
-  where colon = symbol ":"
+account = lexeme parseAccount
 
 commodity :: Parser Commodity
-commodity = lexeme $ Commodity <$> identifier
+commodity = lexeme parseCommodity
 
 amount :: Parser Amount
 amount = lexeme $ parseAmount sc
@@ -143,7 +123,7 @@ lot :: Date -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)
  where
   comma    = symbol ","
-  lotDate  = (comma >> pDate) <|> pure d
+  lotDate  = (comma >> lexeme parseISODate) <|> pure d
   lotLabel = optional (comma >> quotedString)
 
 postingPrice :: Parser ()
@@ -223,7 +203,7 @@ config =
 
 commandDirective :: Parser Directive
 commandDirective = do
-  d <- try pDate
+  d <- try $ lexeme parseISODate
   DatedCommandDirective . Dated d <$> command d
 
 directive :: Parser Directive

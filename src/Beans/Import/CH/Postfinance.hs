@@ -22,7 +22,6 @@ import           Beans.Model                    ( Amount
                                                 , Transaction(..)
                                                 , Commodity(Commodity)
                                                 , Date
-                                                , parseDate
                                                 , Dated(Dated)
                                                 , Flag(Complete)
                                                 , Position(Position)
@@ -34,9 +33,9 @@ import           Control.Monad.Reader           ( MonadReader
                                                 , asks
                                                 )
 import           Data.Group                     ( invert )
-import           Beans.Megaparsec               ( (<?>)
-                                                , count
+import           Beans.Megaparsec               ( count
                                                 , try
+                                                , parseISODate
                                                 , manyTill
                                                 , optional
                                                 , choice
@@ -105,11 +104,7 @@ constField :: [Text] -> Parser Text
 constField = field . choice . fmap string
 
 dateField :: Parser Date
-dateField = try $ do
-  inp <- manyTill anyChar separator <?> "Date"
-  case parseDate "%Y-%-m-%-d" inp of
-    Just d  -> return d
-    Nothing -> fail $ unwords ["Invalid date:", show inp]
+dateField = try $ field parseISODate
 
 descriptionField :: Parser Text
 descriptionField =

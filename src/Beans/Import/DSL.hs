@@ -3,7 +3,6 @@
 module Beans.Import.DSL where
 
 import           Beans.Model                    ( Account(..)
-                                                , AccountType
                                                 , Date
                                                 , parseDate
                                                 , Amount
@@ -47,7 +46,7 @@ import           Beans.Megaparsec               ( Parsec
                                                 , parse
                                                 , parseErrorPretty
                                                 , parseAmount
-                                                , sepBy
+                                                , parseAccount
                                                 , takeWhileP
                                                 , takeWhile1P
                                                 , takeP
@@ -206,18 +205,8 @@ identifier :: Parser Text
 identifier =
   cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
 
-accountType :: Parser AccountType
-accountType = read . unpack <$> choice
-  [ string "Assets"
-  , string "Liabilities"
-  , string "Expenses"
-  , string "Income"
-  , string "Equity"
-  ]
-
 account :: Parser Account
-account =
-  lexeme $ Account <$> accountType <* char ':' <*> (identifier `sepBy` char ':')
+account = lexeme parseAccount
 
 rules :: Parser Rules
 rules = between sc eof (many rule)

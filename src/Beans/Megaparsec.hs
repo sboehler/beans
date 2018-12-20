@@ -23,10 +23,10 @@ import           Data.Monoid                    ( Sum(Sum) )
 import           Data.Char                      ( isAlphaNum )
 import qualified Data.Time.Format              as F
 
-parseAmount :: (MonadParsec e s m, Token s ~ Char) => m () -> m Amount
+parseAmount :: (MonadParsec e T.Text m) => m () -> m Amount
 parseAmount a = Sum <$> parseDecimal a
 
-parseDecimal :: (MonadParsec e s m, Token s ~ Char) => m () -> m D.Decimal
+parseDecimal :: (MonadParsec e T.Text m) => m () -> m D.Decimal
 parseDecimal a = do
   x :: Either Double Integer <- S.floatingOrInteger <$> signed a scientific
   return $ case x of

@@ -13,22 +13,19 @@ import           Beans.Options                  ( BalanceOptions(..)
                                                 , ReportType(..)
                                                 , Valuation(..)
                                                 )
-import qualified Beans.Parser                  as P
+import qualified Beans.Megaparsec              as P
 import           Data.Bifunctor                 ( first )
 import           Data.Semigroup                 ( (<>) )
 import qualified Data.Text                     as T
+import           Data.Void                      ( Void )
 import           Options.Applicative
-import           Beans.Megaparsec               ( parse
-                                                , parseErrorPretty
-                                                )
 
-
-toReadM :: P.Parser a -> ReadM a
-toReadM p = eitherReader $ first parseErrorPretty . parse p "" . T.pack
+toReadM :: P.Parsec Void T.Text a -> ReadM a
+toReadM p = eitherReader $ first P.parseErrorPretty . P.parse p "" . T.pack
 
 dateparser :: Date -> String -> String -> Parser Date
 dateparser v optionStr helpStr = option
-  (toReadM P.pDate)
+  (toReadM P.parseISODate)
   (value v <> long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
 
 fromParser, toParser :: Parser Date
@@ -63,14 +60,14 @@ valuationParser =
   in
     (   AtMarket
     <$> option
-          (toReadM P.commodity)
+          (toReadM P.parseCommodity)
           (long "at-market" <> metavar "COMMODITY" <> short 'm' <> help
             "Valuation at market prices"
           )
     <*> pure account
     )
     <|> (AtCost <$> option
-          (toReadM P.commodity)
+          (toReadM P.parseCommodity)
           (long "at-cost" <> metavar "COMMODITY" <> help
             "Valuation at recorded costs"
           )
@@ -118,7 +115,7 @@ importOptions =
           <> short 'c'
           <> long "config"
           )
-    <*> option (toReadM P.account)
+    <*> option (toReadM P.parseAccount)
                (metavar "ACCOUNT" <> long "account" <> short 'a')
     <*> argument str (metavar "<data file>" <> help "The data file to parse")
 

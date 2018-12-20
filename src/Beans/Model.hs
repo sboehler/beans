@@ -24,9 +24,6 @@ import           Data.Text                      ( Text
 import           Data.Time.Calendar             ( Day
                                                 , fromGregorian
                                                 )
-import           Data.Time.Format               ( defaultTimeLocale
-                                                , parseTimeM
-                                                )
 import           Text.Regex.PCRE                ( (=~) )
 
 type Amount = Sum D.Decimal
@@ -45,9 +42,6 @@ data Date
 
 fromGreg :: Integer -> Int -> Int -> Date
 fromGreg y m d = Date $ fromGregorian y m d
-
-parseDate :: String -> String -> Maybe Date
-parseDate fmt input = Date <$> parseTimeM False defaultTimeLocale fmt input
 
 instance Show Date where
   show MinDate  = "<MIN_DATE>"

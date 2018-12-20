@@ -5,6 +5,7 @@ module Beans.Megaparsec
   , parseAccountType
   , parseDecimal
   , parseISODate
+  , parseFormattedDate
   , parseCommodity
   , parseAccount
   )
@@ -20,7 +21,7 @@ import qualified Data.Text                     as T
 import           Beans.Model
 import           Data.Monoid                    ( Sum(Sum) )
 import           Data.Char                      ( isAlphaNum )
-
+import qualified Data.Time.Format              as F
 
 parseAmount :: (MonadParsec e s m, Token s ~ Char) => m () -> m Amount
 parseAmount a = Sum <$> parseDecimal a
@@ -60,3 +61,13 @@ parseISODate = fromGreg <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
  where
   dash = char '-'
   digits n = read <$> count n digitChar
+
+parseFormattedDate :: (MonadParsec e T.Text m) => String -> m String -> m Date
+parseFormattedDate fmt parser = do
+  inp <- parser
+  case parseDate fmt inp of
+    Just d  -> return d
+    Nothing -> fail $ unwords ["Invalid date:", show inp]
+
+parseDate :: String -> String -> Maybe Date
+parseDate fmt input = Date <$> F.parseTimeM False F.defaultTimeLocale fmt input

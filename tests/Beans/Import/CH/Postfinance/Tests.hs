@@ -13,14 +13,14 @@ import           Beans.Import.Common            ( Config(..) )
 import qualified Data.ByteString.Lazy.Char8    as BS
 import           Data.Text                      ( pack )
 import           System.FilePath.Posix          ( (</>) )
+import           Test.Tasty.HUnit               ( assertEqual
+                                                , testCase
+                                                )
 import           Test.Tasty                     ( TestTree
                                                 , testGroup
                                                 )
 import           Test.Tasty.Golden              ( goldenVsString )
 import           Control.Monad.Reader           ( runReaderT )
-import           Test.Tasty.HUnit               ( assertEqual
-                                                , testCase
-                                                )
 import qualified Data.Text.Prettyprint.Doc     as P
 import           Beans.Pretty                   ( )
 
@@ -38,12 +38,8 @@ test1 = goldenVsString "Postfinance" goldenFile action
     parse
     (Config evaluate sourceFile (Account Assets ["Checking"]))
 
-
-
-
 evaluate :: a -> Maybe Account
 evaluate = const $ Just $ Account Expenses ["Errands"]
-
 
 test2 :: TestTree
 test2 = testCase "name attribute" $ assertEqual

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7fbdac822daad8a40541a4e470c33f0e58fca9cdd7a04bbf03cd3c8c611cddb5
+-- hash: 1bba5ccc22887f7f4414994ac12666c76833e26925eb1672b6fcee0738511ccf
 
 name:           beans
 version:        0.0.2.0
@@ -67,9 +67,15 @@ library
     , lens
     , megaparsec ==6.*
     , mtl
+    , optparse-applicative
     , prettyprinter
     , regex-pcre
     , scientific
+    , tasty
+    , tasty-golden
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
     , text
     , time
   default-language: Haskell2010
@@ -83,10 +89,27 @@ executable beans
   default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      Decimal
+    , base >=4.7 && <5
     , beans
+    , bifunctors
+    , bytestring
+    , containers
+    , exceptions
+    , filepath
+    , groups
+    , lens
     , megaparsec ==6.*
+    , mtl
     , optparse-applicative
+    , prettyprinter
+    , regex-pcre
+    , scientific
+    , tasty
+    , tasty-golden
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
     , text
     , time
   default-language: Haskell2010
@@ -103,15 +126,22 @@ test-suite test
   default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
-      base >=4.7 && <5
+      Decimal
+    , base >=4.7 && <5
     , beans
+    , bifunctors
     , bytestring
+    , containers
+    , exceptions
     , filepath
-    , megaparsec
+    , groups
+    , lens
+    , megaparsec ==6.*
     , mtl
-    , pretty-simple
+    , optparse-applicative
     , prettyprinter
     , regex-pcre
+    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit

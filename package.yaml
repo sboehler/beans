@@ -39,27 +39,7 @@ ghc-options:
   - -j
   - -fwarn-incomplete-record-updates
 
-executables:
-  beans:
-    main: Main.hs
-    source-dirs:
-      - app
-    ghc-options:
-      - -threaded
-      - -rtsopts
-      - -with-rtsopts=-N
-    dependencies:
-      - base >= 4.7 && < 5
-      - beans
-      - text
-      - time
-      - megaparsec == 6.*
-      - optparse-applicative
-
-library:
-  source-dirs:
-    - src
-  dependencies:
+dependencies:
   - base >= 4.7 && < 5
   - bifunctors
   - bytestring
@@ -71,11 +51,34 @@ library:
   - lens
   - megaparsec == 6.*
   - mtl
+  - optparse-applicative
   - prettyprinter
   - regex-pcre
   - scientific
   - text
   - time
+  - tasty
+  - tasty-smallcheck
+  - tasty-quickcheck
+  - tasty-hunit
+  - tasty-golden
+  - text
+
+executables:
+  beans:
+    main: Main.hs
+    source-dirs:
+      - app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - beans
+
+library:
+  source-dirs:
+    - src
 
 tests:
   test:
@@ -83,19 +86,4 @@ tests:
     source-dirs:
       - tests
     dependencies:
-      - base >= 4.7 && < 5
       - beans
-      - tasty
-      - bytestring
-      - filepath
-      - prettyprinter
-      - regex-pcre
-      - tasty-smallcheck
-      - tasty-quickcheck
-      - tasty-hunit
-      - tasty-golden
-      - text
-      - pretty-simple
-      - megaparsec
-      - mtl
-      - time

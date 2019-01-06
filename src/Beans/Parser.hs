@@ -47,12 +47,12 @@ import           Beans.Megaparsec               ( Parsec
                                                 , between
                                                 , empty
                                                 , eof
-                                                , getPosition
+                                                , getSourcePos
                                                 , many
                                                 , manyTill
                                                 , optional
                                                 , parse
-                                                , parseErrorPretty
+                                                , errorBundlePretty
                                                 , parseAmount
                                                 , parseISODate
                                                 , parseAccount
@@ -64,7 +64,7 @@ import           Beans.Megaparsec               ( Parsec
                                                 , try
                                                 , (<|>)
                                                 , char
-                                                , anyChar
+                                                , anySingle
                                                 , space1
                                                 )
 import qualified Text.Megaparsec.Char.Lexer    as L
@@ -117,7 +117,7 @@ quotedString :: Parser Text
 quotedString = lexeme $ quote >> t
  where
   quote = char '"'
-  t     = pack <$> manyTill ((char '\\' >> anyChar) <|> anyChar) quote
+  t     = pack <$> manyTill ((char '\\' >> anySingle) <|> anySingle) quote
 
 lot :: Date -> Parser Lot
 lot d = braces (Lot <$> amount <*> commodity <*> lotDate <*> lotLabel)
@@ -195,11 +195,11 @@ command d =
 
 include :: Parser Include
 include =
-  symbol "include" >> Include <$> getPosition <*> (unpack <$> quotedString)
+  symbol "include" >> Include <$> getSourcePos <*> (unpack <$> quotedString)
 
 config :: Parser Option
 config =
-  symbol "option" >> Option <$> getPosition <*> quotedString <*> quotedString
+  symbol "option" >> Option <$> getSourcePos <*> quotedString <*> quotedString
 
 commandDirective :: Parser Directive
 commandDirective = do
@@ -222,7 +222,7 @@ directives = some directive <* try (scn >> eof)
 
 parseSource :: (MonadThrow m) => FilePath -> Text -> m [Directive]
 parseSource f t = case parse directives f t of
-  Left  e -> (throwM . ParserException . parseErrorPretty) e
+  Left  e -> (throwM . ParserException . errorBundlePretty) e
   Right d -> return d
 
 getIncludedFiles :: FilePath -> [Directive] -> [FilePath]

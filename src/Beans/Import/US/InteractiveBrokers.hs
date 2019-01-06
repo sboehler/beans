@@ -36,7 +36,7 @@ import           Beans.Model                    ( Commodity(..)
                                                 )
 import           Beans.Megaparsec               ( alphaNumChar
                                                 , char
-                                                , anyChar
+                                                , anySingle
                                                 , parseAmount
                                                 , space
                                                 , string
@@ -168,7 +168,7 @@ dateTimeField =
   field
     $  quote
     >> (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
-    <* skipManyTill anyChar quote
+    <* skipManyTill anySingle quote
  where
   dash  = char '-'
   quote = char '"'
@@ -181,13 +181,13 @@ amountField :: Parser Amount
 amountField = field $ parseAmount (pure ())
 
 skipLine :: Parser ()
-skipLine = void $ skipManyTill anyChar eol
+skipLine = void $ skipManyTill anySingle eol
 
 skipField :: Parser ()
-skipField = void $ skipManyTill anyChar separator
+skipField = void $ skipManyTill anySingle separator
 
 skipRestOfLine :: Parser ()
-skipRestOfLine = void $ skipManyTill anyChar eol
+skipRestOfLine = void $ skipManyTill anySingle eol
 
 separator :: Parser ()
 separator = void comma

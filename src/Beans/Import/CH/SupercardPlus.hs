@@ -44,7 +44,7 @@ import           Beans.Megaparsec               ( (<|>)
                                                 , parseMaybe
                                                 , parseAmount
                                                 , parseFormattedDate
-                                                , anyChar
+                                                , anySingle
                                                 , char
                                                 , upperChar
                                                 , digitChar
@@ -116,7 +116,7 @@ textField :: String -> Parser Text
 textField n = field $ takeWhileP (Just n) (/= ',')
 
 ignoreLine :: Parser ()
-ignoreLine = void $ skipManyTill anyChar (eof <|> void eol)
+ignoreLine = void $ skipManyTill anySingle (eof <|> void eol)
 
 separator :: Parser ()
 separator = void (char ',' >> takeWhileP (Just "space") (== ' '))

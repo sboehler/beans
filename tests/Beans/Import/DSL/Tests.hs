@@ -20,7 +20,7 @@ import           Test.Tasty.HUnit               ( assertEqual
                                                 , testCase
                                                 )
 import           Text.Megaparsec                ( parse
-                                                , parseErrorPretty
+                                                , errorBundlePretty
                                                 )
 
 mkParserTest :: (Show a) => String -> Parser a -> Text -> TestTree
@@ -28,7 +28,7 @@ mkParserTest testName parser input = goldenVsString testName fileName action
  where
   fileName = "tests/Beans/Import/DSL" </> testName <.> "golden"
   action =
-    (return . BS.pack . either parseErrorPretty show . parse parser testName)
+    (return . BS.pack . either errorBundlePretty show . parse parser testName)
       input
 
 mkParserTestGroup :: (Show a) => String -> Parser a -> [(Int, Text)] -> TestTree

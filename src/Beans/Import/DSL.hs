@@ -41,7 +41,7 @@ import           Beans.Megaparsec               ( Parsec
                                                 , eof
                                                 , many
                                                 , parse
-                                                , parseErrorPretty
+                                                , errorBundlePretty
                                                 , parseAmount
                                                 , parseISODate
                                                 , parseAccount
@@ -54,7 +54,7 @@ import           Beans.Megaparsec               ( Parsec
                                                 , string
                                                 )
 import qualified Text.Megaparsec.Char.Lexer    as L
-import           Text.Megaparsec.Expr           ( Operator(InfixL, Prefix)
+import           Control.Monad.Combinators.Expr ( Operator(InfixL, Prefix)
                                                 , makeExprParser
                                                 )
 import           Text.Regex.PCRE                ( (=~) )
@@ -68,28 +68,28 @@ data Rule =
   deriving (Show)
 
 data E a where
-  EVarAmount :: E Amount
-  EVarDescription :: E Text
-  EVarType :: E Text
-  EVarDate :: E Date
-  EVarImporter :: E Text
-  EDate :: Date -> E Date
-  EAmount :: Amount -> E Amount
-  EText :: Text -> E Text
-  EBool :: Bool -> E Bool
-  EAnd :: E Bool -> E Bool -> E Bool
-  EOr :: E Bool -> E Bool -> E Bool
-  ENot :: E Bool -> E Bool
-  EPlus :: Num a => E a -> E a -> E a
-  EMinus :: Num a => E a -> E a -> E a
-  EAbs :: Num a => E a -> E a
-  ELT :: (Show a, Ord a) => E a -> E a -> E Bool
-  ELE :: (Show a, Ord a) => E a -> E a -> E Bool
-  EEQ :: (Show a, Eq a) => E a -> E a -> E Bool
-  EGE :: (Show a, Ord a) => E a -> E a -> E Bool
-  EGT :: (Show a, Ord a) => E a -> E a -> E Bool
-  ENE :: (Show a, Ord a) => E a -> E a -> E Bool
-  EMatch :: E Text -> E Text -> E Bool
+  EVarAmount ::E Amount
+  EVarDescription ::E Text
+  EVarType ::E Text
+  EVarDate ::E Date
+  EVarImporter ::E Text
+  EDate ::Date -> E Date
+  EAmount ::Amount -> E Amount
+  EText ::Text -> E Text
+  EBool ::Bool -> E Bool
+  EAnd ::E Bool -> E Bool -> E Bool
+  EOr ::E Bool -> E Bool -> E Bool
+  ENot ::E Bool -> E Bool
+  EPlus ::Num a => E a -> E a -> E a
+  EMinus ::Num a => E a -> E a -> E a
+  EAbs ::Num a => E a -> E a
+  ELT ::(Show a, Ord a) => E a -> E a -> E Bool
+  ELE ::(Show a, Ord a) => E a -> E a -> E Bool
+  EEQ ::(Show a, Eq a) => E a -> E a -> E Bool
+  EGE ::(Show a, Ord a) => E a -> E a -> E Bool
+  EGT ::(Show a, Ord a) => E a -> E a -> E Bool
+  ENE ::(Show a, Ord a) => E a -> E a -> E Bool
+  EMatch ::E Text -> E Text -> E Bool
 
 instance Show a => Show (E a) where
   show (EBool   a)     = show a
@@ -180,7 +180,7 @@ instance Exception ParserException
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m Rules
 parseFile filePath = (liftIO . readFile) filePath >>= parseSource
  where
-  parseSource input = either (throwM . ParserException . parseErrorPretty)
+  parseSource input = either (throwM . ParserException . errorBundlePretty)
                              return
                              (parse rules filePath input)
 

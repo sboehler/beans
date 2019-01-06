@@ -44,7 +44,7 @@ import           Beans.Megaparsec               ( count
                                                 , some
                                                 , eof
                                                 , parseAmount
-                                                , anyChar
+                                                , anySingle
                                                 , char
                                                 , string
                                                 , eol
@@ -71,7 +71,7 @@ postfinanceData = do
   some (command commodity)
     <* ignoreField
     <* constField ["Disclaimer:"]
-    <* skipManyTill anyChar eof
+    <* skipManyTill anySingle eof
 
 command :: Commodity -> Parser (Dated Command)
 command commodity = do
@@ -109,7 +109,7 @@ dateField = try $ field parseISODate
 descriptionField :: Parser Text
 descriptionField =
   quote
-    >> (T.concatMap replace . pack <$> manyTill anyChar
+    >> (T.concatMap replace . pack <$> manyTill anySingle
                                                 (try (quote >> separator))
        )
  where
@@ -123,7 +123,7 @@ amountField :: Parser Amount
 amountField = parseAmount (pure ())
 
 ignoreField :: Parser ()
-ignoreField = void $ skipManyTill anyChar separator
+ignoreField = void $ skipManyTill anySingle separator
 
 separator :: Parser ()
 separator = void $ choice [string ";", eol]

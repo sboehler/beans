@@ -49,9 +49,10 @@ dependencies:
   - filepath
   - groups
   - lens
-  - megaparsec == 6.*
+  - megaparsec == 7.*
   - mtl
   - optparse-applicative
+  - parser-combinators
   - prettyprinter
   - regex-pcre
   - scientific

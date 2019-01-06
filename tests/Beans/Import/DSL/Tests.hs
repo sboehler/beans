@@ -52,7 +52,7 @@ parserTests = testGroup
     , (3, "(True)")
     , (4, "date > 2018-01-01 && date\n <= \n2018-10-01")
     , (5, "(amount <= 4.0) && (amount >= 2) || (40 < 50)")
-    , (6, "description ~=~ \"asdf.*\"")
+    , (6, "description =~ \"asdf.*\"")
     , (7, "! True || False && ! False")
     ]
   amountExprTests = mkParserTestGroup

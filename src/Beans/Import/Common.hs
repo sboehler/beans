@@ -25,7 +25,7 @@ import           Beans.Import.DSL               ( Evaluator
                                                 )
 import           Text.Megaparsec                ( Parsec
                                                 , parse
-                                                , parseErrorPretty
+                                                , errorBundlePretty
                                                 )
 import           Control.Monad.Reader           ( ReaderT
                                                 , asks
@@ -74,7 +74,7 @@ parseCommands
 parseCommands parser source = do
   c@Config { _configFile } <- ask
   case parse (runReaderT parser c) _configFile source of
-    Left  e -> (throwM . ImporterException . parseErrorPretty) e
+    Left  e -> (throwM . ImporterException . errorBundlePretty) e
     Right d -> return d
 
 parseLatin1

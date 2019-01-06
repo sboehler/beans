@@ -21,7 +21,7 @@ import           Data.Void                      ( Void )
 import           Options.Applicative
 
 toReadM :: P.Parsec Void T.Text a -> ReadM a
-toReadM p = eitherReader $ first P.parseErrorPretty . P.parse p "" . T.pack
+toReadM p = eitherReader $ first P.errorBundlePretty . P.parse p "" . T.pack
 
 dateparser :: Date -> String -> String -> Parser Date
 dateparser v optionStr helpStr = option

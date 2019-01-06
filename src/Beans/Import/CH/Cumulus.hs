@@ -39,7 +39,7 @@ import           Beans.Megaparsec               ( (<|>)
                                                 , parseFormattedDate
                                                 , eof
                                                 , many
-                                                , anyChar
+                                                , anySingle
                                                 , eol
                                                 , char
                                                 , eol
@@ -94,7 +94,7 @@ quotedField = field
 descriptionField :: Parser Text
 descriptionField =
   quote
-    >> (T.concatMap replace . T.pack <$> manyTill anyChar
+    >> (T.concatMap replace . T.pack <$> manyTill anySingle
                                                   (try (quote >> separator))
        )
  where
@@ -105,10 +105,10 @@ descriptionField =
   replace c    = T.singleton c
 
 ignoreLine :: Parser ()
-ignoreLine = void $ skipManyTill anyChar (eof <|> void eol)
+ignoreLine = void $ skipManyTill anySingle (eof <|> void eol)
 
 ignoreField :: Parser ()
-ignoreField = void $ skipManyTill anyChar separator
+ignoreField = void $ skipManyTill anySingle separator
 
 separator :: Parser ()
 separator = void $ choice [string ",", eol]

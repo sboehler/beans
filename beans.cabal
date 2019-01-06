@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.28.2.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1bba5ccc22887f7f4414994ac12666c76833e26925eb1672b6fcee0738511ccf
+-- hash: 1478abb47d18fecd9b3ca58b42dac489701bc8992dc74aa86470e6d6efbb2961
 
 name:           beans
 version:        0.0.2.0
@@ -17,10 +19,9 @@ copyright:      2017 Silvio Böhler
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-cabal-version:  >= 1.10
 extra-source-files:
-    ChangeLog.md
     README.org
+    ChangeLog.md
 
 source-repository head
   type: git
@@ -65,9 +66,10 @@ library
     , filepath
     , groups
     , lens
-    , megaparsec ==6.*
+    , megaparsec ==7.*
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , regex-pcre
     , scientific
@@ -99,9 +101,10 @@ executable beans
     , filepath
     , groups
     , lens
-    , megaparsec ==6.*
+    , megaparsec ==7.*
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , regex-pcre
     , scientific
@@ -136,9 +139,10 @@ test-suite test
     , filepath
     , groups
     , lens
-    , megaparsec ==6.*
+    , megaparsec ==7.*
     , mtl
     , optparse-applicative
+    , parser-combinators
     , prettyprinter
     , regex-pcre
     , scientific

@@ -9,6 +9,7 @@
 #+KEYWORDS:  plain-text accounting, beans, ledger, hledger, beancount, ledger-cli, accounting, money, personal finance
 #+LANGUAGE:  en
 
+#+PROPERTY: header-args:sh :var PATH="./result/bin" :results output verbatim :exports both
 
 * About beans
 
@@ -112,7 +113,7 @@ and can be run from there.
 features. Run the following command to get started:
 
 #+NAME: beans-help
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans --help
 #+END_SRC
 
@@ -190,7 +191,7 @@ Having both a parser and a rules file, converting the bank account
 statement to transactions is a simple command:
 
 #+NAME: beans-import
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans import -i ch.postfinance -c examples/example.rules -a Assets:Checking examples/postfinance.csv
 #+END_SRC
 
@@ -201,17 +202,9 @@ editing.
 
 #+RESULTS: beans-import
 #+begin_example
-2017-06-01 * "Acme Corp"
-  Assets:Checking -135.00 CHF
-  Expenses:Groceries 135.00 CHF
-
-2017-05-31 * "FOOBAR COMMUNICATIONS"
-  Assets:Checking -52.60 CHF
-  Expenses:MobilePhone 52.60 CHF
-
-2017-05-29 * "Transfer 01-45-06 Bigbank"
-  Assets:Checking -1040.00 CHF
-  Assets:Investments 1040.00 CHF
+2017-05-26 * "Bank Nextgen "
+  Assets:Checking -250.00 CHF
+  Assets:Investments 250.00 CHF
 
 2017-05-26 * "Cleaning Service"
   Assets:Checking -300.00 CHF
@@ -221,13 +214,21 @@ editing.
   Assets:Checking -115.20 CHF
   Expenses:Groceries 115.20 CHF
 
-2017-05-26 * "Bank Nextgen "
-  Assets:Checking -250.00 CHF
-  Assets:Investments 250.00 CHF
-
 2017-05-26 * "Tire Car Sales"
   Assets:Checking -95.85 CHF
   Expenses:Car 95.85 CHF
+
+2017-05-29 * "Transfer 01-45-06 Bigbank"
+  Assets:Checking -1040.00 CHF
+  Assets:Investments 1040.00 CHF
+
+2017-05-31 * "FOOBAR COMMUNICATIONS"
+  Assets:Checking -52.60 CHF
+  Expenses:MobilePhone 52.60 CHF
+
+2017-06-01 * "Acme Corp"
+  Assets:Checking -135.00 CHF
+  Expenses:Groceries 135.00 CHF
 
 #+end_example
 
@@ -280,7 +281,7 @@ balances.
 A simple use case is to reconcile start and ending balances
 of a specific account:
 
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans journal -j ./examples/example.bean --filter Assets:Checking
 #+END_SRC
 
@@ -293,8 +294,8 @@ of a specific account:
 |            |          |     |                            |                       |           |      |
 | 2018-01-02 | -2000.00 | USD | Rent January               | Expenses:Rent         |   2000.00 | USD  |
 |            |          |     |                            |                       |           |      |
-| 2018-01-10 | -1700.00 | USD | Investing in stock         | Assets:Portfolio      |     10.00 | AAPL |
-|            |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD  |
+| 2018-01-10 |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD  |
+|            | -1700.00 | USD | Investing in stock         | Assets:Portfolio      |     10.00 | AAPL |
 |            |          |     |                            |                       |           |      |
 | 2018-01-12 |  -200.00 | USD | Hungry again               | Expenses:Groceries    |    200.00 | USD  |
 |            |          |     |                            |                       |           |      |
@@ -332,7 +333,7 @@ corresponding counterbookings and the respective amounts and units.
 But we are not restricted to selecting one account. The next example
 shows a combined journal for all Asset accounts:
 
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans journal -j ./examples/example.bean --filter Assets
 #+END_SRC
 
@@ -341,15 +342,15 @@ shows a combined journal for all Asset accounts:
 |------------+----------+------+----------------------------+-----------------------+-----------+-----|
 | <MIN_DATE> |          |      | Assets                     |                       |           |     |
 |------------+----------+------+----------------------------+-----------------------+-----------+-----|
-| 2018-01-01 |     0.00 | BTC  | Opening balance            |                       |           |     |
+| 2018-01-01 | 15000.00 | USD  | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
 |            |     0.00 | AAPL | Opening balance            |                       |           |     |
-|            | 15000.00 | USD  | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
+|            |     0.00 | BTC  | Opening balance            |                       |           |     |
 |            |          |      |                            |                       |           |     |
 | 2018-01-02 | -2000.00 | USD  | Rent January               | Expenses:Rent         |   2000.00 | USD |
 |            |          |      |                            |                       |           |     |
-| 2018-01-10 | -1700.00 | USD  | Investing in stock         |                       |           |     |
+| 2018-01-10 |  -300.00 | USD  | Food                       | Expenses:Groceries    |    300.00 | USD |
+|            | -1700.00 | USD  | Investing in stock         |                       |           |     |
 |            |    10.00 | AAPL |                            |                       |           |     |
-|            |  -300.00 | USD  | Food                       | Expenses:Groceries    |    300.00 | USD |
 |            |          |      |                            |                       |           |     |
 | 2018-01-12 |  -200.00 | USD  | Hungry again               | Expenses:Groceries    |    200.00 | USD |
 |            |          |      |                            |                       |           |     |
@@ -389,7 +390,7 @@ However, economically, it is more interesting to see all values
 converted to USD. So let's do that, using the same syntax as for the
 balance command:
 
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans journal -j ./examples/example.bean --filter Assets -m USD
 #+END_SRC
 
@@ -398,15 +399,15 @@ balance command:
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
 | <MIN_DATE> |          |     | Assets                     |                       |           |     |
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
-| 2018-01-01 |     0.00 | USD | Opening balance            |                       |           |     |
+| 2018-01-01 | 15000.00 | USD | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
 |            |     0.00 | USD | Opening balance            |                       |           |     |
-|            | 15000.00 | USD | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
+|            |     0.00 | USD | Opening balance            |                       |           |     |
 |            |          |     |                            |                       |           |     |
 | 2018-01-02 | -2000.00 | USD | Rent January               | Expenses:Rent         |   2000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-01-10 | -1700.00 | USD | Investing in stock         | Equity:Valuation      |     10.00 | USD |
+| 2018-01-10 |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD |
+|            | -1700.00 | USD | Investing in stock         | Equity:Valuation      |     10.00 | USD |
 |            |  1690.00 | USD |                            |                       |           |     |
-|            |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-01-12 |  -200.00 | USD | Hungry again               | Expenses:Groceries    |    200.00 | USD |
 |            |          |     |                            |                       |           |     |
@@ -417,15 +418,15 @@ balance command:
 |            |          |     |                            |                       |           |     |
 | 2018-01-25 |  4000.00 | USD | Salary January             | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-02-01 | -1090.00 | USD | Valuation BTC              | Equity:Valuation      |   1090.00 | USD |
+| 2018-02-01 | -2000.00 | USD | Rent February              | Expenses:Rent         |   2000.00 | USD |
 |            |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
-|            | -2000.00 | USD | Rent February              | Expenses:Rent         |   2000.00 | USD |
+|            | -1090.01 | USD | Valuation BTC              | Equity:Valuation      |   1090.01 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-02-25 |  4000.00 | USD | Salary February            | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-03-01 |   463.75 | USD | Valuation BTC              | Equity:Valuation      |   -463.75 | USD |
+| 2018-03-01 | -2000.00 | USD | Rent March                 | Expenses:Rent         |   2000.00 | USD |
 |            |    80.00 | USD | Valuation AAPL             | Equity:Valuation      |    -80.00 | USD |
-|            | -2000.00 | USD | Rent March                 | Expenses:Rent         |   2000.00 | USD |
+|            |   463.76 | USD | Valuation BTC              | Equity:Valuation      |   -463.76 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-03-02 |  -200.00 | USD | Yet more food              | Expenses:Groceries    |    200.00 | USD |
 |            |          |     |                            |                       |           |     |
@@ -433,29 +434,29 @@ balance command:
 |            |          |     |                            |                       |           |     |
 | 2018-03-25 |  4000.00 | USD | Salary March               | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-04-01 | -1022.75 | USD | Valuation BTC              | Equity:Valuation      |   1022.75 | USD |
-|            |   -90.00 | USD | Valuation AAPL             | Equity:Valuation      |     90.00 | USD |
+| 2018-04-01 |   -90.00 | USD | Valuation AAPL             | Equity:Valuation      |     90.00 | USD |
+|            | -1022.76 | USD | Valuation BTC              | Equity:Valuation      |   1022.76 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-05-01 |   562.75 | USD | Valuation BTC              | Equity:Valuation      |   -562.75 | USD |
-|            |    30.00 | USD | Valuation AAPL             | Equity:Valuation      |    -30.00 | USD |
+| 2018-05-01 |    30.00 | USD | Valuation AAPL             | Equity:Valuation      |    -30.00 | USD |
+|            |   562.76 | USD | Valuation BTC              | Equity:Valuation      |   -562.76 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-06-01 |  -387.25 | USD | Valuation BTC              | Equity:Valuation      |    387.25 | USD |
-|            |   210.00 | USD | Valuation AAPL             | Equity:Valuation      |   -210.00 | USD |
+| 2018-06-01 |   210.00 | USD | Valuation AAPL             | Equity:Valuation      |   -210.00 | USD |
+|            |  -387.25 | USD | Valuation BTC              | Equity:Valuation      |    387.25 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-07-01 |  -292.75 | USD | Valuation BTC              | Equity:Valuation      |    292.75 | USD |
-|            |   -50.00 | USD | Valuation AAPL             | Equity:Valuation      |     50.00 | USD |
+| 2018-07-01 |   -50.00 | USD | Valuation AAPL             | Equity:Valuation      |     50.00 | USD |
+|            |  -292.75 | USD | Valuation BTC              | Equity:Valuation      |    292.75 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-08-01 |   314.00 | USD | Valuation BTC              | Equity:Valuation      |   -314.00 | USD |
-|            |   160.00 | USD | Valuation AAPL             | Equity:Valuation      |   -160.00 | USD |
+| 2018-08-01 |   160.00 | USD | Valuation AAPL             | Equity:Valuation      |   -160.00 | USD |
+|            |   314.00 | USD | Valuation BTC              | Equity:Valuation      |   -314.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-09-01 |  -102.75 | USD | Valuation BTC              | Equity:Valuation      |    102.75 | USD |
-|            |   260.00 | USD | Valuation AAPL             | Equity:Valuation      |   -260.00 | USD |
+| 2018-09-01 |   260.00 | USD | Valuation AAPL             | Equity:Valuation      |   -260.00 | USD |
+|            |  -102.75 | USD | Valuation BTC              | Equity:Valuation      |    102.75 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-10-01 |  -153.50 | USD | Valuation BTC              | Equity:Valuation      |    153.50 | USD |
-|            |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
+| 2018-10-01 |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
+|            |  -153.51 | USD | Valuation BTC              | Equity:Valuation      |    153.51 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-11-01 |   -55.00 | USD | Valuation BTC              | Equity:Valuation      |     55.00 | USD |
-|            |   -30.00 | USD | Valuation AAPL             | Equity:Valuation      |     30.00 | USD |
+| 2018-11-01 |   -30.00 | USD | Valuation AAPL             | Equity:Valuation      |     30.00 | USD |
+|            |   -55.00 | USD | Valuation BTC              | Equity:Valuation      |     55.00 | USD |
 |            |          |     |                            |                       |           |     |
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
 | <MAX_DATE> | 18409.50 | USD | Assets                     |                       |           |     |
@@ -482,7 +483,7 @@ set of filtering options.
 Let's start with an income statement. Our journal starts at the
 beginning of 2018, with the following balance:
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean --to 2018-01-01
 #+END_SRC
 
@@ -501,7 +502,7 @@ No surprise, this is our opening balance.
 
 Now let's get an overview of our income and expenses in January 2018:
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans incomeStatement -j examples/example.bean --to 2018-01-31
 #+END_SRC
 
@@ -527,7 +528,7 @@ Now let's get an overview of our income and expenses in January 2018:
 
 As of 1 February, the balance looks as follows:
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean --to 2018-02-01
 #+END_SRC
 
@@ -561,7 +562,7 @@ Seeing all commodities separately helps tracking the inventory, but
 they are difficult to compare. Fortunately, we have some prices in the
 journal, so we can print the same table valued at market prices.
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean --to 2018-02-01 -m USD
 #+END_SRC
 
@@ -589,7 +590,7 @@ gains and losses over time with respect to the reference currency.
 Now, how is this valuation loss explained? beans allows for arbitrary slicing:
 
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean --to 2018-02-01 -m USD --filter Portfolio
 #+END_SRC
 
@@ -607,7 +608,7 @@ Now, how is this valuation loss explained? beans allows for arbitrary slicing:
 
 #+end_example
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean --to 2018-02-01 -m USD --filter Wallet
 #+END_SRC
 
@@ -630,7 +631,7 @@ trade, which happened in the Assets:Wallet account.
 
 Commodities are freely convertible. How about a balance sheet in BTC?
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean --to 2018-02-01 -m BTC
 #+END_SRC
 
@@ -651,7 +652,7 @@ Commodities are freely convertible. How about a balance sheet in BTC?
 
 Stepping forward in time, what does the income statement look like over H1/2018?
 
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans incomeStatement -j examples/example.bean --from 2018-01-01 --to 2018-06-30
 #+END_SRC
 
@@ -680,7 +681,7 @@ Stepping forward in time, what does the income statement look like over H1/2018?
 In addition to the predefined reports, beans has a generic balancing command:
 
 #+NAME: beans-balance
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balance -j examples/example.bean
 #+END_SRC
 
@@ -720,7 +721,7 @@ There are some formatting options available (some of which also apply
 to the predefined reports):
 
 #+NAME: beans-balance-with-options
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balance -j examples/example.bean --flat --depth 0
 #+END_SRC
 
@@ -753,7 +754,7 @@ to the predefined reports):
 Valuation at market (i.e. latest available prices) is always an option:
 
 #+NAME: beans-balance-market1
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balance -j examples/example.bean -m USD
 #+END_SRC
 
@@ -784,7 +785,7 @@ Valuation at market (i.e. latest available prices) is always an option:
 
 We can also analyze changes in the balance between specific dates:
 
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balance -j examples/example.bean -m USD --from 2018-06-30 --to 2018-10-30
 #+END_SRC
 
@@ -827,7 +828,7 @@ uniquely due to market price changes.
 Using filtering, we can eliminate the effect of income and expenses
 and track valuation changes over the entire period:
 
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balance -j examples/example.bean --filter Valuation -m USD
 #+END_SRC
 
@@ -850,7 +851,7 @@ and track valuation changes over the entire period:
 How about bitcoin?
 
 #+NAME: beans-balance-market-2
-#+BEGIN_SRC sh :exports both :results output verbatim :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balance -j examples/example.bean -m BTC
 #+END_SRC
 

@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-12-02 Sun 01:43 -->
+<!-- 2019-01-08 Di 00:35 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>The beans manual</title>
@@ -247,97 +247,96 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org1ca8079">1. About beans</a>
+<li><a href="#org4986c5c">1. About beans</a>
 <ul>
-<li><a href="#orgbe6f819">1.1. Project goals</a>
+<li><a href="#orgf8c8961">1.1. Project goals</a>
 <ul>
-<li><a href="#org888e6c8">1.1.1. Built-in file importers</a></li>
-<li><a href="#orge096afe">1.1.2. Rule-based categorization</a></li>
-<li><a href="#orgaf4b285">1.1.3. Proper multi-commodity and valuation</a></li>
-<li><a href="#org1eb4d15">1.1.4. Simple and elegant implementation</a></li>
+<li><a href="#org63159b4">1.1.1. Built-in file importers</a></li>
+<li><a href="#org2007b59">1.1.2. Rule-based categorization</a></li>
+<li><a href="#orgb8d8f4f">1.1.3. Proper multi-commodity and valuation</a></li>
+<li><a href="#org258b1fb">1.1.4. Simple and elegant implementation</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org5cd2d1a">2. Getting beans</a>
+<li><a href="#org0a8542b">2. Getting beans</a>
 <ul>
-<li><a href="#org5b6d94b">2.1. Obtaining the source</a></li>
-<li><a href="#org4d9a30c">2.2. Installing beans</a>
+<li><a href="#orgb48ce21">2.1. Obtaining the source</a></li>
+<li><a href="#org9e8fa76">2.2. Installping beans</a>
 <ul>
-<li><a href="#org3e3e19d">2.2.1. Using Stack</a></li>
-<li><a href="#orga222e92">2.2.2. Using Nix</a></li>
-<li><a href="#orgbe8a5ba">2.2.3. Using Cabal</a></li>
+<li><a href="#org99d9ec1">2.2.1. Using Stack</a></li>
+<li><a href="#orgb7c1c49">2.2.2. Using Nix</a></li>
+<li><a href="#orga8293e5">2.2.3. Using Cabal</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orge1d99bd">3. Working with beans</a>
+<li><a href="#org838627f">3. Working with beans</a>
 <ul>
-<li><a href="#org4af212a">3.1. Importing data</a>
+<li><a href="#org177a6c8">3.1. Importing data</a>
 <ul>
-<li><a href="#orge92e6f9">3.1.1. Importers</a></li>
-<li><a href="#orge1d92cb">3.1.2. Assigning accounts</a></li>
-<li><a href="#org7399c21">3.1.3. Importing data</a></li>
+<li><a href="#org954e881">3.1.1. Importers</a></li>
+<li><a href="#org9b756c9">3.1.2. Assigning accounts</a></li>
+<li><a href="#org6f31162">3.1.3. Importing data</a></li>
 </ul>
 </li>
-<li><a href="#org94a8266">3.2. Creating a journal</a>
+<li><a href="#orgb0ca3a8">3.2. Creating a journal</a>
 <ul>
-<li><a href="#org92382c5">3.2.1. Journal files</a></li>
-<li><a href="#orgdc9e83f">3.2.2. Conventions</a></li>
+<li><a href="#orgf09981c">3.2.1. Journal files</a></li>
+<li><a href="#org4b1f9c2">3.2.2. Conventions</a></li>
 </ul>
 </li>
-<li><a href="#org9d5dca4">3.3. Tracking changes in accounts</a>
+<li><a href="#org12f1562">3.3. Tracking changes in accounts</a>
 <ul>
-<li><a href="#org690feca">3.3.1. Tracking changes in one account</a></li>
-<li><a href="#org4690311">3.3.2. Analyzing a group of accounts</a></li>
-<li><a href="#org110d84c">3.3.3. Converting to a reference commodity</a></li>
+<li><a href="#orgdbe4621">3.3.1. Tracking changes in one account</a></li>
+<li><a href="#orgac6daea">3.3.2. Analyzing a group of accounts</a></li>
+<li><a href="#org2b05fe8">3.3.3. Converting to a reference commodity</a></li>
 </ul>
 </li>
-<li><a href="#org7c3553d">3.4. Standard reports</a>
+<li><a href="#org934e159">3.4. Standard reports</a>
 <ul>
-<li><a href="#org8c24a5d">3.4.1. Income Statement</a></li>
-<li><a href="#org6b69f89">3.4.2. Balance Sheet</a></li>
-<li><a href="#org0d77604">3.4.3. Valuation at latest prices</a></li>
-<li><a href="#org8c59eb9">3.4.4. Analysis &amp; Filtering</a></li>
+<li><a href="#org9f02a0a">3.4.1. Income Statement</a></li>
+<li><a href="#org0f71463">3.4.2. Balance Sheet</a></li>
+<li><a href="#orgf40d379">3.4.3. Valuation at latest prices</a></li>
+<li><a href="#org0d6f5ac">3.4.4. Analysis &amp; Filtering</a></li>
 </ul>
 </li>
-<li><a href="#org0cb8af4">3.5. Low-level balancing</a>
+<li><a href="#orge216399">3.5. Low-level balancing</a>
 <ul>
-<li><a href="#org93b5673">3.5.1. Global balance</a></li>
-<li><a href="#orgf463ed8">3.5.2. Balancing options</a></li>
+<li><a href="#org2755ea3">3.5.1. Global balance</a></li>
+<li><a href="#orgaf06247">3.5.2. Balancing options</a></li>
 </ul>
 </li>
-<li><a href="#orgb2d474a">3.6. Transaction-level valuation</a></li>
+<li><a href="#orge9720f8">3.6. Transaction-level valuation</a></li>
 </ul>
 </li>
-<li><a href="#orgbf596e4">4. Developing beans</a>
+<li><a href="#org9007b61">4. Developing beans</a>
 <ul>
-<li><a href="#orgff35032">4.1. Roadmap</a>
+<li><a href="#org05b09e4">4.1. Roadmap</a>
 <ul>
-<li><a href="#org791ebd0">4.1.1. Shorter term</a></li>
-<li><a href="#orgd06b2ff">4.1.2. Longer term</a></li>
+<li><a href="#org0aed0b7">4.1.1. Shorter term</a></li>
+<li><a href="#orgc6a666d">4.1.2. Longer term</a></li>
 </ul>
 </li>
-<li><a href="#orgd38d93e">4.2. Compatibility</a></li>
-<li><a href="#orgb6b3780">4.3. Documentation</a></li>
-<li><a href="#orgba37d56">4.4. Dev setup</a>
+<li><a href="#org8023b53">4.2. Compatibility</a></li>
+<li><a href="#org34e8c8e">4.3. Documentation</a></li>
+<li><a href="#orge379a69">4.4. Dev setup</a>
 <ul>
-<li><a href="#org48e1d5f">4.4.1. nix / Haskell IDE engine</a></li>
-<li><a href="#org8cce6cb">4.4.2. Stack</a></li>
+<li><a href="#org7e74c74">4.4.1. nix / Haskell IDE engine</a></li>
+<li><a href="#org8b63def">4.4.2. Stack</a></li>
 </ul>
 </li>
-<li><a href="#orgb547b9d">4.5. Adding an importer</a></li>
-<li><a href="#orgbf1a2b3">4.6. Tests</a></li>
+<li><a href="#orgbc509a6">4.5. Adding an importer</a></li>
+<li><a href="#orgffd6b12">4.6. Tests</a></li>
 </ul>
 </li>
-<li><a href="#orgd5e68a7">5. License</a></li>
+<li><a href="#orgb7b6577">5. License</a></li>
 </ul>
 </div>
 </div>
 
-
-<div id="outline-container-org1ca8079" class="outline-2">
-<h2 id="org1ca8079"><span class="section-number-2">1</span> About beans</h2>
+<div id="outline-container-org4986c5c" class="outline-2">
+<h2 id="org4986c5c"><span class="section-number-2">1</span> About beans</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 beans is a <a href="https://plaintextaccounting.org">plain text accounting tool</a> in the tradition of <a href="https://www.ledger-cli.org">ledger</a>,
@@ -345,34 +344,34 @@ beans is a <a href="https://plaintextaccounting.org">plain text accounting tool<
 </p>
 </div>
 
-<div id="outline-container-orgbe6f819" class="outline-3">
-<h3 id="orgbe6f819"><span class="section-number-3">1.1</span> Project goals</h3>
+<div id="outline-container-orgf8c8961" class="outline-3">
+<h3 id="orgf8c8961"><span class="section-number-3">1.1</span> Project goals</h3>
 <div class="outline-text-3" id="text-1-1">
 </div>
-<div id="outline-container-org888e6c8" class="outline-4">
-<h4 id="org888e6c8"><span class="section-number-4">1.1.1</span> Built-in file importers</h4>
+<div id="outline-container-org63159b4" class="outline-4">
+<h4 id="org63159b4"><span class="section-number-4">1.1.1</span> Built-in file importers</h4>
 <div class="outline-text-4" id="text-1-1-1">
 <p>
 The greatest pain of plain text accounting is to import financial
 statements from financial service providers such as banks and credit
-cards. <code>beans</code> strives to include <a href="#org2334919">importers</a> for known formats.
+cards. <code>beans</code> strives to include <a href="#org553e2bf">importers</a> for known formats.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orge096afe" class="outline-4">
-<h4 id="orge096afe"><span class="section-number-4">1.1.2</span> Rule-based categorization</h4>
+<div id="outline-container-org2007b59" class="outline-4">
+<h4 id="org2007b59"><span class="section-number-4">1.1.2</span> Rule-based categorization</h4>
 <div class="outline-text-4" id="text-1-1-2">
 <p>
-<code>beans</code> provides a <a href="#orgbc45c1b">domain-specific language (DSL)</a> to specify rules for
+<code>beans</code> provides a <a href="#org02d0575">domain-specific language (DSL)</a> to specify rules for
 assigning accounts based on transaction features such as amount,
 description or dates.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgaf4b285" class="outline-4">
-<h4 id="orgaf4b285"><span class="section-number-4">1.1.3</span> Proper multi-commodity and valuation</h4>
+<div id="outline-container-orgb8d8f4f" class="outline-4">
+<h4 id="orgb8d8f4f"><span class="section-number-4">1.1.3</span> Proper multi-commodity and valuation</h4>
 <div class="outline-text-4" id="text-1-1-3">
 <p>
 <code>beans</code> aims to make it simple to do both at-cost and at-market
@@ -386,8 +385,8 @@ transactions to reflect gains and losses due to price changes.
 </div>
 </div>
 
-<div id="outline-container-org1eb4d15" class="outline-4">
-<h4 id="org1eb4d15"><span class="section-number-4">1.1.4</span> Simple and elegant implementation</h4>
+<div id="outline-container-org258b1fb" class="outline-4">
+<h4 id="org258b1fb"><span class="section-number-4">1.1.4</span> Simple and elegant implementation</h4>
 <div class="outline-text-4" id="text-1-1-4">
 <p>
 <code>beans</code> is written in <a href="https://haskell-lang.org/">Haskell</a>, an excellent language for concise and
@@ -400,12 +399,12 @@ compatiblity is not an objective.
 </div>
 
 
-<div id="outline-container-org5cd2d1a" class="outline-2">
-<h2 id="org5cd2d1a"><span class="section-number-2">2</span> Getting beans</h2>
+<div id="outline-container-org0a8542b" class="outline-2">
+<h2 id="org0a8542b"><span class="section-number-2">2</span> Getting beans</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org5b6d94b" class="outline-3">
-<h3 id="org5b6d94b"><span class="section-number-3">2.1</span> Obtaining the source</h3>
+<div id="outline-container-orgb48ce21" class="outline-3">
+<h3 id="orgb48ce21"><span class="section-number-3">2.1</span> Obtaining the source</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 <code>beans</code>' source code can be found on <a href="https://github.com/sboehler/beans">github</a>. For the moment, you have
@@ -422,12 +421,12 @@ git clone https://github.com/sboehler/beans.git
 </div>
 </div>
 
-<div id="outline-container-org4d9a30c" class="outline-3">
-<h3 id="org4d9a30c"><span class="section-number-3">2.2</span> Installing beans</h3>
+<div id="outline-container-org9e8fa76" class="outline-3">
+<h3 id="org9e8fa76"><span class="section-number-3">2.2</span> Installping beans</h3>
 <div class="outline-text-3" id="text-2-2">
 </div>
-<div id="outline-container-org3e3e19d" class="outline-4">
-<h4 id="org3e3e19d"><span class="section-number-4">2.2.1</span> Using Stack</h4>
+<div id="outline-container-org99d9ec1" class="outline-4">
+<h4 id="org99d9ec1"><span class="section-number-4">2.2.1</span> Using Stack</h4>
 <div class="outline-text-4" id="text-2-2-1">
 <p>
 <code>stack</code> is probably the easiest option on most platforms to get
@@ -455,8 +454,8 @@ Please file a bug if you encounter problems using <code>stack</code>.
 </div>
 </div>
 
-<div id="outline-container-orga222e92" class="outline-4">
-<h4 id="orga222e92"><span class="section-number-4">2.2.2</span> Using Nix</h4>
+<div id="outline-container-orgb7c1c49" class="outline-4">
+<h4 id="orgb7c1c49"><span class="section-number-4">2.2.2</span> Using Nix</h4>
 <div class="outline-text-4" id="text-2-2-2">
 <p>
 Make sure you have the <a href="https://nixos.org/nix/">nix package manager</a> installed for your
@@ -475,8 +474,8 @@ and can be run from there.
 </div>
 </div>
 
-<div id="outline-container-orgbe8a5ba" class="outline-4">
-<h4 id="orgbe8a5ba"><span class="section-number-4">2.2.3</span> Using Cabal</h4>
+<div id="outline-container-orga8293e5" class="outline-4">
+<h4 id="orga8293e5"><span class="section-number-4">2.2.3</span> Using Cabal</h4>
 <div class="outline-text-4" id="text-2-2-3">
 <p>
 If you intend to develop beans or run the test suite. Make sure cabal
@@ -498,8 +497,8 @@ and can be run from there.
 </div>
 
 
-<div id="outline-container-orge1d99bd" class="outline-2">
-<h2 id="orge1d99bd"><span class="section-number-2">3</span> Working with beans</h2>
+<div id="outline-container-org838627f" class="outline-2">
+<h2 id="org838627f"><span class="section-number-2">3</span> Working with beans</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 <code>beans</code> is a command line tool and has some self-documenting
@@ -507,7 +506,7 @@ features. Run the following command to get started:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh" id="org1a35f75">beans --help
+<pre class="src src-sh" id="org274ca5c">beans --help
 </pre>
 </div>
 
@@ -534,8 +533,8 @@ Use <code>beans &lt;command&gt; --help</code> to get further help on available o
 </p>
 </div>
 
-<div id="outline-container-org4af212a" class="outline-3">
-<h3 id="org4af212a"><span class="section-number-3">3.1</span> Importing data</h3>
+<div id="outline-container-org177a6c8" class="outline-3">
+<h3 id="org177a6c8"><span class="section-number-3">3.1</span> Importing data</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 beans offers assistance with importing bank account statements, the
@@ -543,8 +542,8 @@ most tiring process in plain text accounting.
 </p>
 </div>
 
-<div id="outline-container-orge92e6f9" class="outline-4">
-<h4 id="orge92e6f9"><span class="section-number-4">3.1.1</span> <a id="org2334919"></a>Importers</h4>
+<div id="outline-container-org954e881" class="outline-4">
+<h4 id="org954e881"><span class="section-number-4">3.1.1</span> <a id="org553e2bf"></a>Importers</h4>
 <div class="outline-text-4" id="text-3-1-1">
 <p>
 In a first step, bank account statements need to be parsed. The
@@ -584,8 +583,8 @@ following parsers are available:
 </div>
 </div>
 
-<div id="outline-container-orge1d92cb" class="outline-4">
-<h4 id="orge1d92cb"><span class="section-number-4">3.1.2</span> <a id="orgbc45c1b"></a>Assigning accounts</h4>
+<div id="outline-container-org9b756c9" class="outline-4">
+<h4 id="org9b756c9"><span class="section-number-4">3.1.2</span> <a id="org02d0575"></a>Assigning accounts</h4>
 <div class="outline-text-4" id="text-3-1-2">
 <p>
 The second step is equally tiring, even when transactions are
@@ -631,8 +630,8 @@ be used for various sources.
 </div>
 </div>
 
-<div id="outline-container-org7399c21" class="outline-4">
-<h4 id="org7399c21"><span class="section-number-4">3.1.3</span> Importing data</h4>
+<div id="outline-container-org6f31162" class="outline-4">
+<h4 id="org6f31162"><span class="section-number-4">3.1.3</span> Importing data</h4>
 <div class="outline-text-4" id="text-3-1-3">
 <p>
 Having both a parser and a rules file, converting the bank account
@@ -640,7 +639,7 @@ statement to transactions is a simple command:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh" id="org553df20">beans import -i ch.postfinance -c examples/example.rules -a Assets:Checking examples/postfinance.csv
+<pre class="src src-sh" id="orga70c6b1">beans import -i ch.postfinance -c examples/example.rules -a Assets:Checking examples/postfinance.csv
 </pre>
 </div>
 
@@ -652,17 +651,9 @@ editing.
 </p>
 
 <pre class="example">
-2017-06-01 * "Acme Corp"
-  Assets:Checking -135.00 CHF
-  Expenses:Groceries 135.00 CHF
-
-2017-05-31 * "FOOBAR COMMUNICATIONS"
-  Assets:Checking -52.60 CHF
-  Expenses:MobilePhone 52.60 CHF
-
-2017-05-29 * "Transfer 01-45-06 Bigbank"
-  Assets:Checking -1040.00 CHF
-  Assets:Investments 1040.00 CHF
+2017-05-26 * "Bank Nextgen "
+  Assets:Checking -250.00 CHF
+  Assets:Investments 250.00 CHF
 
 2017-05-26 * "Cleaning Service"
   Assets:Checking -300.00 CHF
@@ -672,13 +663,21 @@ editing.
   Assets:Checking -115.20 CHF
   Expenses:Groceries 115.20 CHF
 
-2017-05-26 * "Bank Nextgen "
-  Assets:Checking -250.00 CHF
-  Assets:Investments 250.00 CHF
-
 2017-05-26 * "Tire Car Sales"
   Assets:Checking -95.85 CHF
   Expenses:Car 95.85 CHF
+
+2017-05-29 * "Transfer 01-45-06 Bigbank"
+  Assets:Checking -1040.00 CHF
+  Assets:Investments 1040.00 CHF
+
+2017-05-31 * "FOOBAR COMMUNICATIONS"
+  Assets:Checking -52.60 CHF
+  Expenses:MobilePhone 52.60 CHF
+
+2017-06-01 * "Acme Corp"
+  Assets:Checking -135.00 CHF
+  Expenses:Groceries 135.00 CHF
 
 </pre>
 
@@ -691,12 +690,12 @@ compatible with beans.
 </div>
 </div>
 
-<div id="outline-container-org94a8266" class="outline-3">
-<h3 id="org94a8266"><span class="section-number-3">3.2</span> Creating a journal</h3>
+<div id="outline-container-orgb0ca3a8" class="outline-3">
+<h3 id="orgb0ca3a8"><span class="section-number-3">3.2</span> Creating a journal</h3>
 <div class="outline-text-3" id="text-3-2">
 </div>
-<div id="outline-container-org92382c5" class="outline-4">
-<h4 id="org92382c5"><span class="section-number-4">3.2.1</span> Journal files</h4>
+<div id="outline-container-orgf09981c" class="outline-4">
+<h4 id="orgf09981c"><span class="section-number-4">3.2.1</span> Journal files</h4>
 <div class="outline-text-4" id="text-3-2-1">
 <p>
 Most commands in beans are based on a journal. beans journals uses a
@@ -829,8 +828,8 @@ splitting a journal in different files.
 </div>
 </div>
 
-<div id="outline-container-orgdc9e83f" class="outline-4">
-<h4 id="orgdc9e83f"><span class="section-number-4">3.2.2</span> Conventions</h4>
+<div id="outline-container-org4b1f9c2" class="outline-4">
+<h4 id="org4b1f9c2"><span class="section-number-4">3.2.2</span> Conventions</h4>
 <div class="outline-text-4" id="text-3-2-2">
 <ul class="org-ul">
 <li>Accounts must be opened (and closed, if so desired) explicitly. They
@@ -857,8 +856,8 @@ congruent with standard practices in the financial industry.</li>
 </div>
 </div>
 
-<div id="outline-container-org9d5dca4" class="outline-3">
-<h3 id="org9d5dca4"><span class="section-number-3">3.3</span> Tracking changes in accounts</h3>
+<div id="outline-container-org12f1562" class="outline-3">
+<h3 id="org12f1562"><span class="section-number-3">3.3</span> Tracking changes in accounts</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 beans allows for sophisticated analysis and reconciliation of account
@@ -866,8 +865,8 @@ balances.
 </p>
 </div>
 
-<div id="outline-container-org690feca" class="outline-4">
-<h4 id="org690feca"><span class="section-number-4">3.3.1</span> Tracking changes in one account</h4>
+<div id="outline-container-orgdbe4621" class="outline-4">
+<h4 id="orgdbe4621"><span class="section-number-4">3.3.1</span> Tracking changes in one account</h4>
 <div class="outline-text-4" id="text-3-3-1">
 <p>
 A simple use case is to reconcile start and ending balances
@@ -887,8 +886,8 @@ of a specific account:
 |            |          |     |                            |                       |           |      |
 | 2018-01-02 | -2000.00 | USD | Rent January               | Expenses:Rent         |   2000.00 | USD  |
 |            |          |     |                            |                       |           |      |
-| 2018-01-10 | -1700.00 | USD | Investing in stock         | Assets:Portfolio      |     10.00 | AAPL |
-|            |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD  |
+| 2018-01-10 |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD  |
+|            | -1700.00 | USD | Investing in stock         | Assets:Portfolio      |     10.00 | AAPL |
 |            |          |     |                            |                       |           |      |
 | 2018-01-12 |  -200.00 | USD | Hungry again               | Expenses:Groceries    |    200.00 | USD  |
 |            |          |     |                            |                       |           |      |
@@ -925,8 +924,8 @@ corresponding counterbookings and the respective amounts and units.
 </div>
 </div>
 
-<div id="outline-container-org4690311" class="outline-4">
-<h4 id="org4690311"><span class="section-number-4">3.3.2</span> Analyzing a group of accounts</h4>
+<div id="outline-container-orgac6daea" class="outline-4">
+<h4 id="orgac6daea"><span class="section-number-4">3.3.2</span> Analyzing a group of accounts</h4>
 <div class="outline-text-4" id="text-3-3-2">
 <p>
 But we are not restricted to selecting one account. The next example
@@ -942,15 +941,15 @@ shows a combined journal for all Asset accounts:
 |------------+----------+------+----------------------------+-----------------------+-----------+-----|
 | &lt;MIN_DATE&gt; |          |      | Assets                     |                       |           |     |
 |------------+----------+------+----------------------------+-----------------------+-----------+-----|
-| 2018-01-01 |     0.00 | BTC  | Opening balance            |                       |           |     |
+| 2018-01-01 | 15000.00 | USD  | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
 |            |     0.00 | AAPL | Opening balance            |                       |           |     |
-|            | 15000.00 | USD  | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
+|            |     0.00 | BTC  | Opening balance            |                       |           |     |
 |            |          |      |                            |                       |           |     |
 | 2018-01-02 | -2000.00 | USD  | Rent January               | Expenses:Rent         |   2000.00 | USD |
 |            |          |      |                            |                       |           |     |
-| 2018-01-10 | -1700.00 | USD  | Investing in stock         |                       |           |     |
+| 2018-01-10 |  -300.00 | USD  | Food                       | Expenses:Groceries    |    300.00 | USD |
+|            | -1700.00 | USD  | Investing in stock         |                       |           |     |
 |            |    10.00 | AAPL |                            |                       |           |     |
-|            |  -300.00 | USD  | Food                       | Expenses:Groceries    |    300.00 | USD |
 |            |          |      |                            |                       |           |     |
 | 2018-01-12 |  -200.00 | USD  | Hungry again               | Expenses:Groceries    |    200.00 | USD |
 |            |          |      |                            |                       |           |     |
@@ -988,8 +987,8 @@ units.
 </div>
 </div>
 
-<div id="outline-container-org110d84c" class="outline-4">
-<h4 id="org110d84c"><span class="section-number-4">3.3.3</span> Converting to a reference commodity</h4>
+<div id="outline-container-org2b05fe8" class="outline-4">
+<h4 id="org2b05fe8"><span class="section-number-4">3.3.3</span> Converting to a reference commodity</h4>
 <div class="outline-text-4" id="text-3-3-3">
 <p>
 However, economically, it is more interesting to see all values
@@ -1006,15 +1005,15 @@ balance command:
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
 | &lt;MIN_DATE&gt; |          |     | Assets                     |                       |           |     |
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
-| 2018-01-01 |     0.00 | USD | Opening balance            |                       |           |     |
+| 2018-01-01 | 15000.00 | USD | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
 |            |     0.00 | USD | Opening balance            |                       |           |     |
-|            | 15000.00 | USD | Opening balance            | Equity:OpeningBalance | -15000.00 | USD |
+|            |     0.00 | USD | Opening balance            |                       |           |     |
 |            |          |     |                            |                       |           |     |
 | 2018-01-02 | -2000.00 | USD | Rent January               | Expenses:Rent         |   2000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-01-10 | -1700.00 | USD | Investing in stock         | Equity:Valuation      |     10.00 | USD |
+| 2018-01-10 |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD |
+|            | -1700.00 | USD | Investing in stock         | Equity:Valuation      |     10.00 | USD |
 |            |  1690.00 | USD |                            |                       |           |     |
-|            |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-01-12 |  -200.00 | USD | Hungry again               | Expenses:Groceries    |    200.00 | USD |
 |            |          |     |                            |                       |           |     |
@@ -1025,15 +1024,15 @@ balance command:
 |            |          |     |                            |                       |           |     |
 | 2018-01-25 |  4000.00 | USD | Salary January             | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-02-01 | -1090.00 | USD | Valuation BTC              | Equity:Valuation      |   1090.00 | USD |
+| 2018-02-01 | -2000.00 | USD | Rent February              | Expenses:Rent         |   2000.00 | USD |
 |            |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
-|            | -2000.00 | USD | Rent February              | Expenses:Rent         |   2000.00 | USD |
+|            | -1090.01 | USD | Valuation BTC              | Equity:Valuation      |   1090.01 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-02-25 |  4000.00 | USD | Salary February            | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-03-01 |   463.75 | USD | Valuation BTC              | Equity:Valuation      |   -463.75 | USD |
+| 2018-03-01 | -2000.00 | USD | Rent March                 | Expenses:Rent         |   2000.00 | USD |
 |            |    80.00 | USD | Valuation AAPL             | Equity:Valuation      |    -80.00 | USD |
-|            | -2000.00 | USD | Rent March                 | Expenses:Rent         |   2000.00 | USD |
+|            |   463.76 | USD | Valuation BTC              | Equity:Valuation      |   -463.76 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-03-02 |  -200.00 | USD | Yet more food              | Expenses:Groceries    |    200.00 | USD |
 |            |          |     |                            |                       |           |     |
@@ -1041,29 +1040,29 @@ balance command:
 |            |          |     |                            |                       |           |     |
 | 2018-03-25 |  4000.00 | USD | Salary March               | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-04-01 | -1022.75 | USD | Valuation BTC              | Equity:Valuation      |   1022.75 | USD |
-|            |   -90.00 | USD | Valuation AAPL             | Equity:Valuation      |     90.00 | USD |
+| 2018-04-01 |   -90.00 | USD | Valuation AAPL             | Equity:Valuation      |     90.00 | USD |
+|            | -1022.76 | USD | Valuation BTC              | Equity:Valuation      |   1022.76 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-05-01 |   562.75 | USD | Valuation BTC              | Equity:Valuation      |   -562.75 | USD |
-|            |    30.00 | USD | Valuation AAPL             | Equity:Valuation      |    -30.00 | USD |
+| 2018-05-01 |    30.00 | USD | Valuation AAPL             | Equity:Valuation      |    -30.00 | USD |
+|            |   562.76 | USD | Valuation BTC              | Equity:Valuation      |   -562.76 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-06-01 |  -387.25 | USD | Valuation BTC              | Equity:Valuation      |    387.25 | USD |
-|            |   210.00 | USD | Valuation AAPL             | Equity:Valuation      |   -210.00 | USD |
+| 2018-06-01 |   210.00 | USD | Valuation AAPL             | Equity:Valuation      |   -210.00 | USD |
+|            |  -387.25 | USD | Valuation BTC              | Equity:Valuation      |    387.25 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-07-01 |  -292.75 | USD | Valuation BTC              | Equity:Valuation      |    292.75 | USD |
-|            |   -50.00 | USD | Valuation AAPL             | Equity:Valuation      |     50.00 | USD |
+| 2018-07-01 |   -50.00 | USD | Valuation AAPL             | Equity:Valuation      |     50.00 | USD |
+|            |  -292.75 | USD | Valuation BTC              | Equity:Valuation      |    292.75 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-08-01 |   314.00 | USD | Valuation BTC              | Equity:Valuation      |   -314.00 | USD |
-|            |   160.00 | USD | Valuation AAPL             | Equity:Valuation      |   -160.00 | USD |
+| 2018-08-01 |   160.00 | USD | Valuation AAPL             | Equity:Valuation      |   -160.00 | USD |
+|            |   314.00 | USD | Valuation BTC              | Equity:Valuation      |   -314.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-09-01 |  -102.75 | USD | Valuation BTC              | Equity:Valuation      |    102.75 | USD |
-|            |   260.00 | USD | Valuation AAPL             | Equity:Valuation      |   -260.00 | USD |
+| 2018-09-01 |   260.00 | USD | Valuation AAPL             | Equity:Valuation      |   -260.00 | USD |
+|            |  -102.75 | USD | Valuation BTC              | Equity:Valuation      |    102.75 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-10-01 |  -153.50 | USD | Valuation BTC              | Equity:Valuation      |    153.50 | USD |
-|            |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
+| 2018-10-01 |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
+|            |  -153.51 | USD | Valuation BTC              | Equity:Valuation      |    153.51 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-11-01 |   -55.00 | USD | Valuation BTC              | Equity:Valuation      |     55.00 | USD |
-|            |   -30.00 | USD | Valuation AAPL             | Equity:Valuation      |     30.00 | USD |
+| 2018-11-01 |   -30.00 | USD | Valuation AAPL             | Equity:Valuation      |     30.00 | USD |
+|            |   -55.00 | USD | Valuation BTC              | Equity:Valuation      |     55.00 | USD |
 |            |          |     |                            |                       |           |     |
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
 | &lt;MAX_DATE&gt; | 18409.50 | USD | Assets                     |                       |           |     |
@@ -1086,8 +1085,8 @@ answer almost any question about a journal.
 </div>
 </div>
 
-<div id="outline-container-org7c3553d" class="outline-3">
-<h3 id="org7c3553d"><span class="section-number-3">3.4</span> Standard reports</h3>
+<div id="outline-container-org934e159" class="outline-3">
+<h3 id="org934e159"><span class="section-number-3">3.4</span> Standard reports</h3>
 <div class="outline-text-3" id="text-3-4">
 <p>
 beans has some standard reports which allow for easy creation of a
@@ -1096,8 +1095,8 @@ set of filtering options.
 </p>
 </div>
 
-<div id="outline-container-org8c24a5d" class="outline-4">
-<h4 id="org8c24a5d"><span class="section-number-4">3.4.1</span> Income Statement</h4>
+<div id="outline-container-org9f02a0a" class="outline-4">
+<h4 id="org9f02a0a"><span class="section-number-4">3.4.1</span> Income Statement</h4>
 <div class="outline-text-4" id="text-3-4-1">
 <p>
 Let's start with an income statement. Our journal starts at the
@@ -1154,8 +1153,8 @@ Now let's get an overview of our income and expenses in January 2018:
 </div>
 </div>
 
-<div id="outline-container-org6b69f89" class="outline-4">
-<h4 id="org6b69f89"><span class="section-number-4">3.4.2</span> Balance Sheet</h4>
+<div id="outline-container-org0f71463" class="outline-4">
+<h4 id="org0f71463"><span class="section-number-4">3.4.2</span> Balance Sheet</h4>
 <div class="outline-text-4" id="text-3-4-2">
 <p>
 As of 1 February, the balance looks as follows:
@@ -1193,8 +1192,8 @@ expenses, but rather against equity.
 </div>
 </div>
 
-<div id="outline-container-org0d77604" class="outline-4">
-<h4 id="org0d77604"><span class="section-number-4">3.4.3</span> Valuation at latest prices</h4>
+<div id="outline-container-orgf40d379" class="outline-4">
+<h4 id="orgf40d379"><span class="section-number-4">3.4.3</span> Valuation at latest prices</h4>
 <div class="outline-text-4" id="text-3-4-3">
 <p>
 Seeing all commodities separately helps tracking the inventory, but
@@ -1229,8 +1228,8 @@ gains and losses over time with respect to the reference currency.
 </div>
 </div>
 
-<div id="outline-container-org8c59eb9" class="outline-4">
-<h4 id="org8c59eb9"><span class="section-number-4">3.4.4</span> Analysis &amp; Filtering</h4>
+<div id="outline-container-org0d6f5ac" class="outline-4">
+<h4 id="org0d6f5ac"><span class="section-number-4">3.4.4</span> Analysis &amp; Filtering</h4>
 <div class="outline-text-4" id="text-3-4-4">
 <p>
 Now, how is this valuation loss explained? beans allows for arbitrary slicing:
@@ -1330,19 +1329,19 @@ Stepping forward in time, what does the income statement look like over H1/2018?
 </div>
 </div>
 
-<div id="outline-container-org0cb8af4" class="outline-3">
-<h3 id="org0cb8af4"><span class="section-number-3">3.5</span> Low-level balancing</h3>
+<div id="outline-container-orge216399" class="outline-3">
+<h3 id="orge216399"><span class="section-number-3">3.5</span> Low-level balancing</h3>
 <div class="outline-text-3" id="text-3-5">
 </div>
-<div id="outline-container-org93b5673" class="outline-4">
-<h4 id="org93b5673"><span class="section-number-4">3.5.1</span> Global balance</h4>
+<div id="outline-container-org2755ea3" class="outline-4">
+<h4 id="org2755ea3"><span class="section-number-4">3.5.1</span> Global balance</h4>
 <div class="outline-text-4" id="text-3-5-1">
 <p>
 In addition to the predefined reports, beans has a generic balancing command:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh" id="org36d8985">beans balance -j examples/example.bean
+<pre class="src src-sh" id="org6585ea2">beans balance -j examples/example.bean
 </pre>
 </div>
 
@@ -1377,12 +1376,12 @@ This outputs a balance for all accounts without any currency conversions.
 </div>
 </div>
 
-<div id="outline-container-orgf463ed8" class="outline-4">
-<h4 id="orgf463ed8"><span class="section-number-4">3.5.2</span> Balancing options</h4>
+<div id="outline-container-orgaf06247" class="outline-4">
+<h4 id="orgaf06247"><span class="section-number-4">3.5.2</span> Balancing options</h4>
 <div class="outline-text-4" id="text-3-5-2">
 </div>
 <ol class="org-ol">
-<li><a id="org6ef1158"></a>Flattening the account structure<br />
+<li><a id="orge33a290"></a>Flattening the account structure<br />
 <div class="outline-text-5" id="text-3-5-2-1">
 <p>
 There are some formatting options available (some of which also apply
@@ -1390,7 +1389,7 @@ to the predefined reports):
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh" id="orgda1d578">beans balance -j examples/example.bean --flat --depth 0
+<pre class="src src-sh" id="orgad5cf51">beans balance -j examples/example.bean --flat --depth 0
 </pre>
 </div>
 
@@ -1419,14 +1418,14 @@ to the predefined reports):
 </div>
 </li>
 
-<li><a id="org196c9a9"></a>Valuation at market prices<br />
+<li><a id="org4c58d7a"></a>Valuation at market prices<br />
 <div class="outline-text-5" id="text-3-5-2-2">
 <p>
 Valuation at market (i.e. latest available prices) is always an option:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh" id="orgf44592c">beans balance -j examples/example.bean -m USD
+<pre class="src src-sh" id="orgbd6d93d">beans balance -j examples/example.bean -m USD
 </pre>
 </div>
 
@@ -1454,7 +1453,7 @@ Valuation at market (i.e. latest available prices) is always an option:
 </div>
 </li>
 
-<li><a id="org7522154"></a>Restricting dates and periods<br />
+<li><a id="orgaa89de9"></a>Restricting dates and periods<br />
 <div class="outline-text-5" id="text-3-5-2-3">
 <p>
 We can also analyze changes in the balance between specific dates:
@@ -1501,7 +1500,7 @@ uniquely due to market price changes.
 </div>
 </li>
 
-<li><a id="org63d5096"></a>Analyzing changes in valuation<br />
+<li><a id="org01b6555"></a>Analyzing changes in valuation<br />
 <div class="outline-text-5" id="text-3-5-2-4">
 <p>
 Using filtering, we can eliminate the effect of income and expenses
@@ -1533,7 +1532,7 @@ How about bitcoin?
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sh" id="org84295ed">beans balance -j examples/example.bean -m BTC
+<pre class="src src-sh" id="org687781d">beans balance -j examples/example.bean -m BTC
 </pre>
 </div>
 
@@ -1577,8 +1576,8 @@ prices. Valuation at cost is yet to be implemented.
 </div>
 </div>
 
-<div id="outline-container-orgb2d474a" class="outline-3">
-<h3 id="orgb2d474a"><span class="section-number-3">3.6</span> Transaction-level valuation</h3>
+<div id="outline-container-orge9720f8" class="outline-3">
+<h3 id="orge9720f8"><span class="section-number-3">3.6</span> Transaction-level valuation</h3>
 <div class="outline-text-3" id="text-3-6">
 <p>
 beans applies valuation at the level of transactions, which seems
@@ -1608,8 +1607,8 @@ commodity can be accounted for explicitly.
 </div>
 
 
-<div id="outline-container-orgbf596e4" class="outline-2">
-<h2 id="orgbf596e4"><span class="section-number-2">4</span> Developing beans</h2>
+<div id="outline-container-org9007b61" class="outline-2">
+<h2 id="org9007b61"><span class="section-number-2">4</span> Developing beans</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Development is very much in progress and beans is not really stable
@@ -1626,8 +1625,8 @@ advantageous if you know some Haskell.
 </p>
 </div>
 
-<div id="outline-container-orgff35032" class="outline-3">
-<h3 id="orgff35032"><span class="section-number-3">4.1</span> Roadmap</h3>
+<div id="outline-container-org05b09e4" class="outline-3">
+<h3 id="org05b09e4"><span class="section-number-3">4.1</span> Roadmap</h3>
 <div class="outline-text-3" id="text-4-1">
 <p>
 beans still has long way to go. I do this in my spare time and I do
@@ -1636,8 +1635,8 @@ working on in the future:
 </p>
 </div>
 
-<div id="outline-container-org791ebd0" class="outline-4">
-<h4 id="org791ebd0"><span class="section-number-4">4.1.1</span> Shorter term</h4>
+<div id="outline-container-org0aed0b7" class="outline-4">
+<h4 id="org0aed0b7"><span class="section-number-4">4.1.1</span> Shorter term</h4>
 <div class="outline-text-4" id="text-4-1-1">
 <ul class="org-ul">
 <li class="on"><code>[X]</code> new command to print and filter transactions (as-is or at market value)</li>
@@ -1653,8 +1652,8 @@ test)</li>
 </div>
 </div>
 
-<div id="outline-container-orgd06b2ff" class="outline-4">
-<h4 id="orgd06b2ff"><span class="section-number-4">4.1.2</span> Longer term</h4>
+<div id="outline-container-orgc6a666d" class="outline-4">
+<h4 id="orgc6a666d"><span class="section-number-4">4.1.2</span> Longer term</h4>
 <div class="outline-text-4" id="text-4-1-2">
 <ul class="org-ul">
 <li class="off"><code>[&#xa0;]</code> general reporting infrastructure</li>
@@ -1668,8 +1667,8 @@ test)</li>
 </div>
 </div>
 
-<div id="outline-container-orgd38d93e" class="outline-3">
-<h3 id="orgd38d93e"><span class="section-number-3">4.2</span> Compatibility</h3>
+<div id="outline-container-org8023b53" class="outline-3">
+<h3 id="org8023b53"><span class="section-number-3">4.2</span> Compatibility</h3>
 <div class="outline-text-3" id="text-4-2">
 <p>
 <code>beans</code> journals are in syntax and semantics largely similar to
@@ -1686,8 +1685,8 @@ translates the ledger into other formats.
 </div>
 </div>
 
-<div id="outline-container-orgb6b3780" class="outline-3">
-<h3 id="orgb6b3780"><span class="section-number-3">4.3</span> Documentation</h3>
+<div id="outline-container-org34e8c8e" class="outline-3">
+<h3 id="org34e8c8e"><span class="section-number-3">4.3</span> Documentation</h3>
 <div class="outline-text-3" id="text-4-3">
 <p>
 This manual aims to provide a comprehensive overview of its
@@ -1697,12 +1696,12 @@ against <a href="https://github.com/sboehler/beans/blob/master/index.org">this f
 </div>
 </div>
 
-<div id="outline-container-orgba37d56" class="outline-3">
-<h3 id="orgba37d56"><span class="section-number-3">4.4</span> Dev setup</h3>
+<div id="outline-container-orge379a69" class="outline-3">
+<h3 id="orge379a69"><span class="section-number-3">4.4</span> Dev setup</h3>
 <div class="outline-text-3" id="text-4-4">
 </div>
-<div id="outline-container-org48e1d5f" class="outline-4">
-<h4 id="org48e1d5f"><span class="section-number-4">4.4.1</span> nix / Haskell IDE engine</h4>
+<div id="outline-container-org7e74c74" class="outline-4">
+<h4 id="org7e74c74"><span class="section-number-4">4.4.1</span> nix / Haskell IDE engine</h4>
 <div class="outline-text-4" id="text-4-4-1">
 <p>
 I am using Emacs and <a href="https://github.com/haskell/haskell-ide-engine">Haskell IDE Engine</a> under <a href="https://nixos.org/">Nixos</a>. To setup your
@@ -1719,8 +1718,8 @@ if you have the nix package manager installed.
 </div>
 </div>
 
-<div id="outline-container-org8cce6cb" class="outline-4">
-<h4 id="org8cce6cb"><span class="section-number-4">4.4.2</span> Stack</h4>
+<div id="outline-container-org8b63def" class="outline-4">
+<h4 id="org8b63def"><span class="section-number-4">4.4.2</span> Stack</h4>
 <div class="outline-text-4" id="text-4-4-2">
 <p>
 It should be possible to develop <code>beans</code> with stack. Please file a bug
@@ -1731,8 +1730,8 @@ expected.
 </div>
 </div>
 
-<div id="outline-container-orgb547b9d" class="outline-3">
-<h3 id="orgb547b9d"><span class="section-number-3">4.5</span> Adding an importer</h3>
+<div id="outline-container-orgbc509a6" class="outline-3">
+<h3 id="orgbc509a6"><span class="section-number-3">4.5</span> Adding an importer</h3>
 <div class="outline-text-3" id="text-4-5">
 <p>
 <code>beans</code> is open to contributions, see the example <a href="https://github.com/sboehler/beans/blob/master/src/Beans/Import/CH/Postfinance.hs">here</a> how an importer
@@ -1749,8 +1748,8 @@ adopted. I am open to suggestion.
 </div>
 </div>
 
-<div id="outline-container-orgbf1a2b3" class="outline-3">
-<h3 id="orgbf1a2b3"><span class="section-number-3">4.6</span> Tests</h3>
+<div id="outline-container-orgffd6b12" class="outline-3">
+<h3 id="orgffd6b12"><span class="section-number-3">4.6</span> Tests</h3>
 <div class="outline-text-3" id="text-4-6">
 <p>
 Every importer should have a test and an example file. This being
@@ -1761,8 +1760,8 @@ said, test coverage is currently lacking for the existing importers.
 </div>
 
 
-<div id="outline-container-orgd5e68a7" class="outline-2">
-<h2 id="orgd5e68a7"><span class="section-number-2">5</span> License</h2>
+<div id="outline-container-orgb7b6577" class="outline-2">
+<h2 id="orgb7b6577"><span class="section-number-2">5</span> License</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 <code>beans</code> is licensed under the BSD-3 license.
@@ -1772,7 +1771,7 @@ said, test coverage is currently lacking for the existing importers.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Silvio Böhler</p>
-<p class="date">Created: 2018-12-02 Sun 01:43</p>
+<p class="date">Created: 2019-01-08 Di 00:35</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

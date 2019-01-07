@@ -4,18 +4,18 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1478abb47d18fecd9b3ca58b42dac489701bc8992dc74aa86470e6d6efbb2961
+-- hash: 6cd198a4ab5eb5bc093f30547fbe87db4ca2e981f7a670bb4b614c53c21db8c2
 
 name:           beans
-version:        0.0.2.0
+version:        0.0.3.0
 synopsis:       A plain text accounting tool
 description:    Please see the README on Github at <https://github.com/sboehler/beans#readme>
 category:       Finance
 homepage:       https://github.com/sboehler/beans#readme
 bug-reports:    https://github.com/sboehler/beans/issues
 author:         Silvio Böhler
-maintainer:     sboehler@gmail.com
-copyright:      2017 Silvio Böhler
+maintainer:     silvio@monadic.ch
+copyright:      2018 Silvio Böhler
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple

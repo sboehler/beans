@@ -56,7 +56,7 @@ Make sure you have git installed and run:
   git clone https://github.com/sboehler/beans.git
 #+END_EXAMPLE
 
-** Installping beans
+** Installing beans
 
 *** Using Stack
 

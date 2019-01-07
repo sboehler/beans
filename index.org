@@ -87,7 +87,7 @@ platform. Then:
 
 #+BEGIN_EXAMPLE sh
   cd beans
-  nix-build release.nix
+  nix-build --attr beans release.nix
 #+END_EXAMPLE
 
 The beans binary will be made available locally in ~./result/bin/beans~

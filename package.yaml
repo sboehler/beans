@@ -1,10 +1,10 @@
 name:                beans
-version:             0.0.2.0
+version:             0.0.3.0
 github:              sboehler/beans
 license:             BSD3
 author:              Silvio Böhler
-maintainer:          sboehler@gmail.com
-copyright:           2017 Silvio Böhler
+maintainer:          silvio@monadic.ch
+copyright:           2018 Silvio Böhler
 
 extra-source-files:
 - README.org

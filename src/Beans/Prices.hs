@@ -74,6 +74,8 @@ lookupPrice commodityName prices = case M.lookup commodityName prices of
   Just p -> return $ invert' p
   _      -> throwM $ NoNormalizedPriceFound prices commodityName
 
+-- TODO: find a better way
 invert' :: D.Decimal -> D.Decimal
-invert' (D.Decimal p m) =
-  D.realFracToDecimal p $ (1.0 :: Double) / fromIntegral p * 10 ^ (-m)
+invert' d = if i > 20 then D.roundTo 20 d' else d'
+ where
+   d'@(D.Decimal i _) = 1 / d

@@ -3,16 +3,16 @@
 
 # beans - A Plain-Text Accounting Tool
 
-`beans` is a [plain text accounting tool](https://plaintextaccounting) in the tradition of [ledger](https://www.ledger-cli.org), [hledger](https://hledger.org) and [beancount](https://furius.ca/beancount/).
+`beans` is a [plain text accounting tool](https://plaintextaccounting) in the tradition of [ledger](https://www.ledger-cli.org),
+[hledger](https://hledger.org) and [beancount](https://furius.ca/beancount/). Read the overview below, or check out the
+[manual](https://sboehler.github.com/beans) for details!
 
 
 ## Track your net worth
 
 Print a formatted balance sheet in USD:
 
-```sh
-beans balanceSheet -j examples/example.bean
-```
+    beans balanceSheet -j examples/example.bean
 
 Output:
 
@@ -36,9 +36,7 @@ Output:
 
 Convert all amounts to USD, using latest market prices:
 
-```sh
-beans balanceSheet -j examples/example.bean -m USD
-```
+    beans balanceSheet -j examples/example.bean -m USD
 
 Output:
 
@@ -55,9 +53,7 @@ Output:
 
 Convert all amounts to bitcoin, using latest market prices:
 
-```sh
-beans balanceSheet -j examples/example.bean -m BTC
-```
+    beans balanceSheet -j examples/example.bean -m BTC
 
 Output:
 
@@ -77,30 +73,24 @@ Output:
 
 Take a sample bank statement:
 
-```raw
-Datum von:;2017-05-23
-Buchungsart:;Alle Buchungen
-Konto:;CHXXXXXXXXXXXXXXXXXXX
-Währung:;CHF
-Buchungsdatum;Avisierungstext;Gutschrift;Lastschrift;Valuta;Saldo
-2017-06-01;"Acme Corp";;-135.00;2017-06-01;
+    Datum von:;2017-05-23
+    Buchungsart:;Alle Buchungen
+    Konto:;CHXXXXXXXXXXXXXXXXXXX
+    Währung:;CHF
+    Buchungsdatum;Avisierungstext;Gutschrift;Lastschrift;Valuta;Saldo
+    2017-06-01;"Acme Corp";;-135.00;2017-06-01;
 
-Disclaimer:
-Dies ist kein durch PostFinance AG erstelltes Dokument. PostFinance AG ist nicht verantwortlich für den Inhalt.
-```
+    Disclaimer:
+    Dies ist kein durch PostFinance AG erstelltes Dokument. PostFinance AG ist nicht verantwortlich für den Inhalt.
 
 Create a set of rules:
 
-```raw
-description =~ "Acme" && abs amount == 135.00 -> Expenses:Groceries
-True -> Expenses:ToBeEditedManually
-```
+    description =~ "Acme" && abs amount == 135.00 -> Expenses:Groceries
+    True -> Expenses:ToBeEditedManually
 
 Import the statement and assign accounts to bookings:
 
-```sh
-beans import -i ch.postfinance -c examples/quick/example.rules -a Assets:Checking examples/quick/postfinance.csv
-```
+    beans import -i ch.postfinance -c examples/quick/example.rules -a Assets:Checking examples/quick/postfinance.csv
 
 Output:
 

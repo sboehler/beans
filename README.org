@@ -7,17 +7,20 @@
 [![Build Status](https://travis-ci.org/sboehler/beans.svg?branch=master)](https://travis-ci.org/sboehler/beans)
 #+END_EXPORT
 
+#+PROPERTY: header-args:sh :var PATH="./result/bin" :exports both :results output verbatim
+
 * beans - A Plain-Text Accounting Tool
 
 ~beans~ is a [[https://plaintextaccounting][plain text accounting tool]] in the tradition of [[https://www.ledger-cli.org][ledger]],
-[[https://hledger.org][hledger]] and [[https://furius.ca/beancount/][beancount]].
+[[https://hledger.org][hledger]] and [[https://furius.ca/beancount/][beancount]]. Read the overview below, or check out the
+[[https://sboehler.github.com/beans][manual]] for details!
 
 ** Track your net worth
 
 Print a formatted balance sheet in USD:
 
 #+NAME: balance
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean
 #+END_SRC
 
@@ -48,7 +51,7 @@ Output:
 Convert all amounts to USD, using latest market prices:
 
 #+NAME: convertedBalance
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean -m USD
 #+END_SRC
 
@@ -72,7 +75,7 @@ Output:
 Convert all amounts to bitcoin, using latest market prices:
 
 #+NAME: convertedBalanceBTC
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans balanceSheet -j examples/example.bean -m BTC
 #+END_SRC
 
@@ -107,7 +110,7 @@ Create a set of rules:
 Import the statement and assign accounts to bookings:
 
 #+NAME: beans-import
-#+BEGIN_SRC sh :exports both :results output :var PATH="./dist/build/beans"
+#+BEGIN_SRC sh
   beans import -i ch.postfinance -c examples/quick/example.rules -a Assets:Checking examples/quick/postfinance.csv
 #+END_SRC
 

@@ -74,8 +74,11 @@ lookupPrice commodityName prices = case M.lookup commodityName prices of
   Just p -> return $ invert' p
   _      -> throwM $ NoNormalizedPriceFound prices commodityName
 
--- TODO: find a better way
+-- Reasonable way to invert a fixed-point number, in particular a
+-- price, without blowing up the number of decimal places
+-- unnecessarily. Adds one digit to the number of significant digit in
+-- order to correct for loss of precision.
 invert' :: D.Decimal -> D.Decimal
-invert' d = if i > 20 then D.roundTo 20 d' else d'
- where
-   d'@(D.Decimal i _) = 1 / d
+invert' d@(D.Decimal i n) =
+  let l = logBase 10 . fromIntegral $ n :: Double
+  in  D.roundTo (2 * ceiling l - i) (1 / d)

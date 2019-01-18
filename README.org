@@ -62,12 +62,12 @@ Output:
 |-------------+----------+-----------+--------------------+----------+-----------|
 | Account     | Amount   | Commodity | Account            | Amount   | Commodity |
 |-------------+----------+-----------+--------------------+----------+-----------|
-| Assets      | 18409.50 | USD       | Equity             | 18409.50 | USD       |
+| Assets      | 18409.32 | USD       | Equity             | 18409.32 | USD       |
 |   Checking  | 14600.00 | USD       |   OpeningBalance   | 15000.00 | USD       |
-|   Portfolio |  2220.00 | USD       |   RetainedEarnings |  4800.00 | USD       |
-|   Wallet    |  1589.50 | USD       |   Valuation        | -1390.50 | USD       |
+|   Portfolio |  2219.80 | USD       |   RetainedEarnings |  4800.00 | USD       |
+|   Wallet    |  1589.52 | USD       |   Valuation        | -1390.68 | USD       |
 |-------------+----------+-----------+--------------------+----------+-----------|
-| Total       | 18409.50 | USD       | Total              | 18409.50 | USD       |
+| Total       | 18409.32 | USD       | Total              | 18409.32 | USD       |
 |-------------+----------+-----------+--------------------+----------+-----------|
 
 #+end_example

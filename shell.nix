@@ -48,7 +48,7 @@ let
     cabal-install
     hlint
     stable.haskellPackages.brittany
-    stable.haskellPackages.stylish-haskell
+    stylish-haskell
   ]);
 
 in

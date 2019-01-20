@@ -51,6 +51,7 @@ import           Beans.Megaparsec               ( alphaNumChar
                                                 , (<|>)
                                                 )
 import           Data.Maybe                     ( catMaybes )
+import qualified Data.List                     as List
 import           Control.Monad.Reader           ( asks
                                                 , MonadReader
                                                 )
@@ -63,7 +64,7 @@ parse = parseLatin1 parseIBData
 
 
 parseIBData :: Parser [Dated Command]
-parseIBData = catMaybes <$> many line
+parseIBData = List.sort . catMaybes <$> many line
 
 line :: Parser (Maybe (Dated Command))
 line =
@@ -83,7 +84,7 @@ depositWithdrawalOrFee = do
   currency    <- commodityField
   date        <- dateField
   description <- textField
-  amount      <- amountField <* skipRestOfLine
+  amount      <- parseAmount (pure ()) <* skipRestOfLine
   account     <- asks _configAccount
   other       <- askAccount
     $ Context date (toLower t) description amount currency name
@@ -136,7 +137,7 @@ dividendOrWithholdingTax = do
   isin <-
     char '(' >> takeWhile1P (Just "ISIN") isAlphaNum <* (char ')' >> space)
   description <- field $ takeWhile1P Nothing (/= ',')
-  amount      <- amountField
+  amount      <- parseAmount (pure ())
   account     <- asks _configAccount
   let desc = unwords [t, (pack . show) symbol, isin, description]
   dividendAccount <- askAccount

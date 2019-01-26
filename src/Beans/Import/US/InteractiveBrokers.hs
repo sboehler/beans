@@ -106,16 +106,16 @@ trade = do
   date                  <- dateTimeField
   amount                <- amountField
   price                 <- amountField <* skipField
-  purchas_contextAmount <- amountField
+  purchase_contextAmount <- amountField
   fe_contextAmount      <- amountField <* skipRestOfLine
   account               <- asks _configAccount
   feeAccount            <- askAccount
-    $ Context date "fee" category fe_contextAmount currency name
+    $ Context date "fees" category fe_contextAmount currency name
   let lot      = Lot price currency date Nothing
       bookings = M.fromListM
         [ (Position account symbol (Just lot), M.singleton symbol amount)
         , ( Position account currency Nothing
-          , M.singleton currency purchas_contextAmount
+          , M.singleton currency purchase_contextAmount
           )
         , ( Position feeAccount currency Nothing
           , M.singleton currency fe_contextAmount

@@ -45,7 +45,7 @@ instance Pretty Tag where
 instance Pretty Lot where
   pretty Lot {_lotLabel, _lotPrice, _lotTargetCommodity, _lotDate} =
     encloseSep "{" "}" "," $
-    [pretty _lotPrice, pretty _lotTargetCommodity, pretty _lotDate] ++
+    [pretty _lotPrice <+> pretty _lotTargetCommodity, pretty _lotDate] ++
     case _lotLabel of
       Nothing -> []
       Just l  -> [pretty l]

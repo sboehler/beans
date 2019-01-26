@@ -147,7 +147,7 @@ evalE EVarAmount      = asks _contextAmount
 evalE EVarDescription = asks _contextDescription
 evalE EVarType        = asks _contextBookingType
 evalE EVarDate        = asks _contextDate
-evalE EVarImporter    = pack . show <$> asks _contextImporter
+evalE EVarImporter    = asks _contextImporter
 evalE (EAbs a    )    = abs <$> evalE a
 evalE (EAnd a b  )    = (&&) <$> evalE a <*> evalE b
 evalE (EOr  a b  )    = (||) <$> evalE a <*> evalE b
@@ -226,8 +226,13 @@ boolLiteral :: Parser (E Bool)
 boolLiteral = EBool <$> choice [True <$ sym "True", False <$ sym "False"]
 
 textExpr :: Parser (E Text)
-textExpr =
-  choice [parens textExpr, textLiteral, EVarDescription <$ sym "description"]
+textExpr = choice
+  [ parens textExpr
+  , textLiteral
+  , EVarDescription <$ sym "description"
+  , EVarType <$ sym "type"
+  , EVarImporter <$ sym "importer"
+  ]
 
 textRelation :: Parser (E Text -> E Text -> E Bool)
 textRelation = choice [EEQ <$ sym "==", ENE <$ sym "!=", EMatch <$ sym "=~"]

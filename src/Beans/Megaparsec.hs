@@ -8,9 +8,12 @@ module Beans.Megaparsec
   , parseFormattedDate
   , parseCommodity
   , parseAccount
+  , subparse
+  , preprocess
   )
 where
 
+import           Data.Functor                   ( ($>) )
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer
@@ -39,12 +42,12 @@ parseCommodity =
     <$> (T.cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum)
 
 parseAccountType :: (MonadParsec e T.Text m) => m AccountType
-parseAccountType = read . T.unpack <$> choice
-  [ string "Assets"
-  , string "Liabilities"
-  , string "Expenses"
-  , string "Income"
-  , string "Equity"
+parseAccountType = choice
+  [ string "Assets" $> Assets
+  , string "Liabilities" $> Liabilities
+  , string "Expenses" $> Expenses
+  , string "Income" $> Income
+  , string "Equity" $> Equity
   ]
 
 parseIdentifier :: (MonadParsec e T.Text m) => m T.Text
@@ -57,17 +60,24 @@ parseAccount =
   where colon = char ':'
 
 parseISODate :: (MonadParsec e T.Text m) => m Date
-parseISODate = fromGreg <$> digits 4 <* dash <*> digits 2 <* dash <*> digits 2
- where
-  dash = char '-'
-  digits n = read <$> count n digitChar
+parseISODate = fromGreg <$> decimal <* dash <*> decimal <* dash <*> decimal
+  where dash = char '-'
 
 parseFormattedDate :: (MonadParsec e T.Text m) => String -> m String -> m Date
 parseFormattedDate fmt parser = do
-  inp <- parser
-  case parseDate fmt inp of
+  input <- parser
+  case parseDate fmt input of
     Just d  -> return d
-    Nothing -> fail $ unwords ["Invalid date:", show inp]
+    Nothing -> fail $ unwords ["Invalid date:", show input]
 
 parseDate :: String -> String -> Maybe Date
 parseDate fmt input = Date <$> F.parseTimeM False F.defaultTimeLocale fmt input
+
+subparse :: MonadParsec e s m => m s -> m a -> m a
+subparse d p = do
+  input <- d
+  rest  <- getInput
+  setInput input >> p <* setInput rest
+
+preprocess :: MonadParsec e s m => (s -> s) -> m a -> m a
+preprocess f p = (f <$> getInput) >>= setInput >> p

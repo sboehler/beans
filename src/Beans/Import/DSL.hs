@@ -27,7 +27,6 @@ import           Data.Monoid                    ( (<>) )
 import           Data.Char                      ( isAlphaNum )
 import           Data.Text                      ( Text
                                                 , cons
-                                                , pack
                                                 , unpack
                                                 )
 import           Data.Text.IO                   ( readFile )

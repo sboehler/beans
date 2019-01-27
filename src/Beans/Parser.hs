@@ -45,6 +45,7 @@ import           System.FilePath.Posix          ( combine
                                                 )
 import           Beans.Megaparsec               ( Parsec
                                                 , between
+                                                , choice
                                                 , empty
                                                 , eof
                                                 , getSourcePos
@@ -142,10 +143,7 @@ posting d = do
 
 
 flag :: Parser Flag
-flag = complete <|> incomplete
- where
-  complete   = Complete <$ symbol "*"
-  incomplete = Incomplete <$ symbol "!"
+flag = choice [symbol "*" $> Complete, symbol "!" $> Incomplete]
 
 tag :: Parser Tag
 tag = Tag <$> (cons <$> char '#' <*> takeWhile1P (Just "alphanum") isAlphaNum)

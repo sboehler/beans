@@ -6,6 +6,7 @@ where
 
 import           Prelude                 hiding ( unwords )
 import           Data.Char                      ( isAlphaNum )
+import qualified Data.Text                     as Text
 import           Data.Text                      ( Text
                                                 , pack
                                                 , unwords
@@ -22,14 +23,12 @@ import           Beans.Import.Common            ( Context(..)
                                                 , Config(..)
                                                 )
 import qualified Beans.Data.Map                as M
-import qualified Text.Megaparsec.Char.Lexer    as L
 import           Beans.Model                    ( Commodity(..)
                                                 , Dated(Dated)
                                                 , Flag(Complete)
                                                 , Command(CmdTransaction)
                                                 , Transaction(..)
                                                 , Date
-                                                , fromGreg
                                                 , Lot(Lot)
                                                 , Position(Position)
                                                 , Amount
@@ -38,12 +37,14 @@ import           Beans.Megaparsec               ( alphaNumChar
                                                 , char
                                                 , anySingle
                                                 , parseAmount
+                                                , parseISODate
                                                 , space
                                                 , string
-                                                , digitChar
                                                 , eol
-                                                , count
                                                 , skipManyTill
+                                                , manyTill
+                                                , subparse
+                                                , preprocess
                                                 , takeWhile1P
                                                 , some
                                                 , many
@@ -101,15 +102,15 @@ depositWithdrawalOrFee = do
 trade :: Parser (Dated Command)
 trade = do
   category <- cField "Trades" >> cField "Data" >> cField "Order" >> textField
-  currency              <- commodityField
-  symbol                <- commodityField
-  date                  <- dateTimeField
-  amount                <- amountField
-  price                 <- amountField <* skipField
+  currency               <- commodityField
+  symbol                 <- commodityField
+  date                   <- dateField
+  amount                 <- amountField
+  price                  <- amountField <* skipField
   purchase_contextAmount <- amountField
-  fe_contextAmount      <- amountField <* skipRestOfLine
-  account               <- asks _configAccount
-  feeAccount            <- askAccount
+  fe_contextAmount       <- amountField <* skipRestOfLine
+  account                <- asks _configAccount
+  feeAccount             <- askAccount
     $ Context date "fees" category fe_contextAmount currency name
   let lot      = Lot price currency date Nothing
       bookings = M.fromListM
@@ -159,27 +160,17 @@ cField :: Text -> Parser Text
 cField = field . string
 
 dateField :: Parser Date
-dateField = field (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
- where
-  dash = char '-'
-  int n = read <$> count n digitChar
-
-dateTimeField :: Parser Date
-dateTimeField =
-  field
-    $  quote
-    >> (fromGreg <$> int 4 <*> (dash >> int 2) <*> (dash >> int 2))
-    <* skipManyTill anySingle quote
- where
-  dash  = char '-'
-  quote = char '"'
-  int n = read <$> count n digitChar
+dateField = field parseISODate
 
 commodityField :: Parser Commodity
-commodityField = field $ Commodity . pack <$> some alphaNumChar
+commodityField =
+  Commodity . pack <$> (some alphaNumChar <* skipManyTill anySingle separator)
 
 amountField :: Parser Amount
-amountField = field $ parseAmount (pure ())
+amountField = field $ preprocess filterCommas p
+ where
+  filterCommas = Text.filter (/= ',')
+  p            = parseAmount $ pure ()
 
 skipLine :: Parser ()
 skipLine = void $ skipManyTill anySingle eol
@@ -197,4 +188,8 @@ comma :: Parser Char
 comma = char ','
 
 field :: Parser a -> Parser a
-field = L.lexeme separator
+field = subparse (quotedField <|> unquotedField)
+ where
+  quote         = char '"'
+  quotedField   = pack <$> (quote >> manyTill anySingle (quote >> separator))
+  unquotedField = pack <$> manyTill anySingle separator

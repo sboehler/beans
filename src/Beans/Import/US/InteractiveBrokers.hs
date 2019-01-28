@@ -4,13 +4,13 @@ module Beans.Import.US.InteractiveBrokers
   )
 where
 
+import           Data.Group                     ( invert )
 import           Prelude                 hiding ( unwords )
 import           Data.Char                      ( isAlphaNum )
 import qualified Data.Text                     as Text
 import           Data.Text                      ( Text
                                                 , pack
                                                 , unwords
-                                                , toLower
                                                 )
 import           Control.Monad                  ( void )
 import           Control.Monad.Catch            ( MonadThrow )
@@ -63,6 +63,8 @@ name = "us.interactivebrokers"
 parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
 parse = parseLatin1 parseIBData
 
+data AccountType = MoneyTransfer | Interest | Fee | WithholdingTax | Dividend
+  deriving (Show, Read, Eq)
 
 parseIBData :: Parser [Dated Command]
 parseIBData = List.sort . catMaybes <$> many line
@@ -79,57 +81,56 @@ line =
 depositWithdrawalOrFee :: Parser (Dated Command)
 depositWithdrawalOrFee = do
   t <-
-    try (cField "Deposits & Withdrawals" <* cField "Data")
-    <|> try (cField "Interest" <* cField "Data")
-    <|> try (cField "Fees" <* (cField "Data" >> cField "Other Fees"))
+    try (MoneyTransfer <$ cField "Deposits & Withdrawals" <* cField "Data")
+    <|> try (Interest <$ cField "Interest" <* cField "Data")
+    <|> try (Fee <$ cField "Fees" <* (cField "Data" >> cField "Other Fees"))
   currency    <- commodityField
   date        <- dateField
   description <- textField
   amount      <- parseAmount (pure ()) <* skipRestOfLine
   account     <- asks _configAccount
   other       <- askAccount
-    $ Context date (toLower t) description amount currency name
+    $ Context date (pack . show $ t) description amount currency name
   let bookings = M.fromListM
         [ (Position account currency Nothing, M.singleton currency amount)
         , (Position other currency Nothing  , M.singleton currency (-amount))
         ]
   return $ Dated date $ CmdTransaction $ Transaction
     Complete
-    (unwords [t, "-" :: Text, description])
+    (unwords [pack . show $ t, "-" :: Text, description])
     []
     bookings
 
 trade :: Parser (Dated Command)
 trade = do
-  category <- cField "Trades" >> cField "Data" >> cField "Order" >> textField
-  currency               <- commodityField
-  symbol                 <- commodityField
-  date                   <- dateField
-  amount                 <- amountField
-  price                  <- amountField <* skipField
-  purchase_contextAmount <- amountField
-  fe_contextAmount       <- amountField <* skipRestOfLine
-  account                <- asks _configAccount
-  feeAccount             <- askAccount
-    $ Context date "fees" category fe_contextAmount currency name
-  let lot      = Lot price currency date Nothing
-      bookings = M.fromListM
-        [ (Position account symbol (Just lot), M.singleton symbol amount)
-        , ( Position account currency Nothing
-          , M.singleton currency purchase_contextAmount
-          )
-        , ( Position feeAccount currency Nothing
-          , M.singleton currency fe_contextAmount
-          )
-        ]
+  description <- cField "Trades" >> cField "Data" >> cField "Order" >> textField
+  currency       <- commodityField
+  symbol         <- commodityField
+  date           <- dateField
+  amount         <- amountField
+  price          <- amountField <* skipField
+  purchaseAmount <- amountField
+  feeAmount      <- invert <$> amountField <* skipRestOfLine
+  account        <- asks _configAccount
+  feeAccount     <- askAccount
+    $ Context date (pack . show $ Fee) description feeAmount currency name
+  let
+    lot      = Lot price currency date Nothing
+    bookings = M.fromListM
+      [ (Position account symbol (Just lot), M.singleton symbol amount)
+      , (Position account currency Nothing, M.singleton currency purchaseAmount)
+      , (Position feeAccount currency Nothing, M.singleton currency feeAmount)
+      ]
   return $ Dated date $ CmdTransaction $ Transaction Complete
-                                                     category
+                                                     description
                                                      []
                                                      bookings
 
 dividendOrWithholdingTax :: Parser (Dated Command)
 dividendOrWithholdingTax = do
-  t        <- cField "Dividends" <|> cField "Withholding Tax"
+  t <-
+    (Dividend <$ cField "Dividends")
+      <|> (WithholdingTax <$ cField "Withholding Tax")
   currency <- cField "Data" >> commodityField
   date     <- dateField
   --description     <- textField
@@ -140,9 +141,9 @@ dividendOrWithholdingTax = do
   description <- field $ takeWhile1P Nothing (/= ',')
   amount      <- parseAmount (pure ())
   account     <- asks _configAccount
-  let desc = unwords [t, (pack . show) symbol, isin, description]
+  let desc = unwords [pack . show $ t, pack . show $ symbol, isin, description]
   dividendAccount <- askAccount
-    $ Context date (toLower t) desc amount currency name
+    $ Context date (pack . show $ t) desc amount currency name
   let
     bookings = M.fromListM
       [ (Position account currency Nothing, M.singleton currency amount)

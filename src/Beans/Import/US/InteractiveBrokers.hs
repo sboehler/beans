@@ -35,6 +35,7 @@ import           Beans.Model                    ( Commodity(..)
                                                 )
 import           Beans.Megaparsec               ( alphaNumChar
                                                 , char
+                                                , choice
                                                 , anySingle
                                                 , parseAmount
                                                 , parseISODate
@@ -115,11 +116,19 @@ trade = do
   feeAccount     <- askAccount
     $ Context date (pack . show $ Fee) description feeAmount currency name
   let
+    -- TODO: Determine reference currency
+    feeCommodity =
+      if description == "Forex" then Commodity "Unknown" else currency
     lot      = Lot price currency date Nothing
     bookings = M.fromListM
       [ (Position account symbol (Just lot), M.singleton symbol amount)
       , (Position account currency Nothing, M.singleton currency purchaseAmount)
-      , (Position feeAccount currency Nothing, M.singleton currency feeAmount)
+      , ( Position account currency Nothing
+        , M.singleton feeCommodity (-feeAmount)
+        )
+      , ( Position feeAccount currency Nothing
+        , M.singleton feeCommodity feeAmount
+        )
       ]
   return $ Dated date $ CmdTransaction $ Transaction Complete
                                                      description
@@ -128,18 +137,16 @@ trade = do
 
 dividendOrWithholdingTax :: Parser (Dated Command)
 dividendOrWithholdingTax = do
-  t <-
-    (Dividend <$ cField "Dividends")
-      <|> (WithholdingTax <$ cField "Withholding Tax")
+  t <- field $ choice
+    [WithholdingTax <$ string "Withholding Tax", Dividend <$ string "Dividends"]
   currency <- cField "Data" >> commodityField
   date     <- dateField
-  --description     <- textField
   symbol   <-
     Commodity <$> takeWhile1P (Just "Commodity name") isAlphaNum <* space
   isin <-
     char '(' >> takeWhile1P (Just "ISIN") isAlphaNum <* (char ')' >> space)
-  description <- field $ takeWhile1P Nothing (/= ',')
-  amount      <- parseAmount (pure ())
+  description <- field $ takeWhile1P Nothing (const True)
+  amount      <- parseAmount (pure ()) <* skipRestOfLine
   account     <- asks _configAccount
   let desc = unwords [pack . show $ t, pack . show $ symbol, isin, description]
   dividendAccount <- askAccount

@@ -3,40 +3,45 @@ module Beans.Import.CH.Postfinance.Tests
   )
 where
 
-import           Beans.Model                    ( Account(Account)
-                                                , AccountType(..)
-                                                )
 import           Beans.Import.CH.Postfinance    ( name
                                                 , parse
                                                 )
-import           Beans.Import.Common            ( Config(..) )
+import           Beans.Import.Common            ( Config(..)
+                                                , ImporterException(..)
+                                                )
+import           Beans.Model                    ( Account(Account)
+                                                , AccountType(..)
+                                                )
+import           Beans.Pretty                   ( )
+import qualified Data.ByteString               as B
 import qualified Data.ByteString.Lazy.Char8    as BS
 import           Data.Text                      ( pack )
+import qualified Data.Text.Prettyprint.Doc     as P
 import           System.FilePath.Posix          ( (</>) )
-import           Test.Tasty.HUnit               ( assertEqual
-                                                , testCase
-                                                )
 import           Test.Tasty                     ( TestTree
                                                 , testGroup
                                                 )
 import           Test.Tasty.Golden              ( goldenVsString )
-import           Control.Monad.Reader           ( runReaderT )
-import qualified Data.Text.Prettyprint.Doc     as P
-import           Beans.Pretty                   ( )
+import           Test.Tasty.HUnit               ( assertEqual
+                                                , testCase
+                                                )
 
 
 tests :: TestTree
 tests = testGroup "CH.Postfinance" [test1, test2]
 
 test1 :: TestTree
-test1 = goldenVsString "Postfinance" goldenFile action
- where
-  path       = "tests/Beans/Import/CH/Postfinance/"
-  sourceFile = path </> "postfinance1.csv"
-  goldenFile = path </> "postfinance1.golden"
-  action     = BS.pack . show . P.sep . fmap P.pretty <$> runReaderT
-    parse
-    (Config evaluate sourceFile (Account Assets ["Checking"]))
+test1 =
+  let path       = "tests/Beans/Import/CH/Postfinance/"
+      sourceFile = path </> "postfinance1.csv"
+      goldenFile = path </> "postfinance1.golden"
+      config     = Config evaluate sourceFile (Account Assets ["Checking"])
+  in  goldenVsString "Postfinance" goldenFile $ do
+        res <- parse config <$> B.readFile sourceFile
+        case res of
+          Left (ImporterException a) -> return $ BS.pack a
+          Right b -> return . BS.pack . show . P.sep . fmap P.pretty $ b
+
 
 evaluate :: a -> Maybe Account
 evaluate = const $ Just $ Account Expenses ["Errands"]

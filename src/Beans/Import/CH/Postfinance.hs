@@ -4,35 +4,14 @@ module Beans.Import.CH.Postfinance
   )
 where
 
-import qualified Data.List                     as List
 import qualified Beans.Data.Map                as M
-import qualified Data.Text                     as T
-import           Data.Text                      ( pack
-                                                , Text
-                                                )
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
                                                 , Parser
+                                                , ImporterException
                                                 , askAccount
-                                                , parseLatin1
+                                                , parseCommands
                                                 )
-import           Data.Char                      ( isAlphaNum )
-import           Beans.Model                    ( Amount
-                                                , Command(CmdTransaction)
-                                                , Transaction(..)
-                                                , Commodity(Commodity)
-                                                , Date
-                                                , Dated(Dated)
-                                                , Flag(Complete)
-                                                , Position(Position)
-                                                )
-import           Control.Monad                  ( void )
-import           Control.Monad.Catch            ( MonadThrow )
-import           Control.Monad.IO.Class         ( MonadIO )
-import           Control.Monad.Reader           ( MonadReader
-                                                , asks
-                                                )
-import           Data.Group                     ( invert )
 import           Beans.Megaparsec               ( count
                                                 , try
                                                 , parseISODate
@@ -49,13 +28,33 @@ import           Beans.Megaparsec               ( count
                                                 , string
                                                 , eol
                                                 )
+import           Beans.Model                    ( Amount
+                                                , Command(CmdTransaction)
+                                                , Transaction(..)
+                                                , Commodity(Commodity)
+                                                , Date
+                                                , Dated(Dated)
+                                                , Flag(Complete)
+                                                , Position(Position)
+                                                )
+import           Control.Monad                  ( void )
+import           Control.Monad.Reader           ( asks )
+import qualified Data.ByteString               as B
+import           Data.Char                      ( isAlphaNum )
+import           Data.Group                     ( invert )
+import           Data.Text                      ( pack
+                                                , Text
+                                                )
+import qualified Data.Text                     as T
+import           Data.Text.Encoding             ( decodeLatin1 )
 import qualified Text.Megaparsec.Char.Lexer    as L
+
 
 name :: Text
 name = "ch.postfinance" :: Text
 
-parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parse = List.sort <$> parseLatin1 postfinanceData
+parse :: Config -> B.ByteString -> Either ImporterException [Dated Command]
+parse config bytes = parseCommands config postfinanceData (decodeLatin1 bytes)
 
 postfinanceData :: Parser [Dated Command]
 postfinanceData = do

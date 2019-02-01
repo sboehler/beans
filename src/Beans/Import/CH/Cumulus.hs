@@ -7,8 +7,9 @@ where
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
                                                 , Parser
+                                                , ImporterException
                                                 , askAccount
-                                                , parseUtf8
+                                                , parseCommands
                                                 )
 import qualified Beans.Data.Map                as M
 import           Beans.Model                    ( Amount
@@ -21,11 +22,7 @@ import           Beans.Model                    ( Amount
                                                 , Position(Position)
                                                 )
 import           Control.Monad                  ( void )
-import           Control.Monad.Catch            ( MonadThrow )
-import           Control.Monad.IO.Class         ( MonadIO )
-import           Control.Monad.Reader           ( MonadReader
-                                                , asks
-                                                )
+import           Control.Monad.Reader           ( asks )
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import           Beans.Megaparsec               ( (<|>)
@@ -46,13 +43,16 @@ import           Beans.Megaparsec               ( (<|>)
                                                 , string
                                                 )
 import qualified Text.Megaparsec.Char.Lexer    as L
-import qualified Data.List                     as List
+import qualified Data.ByteString               as B
+import           Data.Text.Encoding             ( decodeUtf8 )
+
 
 name :: T.Text
 name = "ch.cumulus"
 
-parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parse = List.sort <$> parseUtf8 (ignoreLine >> many command <* eof)
+parse :: Config -> B.ByteString -> Either ImporterException [Dated Command]
+parse config input =
+  parseCommands config (ignoreLine >> many command <* eof) (decodeUtf8 input)
 
 command :: Parser (Dated Command)
 command = do

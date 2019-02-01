@@ -4,17 +4,10 @@ module Beans.Import.Common
   , Config(..)
   , Parser
   , askAccount
-  , parseLatin1
-  , parseUtf8
+  , parseCommands
   )
 where
 
-import           Control.Monad.IO.Class         ( MonadIO
-                                                , liftIO
-                                                )
-import           Control.Monad.Catch            ( MonadThrow
-                                                , throwM
-                                                )
 import           Beans.Model                    ( Account
                                                 , Dated
                                                 , Command
@@ -29,17 +22,12 @@ import           Text.Megaparsec                ( Parsec
                                                 )
 import           Control.Monad.Reader           ( ReaderT
                                                 , asks
-                                                , ask
                                                 , runReaderT
                                                 , MonadReader
                                                 )
 import           Data.Text                      ( Text )
 import           Data.Void                      ( Void )
-import           Data.Text.Encoding             ( decodeLatin1
-                                                , decodeUtf8
-                                                )
-
-import qualified Data.ByteString               as B
+import qualified Data.List                     as List
 
 
 newtype ImporterException =
@@ -59,7 +47,7 @@ data Config = Config {
 
 type Parser = ReaderT Config (Parsec Void Text)
 
-askAccount :: Context -> Parser Account
+askAccount :: (MonadReader Config m) => Context -> m Account
 askAccount entry = do
   evaluator <- asks _configEvaluator
   case evaluator entry of
@@ -67,30 +55,12 @@ askAccount entry = do
     Nothing      -> fail $ "Account not found: " <> show entry
 
 parseCommands
-  :: (MonadIO m, MonadThrow m, MonadReader Config m)
-  => Parser [Dated Command]
+  :: Config
+  -> Parser [Dated Command]
   -> Text
-  -> m [Dated Command]
-parseCommands parser source = do
-  c@Config { _configFile } <- ask
-  case parse (runReaderT parser c) _configFile source of
-    Left  e -> (throwM . ImporterException . errorBundlePretty) e
-    Right d -> return d
-
-parseLatin1
-  :: (MonadIO m, MonadThrow m, MonadReader Config m)
-  => Parser [Dated Command]
-  -> m [Dated Command]
-parseLatin1 parser =
-  asks _configFile
-    >>= liftIO
-    .   B.readFile
-    >>= parseCommands parser
-    .   decodeLatin1
-
-parseUtf8
-  :: (MonadIO m, MonadThrow m, MonadReader Config m)
-  => Parser [Dated Command]
-  -> m [Dated Command]
-parseUtf8 parser =
-  asks _configFile >>= liftIO . B.readFile >>= parseCommands parser . decodeUtf8
+  -> Either ImporterException [Dated Command]
+parseCommands config parser input = do
+  let parser' = runReaderT parser config
+  case List.sort <$> parse parser' (_configFile config) input of
+    Left  e -> (Left . ImporterException . errorBundlePretty) e
+    Right d -> Right d

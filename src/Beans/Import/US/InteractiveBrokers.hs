@@ -4,35 +4,13 @@ module Beans.Import.US.InteractiveBrokers
   )
 where
 
-import           Data.Group                     ( invert )
-import           Prelude                 hiding ( unwords )
-import           Data.Char                      ( isAlphaNum )
-import qualified Data.Text                     as Text
-import           Data.Text                      ( Text
-                                                , pack
-                                                , unwords
-                                                )
-import           Control.Monad                  ( void )
-import           Control.Monad.Catch            ( MonadThrow )
-import           Control.Monad.IO.Class         ( MonadIO )
-
-import           Beans.Import.Common            ( Context(..)
-                                                , Parser
-                                                , askAccount
-                                                , parseLatin1
-                                                , Config(..)
-                                                )
 import qualified Beans.Data.Map                as M
-import           Beans.Model                    ( Commodity(..)
-                                                , Dated(Dated)
-                                                , Flag(Complete)
-                                                , Command(CmdTransaction)
-                                                , Transaction(..)
-                                                , Date
-                                                , Lot(Lot)
-                                                , Position(Position)
-                                                , Amount
+import           Beans.Import.Common            ( Config(..)
+                                                , Context(..)
+                                                , askAccount
+                                                , parseCommands
                                                 )
+import qualified Beans.Import.Common           as Common
 import           Beans.Megaparsec               ( alphaNumChar
                                                 , char
                                                 , choice
@@ -52,17 +30,44 @@ import           Beans.Megaparsec               ( alphaNumChar
                                                 , try
                                                 , (<|>)
                                                 )
-import           Data.Maybe                     ( catMaybes )
-import qualified Data.List                     as List
-import           Control.Monad.Reader           ( asks
-                                                , MonadReader
+import           Beans.Model                    ( Commodity(..)
+                                                , Dated(Dated)
+                                                , Flag(Complete)
+                                                , Command(CmdTransaction)
+                                                , Transaction(..)
+                                                , Date
+                                                , Lot(Lot)
+                                                , Position(Position)
+                                                , Amount
                                                 )
+import           Control.Monad                  ( void )
+import           Control.Monad.Reader           ( asks )
+import           Control.Monad.State            ( StateT
+                                                , evalStateT
+                                                )
+import qualified Data.ByteString               as B
+import           Data.Char                      ( isAlphaNum )
+import           Data.Group                     ( invert )
+import qualified Data.List                     as List
+import           Data.Maybe                     ( catMaybes )
+import           Data.Text                      ( Text
+                                                , pack
+                                                , unwords
+                                                )
+import qualified Data.Text                     as Text
+import           Data.Text.Encoding             ( decodeLatin1 )
+import           Prelude                 hiding ( unwords )
+
+type Parser = StateT (Maybe Commodity) Common.Parser
 
 name :: Text
 name = "us.interactivebrokers"
 
-parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parse = parseLatin1 parseIBData
+parse
+  :: Config -> B.ByteString -> Either Common.ImporterException [Dated Command]
+parse config bytes =
+  let parser = evalStateT parseIBData Nothing
+  in  parseCommands config parser (decodeLatin1 bytes)
 
 data AccountType = MoneyTransfer | Interest | Fee | WithholdingTax | Dividend
   deriving (Show, Read, Eq)

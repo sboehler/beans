@@ -4,33 +4,13 @@ module Beans.Import.CH.SupercardPlus
   )
 where
 
+import qualified Beans.Data.Map                as M
 import           Beans.Import.Common            ( Config(..)
                                                 , Context(..)
                                                 , Parser
+                                                , ImporterException
                                                 , askAccount
-                                                , parseUtf8
-                                                )
-import qualified Beans.Data.Map                as M
-import           Beans.Model                    ( Amount
-                                                , Command(CmdTransaction)
-                                                , Transaction(..)
-                                                , Commodity(Commodity)
-                                                , Date
-                                                , Dated(Dated)
-                                                , Flag(Complete)
-                                                , Position(Position)
-                                                )
-import           Control.Monad                  ( void )
-import           Control.Monad.Catch            ( MonadThrow )
-import           Control.Monad.IO.Class         ( MonadIO )
-import           Control.Monad.Reader           ( MonadReader
-                                                , runReaderT
-                                                , asks
-                                                )
-import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import           Data.Char                      ( isDigit
-                                                , isUpper
+                                                , parseCommands
                                                 )
 import           Beans.Megaparsec               ( (<|>)
                                                 , between
@@ -51,15 +31,37 @@ import           Beans.Megaparsec               ( (<|>)
                                                 , eol
                                                 , string
                                                 )
+import           Beans.Model                    ( Amount
+                                                , Command(CmdTransaction)
+                                                , Transaction(..)
+                                                , Commodity(Commodity)
+                                                , Date
+                                                , Dated(Dated)
+                                                , Flag(Complete)
+                                                , Position(Position)
+                                                )
+import           Control.Monad                  ( void )
+import           Control.Monad.Reader           ( runReaderT
+                                                , asks
+                                                )
+import qualified Data.ByteString               as B
+import           Data.Char                      ( isDigit
+                                                , isUpper
+                                                )
+import           Data.Text                      ( Text )
+import qualified Data.Text                     as T
+import           Data.Text.Encoding             ( decodeUtf8 )
 import qualified Text.Megaparsec.Char.Lexer    as L
-import qualified Data.List                     as List
 
 
 name :: T.Text
 name = "ch.supercardplus"
 
-parse :: (MonadIO m, MonadThrow m, MonadReader Config m) => m [Dated Command]
-parse = List.sort <$> parseUtf8 (ignoreLine >> command `sepEndBy` eol <* eof)
+parse :: Config -> B.ByteString -> Either ImporterException [Dated Command]
+parse config input = parseCommands
+  config
+  (ignoreLine >> command `sepEndBy` eol <* eof)
+  (decodeUtf8 input)
 
 command :: Parser (Dated Command)
 command = do

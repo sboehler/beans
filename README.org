@@ -62,12 +62,12 @@ Output:
 |-------------+----------+-----------+--------------------+----------+-----------|
 | Account     | Amount   | Commodity | Account            | Amount   | Commodity |
 |-------------+----------+-----------+--------------------+----------+-----------|
-| Assets      | 18409.32 | USD       | Equity             | 18409.32 | USD       |
+| Assets      | 18412.61 | USD       | Equity             | 18412.61 | USD       |
 |   Checking  | 14600.00 | USD       |   OpeningBalance   | 15000.00 | USD       |
-|   Portfolio |  2219.80 | USD       |   RetainedEarnings |  4800.00 | USD       |
-|   Wallet    |  1589.52 | USD       |   Valuation        | -1390.68 | USD       |
+|   Portfolio |  2220.25 | USD       |   RetainedEarnings |  4800.00 | USD       |
+|   Wallet    |  1592.36 | USD       |   Valuation        | -1387.39 | USD       |
 |-------------+----------+-----------+--------------------+----------+-----------|
-| Total       | 18409.32 | USD       | Total              | 18409.32 | USD       |
+| Total       | 18412.61 | USD       | Total              | 18412.61 | USD       |
 |-------------+----------+-----------+--------------------+----------+-----------|
 
 #+end_example
@@ -86,12 +86,12 @@ Output:
 |-------------+--------+-----------+--------------------+--------+-----------|
 | Account     | Amount | Commodity | Account            | Amount | Commodity |
 |-------------+--------+-----------+--------------------+--------+-----------|
-| Assets      |   2.90 | BTC       | Equity             |   2.90 | BTC       |
-|   Checking  |   2.30 | BTC       |   OpeningBalance   |   1.12 | BTC       |
+| Assets      |   2.89 | BTC       | Equity             |   2.89 | BTC       |
+|   Checking  |   2.29 | BTC       |   OpeningBalance   |   1.11 | BTC       |
 |   Portfolio |   0.35 | BTC       |   RetainedEarnings |   0.45 | BTC       |
-|   Wallet    |   0.25 | BTC       |   Valuation        |   1.32 | BTC       |
+|   Wallet    |   0.25 | BTC       |   Valuation        |   1.33 | BTC       |
 |-------------+--------+-----------+--------------------+--------+-----------|
-| Total       |   2.90 | BTC       | Total              |   2.90 | BTC       |
+| Total       |   2.89 | BTC       | Total              |   2.89 | BTC       |
 |-------------+--------+-----------+--------------------+--------+-----------|
 
 #+end_example

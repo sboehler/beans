@@ -406,27 +406,27 @@ balance command:
 | 2018-01-02 | -2000.00 | USD | Rent January               | Expenses:Rent         |   2000.00 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-01-10 |  -300.00 | USD | Food                       | Expenses:Groceries    |    300.00 | USD |
-|            | -1700.00 | USD | Investing in stock         | Equity:Valuation      |     10.00 | USD |
-|            |  1690.00 | USD |                            |                       |           |     |
+|            | -1700.00 | USD | Investing in stock         | Equity:Valuation      |      9.95 | USD |
+|            |  1690.05 | USD |                            |                       |           |     |
 |            |          |     |                            |                       |           |     |
 | 2018-01-12 |  -200.00 | USD | Hungry again               | Expenses:Groceries    |    200.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-01-14 | -3500.00 | USD | I want to be part of this! | Equity:Valuation      |    147.00 | USD |
-|            |  3353.00 | USD |                            |                       |           |     |
+| 2018-01-14 | -3500.00 | USD | I want to be part of this! | Equity:Valuation      |    121.62 | USD |
+|            |  3378.38 | USD |                            |                       |           |     |
 |            |          |     |                            |                       |           |     |
 | 2018-01-20 |  -100.00 | USD | Something to read          | Expenses:Books        |    100.00 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-01-25 |  4000.00 | USD | Salary January             | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-02-01 | -2000.00 | USD | Rent February              | Expenses:Rent         |   2000.00 | USD |
-|            |   -20.00 | USD | Valuation AAPL             | Equity:Valuation      |     20.00 | USD |
-|            | -1089.94 | USD | Valuation BTC              | Equity:Valuation      |   1089.94 | USD |
+|            |   -20.04 | USD | Valuation AAPL             | Equity:Valuation      |     20.04 | USD |
+|            | -1105.65 | USD | Valuation BTC              | Equity:Valuation      |   1105.65 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-02-25 |  4000.00 | USD | Salary February            | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-03-01 | -2000.00 | USD | Rent March                 | Expenses:Rent         |   2000.00 | USD |
-|            |    80.10 | USD | Valuation AAPL             | Equity:Valuation      |    -80.10 | USD |
-|            |   463.69 | USD | Valuation BTC              | Equity:Valuation      |   -463.69 | USD |
+|            |    80.08 | USD | Valuation AAPL             | Equity:Valuation      |    -80.08 | USD |
+|            |   474.53 | USD | Valuation BTC              | Equity:Valuation      |   -474.53 | USD |
 |            |          |     |                            |                       |           |     |
 | 2018-03-02 |  -200.00 | USD | Yet more food              | Expenses:Groceries    |    200.00 | USD |
 |            |          |     |                            |                       |           |     |
@@ -434,32 +434,32 @@ balance command:
 |            |          |     |                            |                       |           |     |
 | 2018-03-25 |  4000.00 | USD | Salary March               | Income:Salary         |  -4000.00 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-04-01 |   -90.10 | USD | Valuation AAPL             | Equity:Valuation      |     90.10 | USD |
-|            | -1022.71 | USD | Valuation BTC              | Equity:Valuation      |   1022.71 | USD |
+| 2018-04-01 |   -90.06 | USD | Valuation AAPL             | Equity:Valuation      |     90.06 | USD |
+|            | -1034.92 | USD | Valuation BTC              | Equity:Valuation      |   1034.92 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-05-01 |    30.00 | USD | Valuation AAPL             | Equity:Valuation      |    -30.00 | USD |
-|            |   562.71 | USD | Valuation BTC              | Equity:Valuation      |   -562.71 | USD |
+| 2018-05-01 |    30.02 | USD | Valuation AAPL             | Equity:Valuation      |    -30.02 | USD |
+|            |   560.40 | USD | Valuation BTC              | Equity:Valuation      |   -560.40 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-06-01 |   210.10 | USD | Valuation AAPL             | Equity:Valuation      |   -210.10 | USD |
-|            |  -387.20 | USD | Valuation BTC              | Equity:Valuation      |    387.20 | USD |
+| 2018-06-01 |   210.01 | USD | Valuation AAPL             | Equity:Valuation      |   -210.01 | USD |
+|            |  -393.03 | USD | Valuation BTC              | Equity:Valuation      |    393.03 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-07-01 |   -50.00 | USD | Valuation AAPL             | Equity:Valuation      |     50.00 | USD |
-|            |  -292.76 | USD | Valuation BTC              | Equity:Valuation      |    292.76 | USD |
+| 2018-07-01 |   -49.92 | USD | Valuation AAPL             | Equity:Valuation      |     49.92 | USD |
+|            |  -287.34 | USD | Valuation BTC              | Equity:Valuation      |    287.34 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-08-01 |   160.00 | USD | Valuation AAPL             | Equity:Valuation      |   -160.00 | USD |
-|            |   313.91 | USD | Valuation BTC              | Equity:Valuation      |   -313.91 | USD |
+| 2018-08-01 |   159.91 | USD | Valuation AAPL             | Equity:Valuation      |   -159.91 | USD |
+|            |   316.04 | USD | Valuation BTC              | Equity:Valuation      |   -316.04 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-09-01 |   260.00 | USD | Valuation AAPL             | Equity:Valuation      |   -260.00 | USD |
-|            |  -102.66 | USD | Valuation BTC              | Equity:Valuation      |    102.66 | USD |
+| 2018-09-01 |   260.10 | USD | Valuation AAPL             | Equity:Valuation      |   -260.10 | USD |
+|            |  -109.84 | USD | Valuation BTC              | Equity:Valuation      |    109.84 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-10-01 |   -19.90 | USD | Valuation AAPL             | Equity:Valuation      |     19.90 | USD |
-|            |  -153.52 | USD | Valuation BTC              | Equity:Valuation      |    153.52 | USD |
+| 2018-10-01 |   -19.92 | USD | Valuation AAPL             | Equity:Valuation      |     19.92 | USD |
+|            |  -153.82 | USD | Valuation BTC              | Equity:Valuation      |    153.82 | USD |
 |            |          |     |                            |                       |           |     |
-| 2018-11-01 |   -30.40 | USD | Valuation AAPL             | Equity:Valuation      |     30.40 | USD |
-|            |   -55.00 | USD | Valuation BTC              | Equity:Valuation      |     55.00 | USD |
+| 2018-11-01 |   -29.98 | USD | Valuation AAPL             | Equity:Valuation      |     29.98 | USD |
+|            |   -52.38 | USD | Valuation BTC              | Equity:Valuation      |     52.38 | USD |
 |            |          |     |                            |                       |           |     |
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
-| <MAX_DATE> | 18409.32 | USD | Assets                     |                       |           |     |
+| <MAX_DATE> | 18412.61 | USD | Assets                     |                       |           |     |
 |------------+----------+-----+----------------------------+-----------------------+-----------+-----|
 
 #+end_example
@@ -571,12 +571,12 @@ journal, so we can print the same table valued at market prices.
 |-------------+----------+-----------+--------------------+----------+-----------|
 | Account     | Amount   | Commodity | Account            | Amount   | Commodity |
 |-------------+----------+-----------+--------------------+----------+-----------|
-| Assets      | 13133.06 | USD       | Equity             | 13133.06 | USD       |
+| Assets      | 13142.73 | USD       | Equity             | 13142.73 | USD       |
 |   Checking  |  9200.00 | USD       |   OpeningBalance   | 15000.00 | USD       |
-|   Portfolio |  1670.00 | USD       |   RetainedEarnings |  -600.00 | USD       |
-|   Wallet    |  2263.06 | USD       |   Valuation        | -1266.94 | USD       |
+|   Portfolio |  1670.01 | USD       |   RetainedEarnings |  -600.00 | USD       |
+|   Wallet    |  2272.73 | USD       |   Valuation        | -1257.27 | USD       |
 |-------------+----------+-----------+--------------------+----------+-----------|
-| Total       | 13133.06 | USD       | Total              | 13133.06 | USD       |
+| Total       | 13142.73 | USD       | Total              | 13142.73 | USD       |
 |-------------+----------+-----------+--------------------+----------+-----------|
 
 #+end_example
@@ -599,11 +599,11 @@ Now, how is this valuation loss explained? beans allows for arbitrary slicing:
 |-------------+----------+-----------+-------------+--------+-----------|
 | Account     | Amount   | Commodity | Account     | Amount | Commodity |
 |-------------+----------+-----------+-------------+--------+-----------|
-| Assets      |   -30.00 | USD       | Equity      | -30.00 | USD       |
-|   Checking  | -1700.00 | USD       |   Valuation | -30.00 | USD       |
-|   Portfolio |  1670.00 | USD       |             |        |           |
+| Assets      |   -29.99 | USD       | Equity      | -29.99 | USD       |
+|   Checking  | -1700.00 | USD       |   Valuation | -29.99 | USD       |
+|   Portfolio |  1670.01 | USD       |             |        |           |
 |-------------+----------+-----------+-------------+--------+-----------|
-| Total       |   -30.00 | USD       | Total       | -30.00 | USD       |
+| Total       |   -29.99 | USD       | Total       | -29.99 | USD       |
 |-------------+----------+-----------+-------------+--------+-----------|
 
 #+end_example
@@ -617,11 +617,11 @@ Now, how is this valuation loss explained? beans allows for arbitrary slicing:
 |------------+----------+-----------+-------------+----------+-----------|
 | Account    | Amount   | Commodity | Account     | Amount   | Commodity |
 |------------+----------+-----------+-------------+----------+-----------|
-| Assets     | -1236.94 | USD       | Equity      | -1236.94 | USD       |
-|   Checking | -3500.00 | USD       |   Valuation | -1236.94 | USD       |
-|   Wallet   |  2263.06 | USD       |             |          |           |
+| Assets     | -1227.27 | USD       | Equity      | -1227.27 | USD       |
+|   Checking | -3500.00 | USD       |   Valuation | -1227.27 | USD       |
+|   Wallet   |  2272.73 | USD       |             |          |           |
 |------------+----------+-----------+-------------+----------+-----------|
-| Total      | -1236.94 | USD       | Total       | -1236.94 | USD       |
+| Total      | -1227.27 | USD       | Total       | -1227.27 | USD       |
 |------------+----------+-----------+-------------+----------+-----------|
 
 #+end_example
@@ -641,7 +641,7 @@ Commodities are freely convertible. How about a balance sheet in BTC?
 | Account     | Amount | Commodity | Account            | Amount | Commodity |
 |-------------+--------+-----------+--------------------+--------+-----------|
 | Assets      |   1.45 | BTC       | Equity             |   1.45 | BTC       |
-|   Checking  |   1.02 | BTC       |   OpeningBalance   |   1.12 | BTC       |
+|   Checking  |   1.01 | BTC       |   OpeningBalance   |   1.11 | BTC       |
 |   Portfolio |   0.18 | BTC       |   RetainedEarnings |  -0.12 | BTC       |
 |   Wallet    |   0.25 | BTC       |   Valuation        |   0.45 | BTC       |
 |-------------+--------+-----------+--------------------+--------+-----------|
@@ -764,13 +764,13 @@ Valuation at market (i.e. latest available prices) is always an option:
 | Account          | Amount    | Commodity |
 |------------------+-----------+-----------|
 |                  |      0.00 | USD       |
-| Assets           |  18409.32 | USD       |
+| Assets           |  18412.61 | USD       |
 |   Checking       |  14600.00 | USD       |
-|   Portfolio      |   2219.80 | USD       |
-|   Wallet         |   1589.52 | USD       |
-| Equity           | -13609.32 | USD       |
+|   Portfolio      |   2220.25 | USD       |
+|   Wallet         |   1592.36 | USD       |
+| Equity           | -13612.61 | USD       |
 |   OpeningBalance | -15000.00 | USD       |
-|   Valuation      |   1390.68 | USD       |
+|   Valuation      |   1387.39 | USD       |
 | Expenses         |   7200.00 | USD       |
 |   Books          |    100.00 | USD       |
 |   Groceries      |   1100.00 | USD       |
@@ -795,11 +795,11 @@ We can also analyze changes in the balance between specific dates:
 | Account     | Amount  | Commodity |
 |-------------+---------+-----------|
 |             |    0.00 | USD       |
-| Assets      |  115.06 | USD       |
-|   Portfolio |  350.10 | USD       |
-|   Wallet    | -235.04 | USD       |
-| Equity      | -115.06 | USD       |
-|   Valuation | -115.06 | USD       |
+| Assets      |  115.21 | USD       |
+|   Portfolio |  350.17 | USD       |
+|   Wallet    | -234.96 | USD       |
+| Equity      | -115.21 | USD       |
+|   Valuation | -115.21 | USD       |
 |-------------+---------+-----------|
 
 #+end_example
@@ -838,12 +838,12 @@ and track valuation changes over the entire period:
 | Account     | Amount   | Commodity |
 |-------------+----------+-----------|
 |             |     0.00 | USD       |
-| Assets      | -1390.68 | USD       |
+| Assets      | -1387.39 | USD       |
 |   Checking  | -5200.00 | USD       |
-|   Portfolio |  2219.80 | USD       |
-|   Wallet    |  1589.52 | USD       |
-| Equity      |  1390.68 | USD       |
-|   Valuation |  1390.68 | USD       |
+|   Portfolio |  2220.25 | USD       |
+|   Wallet    |  1592.36 | USD       |
+| Equity      |  1387.39 | USD       |
+|   Valuation |  1387.39 | USD       |
 |-------------+----------+-----------|
 
 #+end_example
@@ -861,19 +861,19 @@ How about bitcoin?
 | Account          | Amount | Commodity |
 |------------------+--------+-----------|
 |                  |   0.00 | BTC       |
-| Assets           |   2.90 | BTC       |
-|   Checking       |   2.30 | BTC       |
+| Assets           |   2.89 | BTC       |
+|   Checking       |   2.29 | BTC       |
 |   Portfolio      |   0.35 | BTC       |
 |   Wallet         |   0.25 | BTC       |
 | Equity           |  -2.44 | BTC       |
-|   OpeningBalance |  -1.12 | BTC       |
-|   Valuation      |  -1.32 | BTC       |
+|   OpeningBalance |  -1.11 | BTC       |
+|   Valuation      |  -1.33 | BTC       |
 | Expenses         |   0.65 | BTC       |
 |   Books          |   0.01 | BTC       |
 |   Groceries      |   0.09 | BTC       |
 |   Rent           |   0.55 | BTC       |
-| Income           |  -1.11 | BTC       |
-|   Salary         |  -1.11 | BTC       |
+| Income           |  -1.10 | BTC       |
+|   Salary         |  -1.10 | BTC       |
 |------------------+--------+-----------|
 
 #+end_example

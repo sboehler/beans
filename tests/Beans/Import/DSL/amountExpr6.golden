@@ -1,1 +1,1 @@
-(abs(amount) + Sum {getSum = 100})
+(abs(amount) + Sum {getSum = 100.000000})

@@ -17,24 +17,17 @@ import           Data.Functor                   ( ($>) )
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer
-import qualified Data.Scientific               as S
-import qualified Data.Decimal                  as D
 import qualified Data.Text                     as T
-
 import           Beans.Model
 import           Data.Monoid                    ( Sum(Sum) )
 import           Data.Char                      ( isAlphaNum )
 import qualified Data.Time.Format              as F
 
 parseAmount :: (MonadParsec e T.Text m) => m () -> m Amount
-parseAmount a = Sum <$> parseDecimal a
+parseAmount a = Sum  <$> parseDecimal a
 
-parseDecimal :: (MonadParsec e T.Text m) => m () -> m D.Decimal
-parseDecimal a = do
-  x :: Either Double Integer <- S.floatingOrInteger <$> signed a scientific
-  return $ case x of
-    Left  f -> D.realFracToDecimal 3 f
-    Right i -> D.Decimal 0 i
+parseDecimal :: (MonadParsec e T.Text m) => m () -> m Decimal
+parseDecimal a = realToFrac <$> signed a scientific
 
 parseCommodity :: (MonadParsec e T.Text m) => m Commodity
 parseCommodity =

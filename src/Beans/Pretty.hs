@@ -7,17 +7,17 @@ module Beans.Pretty
   )
 where
 
-import           Beans.Model
 import qualified Beans.Data.Map                as M
+import           Beans.Model
+import qualified Data.Fixed.Extended as F
 import qualified Data.Text                     as T
-import qualified Data.Decimal                  as D
 import           Data.Text.Prettyprint.Doc
 
 instance Pretty Amount where
   pretty = pretty . format
 
-instance Pretty D.Decimal where
-  pretty = pretty . show
+instance Pretty Decimal where
+  pretty = pretty . F.showRounded 2
 
 instance Pretty Account where
   pretty = pretty . show

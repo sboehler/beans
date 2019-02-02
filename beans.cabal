@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6cd198a4ab5eb5bc093f30547fbe87db4ca2e981f7a670bb4b614c53c21db8c2
+-- hash: 525c7be89e1397388cd757127853f7f741479caee91839cd4e6002d36038e0f5
 
 name:           beans
 version:        0.0.3.0
@@ -50,6 +50,7 @@ library
       Beans.Report.Journal
       Beans.Table
       Beans.Valuation
+      Data.Fixed.Extended
   other-modules:
       Paths_beans
   hs-source-dirs:

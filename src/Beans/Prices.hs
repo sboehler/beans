@@ -20,13 +20,12 @@ import           Control.Monad.Catch            ( Exception
 import qualified Data.Map.Strict               as M
 import           Data.Time.Calendar             ( Day )
 import           Control.Lens
-import qualified Data.Decimal                  as D
 
 type PricesHistory = M.Map Day Prices
 
-type NormalizedPrices = M.Map Commodity D.Decimal
+type NormalizedPrices = M.Map Commodity Decimal
 
-type Prices = M.Map Commodity (M.Map Commodity D.Decimal)
+type Prices = M.Map Commodity (M.Map Commodity Decimal)
 
 data PriceException
   = NoPriceFound Commodity
@@ -51,7 +50,7 @@ invert :: Price -> Price
 invert Price { _priceCommodity, _priceTargetCommodity, _pricePrice } = Price
   { _priceCommodity       = _priceTargetCommodity
   , _priceTargetCommodity = _priceCommodity
-  , _pricePrice           = invert' _pricePrice
+  , _pricePrice           = 1 /_pricePrice
   }
 
 normalize :: Prices -> Commodity -> NormalizedPrices
@@ -69,16 +68,7 @@ normalize' prices done todo = case M.lookupMin todo of
                 todo'      = M.delete c todo `M.union` neighbors'
             in  normalize' prices done' todo'
 
-lookupPrice :: (MonadThrow m) => Commodity -> NormalizedPrices -> m D.Decimal
+lookupPrice :: (MonadThrow m) => Commodity -> NormalizedPrices -> m Decimal
 lookupPrice commodityName prices = case M.lookup commodityName prices of
-  Just p -> return $ invert' p
+  Just p -> return $ 1 / p
   _      -> throwM $ NoNormalizedPriceFound prices commodityName
-
--- Reasonable way to invert a fixed-point number, in particular a
--- price, without blowing up the number of decimal places
--- unnecessarily. Adds one digit to the number of significant digit in
--- order to correct for loss of precision.
-invert' :: D.Decimal -> D.Decimal
-invert' d@(D.Decimal i n) =
-  let l = logBase 10 . fromIntegral $ n :: Double
-  in  D.roundTo (2 * ceiling l - i) (1 / d)

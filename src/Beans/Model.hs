@@ -16,7 +16,6 @@ import           Data.Maybe                     ( catMaybes )
 import           Data.Monoid                    ( Sum(Sum)
                                                 , getSum
                                                 )
-import qualified Data.Decimal                  as D
 import           Data.Text                      ( Text
                                                 , pack
                                                 , unpack
@@ -25,14 +24,16 @@ import           Data.Time.Calendar             ( Day
                                                 , fromGregorian
                                                 )
 import           Text.Regex.PCRE                ( (=~) )
+import qualified Data.Fixed.Extended as F
 
-type Amount = Sum D.Decimal
+type Decimal = F.Micro
+type Amount = Sum Decimal
 
 format :: Amount -> Text
-format = pack . show . D.roundTo 2 . getSum
+format = pack . F.showRounded 2 . getSum
 
-realFracToAmount :: RealFrac n => n -> Amount
-realFracToAmount = Sum . D.realFracToDecimal 4
+realFracToAmount :: Rational -> Amount
+realFracToAmount = Sum . fromRational
 
 data Date
   = MinDate
@@ -125,7 +126,7 @@ data Open = Open
 
 data Price = Price
   { _priceCommodity :: Commodity
-  , _pricePrice :: D.Decimal
+  , _pricePrice :: Decimal
   , _priceTargetCommodity :: Commodity
   } deriving (Eq, Show, Ord)
 

@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 525c7be89e1397388cd757127853f7f741479caee91839cd4e6002d36038e0f5
+-- hash: c12aecc43be20807f9689be94b60eb1c26684ab494c9586f3234fccd681652f1
 
 name:           beans
-version:        0.0.3.0
+version:        0.0.4.0
 synopsis:       A plain text accounting tool
 description:    Please see the README on Github at <https://github.com/sboehler/beans#readme>
 category:       Finance

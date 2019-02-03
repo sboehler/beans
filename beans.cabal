@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c12aecc43be20807f9689be94b60eb1c26684ab494c9586f3234fccd681652f1
+-- hash: 4b0d2e8c9e5dd109b2d604c2b9c2e540f337d6545c948492fa21ca3fe14ddccc
 
 name:           beans
 version:        0.0.4.0
@@ -58,8 +58,7 @@ library
   default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
-      Decimal
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , bifunctors
     , bytestring
     , containers
@@ -73,7 +72,6 @@ library
     , parser-combinators
     , prettyprinter
     , regex-pcre
-    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit
@@ -92,8 +90,7 @@ executable beans
   default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      Decimal
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , beans
     , bifunctors
     , bytestring
@@ -108,7 +105,6 @@ executable beans
     , parser-combinators
     , prettyprinter
     , regex-pcre
-    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit
@@ -130,8 +126,7 @@ test-suite test
   default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
-      Decimal
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , beans
     , bifunctors
     , bytestring
@@ -146,7 +141,6 @@ test-suite test
     , parser-combinators
     , prettyprinter
     , regex-pcre
-    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit

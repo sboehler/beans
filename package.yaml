@@ -44,7 +44,6 @@ dependencies:
   - bifunctors
   - bytestring
   - containers
-  - Decimal
   - exceptions
   - filepath
   - groups
@@ -55,7 +54,6 @@ dependencies:
   - parser-combinators
   - prettyprinter
   - regex-pcre
-  - scientific
   - text
   - time
   - tasty

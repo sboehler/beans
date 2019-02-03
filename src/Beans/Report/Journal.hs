@@ -1,7 +1,6 @@
 module Beans.Report.Journal
   ( createJournal
   , Journal(..)
-  , journalToTable
   )
 where
 
@@ -11,7 +10,6 @@ import           Text.Regex.PCRE                ( (=~) )
 
 import           Beans.Options                  ( JournalOptions(..) )
 import           Beans.Model                    ( Date
-                                                , Transaction(..)
                                                 , Command(..)
                                                 , Filter(..)
                                                 , filter
@@ -24,16 +22,15 @@ import           Beans.Model                    ( Date
                                                 , Account
                                                 , format
                                                 )
-
+import qualified Beans.Model                   as BM
 import qualified Data.List                     as List
 import           Beans.Accounts                 ( sumUntil )
 import qualified Beans.Data.Map                as M
 import           Data.Text                      ( Text )
 import           Control.Monad.Catch            ( MonadThrow )
 import           Data.Maybe                     ( mapMaybe )
-import           Beans.Table                    ( Cell(..)
-                                                , Table(..)
-                                                )
+import qualified Beans.Table                   as TB
+import           Control.Lens
 
 data Journal = Journal {
   rHeader :: Dated Item,
@@ -41,28 +38,39 @@ data Journal = Journal {
   rFooter :: Dated Item
   } deriving (Show)
 
-instance Table Journal where
-  toTable = journalToTable
-
 data Item = Item {
   eDescription :: Text,
-  eAccoun_transactionPostings :: [(Commodity, Amount)],
-  eOtherPostings :: [(Account, Commodity, Amount)]
+  ePostings :: [(Commodity, Amount)],
+  eOtherPostings :: [((Account, Commodity), Amount)]
   } deriving (Show)
+
+instance TB.Table Journal where
+  toTable (Journal (Dated t0 header) items (Dated t1 footer)) = concat
+    [ sep
+    , itemToTable (formatDate t0) header
+    , sep
+    , (concatMap datedItemToTable . M.toList) items
+    , sep
+    , itemToTable (formatDate t1) footer
+    , sep
+    ]
+   where
+    sep        = [replicate 7 TB.Separator]
+    formatDate = TB.AlignLeft . T.pack . show
 
 createJournal :: MonadThrow m => JournalOptions -> Ledger -> m Journal
 createJournal JournalOptions {..} ledger = do
-  let filtered = filter (Filter (T.unpack jrnOptRegex)) ledger
-      items =
-        toItem' jrnOptRegex
-          <$> filter (PeriodFilter jrnOptFrom jrnOptTo) filtered
-  (accounts0, l') <- sumUntil jrnOptFrom filtered mempty
+  (accounts0, l') <- sumUntil jrnOptFrom filtered' mempty
   (accounts1, _ ) <- sumUntil jrnOptTo l' accounts0
   return $ Journal
     { rHeader = accountsToItem jrnOptRegex jrnOptFrom accounts0
     , rItems  = items
     , rFooter = accountsToItem jrnOptRegex jrnOptTo accounts1
     }
+ where
+  filtered' = filter (PeriodFilter jrnOptFrom jrnOptTo)
+    $ filter (Filter $ T.unpack jrnOptRegex) ledger
+  items = toItem' jrnOptRegex <$> filtered'
 
 accountsToItem :: Text -> Date -> Accounts -> Dated Item
 accountsToItem regex date accounts =
@@ -72,86 +80,55 @@ accountsToItem regex date accounts =
       amounts = M.toList $ mconcat (snd <$> filteredAccounts)
   in  Dated
         date
-        (Item
-          { eDescription                = regex
-          , eAccoun_transactionPostings = amounts
-          , eOtherPostings              = []
-          }
-        )
+        (Item {eDescription = regex, ePostings = amounts, eOtherPostings = []})
 
 toItem' :: Text -> [Command] -> [Item]
 toItem' regex = mapMaybe (toItem regex)
 
 toItem :: Text -> Command -> Maybe Item
-toItem regex (CmdTransaction Transaction { _transactionDescription, _transactionPostings })
-  = let (accoun_transactionPostings, otherPostings) =
-          List.partition ((=~ T.unpack regex) . show . _positionAccount . fst)
-            $ M.toList _transactionPostings
-    in  Just $ Item
-          { eDescription = _transactionDescription
-          , eAccoun_transactionPostings = concat
-            $   toAccoun_transactionPostings
-            <$> accoun_transactionPostings
-          , eOtherPostings = concat $ toOtherPostings <$> otherPostings
-          }
+toItem regex (CmdTransaction t) = Just $ Item
+  { eDescription   = t ^. BM.description
+  , ePostings      = concat $ M.toList . snd <$> postings
+  , eOtherPostings = concat $ convert <$> otherPostings
+  }
  where
-  toAccoun_transactionPostings (_, amounts) = M.toList amounts
-  toOtherPostings (Position {..}, amounts) =
-    f _positionAccount <$> M.toList amounts
-  f a (commodity, amount) = (a, commodity, amount)
+  allPostings = M.toList (t ^. BM.postings)
+  matchRegex = view $ _1 . BM.account . to ((=~ T.unpack regex) . show)
+  (postings, otherPostings) = List.partition matchRegex allPostings
+  convert (p, amounts) =
+    (\(c, a) -> ((p ^. BM.account, c), a)) <$> M.toList amounts
 toItem _ _ = Nothing
 
-
--- Formatting a report as a table
-journalToTable :: Journal -> [[Cell]]
-journalToTable (Journal (Dated t0 header) items (Dated t1 footer)) = concat
-  [ [replicate 7 Separator]
-  , itemToTable ((AlignLeft . T.pack . show) t0) header
-  , [replicate 7 Separator]
-  , (concatMap datedItemToTable . M.toList) items
-  , [replicate 7 Separator]
-  , itemToTable ((AlignLeft . T.pack . show) t1) footer
-  , [replicate 7 Separator]
-  ]
-
-datedItemToTable :: (Date, [Item]) -> [[Cell]]
+datedItemToTable :: (Date, [Item]) -> [[TB.Cell]]
 datedItemToTable (d, items) =
   concat
-      (zipWith itemToTable ((AlignLeft . T.pack . show) d : repeat Empty) items)
-    ++ [replicate 7 Empty]
+      (zipWith itemToTable
+               ((TB.AlignLeft . T.pack . show) d : repeat TB.Empty)
+               items
+      )
+    ++ [replicate 7 TB.Empty]
 
-itemToTable :: Cell -> Item -> [[Cell]]
-itemToTable date Item {..}
-  = let
-      dates    = take nbrRows $ date : repeat Empty
-      desc     = T.chunksOf 40 eDescription
-      quantify = take nbrRows . (++ repeat "")
-      amounts =
-        AlignRight <$> quantify (format . snd <$> eAccoun_transactionPostings)
-      commodities = AlignLeft
-        <$> quantify (T.pack . show . fst <$> eAccoun_transactionPostings)
-      descriptions  = AlignLeft <$> quantify desc
-      otherAccounts = AlignLeft <$> quantify
-        (T.pack . show . (\(account, _, _) -> account) <$> eOtherPostings)
-      otherAmounts = AlignRight
-        <$> quantify (format . (\(_, _, amount) -> amount) <$> eOtherPostings)
-      otherCommodities =
-        AlignLeft
-          <$> quantify
-                (   T.pack
-                .   show
-                .   (\(_, commodity, _) -> commodity)
-                <$> eOtherPostings
-                )
-      nbrRows =
-        maximum [1, length eAccoun_transactionPostings, length eOtherPostings]
-    in
-      List.transpose
-        [ dates
-        , amounts
-        , commodities
-        , descriptions
-        , otherAccounts
-        , otherAmounts
-        , otherCommodities
-        ]
+itemToTable :: TB.Cell -> Item -> [[TB.Cell]]
+itemToTable date Item {..} = List.transpose $ align
+  [ [date]
+  , amounts
+  , commodities
+  , descriptions
+  , otherAccounts
+  , otherAmounts
+  , otherCommodities
+  ]
+ where
+  descriptions  = TB.AlignLeft <$> T.chunksOf 60 eDescription
+  amounts       = TB.AlignRight . format . snd <$> ePostings
+  commodities   = TB.AlignLeft . T.pack . show . fst <$> ePostings
+  otherAccounts = TB.AlignLeft . T.pack . show . fst . fst <$> eOtherPostings
+  otherAmounts  = TB.AlignRight . format . snd <$> eOtherPostings
+  otherCommodities =
+    TB.AlignLeft . T.pack . show . snd . fst <$> eOtherPostings
+
+align :: [[TB.Cell]] -> [[TB.Cell]]
+align columns = do
+  col <- columns
+  return $ take l $ col ++ repeat TB.Empty
+  where l = maximum $ length <$> columns

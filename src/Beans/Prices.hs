@@ -50,7 +50,7 @@ invert :: Price -> Price
 invert Price { _priceCommodity, _priceTargetCommodity, _pricePrice } = Price
   { _priceCommodity       = _priceTargetCommodity
   , _priceTargetCommodity = _priceCommodity
-  , _pricePrice           = 1 /_pricePrice
+  , _pricePrice           = 1 / _pricePrice
   }
 
 normalize :: Prices -> Commodity -> NormalizedPrices

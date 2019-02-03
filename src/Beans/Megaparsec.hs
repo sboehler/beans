@@ -24,7 +24,7 @@ import           Data.Char                      ( isAlphaNum )
 import qualified Data.Time.Format              as F
 
 parseAmount :: (MonadParsec e T.Text m) => m () -> m Amount
-parseAmount a = Sum  <$> parseDecimal a
+parseAmount a = Sum <$> parseDecimal a
 
 parseDecimal :: (MonadParsec e T.Text m) => m () -> m Decimal
 parseDecimal a = realToFrac <$> signed a scientific

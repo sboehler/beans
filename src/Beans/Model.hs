@@ -24,7 +24,7 @@ import           Data.Time.Calendar             ( Day
                                                 , fromGregorian
                                                 )
 import           Text.Regex.PCRE                ( (=~) )
-import qualified Data.Fixed.Extended as F
+import qualified Data.Fixed.Extended           as F
 
 type Decimal = F.Micro
 type Amount = Sum Decimal

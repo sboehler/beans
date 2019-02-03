@@ -1,32 +1,32 @@
-{ mkDerivation, base, bifunctors, bytestring, containers, Decimal
+{ mkDerivation, base, bifunctors, bytestring, containers
 , exceptions, filepath, groups, hpack, lens, megaparsec, mtl
 , optparse-applicative, parser-combinators, prettyprinter
-, regex-pcre, scientific, stdenv, tasty, tasty-golden, tasty-hunit
+, regex-pcre, stdenv, tasty, tasty-golden, tasty-hunit
 , tasty-quickcheck, tasty-smallcheck, text, time
 }:
 mkDerivation {
   pname = "beans";
-  version = "0.0.3.0";
+  version = "0.0.4.0";
   src = ./.;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base bifunctors bytestring containers Decimal exceptions filepath
-    groups lens megaparsec mtl optparse-applicative parser-combinators
-    prettyprinter regex-pcre scientific tasty tasty-golden tasty-hunit
+    base bifunctors bytestring containers exceptions filepath groups
+    lens megaparsec mtl optparse-applicative parser-combinators
+    prettyprinter regex-pcre tasty tasty-golden tasty-hunit
     tasty-quickcheck tasty-smallcheck text time
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [
-    base bifunctors bytestring containers Decimal exceptions filepath
-    groups lens megaparsec mtl optparse-applicative parser-combinators
-    prettyprinter regex-pcre scientific tasty tasty-golden tasty-hunit
+    base bifunctors bytestring containers exceptions filepath groups
+    lens megaparsec mtl optparse-applicative parser-combinators
+    prettyprinter regex-pcre tasty tasty-golden tasty-hunit
     tasty-quickcheck tasty-smallcheck text time
   ];
   testHaskellDepends = [
-    base bifunctors bytestring containers Decimal exceptions filepath
-    groups lens megaparsec mtl optparse-applicative parser-combinators
-    prettyprinter regex-pcre scientific tasty tasty-golden tasty-hunit
+    base bifunctors bytestring containers exceptions filepath groups
+    lens megaparsec mtl optparse-applicative parser-combinators
+    prettyprinter regex-pcre tasty tasty-golden tasty-hunit
     tasty-quickcheck tasty-smallcheck text time
   ];
   preConfigure = "hpack";

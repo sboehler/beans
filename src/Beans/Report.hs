@@ -19,7 +19,7 @@ import qualified Beans.Report.Journal          as Journal
 import           Beans.Model                    ( build )
 import           Beans.Parser                   ( parseFile )
 import qualified Beans.Report.Balance          as Balance
-                                                ( createBalance
+                                                ( createBalanceReport
                                                 , incomeStatement
                                                 , balanceSheet
                                                 )
@@ -42,7 +42,7 @@ balance options@BalanceOptions {..} =
   build
     <$> parseFile balOptJournal
     >>= valuateLedger balOptMarket
-    >>= Balance.createBalance options
+    >>= Balance.createBalanceReport options
     >>= printTable
 
 incomeStatement :: (MonadIO m, MonadThrow m) => BalanceOptions -> m ()

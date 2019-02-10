@@ -20,7 +20,6 @@ import           Control.Monad.Catch            ( MonadThrow )
 import           Control.Monad.State            ( MonadState
                                                 , evalStateT
                                                 , StateT
-                                                , get
                                                 )
 import           Data.Maybe                     ( catMaybes )
 import           Data.Monoid                    ( Sum(Sum) )
@@ -44,16 +43,15 @@ makeFields ''ValuationState
 valuateLedger :: MonadThrow m => Valuation -> Ledger -> m Ledger
 valuateLedger (AtMarket t v) ledger = evalStateT
   (mapM valuate ledger)
-  ValuationState
-    { _valuationStatePrices               = mempty
-    , _valuationStatePrevNormalizedPrices = mempty
-    , _valuationStateNormalizedPrices     = mempty
-    , _valuationStatePrevAccounts         = mempty
-    , _valuationStateAccounts             = mempty
-    , _valuationStateTarget               = t
-    , _valuationStateValuationAccount     = v
-    , _valuationStateRestrictions         = mempty
-    }
+  ValuationState { _valuationStatePrices               = mempty
+                 , _valuationStatePrevNormalizedPrices = mempty
+                 , _valuationStateNormalizedPrices     = mempty
+                 , _valuationStatePrevAccounts         = mempty
+                 , _valuationStateAccounts             = mempty
+                 , _valuationStateTarget               = t
+                 , _valuationStateValuationAccount     = v
+                 , _valuationStateRestrictions         = mempty
+                 }
 valuateLedger _ ledger = pure ledger
 
 
@@ -64,7 +62,7 @@ valuate commands = do
 
   zoom restrictions $ mapM_ check commands
   zoom accounts $ mapM process commands
-  zoom prices $ mapM_ updatePrices commands >> get
+  zoom prices $ mapM_ updatePrices commands
 
   normalizedPrices <~ normalize <$> use prices <*> use target
 

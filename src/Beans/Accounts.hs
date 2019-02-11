@@ -71,7 +71,7 @@ check _ = pure ()
 process :: (MonadState Accounts m, MonadThrow m) => Command -> m ()
 process (CmdClose close) = do
   (del, others) <- gets
-    $ M.partitionKeys (view $ account . to (== close ^. account))
+    $ M.partitionKeys (\pos -> pos ^. account == close ^. account)
   unless ((all . all) (== 0) del) (throwM $ BalanceIsNotZero close)
   put others
 process (CmdTransaction t  ) = modify (mappend $ t ^. postings)

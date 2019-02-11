@@ -1,1 +1,1 @@
---command="cabal repl lib:beans"
+--command="cabal new-repl"

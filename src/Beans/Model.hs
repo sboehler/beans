@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveTraversable #-}
-
 module Beans.Model where
 
 import           Control.Monad.Catch            ( Exception

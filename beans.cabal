@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4b0d2e8c9e5dd109b2d604c2b9c2e540f337d6545c948492fa21ca3fe14ddccc
+-- hash: 4a327f118074132733a60d925e8d768e5ca118d4c2b8b9f31c83a763387c9bec
 
 name:           beans
 version:        0.0.4.0
@@ -55,7 +55,7 @@ library
       Paths_beans
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
       base >=4.7 && <5
@@ -87,7 +87,7 @@ executable beans
       Paths_beans
   hs-source-dirs:
       app
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -123,7 +123,7 @@ test-suite test
       Paths_beans
   hs-source-dirs:
       tests
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
   ghc-options: -Wall -j -fwarn-incomplete-record-updates
   build-depends:
       base >=4.7 && <5

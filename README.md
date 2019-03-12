@@ -7,7 +7,7 @@ This is the result of my own Haskell learning experience - reviews, helpful sugg
 
 # Instructions
 
-Prerequisites: Install [stack](<https://docs.haskellstack.org/en/stable/README/>) and have a PostgreSQL database named 'servant-starter-app' running on port 5432, without authentication (see src/Database.hs if you require additional configuration).
+Prerequisites: Install [stack](<https://docs.haskellstack.org/en/stable/README/>) and have a PostgreSQL database named 'webapp' running on port 5432, without authentication (see src/App.hs if you require additional configuration).
 
 
 ## Starting the server

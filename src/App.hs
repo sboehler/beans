@@ -4,25 +4,18 @@ module App
 
 import API (API, api)
 import qualified Capabilities.Database as D
-import Capabilities.Error hiding (throwError)
-import qualified Capabilities.Session as S
-import Control.Monad.Catch (catchIOError)
-import Control.Monad.Freer hiding (run)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Except
 import qualified Data.Pool as P
 import qualified Database.PostgreSQL.Simple as PG
+import Env (Env(Env))
 import Network.Wai.Handler.Warp (run)
+import RIO hiding (Handler)
 import Servant
   ( Context((:.), EmptyContext)
-  , Handler
+  , Handler(Handler)
   , Proxy(Proxy)
-  , err400
-  , err401
-  , err404
-  , err500
   , hoistServerWithContext
   , serveWithContext
-  , throwError
   )
 import Servant.Auth.Server
   ( CookieSettings
@@ -70,35 +63,13 @@ transform ::
      CookieSettings
   -> JWTSettings
   -> P.Pool D.Connection
-  -> Eff '[ S.Session, D.Database, AppError, Handler] a
+  -> RIO Env a
   -> Handler a
-transform cookieSettings jwtSettings pool eff = do
-  res <- P.withResource pool runEffects
-  either mapError return res
-  where
-    runEffects :: D.Connection -> Handler (Either Err a)
-    runEffects con =
-      withTransaction
-        con
-        (runM .
-         runError . D.runDatabase con . S.runSession cookieSettings jwtSettings $
-         eff)
-
-withTransaction ::
-     D.Connection -> Handler (Either Err a) -> Handler (Either Err a)
-withTransaction con handler = do
-  liftIO $ PG.begin con
-  res <- handler `catchIOError` (\_ -> return $ Left InternalError)
-  liftIO $
-    case res of
-      Left _ -> PG.rollback con
-      Right _ -> PG.commit con
-  return res
-
-mapError :: Err -> Handler a
-mapError =
-  throwError . \case
-    BadRequest -> err400
-    Unauthorized -> err401
-    NotFound -> err404
-    InternalError -> err500
+transform cookieSettings jwtSettings pool m =
+  Handler $
+  ExceptT $
+  try $ do
+    P.withResource pool $ \con -> do
+      PG.withTransaction con $ do
+        let env = Env con cookieSettings jwtSettings
+        runRIO env m

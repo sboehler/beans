@@ -16,43 +16,61 @@ ghc-options:
 library:
   source-dirs: src
   default-extensions:
+  - AutoDeriveTypeable
+  - BangPatterns
+  - BinaryLiterals
+  - ConstraintKinds
   - DataKinds
+  - DefaultSignatures
+  - DeriveDataTypeable
+  - DeriveFoldable
+  - DeriveFunctor
   - DeriveGeneric
-  - GeneralizedNewtypeDeriving
+  - DeriveTraversable
+  - DoAndIfThenElse
+  - EmptyDataDecls
+  - ExistentialQuantification
   - FlexibleContexts
-  - OverloadedStrings
   - FlexibleInstances
+  - FunctionalDependencies
   - GADTs
-  - MultiParamTypeClasses
+  - GeneralizedNewtypeDeriving
+  - InstanceSigs
+  - KindSignatures
   - LambdaCase
+  - MonadFailDesugaring
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+  - NoImplicitPrelude
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - PatternGuards
+  - PolyKinds
   - RankNTypes
   - RecordWildCards
   - ScopedTypeVariables
-  - FunctionalDependencies
   - StandaloneDeriving
   - TemplateHaskell
-  - UndecidableInstances
+  - TypeSynonymInstances
+  - TupleSections
   - TypeFamilies
   - TypeOperators
+  - TypeSynonymInstances
+  - ViewPatterns
   exposed-modules:
   - App
-  - TestFreer
   dependencies:
   - aeson
   - base >=4.7 && <5
   - bytestring
   - cereal
   - cryptonite
-  - exceptions
-  - freer-simple
-  - lens
-  - mtl
-  - natural-transformation
-  - text
+  - rio
+  - microlens-platform
   - postgresql-simple
   - postgresql-simple-migration
   - resource-pool
-  - resourcet
   - servant-server
   - servant-auth
   - servant-auth-server

@@ -3,21 +3,22 @@ module API.User
   , userAPI
   ) where
 
-import qualified Capabilities.Database as D
-import Capabilities.Error
-import Control.Lens
-import Control.Monad.Freer
 import qualified Database.Users as Users
+import Env
 import qualified Model as M
+import RIO
 import Servant
   ( (:<|>)((:<|>))
   , (:>)
   , Get
-  , Handler
   , JSON
   , Post
   , ReqBody
   , ServerT
+  , err400
+  , err401
+  , err404
+  , err500
   )
 import Servant.Auth.Server (Auth, AuthResult(Authenticated), Cookie)
 
@@ -27,14 +28,11 @@ type GetUserR
      :> "user"
      :> Get '[ JSON] (M.Entity M.User)
 
-getUser ::
-     (Members '[ D.Database, AppError] effs)
-  => AuthResult M.UserSession
-  -> Eff effs (M.Entity M.User)
+getUser :: AuthResult M.UserSession -> RIO Env (M.Entity M.User)
 getUser (Authenticated (M.UserSession userId)) = do
   user <- Users.get userId
-  maybe (throwError NotFound) return user
-getUser _ = throwError Unauthorized
+  maybe (throwIO err404) return user
+getUser _ = throwIO err401
 
 --------------------------------------------------------------------------------
 type PostUserR
@@ -42,24 +40,19 @@ type PostUserR
      :> ReqBody '[ JSON] M.Credentials
      :> Post '[ JSON] (M.Entity M.User)
 
-createUser ::
-     (LastMember Handler effs, Members '[ D.Database, AppError, Handler] effs)
-  => M.Credentials
-  -> Eff effs (M.Entity M.User)
+createUser :: M.Credentials -> RIO Env (M.Entity M.User)
 createUser credentials = do
   existingUser <- Users.getByEmail (credentials ^. M.email)
   case existingUser of
-    Just _ -> throwError BadRequest
+    Just _ -> throwIO err400
     Nothing ->
       M.createUser credentials >>= Users.insert >>=
-      maybe (throwError InternalError) return
+      maybe (throwIO err500) return
 
 --------------------------------------------------------------------------------
 type UserAPI
    = GetUserR
      :<|> PostUserR
 
-userAPI ::
-     (LastMember Handler effs, Members '[ D.Database, AppError, Handler] effs)
-  => ServerT UserAPI (Eff effs)
+userAPI :: ServerT UserAPI (RIO Env)
 userAPI = getUser :<|> createUser

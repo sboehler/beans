@@ -1,9 +1,8 @@
-{ mkDerivation, aeson, base, bytestring, cereal, cryptonite
-, exceptions, freer-simple, hpack, lens, mtl
-, natural-transformation, postgresql-simple
-, postgresql-simple-migration, resource-pool, resourcet
-, servant-auth, servant-auth-server, servant-server, stdenv, text
-, transformers, wai, warp
+{ mkDerivation, aeson, base, bytestring, cereal, cryptonite, hpack
+, microlens-platform, postgresql-simple
+, postgresql-simple-migration, resource-pool, rio, servant-auth
+, servant-auth-server, servant-server, stdenv, transformers, wai
+, warp
 }:
 mkDerivation {
   pname = "servant-starter-app";
@@ -12,10 +11,10 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    aeson base bytestring cereal cryptonite exceptions freer-simple
-    lens mtl natural-transformation postgresql-simple
-    postgresql-simple-migration resource-pool resourcet servant-auth
-    servant-auth-server servant-server text transformers wai warp
+    aeson base bytestring cereal cryptonite microlens-platform
+    postgresql-simple postgresql-simple-migration resource-pool rio
+    servant-auth servant-auth-server servant-server transformers wai
+    warp
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [ base ];

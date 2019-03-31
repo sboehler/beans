@@ -4,27 +4,22 @@ module Database.Users
   , insert
   ) where
 
-import Prelude hiding (id)
-
 import qualified Capabilities.Database as D
-import Control.Lens ((^.))
-import Control.Monad.Freer (Eff, Members)
+import Env
+import Lens.Micro.Platform ((^.))
 import qualified Model as M
+import RIO hiding (id)
 
-get ::
-     Members '[ D.Database] effs
-  => M.UserId
-  -> Eff effs (Maybe (M.Entity M.User))
-get id = D.fetch1 "select * from users where id = ?" [id]
+get :: M.UserId -> RIO Env (Maybe (M.Entity M.User))
+get id =
+  D.fetch1
+    "select id, email, hashed_password, created_at from users where id = ?"
+    [id]
 
-getByEmail ::
-     Members '[ D.Database] effs
-  => M.Email
-  -> Eff effs (Maybe (M.Entity M.User))
+getByEmail :: M.Email -> RIO Env (Maybe (M.User))
 getByEmail email = D.fetch1 "select * from users where email = ?" [email]
 
-insert ::
-     Members '[ D.Database] effs => M.User -> Eff effs (Maybe (M.Entity M.User))
+insert :: M.User -> RIO Env (Maybe (M.Entity M.User))
 insert u =
   D.fetch1
     "insert into users (email, hashed_password) values (?, ?) returning *"

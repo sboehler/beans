@@ -6,3 +6,4 @@ cabal.project.local
 cabal.project.local~
 result
 /.ghc.environment.*
+.envrc

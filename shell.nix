@@ -30,7 +30,7 @@ let
   #
   hies = (import (builtins.fetchGit {
     url = "https://github.com/domenkozar/hie-nix/";
-    rev = "19f47e0bf2e2f1a793bf87d64bf8266062f422b1";
+    rev = "3568848019da43c4581e931fcb7a6cb8b0f33079";
   }) {}).hies;
 
   drv = haskellPackages.callPackage f {};

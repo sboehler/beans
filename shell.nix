@@ -1,7 +1,7 @@
 let
   overlays = [
-    (_: super: {
-      haskell = super.haskell // {
+    (_: pkgs: {
+      haskell = pkgs.haskell // {
         packageOverrides = self: super: {
           ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
           ghcWithPackages = self.ghc.withPackages;

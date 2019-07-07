@@ -68,8 +68,8 @@ transform ::
 transform cookieSettings jwtSettings pool m =
   Handler $
   ExceptT $
-  try $ do
-    P.withResource pool $ \con -> do
-      PG.withTransaction con $ do
-        let env = Env con cookieSettings jwtSettings
-        runRIO env m
+  try $
+  P.withResource pool $ \con ->
+    PG.withTransaction con $ do
+      let env = Env con cookieSettings jwtSettings
+      runRIO env m

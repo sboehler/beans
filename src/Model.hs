@@ -39,11 +39,12 @@ import Servant.Auth.Server (FromJWT, ToJWT)
 type family Id a
 
 -- A wrapper for models
-data Entity model = Entity
-  { _entityId :: Id model
-  , _entityModel :: model
-  , _entityCreatedAt :: T.UTCTime
-  }
+data Entity model =
+  Entity
+    { _entityId :: Id model
+    , _entityModel :: model
+    , _entityCreatedAt :: T.UTCTime
+    }
 
 makeFields ''Entity
 
@@ -92,10 +93,12 @@ hashPassword password = do
   return $ HashedPassword hash
 
 --------------------------------------------------------------------------------
-data User = User
-  { _userEmail :: Email
-  , _userPassword :: HashedPassword
-  } deriving (Show, Eq, Generic)
+data User =
+  User
+    { _userEmail :: Email
+    , _userPassword :: HashedPassword
+    }
+  deriving (Show, Eq, Generic)
 
 makeFields ''User
 
@@ -112,10 +115,12 @@ instance FromRow User
 type instance Id User = UserId
 
 --------------------------------------------------------------------------------
-data Credentials = Credentials
-  { _credentialsEmail :: Email
-  , _credentialsPassword :: String
-  } deriving (Show, Eq, Generic)
+data Credentials =
+  Credentials
+    { _credentialsEmail :: Email
+    , _credentialsPassword :: String
+    }
+  deriving (Show, Eq, Generic)
 
 makeFields ''Credentials
 

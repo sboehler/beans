@@ -17,7 +17,7 @@ import RIO
 createPool :: MonadIO m => m (P.Pool PG.Connection)
 createPool = liftIO $ P.createPool open PG.close 1 10 10
   where
-    open = PG.connectPostgreSQL "dbname=webapp"
+    open = PG.connectPostgreSQL "dbname=dev host=localhost user=dev password=dev port=15432"
 
 initializeDatabase :: MonadIO m => FilePath -> PG.Connection -> m ()
 initializeDatabase dir con =

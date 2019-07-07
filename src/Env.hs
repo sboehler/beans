@@ -7,10 +7,11 @@ import Servant.Auth.Server (CookieSettings, JWTSettings)
 
 type ConnectionPool = P.Pool PG.Connection
 
-data Env = Env
-  { _envConnection :: PG.Connection
-  , _envCookieSettings :: CookieSettings
-  , _envJwtSettings :: JWTSettings
-  }
+data Env =
+  Env
+    { _envConnection :: PG.Connection
+    , _envCookieSettings :: CookieSettings
+    , _envJwtSettings :: JWTSettings
+    }
 
 makeFields ''Env

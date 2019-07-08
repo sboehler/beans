@@ -1,12 +1,12 @@
-name: servant-starter-app
+name: waccounts
 version: '0.1.0.0'
-description: Starter template for servant
+description: An experimental web-based accounting engine
 category: Web
 author: Silvio Böhler
 maintainer: sboehler@noreply.users.github.com
-copyright: 2017 Silvio Böhler
+copyright: 2019 Silvio Böhler
 license: BSD3
-github: sboehler/servant-starter-app
+github: sboehler/web-app
 extra-source-files:
 - README.md
 ghc-options:
@@ -78,7 +78,7 @@ library:
   - wai
   - warp
 executables:
-  servant-starter-app-exe:
+  waccounts-exe:
     main: Main.hs
     source-dirs: app
     ghc-options:
@@ -89,4 +89,3 @@ executables:
     - -Werror
     dependencies:
     - base
-    - servant-starter-app

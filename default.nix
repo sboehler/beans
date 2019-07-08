@@ -5,7 +5,7 @@
 , warp
 }:
 mkDerivation {
-  pname = "servant-starter-app";
+  pname = "waccounts";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = true;
@@ -18,7 +18,7 @@ mkDerivation {
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [ base ];
-  preConfigure = "hpack";
-  homepage = "https://github.com/sboehler/servant-starter-app#readme";
+  prePatch = "hpack";
+  homepage = "https://github.com/sboehler/web-app#readme";
   license = stdenv.lib.licenses.bsd3;
 }

@@ -25,7 +25,7 @@ let
       stylish-haskell
     ]
     ++ (with pkgs.nodePackages; [pulp])
-    ++ (with pkgs; [niv purescript psc-package])
+    ++ (with pkgs; [purescript psc-package])
   );
 in
 if pkgs.lib.inNixShell then drvWithTools.env else drvWithTools

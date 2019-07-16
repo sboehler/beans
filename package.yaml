@@ -89,3 +89,4 @@ executables:
     - -Werror
     dependencies:
     - base
+    - waccounts

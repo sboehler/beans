@@ -14,7 +14,7 @@ let
     overlays = overlays;
   };
 
-  drv = pkgs.haskellPackages.callPackage (import ./.) {};
+  drv = pkgs.haskellPackages.callPackage (import ./default.nix) {};
 
   drvWithTools = pkgs.haskell.lib.addBuildDepends drv (
     with pkgs.haskellPackages; [

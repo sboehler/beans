@@ -2,12 +2,12 @@
 , microlens-platform, postgresql-simple
 , postgresql-simple-migration, resource-pool, rio, servant-auth
 , servant-auth-server, servant-server, stdenv, transformers, wai
-, warp
+, warp, pkgs
 }:
 mkDerivation {
   pname = "waccounts";
   version = "0.1.0.0";
-  src = ./.;
+  src = pkgs.nix-gitignore.gitignoreSource [] ./.;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [

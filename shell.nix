@@ -1,17 +1,20 @@
 let
+  sources = import ./nix/sources.nix;
+
   overlays = [
     (_: pkgs: {
       haskell = pkgs.haskell // {
         packageOverrides = self: super: {
           ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
           ghcWithPackages = self.ghc.withPackages;
-          ormolu = self.callPackage (import ./nix/ormolu.nix) {};
+          ormolu = self.callPackage (
+            self.callCabal2nix "ormolu" sources.ormolu) {};
         };
       };
     })
   ];
 
-  pkgs = import ./nix {
+  pkgs = import sources.nixpkgs {
     overlays = overlays;
   };
 

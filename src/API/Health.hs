@@ -1,7 +1,8 @@
 module API.Health
   ( HealthAPI
   , healthAPI
-  ) where
+  )
+where
 
 import Env
 import RIO
@@ -9,8 +10,8 @@ import Servant ((:>), Get, PlainText, ServerT)
 
 --------------------------------------------------------------------------------
 type GetHealthR
-   = "health"
-     :> Get '[ PlainText] Text
+  = "health"
+    :> Get '[PlainText] Text
 
 getHealth :: RIO Env Text
 getHealth = pure "Healthy!"

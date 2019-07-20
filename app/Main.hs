@@ -1,6 +1,7 @@
 module Main
   ( main
-  ) where
+  )
+where
 
 import App (startApp)
 

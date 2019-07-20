@@ -1,17 +1,18 @@
 module API
   ( API
   , api
-  ) where
+  )
+where
 
 import API.Health (HealthAPI, healthAPI)
 import API.User (UserAPI, userAPI)
 import Env
 import RIO
-import Servant ((:<|>)(..), ServerT)
+import Servant ((:<|>) (..), ServerT)
 
 type API
-   = UserAPI
-     :<|> HealthAPI
+  = UserAPI
+    :<|> HealthAPI
 
 api :: ServerT API (RIO Env)
 api = userAPI :<|> healthAPI

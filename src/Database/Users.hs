@@ -2,7 +2,8 @@ module Database.Users
   ( getByEmail
   , get
   , insert
-  ) where
+  )
+where
 
 import qualified Capabilities.Database as D
 import Env

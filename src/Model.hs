@@ -15,16 +15,17 @@ module Model
   , Email
   , UserId
   , Credentials
-  , UserSession(..)
-  ) where
+  , UserSession (..)
+  )
+where
 
 import qualified Crypto.KDF.BCrypt as CKB
-import Data.Aeson (FromJSON, ToJSON, Value(..), (.=), object, toJSON)
+import Data.Aeson ((.=), FromJSON, ToJSON, Value (..), object, toJSON)
 import qualified Data.ByteString.Char8 as B
 import Data.Serialize (Serialize)
-import Database.PostgreSQL.Simple.FromField (FromField(..))
+import Database.PostgreSQL.Simple.FromField (FromField (..))
 import Database.PostgreSQL.Simple.FromRow (FromRow, field, fromRow)
-import Database.PostgreSQL.Simple.ToField (ToField(..))
+import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow, toRow)
 import GHC.Generics (Generic)
 import Lens.Micro.Platform (makeFields)
@@ -39,25 +40,28 @@ import Servant.Auth.Server (FromJWT, ToJWT)
 type family Id a
 
 -- A wrapper for models
-data Entity model =
-  Entity
-    { _entityId :: Id model
-    , _entityModel :: model
-    , _entityCreatedAt :: T.UTCTime
-    }
+data Entity model
+  = Entity
+      { _entityId :: Id model
+      , _entityModel :: model
+      , _entityCreatedAt :: T.UTCTime
+      }
 
 makeFields ''Entity
 
 deriving instance
-         (Show (Id model), Show model) => Show (Entity model)
+  (Show (Id model), Show model) => Show (Entity model)
 
 instance (ToField (Id model), ToRow model) => ToRow (Entity model) where
+
   toRow (Entity i m _t) = toField i : toRow m
 
 instance (FromField (Id model), FromRow model) => FromRow (Entity model) where
+
   fromRow = Entity <$> field <*> fromRow <*> field
 
 instance (ToJSON model, ToJSON (Id model)) => ToJSON (Entity model) where
+
   toJSON e =
     case toJSON (e ^. model) of
       Object m -> Object $ m `H.union` l
@@ -68,20 +72,20 @@ instance (ToJSON model, ToJSON (Id model)) => ToJSON (Entity model) where
           [("id", toJSON (e ^. id)), ("createdAt", toJSON (e ^. createdAt))]
 
 --------------------------------------------------------------------------------
-newtype UserId =
-  UserId Int
+newtype UserId
+  = UserId Int
   deriving (Eq, Show, Read, Generic, FromField, ToField, FromJSON, ToJSON)
 
 instance Serialize UserId
 
 --------------------------------------------------------------------------------
-newtype Email =
-  Email String
+newtype Email
+  = Email String
   deriving (Show, Eq, Read, FromField, ToField, Generic, FromJSON, ToJSON)
 
 --------------------------------------------------------------------------------
-newtype HashedPassword =
-  HashedPassword B.ByteString
+newtype HashedPassword
+  = HashedPassword B.ByteString
   deriving (Show, Eq, Read, FromField, ToField)
 
 validatePassword :: String -> HashedPassword -> Bool
@@ -93,11 +97,11 @@ hashPassword password = do
   return $ HashedPassword hash
 
 --------------------------------------------------------------------------------
-data User =
-  User
-    { _userEmail :: Email
-    , _userPassword :: HashedPassword
-    }
+data User
+  = User
+      { _userEmail :: Email
+      , _userPassword :: HashedPassword
+      }
   deriving (Show, Eq, Generic)
 
 makeFields ''User
@@ -108,6 +112,7 @@ createUser credentials = do
   return $ User (credentials ^. email) hashedPassword
 
 instance ToJSON User where
+
   toJSON u = object ["email" .= (u ^. email)]
 
 instance FromRow User
@@ -115,11 +120,11 @@ instance FromRow User
 type instance Id User = UserId
 
 --------------------------------------------------------------------------------
-data Credentials =
-  Credentials
-    { _credentialsEmail :: Email
-    , _credentialsPassword :: String
-    }
+data Credentials
+  = Credentials
+      { _credentialsEmail :: Email
+      , _credentialsPassword :: String
+      }
   deriving (Show, Eq, Generic)
 
 makeFields ''Credentials
@@ -127,8 +132,8 @@ makeFields ''Credentials
 instance FromJSON Credentials
 
 --------------------------------------------------------------------------------
-newtype UserSession =
-  UserSession UserId
+newtype UserSession
+  = UserSession UserId
   deriving (Eq, Show, Read, Generic)
 
 instance FromJSON UserSession

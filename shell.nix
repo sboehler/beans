@@ -18,6 +18,7 @@ let
       ghcid
       cabal-install
       hlint
+      hasktags
       hindent
       stylish-haskell
       ormolu

@@ -28,9 +28,8 @@ initializeDatabase dir con =
   where
     migrate c = PG.runMigration $ PG.MigrationContext c True con
 
-class
-  Monad m
-  => Database m where
+--------------------------------------------------------------------------------
+class Monad m => Database m where
 
   fetch1_ :: PG.FromRow b => PG.Query -> m (Maybe b)
 
@@ -40,6 +39,7 @@ class
 
   fetchN :: (PG.FromRow b, PG.ToRow c) => PG.Query -> c -> m [b]
 
+--------------------------------------------------------------------------------
 instance HasConnection a PG.Connection => Database (RIO a) where
 
   fetch1_ q = do

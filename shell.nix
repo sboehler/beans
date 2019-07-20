@@ -5,6 +5,7 @@ let
         packageOverrides = self: super: {
           ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
           ghcWithPackages = self.ghc.withPackages;
+          ormolu = self.callPackage (import ./nix/ormolu.nix) {};
         };
       };
     })
@@ -23,6 +24,7 @@ let
       hlint
       hindent
       stylish-haskell
+      ormolu
     ]
     ++ (with pkgs.nodePackages; [pulp])
     ++ (with pkgs; [purescript psc-package])

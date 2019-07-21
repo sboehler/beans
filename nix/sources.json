@@ -1,4 +1,16 @@
 {
+    "all-hies": {
+        "branch": "master",
+        "description": "Cached Haskell IDE Engine Nix builds for all GHC versions",
+        "homepage": "",
+        "owner": "infinisil",
+        "repo": "all-hies",
+        "rev": "9540f6aaeb9520abfc30729dc003836b790441a0",
+        "sha256": "1pmrmc0y94434z3znk69wpi8lgfblci4a1py9k0ri9fifsqkb7sn",
+        "type": "tarball",
+        "url": "https://github.com/infinisil/all-hies/archive/9540f6aaeb9520abfc30729dc003836b790441a0.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",

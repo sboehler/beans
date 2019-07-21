@@ -4,7 +4,6 @@ module API.Health
   )
 where
 
-import Env
 import RIO
 import Servant ((:>), Get, PlainText, ServerT)
 
@@ -13,11 +12,11 @@ type GetHealthR
   = "health"
     :> Get '[PlainText] Text
 
-getHealth :: RIO Env Text
+getHealth :: Monad m => m Text
 getHealth = pure "Healthy!"
 
 --------------------------------------------------------------------------------
 type HealthAPI = GetHealthR
 
-healthAPI :: ServerT HealthAPI (RIO Env)
+healthAPI :: Monad m => ServerT HealthAPI m
 healthAPI = getHealth

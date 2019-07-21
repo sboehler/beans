@@ -6,7 +6,7 @@ where
 
 import API.Health (HealthAPI, healthAPI)
 import API.User (UserAPI, userAPI)
-import Env
+import qualified Capabilities.Database as D
 import RIO
 import Servant ((:<|>) (..), ServerT)
 
@@ -14,5 +14,5 @@ type API
   = UserAPI
     :<|> HealthAPI
 
-api :: ServerT API (RIO Env)
+api :: (MonadIO m, D.Database m) => ServerT API m
 api = userAPI :<|> healthAPI

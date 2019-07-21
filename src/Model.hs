@@ -91,7 +91,7 @@ newtype HashedPassword
 validatePassword :: String -> HashedPassword -> Bool
 validatePassword p (HashedPassword h) = CKB.validatePassword (B.pack p) h
 
-hashPassword :: String -> RIO e HashedPassword
+hashPassword :: MonadIO m => String -> m HashedPassword
 hashPassword password = do
   hash <- liftIO $ CKB.hashPassword 12 (B.pack password)
   return $ HashedPassword hash
@@ -106,7 +106,7 @@ data User
 
 makeFields ''User
 
-createUser :: Credentials -> RIO e User
+createUser :: MonadIO m => Credentials -> m User
 createUser credentials = do
   hashedPassword <- hashPassword (credentials ^. password)
   return $ User (credentials ^. email) hashedPassword

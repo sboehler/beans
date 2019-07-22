@@ -4,6 +4,7 @@ module App
 where
 
 import API (API, api)
+import Capabilities.Crypto ()
 import qualified Capabilities.Database as D
 import Control.Monad.Trans.Except
 import qualified Data.Pool as P

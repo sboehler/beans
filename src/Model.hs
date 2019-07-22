@@ -5,13 +5,10 @@ module Model
   , id
   , model
   , createdAt
-  , User
-  , createUser
+  , User (..)
   , email
   , password
-  , HashedPassword
-  , hashPassword
-  , validatePassword
+  , HashedPassword (..)
   , Email
   , UserId
   , Credentials
@@ -19,7 +16,6 @@ module Model
   )
 where
 
-import qualified Crypto.KDF.BCrypt as CKB
 import Data.Aeson ((.=), FromJSON, ToJSON, Value (..), object, toJSON)
 import qualified Data.ByteString.Char8 as B
 import Data.Serialize (Serialize)
@@ -88,14 +84,6 @@ newtype HashedPassword
   = HashedPassword B.ByteString
   deriving (Show, Eq, Read, FromField, ToField)
 
-validatePassword :: String -> HashedPassword -> Bool
-validatePassword p (HashedPassword h) = CKB.validatePassword (B.pack p) h
-
-hashPassword :: MonadIO m => String -> m HashedPassword
-hashPassword password = do
-  hash <- liftIO $ CKB.hashPassword 12 (B.pack password)
-  return $ HashedPassword hash
-
 --------------------------------------------------------------------------------
 data User
   = User
@@ -105,11 +93,6 @@ data User
   deriving (Show, Eq, Generic)
 
 makeFields ''User
-
-createUser :: MonadIO m => Credentials -> m User
-createUser credentials = do
-  hashedPassword <- hashPassword (credentials ^. password)
-  return $ User (credentials ^. email) hashedPassword
 
 instance ToJSON User where
 

@@ -2,7 +2,7 @@
 
 module Capabilities.Database
   ( initializeDatabase
-  , PG.Connection
+  , PGS.Connection
   , createPool
   , Database (..)
   )
@@ -10,50 +10,65 @@ where
 
 import Control.Monad.IO.Class (MonadIO)
 import qualified Data.Pool as P
-import qualified Database.PostgreSQL.Simple as PG
-import qualified Database.PostgreSQL.Simple.Migration as PG
+import Database.Beam.Postgres as BPG
+import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.PostgreSQL.Simple.Migration as PGS
 import Env
 import RIO
 
-createPool :: MonadIO m => m (P.Pool PG.Connection)
-createPool = liftIO $ P.createPool open PG.close 1 10 10
+createPool :: MonadIO m => m (P.Pool PGS.Connection)
+createPool = liftIO $ P.createPool open PGS.close 1 10 10
   where
-    open = PG.connectPostgreSQL "dbname=dev host=localhost user=dev password=dev port=15432"
+    open = PGS.connectPostgreSQL "dbname=dev host=localhost user=dev password=dev port=15432"
 
-initializeDatabase :: MonadIO m => FilePath -> PG.Connection -> m ()
+initializeDatabase :: MonadIO m => FilePath -> PGS.Connection -> m ()
 initializeDatabase dir con =
   liftIO $
-    PG.withTransaction con $
-    mapM_ migrate [PG.MigrationInitialization, PG.MigrationDirectory dir]
+    PGS.withTransaction con $
+    mapM_ migrate [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
   where
-    migrate c = PG.runMigration $ PG.MigrationContext c True con
+    migrate c = PGS.runMigration $ PGS.MigrationContext c True con
 
 --------------------------------------------------------------------------------
-class Monad m => Database m where
+class (MonadIO m) => Database m where
 
-  fetch1_ :: PG.FromRow b => PG.Query -> m (Maybe b)
+  initialize :: FilePath -> m ()
 
-  fetch1 :: (PG.FromRow b, PG.ToRow c) => PG.Query -> c -> m (Maybe b)
+  runStatement :: BPG.Pg a -> m a
 
-  fetchN_ :: (PG.FromRow b) => PG.Query -> m [b]
+  fetch1_ :: PGS.FromRow b => PGS.Query -> m (Maybe b)
 
-  fetchN :: (PG.FromRow b, PG.ToRow c) => PG.Query -> c -> m [b]
+  fetch1 :: (PGS.FromRow b, PGS.ToRow c) => PGS.Query -> c -> m (Maybe b)
+
+  fetchN_ :: (PGS.FromRow b) => PGS.Query -> m [b]
+
+  fetchN :: (PGS.FromRow b, PGS.ToRow c) => PGS.Query -> c -> m [b]
 
 --------------------------------------------------------------------------------
-instance HasConnection a PG.Connection => Database (RIO a) where
+instance HasConnection a PGS.Connection => Database (RIO a) where
+
+  initialize dir = do
+    con <- view connection
+    let migrate c = PGS.runMigration $ PGS.MigrationContext c True con
+    liftIO $ PGS.withTransaction con $
+      mapM_ migrate [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
+
+  runStatement q = do
+    con <- view connection
+    liftIO $ BPG.runBeamPostgres con q
 
   fetch1_ q = do
     con <- view connection
-    listToMaybe <$> liftIO (PG.query_ con q)
+    listToMaybe <$> liftIO (PGS.query_ con q)
 
   fetch1 q args = do
     con <- view connection
-    listToMaybe <$> liftIO (PG.query con q args)
+    listToMaybe <$> liftIO (PGS.query con q args)
 
   fetchN_ q = do
     con <- view connection
-    liftIO $ PG.query_ con q
+    liftIO $ PGS.query_ con q
 
   fetchN q args = do
     con <- view connection
-    liftIO $ PG.query con q args
+    liftIO $ PGS.query con q args

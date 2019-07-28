@@ -63,6 +63,9 @@ library:
   dependencies:
   - aeson
   - base >=4.7 && <5
+  - beam-core
+  - beam-migrate
+  - beam-postgres
   - bytestring
   - cereal
   - cryptonite
@@ -75,6 +78,7 @@ library:
   - servant-auth
   - servant-auth-server
   - transformers
+  - time
   - wai
   - warp
 executables:

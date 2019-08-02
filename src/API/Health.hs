@@ -13,7 +13,7 @@ type GetHealthR
     :> Get '[PlainText] Text
 
 getHealth :: Monad m => m Text
-getHealth = pure "Healthy!"
+getHealth = pure "Healthy!\n"
 
 --------------------------------------------------------------------------------
 type HealthAPI = GetHealthR

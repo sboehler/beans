@@ -5,13 +5,18 @@ module API
 where
 
 import API.Health (HealthAPI, healthAPI)
+import API.Users (UsersAPI, usersAPI)
 import qualified Capabilities.Crypto as C
 import qualified Capabilities.Database as D
 import RIO
-import Servant ((:>), ServerT)
+import Servant
+  ( (:<|>) ((:<|>))
+  , (:>)
+  , ServerT
+  )
 
 type API
-  = "api" :> HealthAPI
+  = "api" :> (HealthAPI :<|> UsersAPI)
 
 api :: (C.Crypto m, MonadThrow m, D.Database m) => ServerT API m
-api = healthAPI
+api = healthAPI :<|> usersAPI

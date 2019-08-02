@@ -22,6 +22,7 @@ library:
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
+  - DeriveAnyClass
   - DeriveDataTypeable
   - DeriveFoldable
   - DeriveFunctor
@@ -34,7 +35,7 @@ library:
   - FlexibleInstances
   - FunctionalDependencies
   - GADTs
-  - GeneralizedNewtypeDeriving
+  # - GeneralizedNewtypeDeriving
   - InstanceSigs
   - KindSignatures
   - LambdaCase
@@ -52,6 +53,7 @@ library:
   - ScopedTypeVariables
   - StandaloneDeriving
   - TemplateHaskell
+  - TypeApplications
   - TypeSynonymInstances
   - TupleSections
   - TypeFamilies

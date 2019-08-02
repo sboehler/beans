@@ -22,12 +22,13 @@ createPool = liftIO $ P.createPool open PGS.close 1 10 10
     open = PGS.connectPostgreSQL "dbname=dev host=localhost user=dev password=dev port=15432"
 
 initializeDatabase :: MonadIO m => FilePath -> PGS.Connection -> m ()
-initializeDatabase dir con =
+initializeDatabase dir con = do
   liftIO $
-    PGS.withTransaction con $
-    mapM_ migrate [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
-  where
-    migrate c = PGS.runMigration $ PGS.MigrationContext c True con
+    PGS.withTransaction con $ do
+    res <- PGS.runMigrations True con [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
+    case res of
+      PGS.MigrationError e -> error e
+      _ -> return ()
 
 --------------------------------------------------------------------------------
 class (MonadIO m) => Database m where

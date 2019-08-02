@@ -1,14 +1,45 @@
 module Database.Schema where
 
-import Data.Time.Clock (UTCTime)
+import Data.Time.LocalTime (LocalTime)
 import Database.Beam
+import Database.Beam.Migrate
+import Database.Beam.Postgres (Postgres)
 import RIO
 
 data UserT f
   = User
-      { _userId :: Columnar f Integer
+      { _userId :: Columnar f Int64
       , _userEmail :: Columnar f Text
       , _userHashedPassword :: Columnar f Text
-      , _userCreatedAt :: Columnar f UTCTime
+      , _userCreatedAt :: Columnar f LocalTime
       }
   deriving Generic
+
+type User = UserT Identity
+
+type UserId = PrimaryKey UserT Identity
+
+deriving instance Show User
+
+deriving instance Eq User
+
+instance Beamable UserT
+
+instance Table UserT where
+
+  data PrimaryKey UserT f = UserId (Columnar f Int64)
+    deriving (Generic, Beamable)
+
+  primaryKey = UserId . _userId
+
+--------------------------------------------------------------------------------
+data BeansDb f
+  = BeansDb
+      {_beansUsers :: f (TableEntity UserT)}
+  deriving (Generic, Database be)
+
+beansDb :: DatabaseSettings be BeansDb
+beansDb = defaultDbSettings
+
+beansCheckedDb :: CheckedDatabaseSettings Postgres BeansDb
+beansCheckedDb = defaultMigratableDbSettings @Postgres

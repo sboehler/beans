@@ -73,7 +73,6 @@ library:
   - conduit
   - cryptonite
   - rio
-  - rio-orphans
   - microlens-platform
   - monad-control
   - postgresql-simple

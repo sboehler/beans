@@ -12,7 +12,6 @@ import qualified Database.PostgreSQL.Simple as PG
 import Env (Env (Env))
 import Network.Wai.Handler.Warp (run)
 import RIO hiding (Handler)
-import RIO.Orphans ()
 import Servant
   ( Context ((:.), EmptyContext)
   , Handler (Handler)
@@ -29,7 +28,6 @@ import Servant.Auth.Server
   , defaultJWTSettings
   , generateKey
   )
-import Servant.Conduit
 
 startApp :: IO ()
 startApp = do
@@ -75,7 +73,3 @@ transform cookieSettings jwtSettings pool m =
     PG.withTransaction con $ do
       let env = Env con cookieSettings jwtSettings
       runRIO env m
-
-instance ConduitToSourceIO (RIO Env) where
-
-  conduitToSourceIO = conduitToSourceIO

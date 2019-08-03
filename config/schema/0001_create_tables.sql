@@ -1,9 +1,9 @@
-CREATE TABLE users
+create table users
 (
-  id              BIGSERIAL PRIMARY KEY,
-  email           VARCHAR NOT NULL,
-  hashed_password VARCHAR NOT NULL,
-  created_at      timestamptz not null default now()
+    id              bigserial primary key,
+    email           varchar     not null,
+    hashed_password varchar     not null,
+    created_at      timestamptz not null default now()
 );
 
-CREATE UNIQUE INDEX ON users (email);
+create unique index on users (email);

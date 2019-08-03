@@ -5,6 +5,7 @@ module API.Users
 where
 
 import qualified Capabilities.Database as CD
+import Control.Monad.Trans.Control
 import Data.Conduit
 import Data.Conduit.List
 import Database.Beam
@@ -48,14 +49,14 @@ type GetUsersR3
   = "users3"
     :> StreamGet NewlineFraming JSON (SourceIO D.User)
 
-getUsers3 :: (MonadIO m, CD.Database m) => ServerT GetUsersR3 m
+getUsers3 :: (MonadIO m, CD.Database m, MonadBaseControl IO m, ConduitToSourceIO m) => ServerT GetUsersR3 m
 getUsers3 = do
   con <- CD.getConnection
   let allUsers = select (all_ (D._beansUsers D.beansDb))
-  liftIO $ runSelect con allUsers (return . conduitToSourceIO)
+  runSelect con allUsers (pure . conduitToSourceIO)
 
 --------------------------------------------------------------------------------
 type UsersAPI = GetUsersR :<|> GetUsersR2 :<|> GetUsersR3
 
-usersAPI :: (CD.Database m) => ServerT UsersAPI m
+usersAPI :: (CD.Database m, MonadBaseControl IO m, ConduitToSourceIO m) => ServerT UsersAPI m
 usersAPI = getUsers :<|> getUsers2 :<|> getUsers3

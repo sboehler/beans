@@ -5,12 +5,8 @@ module API.Users
 where
 
 import qualified Capabilities.Database as CD
-import Data.Conduit
-import Data.Conduit.List
 import Database.Beam
-import Database.Beam.Postgres.Conduit
 import qualified Database.Schema as D
-import RIO
 import Servant
   ( (:>)
   , Get
@@ -23,14 +19,11 @@ type GetUsersR
   = "users"
     :> Get '[JSON] [D.User]
 
-getUsers :: (MonadIO m, CD.Database m) => ServerT GetUsersR m
-getUsers = do
-  con <- CD.getConnection
-  let allUsers = select (all_ (D._beansUsers D.beansDb))
-  runConduit $ liftIO $ runSelect con allUsers (\c -> runConduit (c .| consume))
+getUsers :: (CD.Database m n) => ServerT GetUsersR m
+getUsers = CD.runSelectMany (select (all_ (D._beansUsers D.beansDb)))
 
 --------------------------------------------------------------------------------
 type UsersAPI = GetUsersR
 
-usersAPI :: (CD.Database m) => ServerT UsersAPI m
+usersAPI :: (CD.Database m n) => ServerT UsersAPI m
 usersAPI = getUsers

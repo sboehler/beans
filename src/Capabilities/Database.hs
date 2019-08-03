@@ -9,8 +9,13 @@ module Capabilities.Database
 where
 
 import Control.Monad.IO.Class (MonadIO)
+import qualified Data.Conduit as C
+import qualified Data.Conduit.List as C
 import qualified Data.Pool as P
-import Database.Beam.Postgres as BPG
+import Database.Beam.Backend.SQL.Row (FromBackendRow)
+import Database.Beam.Postgres (Postgres)
+import qualified Database.Beam.Postgres.Conduit as C
+import Database.Beam.Query (SqlSelect)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Migration as PGS
 import Env
@@ -31,24 +36,23 @@ initializeDatabase dir con = do
       _ -> return ()
 
 --------------------------------------------------------------------------------
-class (MonadIO m) => Database m where
+class (Monad m, Monad n) => Database m n | m -> n where
 
   initialize :: FilePath -> m ()
 
-  runStatement :: BPG.Pg a -> m a
+  runSelect :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> (C.ConduitT () a n () -> n b) -> m b
 
-  getConnection :: m Connection
+  runSelectMany :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> m [a]
+  runSelectMany q = runSelect q (\c -> C.runConduit (c C..| C.consume))
 
-  fetch1_ :: PGS.FromRow b => PGS.Query -> m (Maybe b)
+  runSelectMaybe :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> m (Maybe a)
+  runSelectMaybe q = runSelect q (\c -> C.runConduit (c C..| C.await))
 
-  fetch1 :: (PGS.FromRow b, PGS.ToRow c) => PGS.Query -> c -> m (Maybe b)
-
-  fetchN_ :: (PGS.FromRow b) => PGS.Query -> m [b]
-
-  fetchN :: (PGS.FromRow b, PGS.ToRow c) => PGS.Query -> c -> m [b]
+  runSelectOne :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> m a
+  runSelectOne q = runSelectMaybe q >>= maybe (error "error") return
 
 --------------------------------------------------------------------------------
-instance HasConnection a PGS.Connection => Database (RIO a) where
+instance HasConnection a PGS.Connection => Database (RIO a) IO where
 
   initialize dir = do
     con <- view connection
@@ -56,24 +60,6 @@ instance HasConnection a PGS.Connection => Database (RIO a) where
     liftIO $ PGS.withTransaction con $
       mapM_ migrate [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
 
-  runStatement q = do
+  runSelect q f = do
     con <- view connection
-    liftIO $ BPG.runBeamPostgres con q
-
-  getConnection = view connection
-
-  fetch1_ q = do
-    con <- view connection
-    listToMaybe <$> liftIO (PGS.query_ con q)
-
-  fetch1 q args = do
-    con <- view connection
-    listToMaybe <$> liftIO (PGS.query con q args)
-
-  fetchN_ q = do
-    con <- view connection
-    liftIO $ PGS.query_ con q
-
-  fetchN q args = do
-    con <- view connection
-    liftIO $ PGS.query con q args
+    C.runConduit $ liftIO $ C.runSelect con q f

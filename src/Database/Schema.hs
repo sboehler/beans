@@ -3,7 +3,6 @@ module Database.Schema where
 import Data.Aeson (ToJSON)
 import Data.Time.LocalTime (LocalTime)
 import Database.Beam
-import Database.Beam.Backend.SQL
 import Database.Beam.Migrate
 import Database.Beam.Postgres (Postgres)
 import RIO
@@ -47,9 +46,3 @@ beansDb = defaultDbSettings
 
 beansCheckedDb :: CheckedDatabaseSettings Postgres BeansDb
 beansCheckedDb = defaultMigratableDbSettings @Postgres
-
--- TODO: move somewhere else
-getUsers :: (MonadBeam be m, HasQBuilder be, BeamSqlBackend be, FromBackendRow be User) => m [User]
-getUsers = do
-  let allUsers = all_ (_beansUsers beansDb)
-  runSelectReturningList $ select allUsers

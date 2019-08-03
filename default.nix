@@ -1,7 +1,7 @@
 { mkDerivation, aeson, base, beam-core, beam-migrate, beam-postgres
-, bytestring, cereal, cryptonite, hpack, microlens-platform
+, bytestring, cereal, conduit, cryptonite, hpack, microlens-platform
 , postgresql-simple, postgresql-simple-migration, resource-pool
-, rio, servant-auth, servant-auth-server, servant-server, stdenv
+, rio, servant-auth, servant-auth-server, servant-conduit, servant-server, stdenv
 , time, transformers, wai, warp, pkgs
 }:
 mkDerivation {
@@ -12,9 +12,9 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson base beam-core beam-migrate beam-postgres bytestring cereal
-    cryptonite microlens-platform postgresql-simple
+    conduit cryptonite microlens-platform postgresql-simple
     postgresql-simple-migration resource-pool rio servant-auth
-    servant-auth-server servant-server time transformers wai warp
+    servant-auth-server servant-conduit servant-server time transformers wai warp
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [ base ];

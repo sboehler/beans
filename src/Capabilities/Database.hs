@@ -37,6 +37,8 @@ class (MonadIO m) => Database m where
 
   runStatement :: BPG.Pg a -> m a
 
+  getConnection :: m Connection
+
   fetch1_ :: PGS.FromRow b => PGS.Query -> m (Maybe b)
 
   fetch1 :: (PGS.FromRow b, PGS.ToRow c) => PGS.Query -> c -> m (Maybe b)
@@ -57,6 +59,8 @@ instance HasConnection a PGS.Connection => Database (RIO a) where
   runStatement q = do
     con <- view connection
     liftIO $ BPG.runBeamPostgres con q
+
+  getConnection = view connection
 
   fetch1_ q = do
     con <- view connection

@@ -1,3 +1,5 @@
+alter database dev set timezone to 'Europe/Zurich';
+
 create table users
 (
     id              bigserial primary key,

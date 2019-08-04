@@ -8,12 +8,14 @@ module Capabilities.Database
   )
 where
 
+import Config
 import Control.Monad.IO.Class (MonadIO)
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as C
 import qualified Data.Pool as P
+import Data.Text (unpack)
 import Database.Beam.Backend.SQL.Row (FromBackendRow)
-import Database.Beam.Postgres (Postgres)
+import Database.Beam.Postgres (ConnectInfo (..), Postgres)
 import qualified Database.Beam.Postgres.Conduit as C
 import Database.Beam.Query (SqlSelect)
 import qualified Database.PostgreSQL.Simple as PGS
@@ -21,10 +23,18 @@ import qualified Database.PostgreSQL.Simple.Migration as PGS
 import Env
 import RIO
 
-createPool :: MonadIO m => m (P.Pool PGS.Connection)
-createPool = liftIO $ P.createPool open PGS.close 1 10 10
-  where
-    open = PGS.connectPostgreSQL "dbname=dev host=localhost user=dev password=dev port=15432"
+createPool :: MonadIO m => Config -> m (P.Pool PGS.Connection)
+createPool c = do
+  let open =
+        PGS.connect
+          PGS.defaultConnectInfo
+            { connectHost = unpack $ c ^. databaseHost
+            , connectPort = fromIntegral $ c ^. databasePort
+            , connectUser = unpack $ c ^. databaseUser
+            , connectPassword = unpack $ c ^. databasePassword
+            , connectDatabase = unpack $ c ^. databaseName
+            }
+  liftIO $ P.createPool open PGS.close 1 10 10
 
 initializeDatabase :: MonadIO m => FilePath -> PGS.Connection -> m ()
 initializeDatabase dir con = do
@@ -52,7 +62,7 @@ class (Monad m, Monad n) => Database m n | m -> n where
   runSelectOne q = runSelectMaybe q >>= maybe (error "error") return
 
 --------------------------------------------------------------------------------
-instance HasConnection a PGS.Connection => Database (RIO a) IO where
+instance (HasConnection a PGS.Connection) => Database (RIO a) IO where
 
   initialize dir = do
     con <- view connection

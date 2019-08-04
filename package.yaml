@@ -35,7 +35,6 @@ library:
   - FlexibleInstances
   - FunctionalDependencies
   - GADTs
-  # - GeneralizedNewtypeDeriving
   - InstanceSigs
   - KindSignatures
   - LambdaCase
@@ -72,17 +71,18 @@ library:
   - cereal
   - conduit
   - cryptonite
-  - rio
+  - dhall
   - microlens-platform
-  - monad-control
   - postgresql-simple
   - postgresql-simple-migration
   - resource-pool
+  - rio
   - servant
   - servant-server
   - servant-auth
   - servant-auth-server
   - servant-conduit
+  - text
   - transformers
   - time
   - wai

@@ -6,6 +6,7 @@ where
 import API (API, api)
 import Capabilities.Crypto ()
 import qualified Capabilities.Database as D
+import Config (Config, getConfig)
 import Control.Monad.Trans.Except
 import qualified Data.Pool as P
 import qualified Database.PostgreSQL.Simple as PG
@@ -31,10 +32,12 @@ import Servant.Auth.Server
 
 startApp :: IO ()
 startApp = do
+  -- read configuration
+  config <- getConfig
   -- create a key to sign cookies
   myKey <- generateKey
   -- create a pool of database connections
-  pool <- D.createPool
+  pool <- D.createPool config
   -- apply database migrations
   P.withResource pool (D.initializeDatabase "config/schema")
   -- cookie settings
@@ -52,7 +55,7 @@ startApp = do
         hoistServerWithContext
           (Proxy :: Proxy API)
           (Proxy :: Proxy '[CookieSettings, JWTSettings])
-          (transform cookieSettings jwtSettings pool)
+          (transform config cookieSettings jwtSettings pool)
           api
   -- create the appliation
   let app = serveWithContext (Proxy :: Proxy API) context server
@@ -60,16 +63,17 @@ startApp = do
   run port app
 
 transform
-  :: forall a. CookieSettings
+  :: forall a. Config
+  -> CookieSettings
   -> JWTSettings
   -> P.Pool D.Connection
   -> RIO Env a
   -> Handler a
-transform cookieSettings jwtSettings pool m =
+transform config cookieSettings jwtSettings pool m =
   Handler $
     ExceptT $
     try $
     P.withResource pool $ \con ->
     PG.withTransaction con $ do
-      let env = Env con cookieSettings jwtSettings
+      let env = Env config cookieSettings jwtSettings con
       runRIO env m

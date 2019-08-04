@@ -4,6 +4,7 @@
 , postgresql-simple-migration, resource-pool, rio, servant
 , servant-auth, servant-auth-server, servant-conduit
 , servant-server, stdenv, time, transformers, wai, warp
+, pkgs
 }:
 mkDerivation {
   pname = "waccounts";

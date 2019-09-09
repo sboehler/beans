@@ -45,9 +45,7 @@ startApp = do
   -- jwt settings
   let jwtSettings = defaultJWTSettings myKey
   -- servant context
-  let context =
-        def {cookieIsSecure = NotSecure} :. defaultJWTSettings myKey :.
-          EmptyContext
+  let context = cookieSettings :. jwtSettings :. EmptyContext
   -- create a server
   let server =
         hoistServerWithContext

@@ -6,7 +6,7 @@ where
 import API (API, api)
 import Capabilities.Crypto ()
 import qualified Capabilities.Database as D
-import Config (Config, getConfig)
+import qualified Config as C
 import Control.Monad.Trans.Except
 import qualified Data.Pool as P
 import qualified Database.PostgreSQL.Simple as PG
@@ -33,7 +33,7 @@ import Servant.Auth.Server
 startApp :: IO ()
 startApp = do
   -- read configuration
-  config <- getConfig
+  config <- C.getConfig
   -- create a key to sign cookies
   myKey <- generateKey
   -- create a pool of database connections
@@ -44,8 +44,6 @@ startApp = do
   let cookieSettings = def {cookieIsSecure = NotSecure}
   -- jwt settings
   let jwtSettings = defaultJWTSettings myKey
-  -- the port on which we are running the server
-  let port = 4000
   -- servant context
   let context =
         def {cookieIsSecure = NotSecure} :. defaultJWTSettings myKey :.
@@ -59,11 +57,12 @@ startApp = do
           api
   -- create the appliation
   let app = serveWithContext (Proxy :: Proxy API) context server
+  let port = fromIntegral $ config ^. C.appPort
   -- run the application
   run port app
 
 transform
-  :: forall a. Config
+  :: forall a. C.Config
   -> CookieSettings
   -> JWTSettings
   -> P.Pool D.Connection

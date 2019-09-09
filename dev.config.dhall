@@ -8,4 +8,6 @@
 	"dev"
 , _configDatabaseHost =
 	"localhost"
+, _configAppPort =
+	4000
 }

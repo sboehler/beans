@@ -7,7 +7,7 @@ import API (API, api)
 import Capabilities.Crypto ()
 import qualified Capabilities.Database as D
 import qualified Config as C
-import Control.Monad.Trans.Except
+import Control.Monad.Trans.Except (ExceptT (..))
 import qualified Data.Pool as P
 import qualified Database.PostgreSQL.Simple as PG
 import Env (Env (Env))

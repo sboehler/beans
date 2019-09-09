@@ -1,10 +1,10 @@
 { mkDerivation, aeson, base, beam-core, beam-migrate, beam-postgres
-, bytestring, cereal, conduit, cryptonite, dhall, hpack
+, bytestring, cereal, conduit, cryptonite, dhall, hpack, jose
 , microlens-platform, postgresql-simple
 , postgresql-simple-migration, resource-pool, rio, servant
 , servant-auth, servant-auth-server, servant-conduit
-, servant-server, stdenv, time, transformers, wai, warp
 , pkgs
+, servant-server, stdenv, text, time, transformers, wai, warp
 }:
 mkDerivation {
   pname = "waccounts";
@@ -14,9 +14,9 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     aeson base beam-core beam-migrate beam-postgres bytestring cereal
-    conduit cryptonite dhall microlens-platform postgresql-simple
+    conduit cryptonite dhall jose microlens-platform postgresql-simple
     postgresql-simple-migration resource-pool rio servant servant-auth
-    servant-auth-server servant-conduit servant-server time
+    servant-auth-server servant-conduit servant-server text time
     transformers wai warp
   ];
   libraryToolDepends = [ hpack ];

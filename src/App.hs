@@ -8,7 +8,12 @@ import Capabilities.Crypto ()
 import qualified Capabilities.Database as D
 import qualified Config as C
 import Control.Monad.Trans.Except (ExceptT (..))
+import Crypto.JOSE.JWK ()
+import Data.Aeson (decode)
+import Data.ByteString.Lazy (fromStrict)
+import Data.Maybe (fromJust)
 import qualified Data.Pool as P
+import qualified Data.Text.Encoding as E
 import qualified Database.PostgreSQL.Simple as PG
 import Env (Env (Env))
 import Network.Wai.Handler.Warp (run)
@@ -27,15 +32,14 @@ import Servant.Auth.Server
   , cookieIsSecure
   , def
   , defaultJWTSettings
-  , generateKey
   )
 
 startApp :: IO ()
 startApp = do
   -- read configuration
   config <- C.getConfig
-  -- create a key to sign cookies
-  myKey <- generateKey
+  -- load the key to sign cookies
+  let myKey = fromJust . decode . fromStrict . E.encodeUtf8 $ (config ^. C.appKey)
   -- create a pool of database connections
   pool <- D.createPool config
   -- apply database migrations

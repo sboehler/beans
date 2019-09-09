@@ -14,6 +14,7 @@ data Config
       , _configDatabasePassword :: Text
       , _configDatabaseHost :: Text
       , _configAppPort :: Natural
+      , _configAppKey :: Text
       }
   deriving (Generic, Eq, Show)
 

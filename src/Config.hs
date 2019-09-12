@@ -4,7 +4,7 @@ import Data.Text (pack)
 import Dhall
 import Lens.Micro.Platform (makeFields)
 import RIO
-import System.Environment (getEnv)
+import System.Environment (lookupEnv)
 
 data Config
   = Config
@@ -24,5 +24,5 @@ makeFields ''Config
 
 getConfig :: MonadIO m => m Config
 getConfig = do
-  configFilePath <- liftIO $ getEnv "WEB_APP_CONFIG_FILE_PATH"
+  configFilePath <- fromMaybe "./dev.config.dhall" <$> (liftIO $ lookupEnv "WEB_APP_CONFIG_FILE_PATH")
   liftIO $ (input auto (pack configFilePath) :: IO Config)

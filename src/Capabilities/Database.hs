@@ -49,8 +49,6 @@ initializeDatabase dir con = do
 --------------------------------------------------------------------------------
 class (Monad m) => Database m where
 
-  initialize :: FilePath -> m ()
-
   runSelect :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> (C.ConduitT () a m () -> m b) -> m b
 
   runSelectMany :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> m [a]
@@ -64,12 +62,6 @@ class (Monad m) => Database m where
 
 --------------------------------------------------------------------------------
 instance (HasConnection a PGS.Connection) => Database (RIO a) where
-
-  initialize dir = do
-    con <- view connection
-    let migrate c = PGS.runMigration $ PGS.MigrationContext c True con
-    liftIO $ PGS.withTransaction con $
-      mapM_ migrate [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
 
   runSelect q f = do
     con <- view connection

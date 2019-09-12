@@ -78,6 +78,7 @@ library:
   - postgresql-simple-migration
   - resource-pool
   - rio
+  - rio-orphans
   - servant
   - servant-server
   - servant-auth

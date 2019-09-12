@@ -22,6 +22,7 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Migration as PGS
 import Env
 import RIO
+import RIO.Orphans ()
 
 createPool :: MonadIO m => Config -> m (P.Pool PGS.Connection)
 createPool c = do
@@ -46,11 +47,11 @@ initializeDatabase dir con = do
       _ -> return ()
 
 --------------------------------------------------------------------------------
-class (Monad m, Monad n) => Database m n | m -> n where
+class (Monad m) => Database m where
 
   initialize :: FilePath -> m ()
 
-  runSelect :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> (C.ConduitT () a n () -> n b) -> m b
+  runSelect :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> (C.ConduitT () a m () -> m b) -> m b
 
   runSelectMany :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> m [a]
   runSelectMany q = runSelect q (\c -> C.runConduit (c C..| C.consume))
@@ -62,7 +63,7 @@ class (Monad m, Monad n) => Database m n | m -> n where
   runSelectOne q = runSelectMaybe q >>= maybe (error "error") return
 
 --------------------------------------------------------------------------------
-instance (HasConnection a PGS.Connection) => Database (RIO a) IO where
+instance (HasConnection a PGS.Connection) => Database (RIO a) where
 
   initialize dir = do
     con <- view connection
@@ -72,4 +73,4 @@ instance (HasConnection a PGS.Connection) => Database (RIO a) IO where
 
   runSelect q f = do
     con <- view connection
-    C.runConduit $ liftIO $ C.runSelect con q f
+    C.runSelect con q f

@@ -21,7 +21,9 @@ import RIO hiding (Handler)
 import Servant
   ( Context ((:.), EmptyContext)
   , Handler (Handler)
+  , HasServer
   , Proxy (Proxy)
+  , ServerT
   , hoistServerWithContext
   , serveWithContext
   )
@@ -52,9 +54,8 @@ startApp = do
   let context = cookieSettings :. jwtSettings :. EmptyContext
   -- create a server
   let server =
-        hoistServerWithContext
+        hoistServerWithAuth
           (Proxy :: Proxy API)
-          (Proxy :: Proxy '[CookieSettings, JWTSettings])
           (transform config cookieSettings jwtSettings pool)
           api
   -- create the appliation
@@ -62,6 +63,15 @@ startApp = do
   let port = fromIntegral $ config ^. C.appPort
   -- run the application
   run port app
+
+hoistServerWithAuth
+  :: HasServer api '[CookieSettings, JWTSettings]
+  => Proxy api
+  -> (forall x. m x -> n x)
+  -> ServerT api m
+  -> ServerT api n
+hoistServerWithAuth a =
+  hoistServerWithContext a (Proxy :: Proxy '[CookieSettings, JWTSettings])
 
 transform
   :: forall a. C.Config

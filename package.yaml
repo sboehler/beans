@@ -22,7 +22,6 @@ library:
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
-  - DerivingStrategies
   - DerivingVia
   - DeriveAnyClass
   - DeriveDataTypeable

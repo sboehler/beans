@@ -68,5 +68,7 @@ data BeansDb f
       {_beansUsers :: f (TableEntity UserT)}
   deriving (Generic, Database be)
 
+BeansDb (TableLens dbUsers) = dbLenses
+
 beansDb :: DatabaseSettings be BeansDb
 beansDb = defaultDbSettings

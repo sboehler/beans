@@ -7,6 +7,7 @@ where
 import qualified Capabilities.Database as CD
 import Database.Beam
 import qualified Database.Schema as D
+import Lens.Micro.Platform ((^.))
 import Servant
   ( (:>)
   , Get
@@ -20,7 +21,7 @@ type GetUsersR
     :> Get '[JSON] [D.User]
 
 getUsers :: (CD.Database m) => ServerT GetUsersR m
-getUsers = CD.runSelectMany (select (all_ (D._beansUsers D.beansDb)))
+getUsers = CD.runSelectMany (select (all_ (D.beansDb ^. D.dbUsers)))
 
 --------------------------------------------------------------------------------
 type UsersAPI = GetUsersR

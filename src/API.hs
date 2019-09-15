@@ -5,6 +5,7 @@ module API
 where
 
 import API.Health (HealthAPI, healthAPI)
+import API.Session (SessionAPI, sessionAPI)
 import API.Users (UsersAPI, usersAPI)
 import qualified Capabilities.Crypto as C
 import qualified Capabilities.Database as D
@@ -16,7 +17,7 @@ import Servant
   )
 
 type API
-  = "api" :> (HealthAPI :<|> UsersAPI)
+  = "api" :> (HealthAPI :<|> UsersAPI :<|> SessionAPI)
 
 api :: (C.Crypto m, MonadThrow m, D.Database m) => ServerT API m
-api = healthAPI :<|> usersAPI
+api = healthAPI :<|> usersAPI :<|> sessionAPI

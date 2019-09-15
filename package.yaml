@@ -22,6 +22,8 @@ library:
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
+  - DerivingStrategies
+  - DerivingVia
   - DeriveAnyClass
   - DeriveDataTypeable
   - DeriveFoldable
@@ -35,6 +37,7 @@ library:
   - FlexibleInstances
   - FunctionalDependencies
   - GADTs
+  - ImpredicativeTypes
   - InstanceSigs
   - KindSignatures
   - LambdaCase
@@ -58,6 +61,7 @@ library:
   - TypeFamilies
   - TypeOperators
   - TypeSynonymInstances
+  - UndecidableInstances
   - ViewPatterns
   exposed-modules:
   - App

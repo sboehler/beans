@@ -1,8 +1,3 @@
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE ImpredicativeTypes #-}
-{-# LANGUAGE UndecidableInstances #-}
-
 {-# OPTIONS_GHC  -fno-warn-missing-signatures #-}
 module Database.Schema where
 

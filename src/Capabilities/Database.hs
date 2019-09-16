@@ -1,5 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 module Capabilities.Database
   ( initializeDatabase
   , PGS.Connection

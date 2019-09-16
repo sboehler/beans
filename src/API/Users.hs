@@ -32,11 +32,8 @@ type GetUserR
       :> Get '[JSON] D.User
 
 getUser :: (CD.ManageUsers m, MonadThrow m) => ServerT GetUserR m
-getUser userId = do
-  user <- CD.getUserById (D.UserId userId)
-  case user of
-    (Just u) -> return u
-    _ -> throwM err404
+getUser userId =
+  CD.getUserById (D.UserId userId) >>= maybe (throwM err404) return
 
 --------------------------------------------------------------------------------
 type UsersAPI = GetUsersR :<|> GetUserR

@@ -5,21 +5,20 @@ where
 
 import qualified Crypto.KDF.BCrypt as C
 import qualified Data.ByteString.Char8 as B
+import qualified Data.Text.Encoding as T
+import qualified Database.Schema as D
 import RIO
 
-newtype HashedPassword = HashedPassword B.ByteString
+class Monad m => Crypto m where
 
-class Crypto m where
+  validatePassword :: B.ByteString -> D.HashedPassword -> m Bool
 
-  validatePassword :: String -> HashedPassword -> m Bool
-
-  hashPassword :: String -> m HashedPassword
+  hashPassword :: B.ByteString -> m D.HashedPassword
 
 --------------------------------------------------------------------------------
 instance Crypto (RIO a) where
 
-  validatePassword p (HashedPassword h) = return $ C.validatePassword (B.pack p) h
+  validatePassword p (D.HashedPassword h) = return $ C.validatePassword p (T.encodeUtf8 h)
 
-  hashPassword pwd = do
-    hash <- liftIO $ C.hashPassword 12 (B.pack pwd)
-    return $ HashedPassword hash
+  hashPassword pwd =
+    liftIO $ D.HashedPassword . T.decodeUtf8 <$> C.hashPassword 12 pwd

@@ -7,6 +7,7 @@ import Database.Beam
 import Database.Beam.Backend.SQL.SQL92
 import Database.Beam.Postgres (Postgres)
 import RIO
+import Servant.Auth.Server (ToJWT)
 
 --------------------------------------------------------------------------------
 newtype Email = Email Text
@@ -14,11 +15,15 @@ newtype Email = Email Text
 
 deriving via Text instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Email
 
+deriving via Text instance HasSqlEqualityCheck Postgres Text => HasSqlEqualityCheck Postgres Email
+
 --------------------------------------------------------------------------------
 newtype HashedPassword = HashedPassword Text
   deriving (Show, Eq, FromBackendRow Postgres) via Text
 
 deriving via Text instance HasSqlValueSyntax be Text => HasSqlValueSyntax be HashedPassword
+
+deriving via Text instance HasSqlEqualityCheck Postgres Text => HasSqlEqualityCheck Postgres HashedPassword
 
 --------------------------------------------------------------------------------
 data UserT f
@@ -48,6 +53,8 @@ deriving instance Eq User
 instance ToJSON User where
 
   toJSON user = object ["id" .= (user ^. userId), "email" .= (user ^. email)]
+
+instance ToJWT User
 
 type UserId = PrimaryKey UserT Identity
 

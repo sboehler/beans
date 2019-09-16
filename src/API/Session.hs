@@ -4,10 +4,14 @@ module API.Session
   )
 where
 
+import qualified Capabilities.Crypto as C
+import qualified Capabilities.Persistence as C
 import Data.Aeson (FromJSON, ToJSON)
+import Data.ByteString.Lazy (toStrict)
+import Data.Text.Encoding as T
 import qualified Database.Schema as D
 import RIO
-import Servant ((:>), JSON, Post, ReqBody, ServerT)
+import Servant ((:>), JSON, Post, ReqBody, ServerT, err401)
 
 data Credentials
   = Credentials
@@ -27,10 +31,15 @@ type PostSessionR
     :> ReqBody '[JSON] Credentials
       :> Post '[JSON] Token
 
-createSession :: Monad m => ServerT PostSessionR m
-createSession _creds = return $ Token ""
+createSession :: (MonadThrow m, C.Crypto m, C.ManageUsers m, C.ManageSession m) => ServerT PostSessionR m
+createSession creds = do
+  user <- C.getUserByEmail (credentialsEmail creds) >>= maybe (throwM err401) return
+  valid <- C.validatePassword (T.encodeUtf8 $ credentialsPassword creds) (user ^. D.hashedPassword)
+  when (not valid) $ throwM err401
+  token <- C.createSession user >>= either (const $ throwM err401) return
+  return $ Token $ T.decodeUtf8 (toStrict token)
 
 type SessionAPI = PostSessionR
 
-sessionAPI :: (Monad m) => ServerT SessionAPI m
+sessionAPI :: (MonadThrow m, C.Crypto m, C.ManageUsers m, C.ManageSession m) => ServerT SessionAPI m
 sessionAPI = createSession

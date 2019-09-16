@@ -19,5 +19,5 @@ import Servant
 type API
   = "api" :> (HealthAPI :<|> UsersAPI :<|> SessionAPI)
 
-api :: (C.Crypto m, MonadThrow m, C.ManageUsers m) => ServerT API m
+api :: (C.Crypto m, MonadThrow m, C.ManageUsers m, C.ManageSession m) => ServerT API m
 api = healthAPI :<|> usersAPI :<|> sessionAPI

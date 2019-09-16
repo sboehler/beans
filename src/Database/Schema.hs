@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC  -fno-warn-missing-signatures #-}
 module Database.Schema where
 
-import Data.Aeson ((.=), ToJSON (..), object)
+import Data.Aeson ((.=), FromJSON (..), ToJSON (..), object)
 import Data.Time.LocalTime (LocalTime)
 import Database.Beam
 import Database.Beam.Backend.SQL.SQL92
@@ -10,7 +10,7 @@ import RIO
 
 --------------------------------------------------------------------------------
 newtype Email = Email Text
-  deriving (ToJSON, Show, Eq, FromBackendRow Postgres) via Text
+  deriving (FromJSON, ToJSON, Show, Eq, FromBackendRow Postgres) via Text
 
 deriving via Text instance HasSqlValueSyntax be Text => HasSqlValueSyntax be Email
 

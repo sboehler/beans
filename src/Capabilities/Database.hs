@@ -61,7 +61,7 @@ class (Monad m) => Database m where
   runSelectOne q = runSelectMaybe q >>= maybe (error "error") return
 
 --------------------------------------------------------------------------------
-instance (HasConnection a PGS.Connection) => Database (RIO a) where
+instance Database (RIO Env) where
 
   runSelect q f = do
     con <- view connection

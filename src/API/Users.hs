@@ -4,15 +4,17 @@ module API.Users
   )
 where
 
-import qualified Capabilities.Database as CD
-import Database.Beam
+import qualified Capabilities.Persistence as CD
 import qualified Database.Schema as D
-import Lens.Micro.Platform ((^.))
+import RIO
 import Servant
-  ( (:>)
+  ( (:<|>) (..)
+  , (:>)
+  , Capture
   , Get
   , JSON
   , ServerT
+  , err404
   )
 
 --------------------------------------------------------------------------------
@@ -20,11 +22,24 @@ type GetUsersR
   = "users"
     :> Get '[JSON] [D.User]
 
-getUsers :: (CD.Database m) => ServerT GetUsersR m
-getUsers = CD.runSelectMany (select (all_ (D.beansDb ^. D.dbUsers)))
+getUsers :: (CD.ManageUsers m) => ServerT GetUsersR m
+getUsers = CD.getUsers
 
 --------------------------------------------------------------------------------
-type UsersAPI = GetUsersR
+type GetUserR
+  = "users"
+    :> Capture "id" Int64
+      :> Get '[JSON] D.User
 
-usersAPI :: (CD.Database m) => ServerT UsersAPI m
-usersAPI = getUsers
+getUser :: (CD.ManageUsers m, MonadThrow m) => ServerT GetUserR m
+getUser userId = do
+  user <- CD.getUserById (D.UserId userId)
+  case user of
+    (Just u) -> return u
+    _ -> throwM err404
+
+--------------------------------------------------------------------------------
+type UsersAPI = GetUsersR :<|> GetUserR
+
+usersAPI :: (CD.ManageUsers m, MonadThrow m) => ServerT UsersAPI m
+usersAPI = getUsers :<|> getUser

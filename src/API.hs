@@ -8,7 +8,7 @@ import API.Health (HealthAPI, healthAPI)
 import API.Session (SessionAPI, sessionAPI)
 import API.Users (UsersAPI, usersAPI)
 import qualified Capabilities.Crypto as C
-import qualified Capabilities.Database as D
+import qualified Capabilities.Persistence as C
 import RIO
 import Servant
   ( (:<|>) ((:<|>))
@@ -19,5 +19,5 @@ import Servant
 type API
   = "api" :> (HealthAPI :<|> UsersAPI :<|> SessionAPI)
 
-api :: (C.Crypto m, MonadThrow m, D.Database m) => ServerT API m
+api :: (C.Crypto m, MonadThrow m, C.ManageUsers m) => ServerT API m
 api = healthAPI :<|> usersAPI :<|> sessionAPI

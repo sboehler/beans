@@ -4,8 +4,7 @@ module API.Session
   )
 where
 
-import qualified Capabilities.Database as CD
-import Data.Aeson (ToJSON)
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Database.Schema as D
 import RIO
 import Servant ((:>), JSON, Post, ReqBody, ServerT)
@@ -15,7 +14,7 @@ data Credentials
       { credentialsEmail :: D.Email
       , credentialsPassword :: Text
       }
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Generic, FromJSON)
 
 newtype Token
   = Token
@@ -28,10 +27,10 @@ type PostSessionR
     :> ReqBody '[JSON] Credentials
       :> Post '[JSON] Token
 
-createSession :: (CD.Database m) => ServerT PostSessionR m
+createSession :: Monad m => ServerT PostSessionR m
 createSession _creds = return $ Token ""
 
 type SessionAPI = PostSessionR
 
-sessionAPI :: (CD.Database m) => ServerT SessionAPI m
+sessionAPI :: (Monad m) => ServerT SessionAPI m
 sessionAPI = createSession

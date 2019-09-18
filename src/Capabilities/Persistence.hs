@@ -18,6 +18,8 @@ class (Monad m) => ManageUsers m where
 
   getUsers :: m [S.User]
 
+  createUser :: S.Email -> S.HashedPassword -> m S.User
+
 instance ManageUsers (RIO Env) where
 
   getUserById (S.UserId i) =
@@ -31,6 +33,15 @@ instance ManageUsers (RIO Env) where
       all_ (S.beansDb ^. S.dbUsers)
 
   getUsers = CD.runSelectMany (select (all_ (S.beansDb ^. S.dbUsers)))
+
+  createUser email password = do
+    users <-
+      CD.runInsertReturningList $
+        insert (S.beansDb ^. S.dbUsers) $
+        insertExpressions [S.User default_ (val_ email) (val_ password) default_]
+    case users of
+      [user] -> return user
+      _ -> error "inconsistency"
 
 --------------------------------------------------------------------------------
 class (Monad m) => ManageSession m where

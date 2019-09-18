@@ -12,10 +12,13 @@ import qualified Data.Conduit as C
 import qualified Data.Conduit.List as C
 import qualified Data.Pool as P
 import Data.Text (unpack)
+import qualified Database.Beam.Backend.SQL.BeamExtensions as BeamExtensions
 import Database.Beam.Backend.SQL.Row (FromBackendRow)
 import Database.Beam.Postgres (ConnectInfo (..), Postgres)
+import qualified Database.Beam.Postgres as C
 import qualified Database.Beam.Postgres.Conduit as C
-import Database.Beam.Query (SqlSelect)
+import Database.Beam.Query (Projectible, QExpr, SqlInsert, SqlSelect)
+import Database.Beam.Schema.Tables (Beamable)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Migration as PGS
 import Env
@@ -49,6 +52,8 @@ class (Monad m) => Database m where
 
   runSelect :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> (C.ConduitT () a m () -> m b) -> m b
 
+  runInsertReturningList :: (Beamable table, Projectible Postgres (table (QExpr Postgres ())), FromBackendRow Postgres (table Identity)) => SqlInsert Postgres table -> m [table Identity]
+
   runSelectMany :: (FromBackendRow Postgres a) => SqlSelect Postgres a -> m [a]
   runSelectMany q = runSelect q (\c -> C.runConduit (c C..| C.consume))
 
@@ -64,3 +69,7 @@ instance Database (RIO Env) where
   runSelect q f = do
     con <- view connection
     C.runSelect con q f
+
+  runInsertReturningList q = do
+    con <- view connection
+    liftIO $ C.runBeamPostgres con $ BeamExtensions.runInsertReturningList q

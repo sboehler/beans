@@ -1,5 +1,5 @@
 module Capabilities.Crypto
-  ( Crypto (..)
+  ( Crypto (..),
   )
 where
 

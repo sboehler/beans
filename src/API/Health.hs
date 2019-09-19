@@ -1,21 +1,21 @@
 module API.Health
-  ( HealthAPI
-  , healthAPI
+  ( HealthAPI,
+    healthAPI,
   )
 where
 
 import RIO
 import Servant
-  ( (:>)
-  , Get
-  , PlainText
-  , ServerT
+  ( (:>),
+    Get,
+    PlainText,
+    ServerT,
   )
 
 --------------------------------------------------------------------------------
 type GetHealthR
   = "health"
-    :> Get '[PlainText] Text
+      :> Get '[PlainText] Text
 
 getHealth :: Monad m => ServerT GetHealthR m
 getHealth = pure "Healthy!\n"

@@ -1,5 +1,5 @@
 module Main
-  ( main
+  ( main,
   )
 where
 

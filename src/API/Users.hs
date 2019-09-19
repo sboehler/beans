@@ -1,6 +1,6 @@
 module API.Users
-  ( UsersAPI
-  , usersAPI
+  ( UsersAPI,
+    usersAPI,
   )
 where
 
@@ -10,21 +10,21 @@ import Data.Aeson (FromJSON)
 import qualified Database.Schema as D
 import RIO
 import Servant
-  ( (:<|>) (..)
-  , (:>)
-  , Capture
-  , Get
-  , JSON
-  , Post
-  , ReqBody
-  , ServerT
-  , err404
+  ( (:<|>) (..),
+    (:>),
+    Capture,
+    Get,
+    JSON,
+    Post,
+    ReqBody,
+    ServerT,
+    err404,
   )
 
 --------------------------------------------------------------------------------
 type GetUsersR
   = "users"
-    :> Get '[JSON] [D.User]
+      :> Get '[JSON] [D.User]
 
 getUsers :: (CD.ManageUsers m) => ServerT GetUsersR m
 getUsers = CD.getUsers
@@ -32,7 +32,7 @@ getUsers = CD.getUsers
 --------------------------------------------------------------------------------
 type GetUserR
   = "users"
-    :> Capture "id" Int64
+      :> Capture "id" Int64
       :> Get '[JSON] D.User
 
 getUser :: (CD.ManageUsers m, MonadThrow m) => ServerT GetUserR m
@@ -42,14 +42,14 @@ getUser userId =
 --------------------------------------------------------------------------------
 data Credentials
   = Credentials
-      { credentialsEmail :: D.Email
-      , credentialsPassword :: Text
+      { credentialsEmail :: D.Email,
+        credentialsPassword :: Text
       }
   deriving (Show, Eq, Generic, FromJSON)
 
 type CreateUserR
   = "users"
-    :> ReqBody '[JSON] Credentials
+      :> ReqBody '[JSON] Credentials
       :> Post '[JSON] D.User
 
 createUser :: (CD.ManageUsers m, CD.Crypto m, MonadThrow m) => ServerT CreateUserR m

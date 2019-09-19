@@ -1,5 +1,5 @@
 module App
-  ( startApp
+  ( startApp,
   )
 where
 
@@ -19,21 +19,21 @@ import Env (Env (Env))
 import Network.Wai.Handler.Warp (run)
 import RIO hiding (Handler)
 import Servant
-  ( Context ((:.), EmptyContext)
-  , Handler (Handler)
-  , HasServer
-  , Proxy (Proxy)
-  , ServerT
-  , hoistServerWithContext
-  , serveWithContext
+  ( Context ((:.), EmptyContext),
+    Handler (Handler),
+    HasServer,
+    Proxy (Proxy),
+    ServerT,
+    hoistServerWithContext,
+    serveWithContext,
   )
 import Servant.Auth.Server
-  ( CookieSettings
-  , IsSecure (NotSecure)
-  , JWTSettings
-  , cookieIsSecure
-  , def
-  , defaultJWTSettings
+  ( CookieSettings,
+    IsSecure (NotSecure),
+    JWTSettings,
+    cookieIsSecure,
+    def,
+    defaultJWTSettings,
   )
 
 startApp :: IO ()
@@ -74,17 +74,19 @@ hoistServerWithAuth a =
   hoistServerWithContext a (Proxy :: Proxy '[CookieSettings, JWTSettings])
 
 transform
-  :: forall a. C.Config
+  :: forall a.
+     C.Config
   -> CookieSettings
   -> JWTSettings
   -> P.Pool D.Connection
   -> RIO Env a
   -> Handler a
 transform config cookieSettings jwtSettings pool m =
-  Handler $
-    ExceptT $
-    try $
-    P.withResource pool $ \con ->
-    PG.withTransaction con $ do
-      let env = Env config cookieSettings jwtSettings con
-      runRIO env m
+  Handler
+    $ ExceptT
+    $ try
+    $ P.withResource pool
+    $ \con ->
+      PG.withTransaction con $ do
+        let env = Env config cookieSettings jwtSettings con
+        runRIO env m

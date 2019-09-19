@@ -1,8 +1,8 @@
 module Capabilities.Database
-  ( initializeDatabase
-  , PGS.Connection
-  , createPool
-  , Database (..)
+  ( initializeDatabase,
+    PGS.Connection,
+    createPool,
+    Database (..),
   )
 where
 
@@ -30,22 +30,23 @@ createPool c = do
   let open =
         PGS.connect
           PGS.defaultConnectInfo
-            { connectHost = unpack $ c ^. databaseHost
-            , connectPort = fromIntegral $ c ^. databasePort
-            , connectUser = unpack $ c ^. databaseUser
-            , connectPassword = unpack $ c ^. databasePassword
-            , connectDatabase = unpack $ c ^. databaseName
+            { connectHost = unpack $ c ^. databaseHost,
+              connectPort = fromIntegral $ c ^. databasePort,
+              connectUser = unpack $ c ^. databaseUser,
+              connectPassword = unpack $ c ^. databasePassword,
+              connectDatabase = unpack $ c ^. databaseName
             }
   liftIO $ P.createPool open PGS.close 1 10 10
 
 initializeDatabase :: MonadIO m => FilePath -> PGS.Connection -> m ()
 initializeDatabase dir con = do
-  liftIO $
-    PGS.withTransaction con $ do
-    res <- PGS.runMigrations True con [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
-    case res of
-      PGS.MigrationError e -> error e
-      _ -> return ()
+  liftIO
+    $ PGS.withTransaction con
+    $ do
+      res <- PGS.runMigrations True con [PGS.MigrationInitialization, PGS.MigrationDirectory dir]
+      case res of
+        PGS.MigrationError e -> error e
+        _ -> return ()
 
 --------------------------------------------------------------------------------
 class (Monad m) => Database m where

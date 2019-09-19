@@ -1,4 +1,5 @@
-{-# OPTIONS_GHC  -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 module Database.Schema where
 
 import Data.Aeson ((.=), FromJSON (..), ToJSON (..), object)
@@ -28,12 +29,12 @@ deriving via Text instance HasSqlEqualityCheck Postgres Text => HasSqlEqualityCh
 --------------------------------------------------------------------------------
 data UserT f
   = User
-      { _userId :: Columnar f Int64
-      , _userEmail :: Columnar f Email
-      , _userHashedPassword :: Columnar f HashedPassword
-      , _userCreatedAt :: Columnar f LocalTime
+      { _userId :: Columnar f Int64,
+        _userEmail :: Columnar f Email,
+        _userHashedPassword :: Columnar f HashedPassword,
+        _userCreatedAt :: Columnar f LocalTime
       }
-  deriving Generic
+  deriving (Generic)
 
 instance Beamable UserT
 
@@ -51,7 +52,6 @@ deriving instance Show User
 deriving instance Eq User
 
 instance ToJSON User where
-
   toJSON user = object ["id" .= (user ^. userId), "email" .= (user ^. email)]
 
 instance ToJWT User

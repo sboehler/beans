@@ -1,6 +1,6 @@
 module API
-  ( API
-  , api
+  ( API,
+    api,
   )
 where
 
@@ -11,9 +11,9 @@ import qualified Capabilities.Crypto as C
 import qualified Capabilities.Persistence as C
 import RIO
 import Servant
-  ( (:<|>) ((:<|>))
-  , (:>)
-  , ServerT
+  ( (:<|>) ((:<|>)),
+    (:>),
+    ServerT,
   )
 
 type API

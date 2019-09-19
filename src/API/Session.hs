@@ -1,6 +1,6 @@
 module API.Session
-  ( SessionAPI
-  , sessionAPI
+  ( SessionAPI,
+    sessionAPI,
   )
 where
 
@@ -15,8 +15,8 @@ import Servant ((:>), JSON, Post, ReqBody, ServerT, err401)
 
 data Credentials
   = Credentials
-      { credentialsEmail :: D.Email
-      , credentialsPassword :: Text
+      { credentialsEmail :: D.Email,
+        credentialsPassword :: Text
       }
   deriving (Show, Eq, Generic, FromJSON)
 
@@ -28,7 +28,7 @@ newtype Token
 
 type PostSessionR
   = "session"
-    :> ReqBody '[JSON] Credentials
+      :> ReqBody '[JSON] Credentials
       :> Post '[JSON] Token
 
 createSession :: (MonadThrow m, C.Crypto m, C.ManageUsers m, C.ManageSession m) => ServerT PostSessionR m

@@ -10,10 +10,10 @@ type ConnectionPool = P.Pool PG.Connection
 
 data Env
   = Env
-      { _envConfig :: Config
-      , _envCookieSettings :: CookieSettings
-      , _envJwtSettings :: JWTSettings
-      , _envConnection :: PG.Connection
+      { _envConfig :: Config,
+        _envCookieSettings :: CookieSettings,
+        _envJwtSettings :: JWTSettings,
+        _envConnection :: PG.Connection
       }
 
 makeFields ''Env

@@ -8,13 +8,13 @@ import System.Environment (lookupEnv)
 
 data Config
   = Config
-      { _configDatabaseName :: Text
-      , _configDatabasePort :: Natural
-      , _configDatabaseUser :: Text
-      , _configDatabasePassword :: Text
-      , _configDatabaseHost :: Text
-      , _configAppPort :: Natural
-      , _configAppKey :: Text
+      { _configDatabaseName :: Text,
+        _configDatabasePort :: Natural,
+        _configDatabaseUser :: Text,
+        _configDatabasePassword :: Text,
+        _configDatabaseHost :: Text,
+        _configAppPort :: Natural,
+        _configAppKey :: Text
       }
   deriving (Generic, Eq, Show)
 

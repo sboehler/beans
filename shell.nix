@@ -32,7 +32,7 @@ let
     ]
     ++ (with pkgs.nodePackages; [pulp])
     ++ (with pkgs; [purescript psc-package])
-    ++ [ghcide]
+    ++ [ghcide pkgs.cacert]
   );
 in
 if pkgs.lib.inNixShell then drvWithTools.env else drvWithTools

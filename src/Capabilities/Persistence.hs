@@ -4,6 +4,7 @@ import Capabilities.Database as CD
 import qualified Crypto.JOSE.Error as E
 import Data.ByteString.Lazy as B
 import Database.Beam
+import Data.Time.Clock(getCurrentTime, addUTCTime)
 import qualified Database.Schema as S
 import Env
 import RIO
@@ -52,4 +53,5 @@ instance ManageSession (RIO Env) where
 
   createSession user = do
     js <- view jwtSettings
-    liftIO $ makeJWT user js Nothing
+    expiry <- addUTCTime (12 * 3600) <$> (liftIO getCurrentTime)
+    liftIO $ makeJWT user js (Just expiry)

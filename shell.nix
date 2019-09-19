@@ -17,6 +17,8 @@ let
     selector = p: { inherit (p) ghc865; };
   };
 
+  ghcide = (import (builtins.fetchTarball "https://github.com/hercules-ci/ghcide-nix/tarball/master") {}).ghcide-ghc865;
+
   drvWithTools = pkgs.haskell.lib.addBuildDepends drv (
     with haskellPackages; [
       ghcid
@@ -30,7 +32,7 @@ let
     ]
     ++ (with pkgs.nodePackages; [pulp])
     ++ (with pkgs; [purescript psc-package])
-    ++ [all-hies]
+    ++ [ghcide]
   );
 in
 if pkgs.lib.inNixShell then drvWithTools.env else drvWithTools

@@ -7,7 +7,7 @@ let
     overrides = self: super: {
       ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
       # ghcWithPackages = self.ghc.withPackages;
-      ormolu = self.callCabal2nix "ormolu" sources.ormolu {};
+      ormolu = self.callCabal2nixWithOptions "ormolu" sources.ormolu "--no-check" {};
     };
   };
 

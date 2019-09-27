@@ -5,9 +5,9 @@ import qualified Crypto.JOSE.Error as E
 import Data.ByteString.Lazy as B
 import Data.Time.Clock (addUTCTime, getCurrentTime)
 import Database.Beam
-import qualified Database.Schema as S
 import Env
 import RIO
+import qualified Schema as S
 import Servant.Auth.Server (makeJWT)
 
 --------------------------------------------------------------------------------

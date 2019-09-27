@@ -9,8 +9,8 @@ import qualified Capabilities.Persistence as C
 import Data.Aeson (FromJSON, ToJSON)
 import Data.ByteString.Lazy (toStrict)
 import Data.Text.Encoding as T
-import qualified Database.Schema as D
 import RIO
+import qualified Schema as D
 import Servant ((:>), JSON, Post, ReqBody, ServerT, err401)
 
 data Credentials

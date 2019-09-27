@@ -7,8 +7,8 @@ where
 import qualified Capabilities.Crypto as CD
 import qualified Capabilities.Persistence as CD
 import Data.Aeson (FromJSON)
-import qualified Database.Schema as D
 import RIO
+import qualified Schema as D
 import Servant
   ( (:<|>) (..),
     (:>),

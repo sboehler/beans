@@ -6,7 +6,7 @@ where
 import qualified Crypto.KDF.BCrypt as C
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Text.Encoding as T
-import qualified Database.Schema as D
+import qualified Schema as D
 import RIO
 
 class Monad m => Crypto m where

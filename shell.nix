@@ -28,7 +28,6 @@ let
       hindent
       stylish-haskell
       ormolu
-      beam-core
     ]
     ++ (with pkgs.nodePackages; [pulp])
     ++ (with pkgs; [purescript psc-package])

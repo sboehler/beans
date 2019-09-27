@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module Database.Schema where
+module Schema where
 
 import Data.Aeson ((.=), FromJSON (..), ToJSON (..), object)
 import Data.Time.LocalTime (LocalTime)

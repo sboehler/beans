@@ -4,9 +4,8 @@ module App
 where
 
 import API (API, api)
-import qualified Config as C
 import Control.Monad.Trans.Except (ExceptT (..))
-import Crypto.JOSE.JWK ()
+import Database (ConnectionPool, createPool, withResource)
 import Env (Env (Env))
 import Network.Wai.Handler.Warp (defaultSettings, runSettings, setHost, setPort)
 import RIO hiding (Handler)
@@ -17,31 +16,25 @@ import Servant
     serve,
   )
 
-startApp :: IO ()
-startApp = do
-  -- read configuration
-  config <- C.getConfig
-  -- create a pool of database connections
+startApp :: FilePath -> IO ()
+startApp dbfile = do
+  pool <- createPool dbfile
   let server =
         hoistServer
           (Proxy :: Proxy API)
-          (transform config)
+          (transform pool)
           api
-  -- create the appliation
   let app = serve (Proxy :: Proxy API) server
-  let port = fromIntegral $ config ^. C.appPort
-  -- run the application
-  runSettings (setPort port $ setHost "*" $ defaultSettings) app
+  runSettings (setPort 4004 $ setHost "*" $ defaultSettings) app
 
 transform ::
   forall a.
-  C.Config ->
+  ConnectionPool ->
   RIO Env a ->
   Handler a
-transform config m =
+transform pool m =
   Handler
     $ ExceptT
     $ try
-    $ do
-      let env = Env config
-      runRIO env m
+    $ withResource pool
+    $ \con -> runRIO (Env con) m

@@ -6,4 +6,4 @@ where
 import App (startApp)
 
 main :: IO ()
-main = startApp
+main = startApp "test.db"

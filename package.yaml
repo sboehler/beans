@@ -72,10 +72,7 @@ library:
   - beam-sqlite
   - bytestring
   - cereal
-  - conduit
-  - cryptonite
-  - dhall
-  - jose
+  - containers
   - microlens-platform
   - optparse-applicative
   - sqlite-simple
@@ -84,9 +81,6 @@ library:
   - rio-orphans
   - servant
   - servant-server
-  - servant-auth
-  - servant-auth-server
-  - servant-conduit
   - text
   - transformers
   - time

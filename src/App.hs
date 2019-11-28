@@ -5,7 +5,7 @@ where
 
 import API (API, api)
 import Control.Monad.Trans.Except (ExceptT (..))
-import Database (ConnectionPool, createPool, withResource)
+import Database (ConnectionPool, createPool, initialize, withResource)
 import Env (Env (Env))
 import Network.Wai.Handler.Warp (defaultSettings, runSettings, setHost, setPort)
 import RIO hiding (Handler)
@@ -18,6 +18,7 @@ import Servant
 
 startApp :: FilePath -> IO ()
 startApp dbfile = do
+  initialize dbfile
   pool <- createPool dbfile
   let server =
         hoistServer

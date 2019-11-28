@@ -13,9 +13,9 @@ import Servant
   )
 
 --------------------------------------------------------------------------------
-type GetHealthR
-  = "health"
-      :> Get '[PlainText] Text
+type GetHealthR =
+  "health"
+    :> Get '[PlainText] Text
 
 getHealth :: Monad m => ServerT GetHealthR m
 getHealth = pure "Healthy!\n"

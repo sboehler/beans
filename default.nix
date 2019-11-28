@@ -1,24 +1,22 @@
-{ mkDerivation, aeson, base, beam-core, beam-migrate, beam-postgres
+{ mkDerivation, aeson, base, beam-core, beam-migrate, beam-sqlite
 , bytestring, cereal, conduit, cryptonite, dhall, hpack, jose
-, microlens-platform, postgresql-simple
-, postgresql-simple-migration, resource-pool, rio, rio-orphans
-, servant, servant-auth, servant-auth-server, servant-conduit
-, servant-server, stdenv, text, time, transformers
-, wai, warp, pkgs
-
+, microlens-platform, optparse-applicative, resource-pool, rio
+, rio-orphans, servant, servant-auth, servant-auth-server
+, servant-conduit, servant-server, sqlite-simple, stdenv, text
+, time, transformers, wai, warp
 }:
 mkDerivation {
   pname = "waccounts";
   version = "0.1.0.0";
-  src = pkgs.nix-gitignore.gitignoreSource [] ./.;
+  src = ./.;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    aeson base beam-core beam-migrate beam-postgres bytestring cereal
-    conduit cryptonite dhall jose microlens-platform postgresql-simple
-    postgresql-simple-migration resource-pool rio rio-orphans servant
+    aeson base beam-core beam-migrate beam-sqlite bytestring cereal
+    conduit cryptonite dhall jose microlens-platform
+    optparse-applicative resource-pool rio rio-orphans servant
     servant-auth servant-auth-server servant-conduit servant-server
-    text time transformers wai warp
+    sqlite-simple text time transformers wai warp
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [ base ];

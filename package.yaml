@@ -69,7 +69,7 @@ library:
   - base >=4.7 && <5
   - beam-core
   - beam-migrate
-  - beam-postgres
+  - beam-sqlite
   - bytestring
   - cereal
   - conduit
@@ -77,8 +77,8 @@ library:
   - dhall
   - jose
   - microlens-platform
-  - postgresql-simple
-  - postgresql-simple-migration
+  - optparse-applicative
+  - sqlite-simple
   - resource-pool
   - rio
   - rio-orphans

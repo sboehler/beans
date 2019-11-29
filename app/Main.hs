@@ -7,7 +7,7 @@ import App (startApp)
 import Options.Applicative
 
 fileParser :: Parser FilePath
-fileParser = argument str (metavar "FILE")
+fileParser = argument str (metavar "FILE" <> action "file")
 
 main :: IO ()
 main = do

@@ -1,5 +1,5 @@
-{ mkDerivation, aeson, base, beam-core, beam-migrate, beam-sqlite
-, bytestring, cereal, containers, hpack, microlens-platform
+{ mkDerivation, aeson, base, beam-core, beam-sqlite, bytestring
+, cereal, containers, hpack, microlens-platform
 , optparse-applicative, resource-pool, rio, rio-orphans, servant
 , servant-server, sqlite-simple, stdenv, text, time, transformers
 , wai, warp
@@ -11,13 +11,12 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    aeson base beam-core beam-migrate beam-sqlite bytestring cereal
-    containers microlens-platform optparse-applicative resource-pool
-    rio rio-orphans servant servant-server sqlite-simple text time
-    transformers wai warp
+    aeson base beam-core beam-sqlite bytestring cereal containers
+    microlens-platform resource-pool rio rio-orphans servant
+    servant-server sqlite-simple text time transformers wai warp
   ];
   libraryToolDepends = [ hpack ];
-  executableHaskellDepends = [ base ];
+  executableHaskellDepends = [ base optparse-applicative ];
   prePatch = "hpack";
   homepage = "https://github.com/sboehler/web-app#readme";
   license = stdenv.lib.licenses.bsd3;

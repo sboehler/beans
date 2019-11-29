@@ -68,13 +68,11 @@ library:
   - aeson
   - base >=4.7 && <5
   - beam-core
-  - beam-migrate
   - beam-sqlite
   - bytestring
   - cereal
   - containers
   - microlens-platform
-  - optparse-applicative
   - sqlite-simple
   - resource-pool
   - rio
@@ -99,3 +97,4 @@ executables:
     dependencies:
     - base
     - beans-web
+    - optparse-applicative

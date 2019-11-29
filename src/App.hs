@@ -5,7 +5,7 @@ where
 
 import API (API, api)
 import Control.Monad.Trans.Except (ExceptT (..))
-import Database (ConnectionPool, createPool, initialize, withResource)
+import qualified Database as Db
 import Env (Env (Env))
 import Network.Wai.Handler.Warp (defaultSettings, runSettings, setHost, setPort)
 import RIO hiding (Handler)
@@ -18,8 +18,8 @@ import Servant
 
 startApp :: FilePath -> IO ()
 startApp dbfile = do
-  initialize dbfile
-  pool <- createPool dbfile
+  Db.initialize dbfile
+  pool <- Db.createPool dbfile
   let server =
         hoistServer
           (Proxy :: Proxy API)
@@ -30,12 +30,12 @@ startApp dbfile = do
 
 transform ::
   forall a.
-  ConnectionPool ->
+  Db.ConnectionPool ->
   RIO Env a ->
   Handler a
 transform pool m =
   Handler
     $ ExceptT
     $ try
-    $ withResource pool
+    $ Db.withResource pool
     $ \con -> runRIO (Env con) m

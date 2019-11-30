@@ -72,6 +72,7 @@ library:
   - bytestring
   - cereal
   - containers
+  - http-types
   - microlens-platform
   - sqlite-simple
   - resource-pool

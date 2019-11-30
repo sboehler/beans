@@ -32,8 +32,9 @@ migrate con = do
     \create unique index if not exists schema_version_unique on schema_version (version);"
   version <- fromMaybe 0 <$> getOne con "select max(version) from schema_version" :: IO Int64
   let steps = filter ((> version) . fst) migrations
+  putStrLn $ "Current Schema Version: " ++ show version
   forM_ steps $ \(step, query) -> do
-    putStrLn $ "Migration: step " ++ (show step)
+    putStrLn $ "Migrating to version: " ++ show step
     S.withTransaction con $ do
       S.execute_ con query
       S.execute con "insert into schema_version (version) values (?)" (S.Only step)

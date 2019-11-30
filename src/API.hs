@@ -14,5 +14,5 @@ import Servant
 type API =
   "api" :> (HealthAPI)
 
-api :: (MonadThrow m) => ServerT API m
+api :: (MonadReader env m, HasLogFunc env, MonadIO m, MonadThrow m) => ServerT API m
 api = healthAPI

@@ -17,11 +17,13 @@ type GetHealthR =
   "health"
     :> Get '[PlainText] Text
 
-getHealth :: Monad m => ServerT GetHealthR m
-getHealth = pure "Healthy!\n"
+getHealth :: (MonadIO m, MonadReader env m, HasLogFunc env) => ServerT GetHealthR m
+getHealth = do
+  logInfo "Hello!"
+  pure "Healthy!\n"
 
 --------------------------------------------------------------------------------
 type HealthAPI = GetHealthR
 
-healthAPI :: Monad m => ServerT HealthAPI m
+healthAPI :: (MonadIO m, MonadReader env m, HasLogFunc env) => ServerT HealthAPI m
 healthAPI = getHealth

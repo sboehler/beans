@@ -1,46 +1,31 @@
 let
-  compiler = "ghc864";
+  sources = import ./nix/sources.nix;
 
   config = {
-
+    # allowBroken = true;
     packageOverrides = pkgs: rec {
-
-      haskell = pkgs.haskell // {
-        packages = pkgs.haskell.packages // {
-        ${compiler} = pkgs.haskell.packages.${compiler}.override {
-            overrides = self: super: {
-              ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
-              ghcWithPackages = self.ghc.withPackages;
-            };
-          };
+      haskellPackages = pkgs.haskellPackages.override {
+        overrides = self: super: {
+          ghc = super.ghc // { withPackages = super.ghc.withHoogle; };
+          ghcWithPackages = self.ghc.withPackages;
         };
       };
     };
   };
 
-  pkgs = import <nixpkgs> { inherit config; };
+  pkgs = import sources.nixpkgs { inherit config; };
 
-  f = import ./default.nix;
+  drv = pkgs.haskellPackages.callPackage (import ./default.nix) {};
 
-  haskellPackages = pkgs.haskell.packages.${compiler};
-
-  # Haskell IDE Engine
-  #
-  # When upgrading, make sure to delete ~/.cache/cabal-helper!
-  #
-  hies = (import (builtins.fetchGit {
-    url = "https://github.com/domenkozar/hie-nix/";
-    rev = "3568848019da43c4581e931fcb7a6cb8b0f33079";
-  }) {}).hies;
-
-  drv = haskellPackages.callPackage f {};
-
-  drvWithTools = pkgs.haskell.lib.addBuildDepends drv (with haskellPackages; [
-    hies
-    ghcid
+  drvWithTools = pkgs.haskell.lib.addBuildTools drv (with pkgs.haskellPackages; [
     cabal-install
-    hasktags
+    cabal2nix
+    dhall
+    ghcid
+    ghcide
     hlint
+    hoogle
+    ormolu
     stylish-haskell
   ]);
 

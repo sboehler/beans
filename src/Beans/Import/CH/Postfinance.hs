@@ -1,131 +1,100 @@
 module Beans.Import.CH.Postfinance
-  ( parse
-  , name
+  ( parse,
   )
 where
 
-import qualified Beans.Data.Map                as M
-import           Beans.Import.Common            ( Config(..)
-                                                , Context(..)
-                                                , Parser
-                                                , ImporterException
-                                                , askAccount
-                                                , parseCommands
-                                                )
-import           Beans.Megaparsec               ( count
-                                                , try
-                                                , parseISODate
-                                                , manyTill
-                                                , optional
-                                                , choice
-                                                , takeWhile1P
-                                                , skipManyTill
-                                                , some
-                                                , eof
-                                                , parseAmount
-                                                , anySingle
-                                                , char
-                                                , string
-                                                , eol
-                                                )
-import           Beans.Model                    ( Amount
-                                                , Command(CmdTransaction)
-                                                , Transaction(..)
-                                                , Commodity(Commodity)
-                                                , Date
-                                                , Dated(Dated)
-                                                , Flag(Complete)
-                                                , Position(Position)
-                                                )
-import           Control.Monad                  ( void )
-import           Control.Monad.Reader           ( asks )
-import qualified Data.ByteString               as B
-import           Data.Char                      ( isAlphaNum )
-import           Data.Group                     ( invert )
-import           Data.Text                      ( pack
-                                                , Text
-                                                )
-import qualified Data.Text                     as T
-import           Data.Text.Encoding             ( decodeLatin1 )
-import qualified Text.Megaparsec.Char.Lexer    as L
+import qualified Beans.Account as Account
+import Beans.Command (Command (CmdTransaction))
+import Beans.Commodity (Commodity (..))
+import qualified Beans.Date as Date
+import qualified Beans.Import.Common as Common
+import qualified Beans.Import.Common as Import
+import qualified Beans.Megaparsec as M
+import Beans.Transaction (Posting (..), Transaction (..))
+import Beans.ValAmount (ValAmount)
+import Control.Monad (void)
+import qualified Control.Monad.Reader as Reader
+import qualified Data.ByteString as B
+import Data.Group (invert)
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Text
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Char as M
+import qualified Text.Megaparsec.Char.Lexer as L
 
+type Parser = Common.Parser
 
-name :: Text
-name = "ch.postfinance" :: Text
+parse :: Common.Config -> B.ByteString -> Either Common.ImporterException [Command]
+parse config bytes = Import.parseCommands config postfinanceData (Text.decodeLatin1 bytes)
 
-parse :: Config -> B.ByteString -> Either ImporterException [Dated Command]
-parse config bytes = parseCommands config postfinanceData (decodeLatin1 bytes)
-
-postfinanceData :: Parser [Dated Command]
+postfinanceData :: Parser [Command]
 postfinanceData = do
   commodity <-
-    optional (constField ["Datum von:", "Date from:"] *> ignoreField)
-    *> constField ["Buchungsart:", "Entry type:"]
-    *> ignoreField
-    *> constField ["Konto:", "Account:"]
-    *> ignoreField
-    *> constField ["Währung:", "Currency:"]
-    *> currencyField
-    <* count 6 ignoreField
-  some (command commodity)
+    M.optional (constField ["Datum von:", "Date from:"] *> ignoreField)
+      *> constField ["Buchungsart:", "Entry type:"]
+      *> ignoreField
+      *> constField ["Konto:", "Account:"]
+      *> ignoreField
+      *> constField ["Währung:", "Currency:"]
+      *> currencyField
+      <* M.count 6 ignoreField
+  M.some (command commodity)
     <* ignoreField
     <* constField ["Disclaimer:"]
-    <* skipManyTill anySingle eof
+    <* M.skipManyTill M.anySingle M.eof
 
-command :: Commodity -> Parser (Dated Command)
+command :: Commodity -> Parser Command
 command commodity = do
-  date         <- dateField
-  description  <- descriptionField
-  amount       <- entryAmount <* count 2 ignoreField
-  account      <- asks _configAccount
-  otherAccount <- askAccount
-    $ Context date "expense" description (invert amount) commodity name
-  let bookings = M.fromListM
-        [ (Position account commodity Nothing, M.singleton commodity amount)
-        , ( Position otherAccount commodity Nothing
-          , M.singleton commodity (-amount)
-          )
+  date <- dateField
+  description <- descriptionField
+  amount <- entryAmount <* M.count 2 ignoreField
+  account <- Reader.asks Common.account
+  let bookings =
+        [ Posting account commodity Nothing amount Nothing,
+          Posting Account.unknown commodity Nothing (invert amount) Nothing
         ]
-  return $ Dated
-    date
-    (CmdTransaction (Transaction Complete description [] bookings))
+  return $
+    CmdTransaction (Transaction date description [] bookings)
 
-entryAmount :: Parser Amount
-entryAmount = field $ choice [credit, debit]
- where
-  debit  = amountField <* separator
-  credit = separator *> amountField
+entryAmount :: Parser ValAmount
+entryAmount = field $ M.choice [credit, debit]
+  where
+    debit = amountField <* separator
+    credit = separator *> amountField
 
 currencyField :: Parser Commodity
-currencyField = field $ Commodity <$> takeWhile1P (Just "Currency") isAlphaNum
+currencyField = field M.parseCommodity
 
 constField :: [Text] -> Parser Text
-constField = field . choice . fmap string
+constField = field . M.choice . fmap M.string
 
-dateField :: Parser Date
-dateField = try $ field parseISODate
+dateField :: Parser Date.Date
+dateField = field M.parseISODate
 
 descriptionField :: Parser Text
 descriptionField =
   quote
-    >> (T.concatMap replace . pack <$> manyTill anySingle
-                                                (try (quote >> separator))
+    >> ( Text.concatMap replace . Text.pack
+           <$> M.manyTill
+             M.anySingle
+             (M.try (quote >> separator))
        )
- where
-  quote = char '"'
-  replace '\n' = " "
-  replace '\r' = ""
-  replace '"'  = "\""
-  replace c    = T.singleton c
+  where
+    quote = M.char '"'
+    replace '\n' = " "
+    replace '\r' = ""
+    replace '"' = "\""
+    replace c = Text.singleton c
 
-amountField :: Parser Amount
-amountField = parseAmount (pure ())
+amountField :: Parser ValAmount
+amountField = M.parseValAmount . pure $ ()
 
 ignoreField :: Parser ()
-ignoreField = void $ skipManyTill anySingle separator
+ignoreField = void $ M.skipManyTill M.anySingle separator
 
 separator :: Parser ()
-separator = void $ choice [string ";", eol]
+separator = void $ M.choice [M.string ";", M.eol]
 
 field :: Parser a -> Parser a
 field = L.lexeme separator

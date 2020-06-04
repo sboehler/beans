@@ -1,74 +1,74 @@
 module Beans.Prices
-  ( PricesHistory
-  , NormalizedPrices
-  , Prices
-  , updatePrices
-  , normalize
-  , lookupPrice
+  ( NormalizedPrices,
+    Prices,
+    updatePrices,
+    normalize,
+    valuate,
+    new,
+    newN,
+    lookupPrice,
   )
 where
 
-import           Beans.Model
-import           Control.Monad.State            ( StateT
-                                                , modify
-                                                , gets
-                                                )
-import           Control.Monad.Catch            ( Exception
-                                                , MonadThrow
-                                                , throwM
-                                                )
-import qualified Data.Map.Strict               as M
-import           Data.Time.Calendar             ( Day )
-import           Control.Lens
+import Beans.Amount (Amount)
+import qualified Beans.Amount as Amount
+import Beans.Commodity (Commodity)
+import Beans.Price (Price (..))
+import Control.Monad.Catch (Exception, MonadThrow, throwM)
+import qualified Data.Map.Strict as Map
+import Data.Map.Strict (Map)
 
-type PricesHistory = M.Map Day Prices
+type NormalizedPrices = Map Commodity Double
 
-type NormalizedPrices = M.Map Commodity Decimal
-
-type Prices = M.Map Commodity (M.Map Commodity Decimal)
+type Prices = Map Commodity (Map Commodity Double)
 
 data PriceException
-  = NoPriceFound Commodity
-                 Commodity
-  | NoNormalizedPriceFound NormalizedPrices
-                           Commodity
+  = NoPriceFound Commodity Commodity
+  | NoNormalizedPriceFound NormalizedPrices Commodity
   deriving (Show)
 
 instance Exception PriceException
 
-updatePrices :: Monad m => Command -> StateT Prices m ()
-updatePrices (CmdPrice p) = addPrice p >> addPrice (invert p)
-updatePrices _            = pure ()
+new :: Prices
+new = Map.empty
 
-addPrice :: Monad m => Price -> StateT Prices m ()
-addPrice p = do
-  inner <- gets $ M.findWithDefault mempty (p ^. commodity)
-  let inner' = M.insert (p ^. targetCommodity) (p ^. price) inner
-  modify $ M.insert (p ^. commodity) inner'
+newN :: NormalizedPrices
+newN = Map.empty
 
-invert :: Price -> Price
-invert Price { _priceCommodity, _priceTargetCommodity, _pricePrice } = Price
-  { _priceCommodity       = _priceTargetCommodity
-  , _priceTargetCommodity = _priceCommodity
-  , _pricePrice           = 1 / _pricePrice
-  }
+updatePrices :: MonadThrow m => Prices -> Price -> m Prices
+updatePrices prices (Price _ c p tc) =
+  pure prices
+    >>= addPrice c tc p
+    >>= addPrice tc c (1 / p)
+
+addPrice :: MonadThrow m => Commodity -> Commodity -> Double -> Prices -> m Prices
+addPrice commodity targetCommodity price prices = do
+  let inner = Map.findWithDefault mempty commodity prices
+  let inner' = Map.insert targetCommodity price inner
+  pure $ Map.insert commodity inner' prices
 
 normalize :: Prices -> Commodity -> NormalizedPrices
-normalize prices current = normalize' prices mempty (M.singleton current 1.0)
+normalize prices current = normalize' prices mempty (Map.singleton current 1.0)
 
 normalize' :: Prices -> NormalizedPrices -> NormalizedPrices -> NormalizedPrices
-normalize' prices done todo = case M.lookupMin todo of
-  Nothing -> done
-  Just (c, p) ->
-    let done' = M.insert c p done
-    in  case M.lookup c prices of
-          Nothing -> done'
-          Just neighbors ->
-            let neighbors' = (* p) <$> (neighbors `M.difference` done')
-                todo'      = M.delete c todo `M.union` neighbors'
-            in  normalize' prices done' todo'
+normalize' prices done todo =
+  case Map.lookupMin todo of
+    Just (c, p) ->
+      let done' = Map.insert c p done
+       in case Map.lookup c prices of
+            Nothing -> done'
+            Just neighbors ->
+              let neighbors' = (* p) <$> (neighbors `Map.difference` done')
+                  todo' = Map.delete c todo `Map.union` neighbors'
+               in normalize' prices done' todo'
+    Nothing -> done
 
-lookupPrice :: (MonadThrow m) => Commodity -> NormalizedPrices -> m Decimal
-lookupPrice commodityName prices = case M.lookup commodityName prices of
-  Just p -> return $ 1 / p
-  _      -> throwM $ NoNormalizedPriceFound prices commodityName
+lookupPrice :: (MonadThrow m) => Commodity -> NormalizedPrices -> m Double
+lookupPrice commodity prices = case Map.lookup commodity prices of
+  Just p -> pure $ 1 / p
+  _ -> throwM $ NoNormalizedPriceFound prices commodity
+
+valuate :: MonadThrow m => NormalizedPrices -> Commodity -> Amount -> m Amount
+valuate np c a = do
+  p <- lookupPrice c np
+  pure $ Amount.asFloat (* p) a

@@ -1,117 +1,93 @@
 module Beans.Import.CH.Cumulus
-  ( parse
-  , name
+  ( parse,
   )
 where
 
-import           Beans.Import.Common            ( Config(..)
-                                                , Context(..)
-                                                , Parser
-                                                , ImporterException
-                                                , askAccount
-                                                , parseCommands
-                                                )
-import qualified Beans.Data.Map                as M
-import           Beans.Model                    ( Amount
-                                                , Command(CmdTransaction)
-                                                , Transaction(..)
-                                                , Commodity(Commodity)
-                                                , Date
-                                                , Dated(Dated)
-                                                , Flag(Complete)
-                                                , Position(Position)
-                                                )
-import           Control.Monad                  ( void )
-import           Control.Monad.Reader           ( asks )
-import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import           Beans.Megaparsec               ( (<|>)
-                                                , between
-                                                , choice
-                                                , manyTill
-                                                , skipManyTill
-                                                , try
-                                                , takeWhileP
-                                                , parseAmount
-                                                , parseFormattedDate
-                                                , eof
-                                                , many
-                                                , anySingle
-                                                , eol
-                                                , char
-                                                , eol
-                                                , string
-                                                )
-import qualified Text.Megaparsec.Char.Lexer    as L
-import qualified Data.ByteString               as B
-import           Data.Text.Encoding             ( decodeUtf8 )
+import qualified Beans.Account as Account
+import Beans.Command (Command (CmdTransaction))
+import Beans.Commodity (Commodity (..))
+import qualified Beans.Date as Date
+import qualified Beans.Import.Common as Common
+import qualified Beans.Megaparsec as M
+import Beans.Transaction (Posting (..), Transaction (..))
+import Beans.ValAmount (ValAmount)
+import Control.Monad (void)
+import qualified Control.Monad.Reader as Reader
+import qualified Data.ByteString as B
+import Data.Group (invert)
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Text
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Char as M
+import qualified Text.Megaparsec.Char.Lexer as L
 
+type Parser = Common.Parser
 
-name :: T.Text
-name = "ch.cumulus"
-
-parse :: Config -> B.ByteString -> Either ImporterException [Dated Command]
+parse :: Common.Config -> B.ByteString -> Either Common.ImporterException [Command]
 parse config input =
-  parseCommands config (ignoreLine >> many command <* eof) (decodeUtf8 input)
+  Common.parseCommands config (ignoreLine >> M.many command <* M.eof) (Text.decodeUtf8 input)
 
-command :: Parser (Dated Command)
+command :: Parser Command
 command = do
-  date        <- dateField <* ignoreField
+  date <- dateField <* ignoreField
   description <- descriptionField
-  amount      <- entryAmount
-  account     <- asks _configAccount
+  amount <- entryAmount
+  account <- Reader.asks Common.account
   let commodity = Commodity "CHF"
-  otherAccount <- askAccount
-    $ Context date "expense" description amount commodity name
-  let bookings = M.fromListM
-        [ (Position account commodity Nothing, M.singleton commodity (-amount))
-        , ( Position otherAccount commodity Nothing
-          , M.singleton commodity amount
-          )
+      bookings =
+        [ Posting account commodity Nothing (invert amount) Nothing,
+          Posting Account.unknown commodity Nothing amount Nothing
         ]
-  return $ Dated date $ CmdTransaction $ Transaction Complete
-                                                     description
-                                                     []
-                                                     bookings
+  return $ CmdTransaction $
+    Transaction
+      date
+      description
+      []
+      bookings
 
-dateField :: Parser Date
-dateField = parseFormattedDate "%-d.%-m.%Y" (T.unpack <$> quotedField)
+dateField :: Parser Date.Date
+dateField = M.parseFormattedDate "%-d.%-m.%Y" (Text.unpack <$> quotedField)
 
-entryAmount :: Parser Amount
-entryAmount = choice [credit, debit]
- where
-  debit  = amountField <* separator
-  credit = separator *> amountField
+entryAmount :: Parser ValAmount
+entryAmount = M.choice [credit, debit]
+  where
+    debit = amountField <* separator
+    credit = invert <$> separator *> amountField
 
-amountField :: Parser Amount
-amountField = field $ parseAmount (pure ())
+amountField :: Parser ValAmount
+amountField = field $ M.parseValAmount (pure ())
 
 quotedField :: Parser Text
-quotedField = field
-  $ between quote quote (takeWhileP (Just "quoted string") (/= '"'))
-  where quote = char '"'
+quotedField =
+  field $
+    M.between quote quote (M.takeWhileP (Just "quoted string") (/= '"'))
+  where
+    quote = M.char '"'
 
 descriptionField :: Parser Text
 descriptionField =
   quote
-    >> (T.concatMap replace . T.pack <$> manyTill anySingle
-                                                  (try (quote >> separator))
+    >> ( Text.concatMap replace . Text.pack
+           <$> M.manyTill
+             M.anySingle
+             (M.try (quote >> separator))
        )
- where
-  quote = char '"'
-  replace '\n' = " "
-  replace '\r' = ""
-  replace '"'  = "\""
-  replace c    = T.singleton c
+  where
+    quote = M.char '"'
+    replace '\n' = " "
+    replace '\r' = ""
+    replace '"' = "\""
+    replace c = Text.singleton c
 
 ignoreLine :: Parser ()
-ignoreLine = void $ skipManyTill anySingle (eof <|> void eol)
+ignoreLine = void $ M.skipManyTill M.anySingle (M.choice [M.eof, void M.eol])
 
 ignoreField :: Parser ()
-ignoreField = void $ skipManyTill anySingle separator
+ignoreField = void $ M.skipManyTill M.anySingle separator
 
 separator :: Parser ()
-separator = void $ choice [string ",", eol]
+separator = void $ M.choice [M.string ",", M.eol]
 
 field :: Parser a -> Parser a
 field = L.lexeme separator

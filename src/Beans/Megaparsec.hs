@@ -1,76 +1,90 @@
 module Beans.Megaparsec
-  ( module Text.Megaparsec
-  , module Text.Megaparsec.Char
-  , parseAmount
-  , parseAccountType
-  , parseDecimal
-  , parseISODate
-  , parseFormattedDate
-  , parseCommodity
-  , parseAccount
-  , subparse
-  , preprocess
+  ( parseAmount,
+    parseAccountType,
+    parseValAmount,
+    parseISODate,
+    parseFormattedDate,
+    parseCommodity,
+    parseAccount,
+    subparse,
+    preprocess,
   )
 where
 
-import           Data.Functor                   ( ($>) )
-import           Text.Megaparsec
-import           Text.Megaparsec.Char
-import           Text.Megaparsec.Char.Lexer
-import qualified Data.Text                     as T
-import           Beans.Model
-import           Data.Monoid                    ( Sum(Sum) )
-import           Data.Char                      ( isAlphaNum )
-import qualified Data.Time.Format              as F
+import Beans.Account (Account (..), AccountType (..))
+import Beans.Amount (Amount)
+import Beans.Commodity (Commodity (..))
+import qualified Beans.Date as Date
+import Beans.ValAmount (ValAmount)
+import qualified Beans.ValAmount as ValAmount
+import qualified Data.Char as Char
+import Data.Functor (($>))
+import qualified Data.Text as Text
+import Data.Text (Text)
+import qualified Data.Time.Format as F
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Char as M
+import qualified Text.Megaparsec.Char.Lexer as L
 
-parseAmount :: (MonadParsec e T.Text m) => m () -> m Amount
-parseAmount a = Sum <$> parseDecimal a
+parseValAmount :: (M.MonadParsec e Text m) => m () -> m ValAmount
+parseValAmount sc = ValAmount.new <$> parseAmount sc
 
-parseDecimal :: (MonadParsec e T.Text m) => m () -> m Decimal
-parseDecimal a = realToFrac <$> signed a scientific
+parseAmount :: (M.MonadParsec e Text m) => m () -> m Amount
+parseAmount sc = realToFrac <$> L.signed sc L.scientific
 
-parseCommodity :: (MonadParsec e T.Text m) => m Commodity
+parseCommodity :: (M.MonadParsec e Text m) => m Commodity
 parseCommodity =
   Commodity
-    <$> (T.cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum)
+    <$> M.takeWhile1P (Just "alphanumeric") Char.isAlphaNum
 
-parseAccountType :: (MonadParsec e T.Text m) => m AccountType
-parseAccountType = choice
-  [ string "Assets" $> Assets
-  , string "Liabilities" $> Liabilities
-  , string "Expenses" $> Expenses
-  , string "Income" $> Income
-  , string "Equity" $> Equity
-  ]
+parseAccountType :: (M.MonadParsec e Text m) => m AccountType
+parseAccountType =
+  M.choice
+    [ M.string "Assets" $> Assets,
+      M.string "Liabilities" $> Liabilities,
+      M.string "Expenses" $> Expenses,
+      M.string "Income" $> Income,
+      M.string "Equity" $> Equity,
+      M.string "TBD" $> TBD
+    ]
 
-parseIdentifier :: (MonadParsec e T.Text m) => m T.Text
-parseIdentifier =
-  T.cons <$> letterChar <*> takeWhileP (Just "alphanumeric") isAlphaNum
-
-parseAccount :: (MonadParsec e T.Text m) => m Account
+parseAccount :: (M.MonadParsec e Text m) => m Account
 parseAccount =
-  Account <$> parseAccountType <* colon <*> parseIdentifier `sepBy` colon
-  where colon = char ':'
+  Account <$> parseAccountType <*> M.many parseSegment
+  where
+    colon = M.char ':'
+    parseSegment =
+      Text.cons <$> (colon >> M.letterChar) <*> M.takeWhileP (Just "alphanumeric") Char.isAlphaNum
 
-parseISODate :: (MonadParsec e T.Text m) => m Date
-parseISODate = fromGreg <$> decimal <* dash <*> decimal <* dash <*> decimal
-  where dash = char '-'
+parseISODate :: (M.MonadParsec e Text m) => m Date.Date
+parseISODate = do
+  y <- L.decimal
+  _ <- dash
+  m <- L.decimal
+  _ <- dash
+  d <- L.decimal
+  pure $ Date.fromGregorian (y, m, d)
+  where
+    dash = M.char '-'
 
-parseFormattedDate :: (MonadParsec e T.Text m) => String -> m String -> m Date
+parseFormattedDate :: (M.MonadParsec e Text m) => String -> m String -> m Date.Date
 parseFormattedDate fmt parser = do
   input <- parser
-  case parseDate fmt input of
-    Just d  -> return d
-    Nothing -> fail $ unwords ["Invalid date:", show input]
+  case parseDate input of
+    Just d -> pure d
+    Nothing -> error $ unwords ["Invalid date:", show input]
+  where
+    parseDate input = Date.Date <$> F.parseTimeM False F.defaultTimeLocale fmt input
 
-parseDate :: String -> String -> Maybe Date
-parseDate fmt input = Date <$> F.parseTimeM False F.defaultTimeLocale fmt input
-
-subparse :: MonadParsec e s m => m s -> m a -> m a
+subparse :: M.MonadParsec e s m => m s -> m a -> m a
 subparse d p = do
   input <- d
-  rest  <- getInput
-  setInput input >> p <* setInput rest
+  rest <- M.getInput
+  M.setInput input >> p <* M.setInput rest
 
-preprocess :: MonadParsec e s m => (s -> s) -> m a -> m a
-preprocess f p = (f <$> getInput) >>= setInput >> p
+preprocess :: M.MonadParsec e s m => (s -> s) -> m a -> m a
+preprocess f p = do
+  -- TODO: this changes all the input!
+  input' <- f <$> M.getInput
+  M.setInput input'
+  p

@@ -1,8 +1,10 @@
-{ mkDerivation, base, bifunctors, bytestring, containers
-, exceptions, filepath, groups, hpack, lens, megaparsec, mtl
-, optparse-applicative, parser-combinators, prettyprinter
-, regex-pcre, stdenv, tasty, tasty-golden, tasty-hunit
+{ mkDerivation, aeson, base, bifunctors, bytestring, containers
+, dhall, directory, exceptions, filepath, groups, hpack
+, http-conduit, megaparsec, mtl, optparse-applicative
+, parser-combinators, prettyprinter, recursion-schemes, regex-pcre
+, scientific, stdenv, tasty, tasty-golden, tasty-hunit
 , tasty-quickcheck, tasty-smallcheck, text, time
+, unordered-containers
 }:
 mkDerivation {
   pname = "beans";
@@ -11,25 +13,31 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base bifunctors bytestring containers exceptions filepath groups
-    lens megaparsec mtl optparse-applicative parser-combinators
-    prettyprinter regex-pcre tasty tasty-golden tasty-hunit
-    tasty-quickcheck tasty-smallcheck text time
+    aeson base bifunctors bytestring containers dhall directory
+    exceptions filepath groups http-conduit megaparsec mtl
+    optparse-applicative parser-combinators prettyprinter
+    recursion-schemes regex-pcre scientific tasty tasty-golden
+    tasty-hunit tasty-quickcheck tasty-smallcheck text time
+    unordered-containers
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [
-    base bifunctors bytestring containers exceptions filepath groups
-    lens megaparsec mtl optparse-applicative parser-combinators
-    prettyprinter regex-pcre tasty tasty-golden tasty-hunit
-    tasty-quickcheck tasty-smallcheck text time
+    aeson base bifunctors bytestring containers dhall directory
+    exceptions filepath groups http-conduit megaparsec mtl
+    optparse-applicative parser-combinators prettyprinter
+    recursion-schemes regex-pcre scientific tasty tasty-golden
+    tasty-hunit tasty-quickcheck tasty-smallcheck text time
+    unordered-containers
   ];
   testHaskellDepends = [
-    base bifunctors bytestring containers exceptions filepath groups
-    lens megaparsec mtl optparse-applicative parser-combinators
-    prettyprinter regex-pcre tasty tasty-golden tasty-hunit
-    tasty-quickcheck tasty-smallcheck text time
+    aeson base bifunctors bytestring containers dhall directory
+    exceptions filepath groups http-conduit megaparsec mtl
+    optparse-applicative parser-combinators prettyprinter
+    recursion-schemes regex-pcre scientific tasty tasty-golden
+    tasty-hunit tasty-quickcheck tasty-smallcheck text time
+    unordered-containers
   ];
-  preConfigure = "hpack";
+  prePatch = "hpack";
   homepage = "https://github.com/sboehler/beans#readme";
   description = "A plain text accounting tool";
   license = stdenv.lib.licenses.bsd3;

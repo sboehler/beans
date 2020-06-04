@@ -23,9 +23,12 @@ default-extensions:
 - ParallelListComp
 - DeriveFunctor
 - DeriveTraversable
+- DerivingVia
+- DeriveGeneric
 - ApplicativeDo
 - LambdaCase
 - FlexibleContexts
+- GeneralizedNewtypeDeriving
 - TypeFamilies
 - StandaloneDeriving
 - MultiParamTypeClasses
@@ -37,23 +40,30 @@ default-extensions:
 
 ghc-options:
   - -Wall
-  - -j
   - -fwarn-incomplete-record-updates
 
 dependencies:
+  - aeson
   - base >= 4.7 && < 5
   - bifunctors
   - bytestring
   - containers
+  - Cabal
+  - directory
+  - dhall
+  - either
   - exceptions
   - filepath
+  - free
   - groups
-  - lens
-  - megaparsec == 7.*
+  - hashable
+  - http-conduit
+  - megaparsec
   - mtl
   - optparse-applicative
   - parser-combinators
   - prettyprinter
+  - scientific
   - regex-pcre
   - text
   - time
@@ -63,6 +73,7 @@ dependencies:
   - tasty-hunit
   - tasty-golden
   - text
+  - unordered-containers
 
 executables:
   beans:

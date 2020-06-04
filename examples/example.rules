@@ -1,9 +1,0 @@
-description =~ "Acme" -> Expenses:Groceries
-description =~ "FOOBAR" -> Expenses:MobilePhone
-description =~ "(Bigbank|Nextgen)" -> Assets:Investments
-description =~ "Clean.*" -> Expenses:Cleaning
-description =~ "Supermarket" -> Expenses:Groceries
-description =~ "Car" && abs amount < 1000 -> Expenses:Car
-description =~ "Zapote" && abs amount == 21.80 -> Assets:Car
-date == 2018-06-14 -> Assets:Something
-True -> Expenses:ToBeEditedManually

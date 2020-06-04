@@ -1,2 +1,0 @@
-description =~ "Acme" && abs amount == 135.00 -> Expenses:Groceries
-True -> Expenses:ToBeEditedManually

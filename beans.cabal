@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.1.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4a327f118074132733a60d925e8d768e5ca118d4c2b8b9f31c83a763387c9bec
+-- hash: 1974dd15f817f5e29a65294d46f989d1dead13fcc8c95353c242728918f58c3c
 
 name:           beans
 version:        0.0.4.0
@@ -29,49 +29,81 @@ source-repository head
 
 library
   exposed-modules:
-      Beans.Accounts
-      Beans.Data.Map
-      Beans.Import
+      Beans.Account
+      Beans.Amount
+      Beans.Amounts
+      Beans.Assertion
+      Beans.ATree
+      Beans.Balance
+      Beans.Close
+      Beans.Command
+      Beans.Command.Balance
+      Beans.Command.Fetch
+      Beans.Command.Import
+      Beans.Command.Infer
+      Beans.Command.Transcode
+      Beans.Commodity
+      Beans.Date
       Beans.Import.CH.Cumulus
       Beans.Import.CH.Postfinance
       Beans.Import.CH.SupercardPlus
+      Beans.Import.CH.Swissquote
       Beans.Import.Common
-      Beans.Import.DSL
       Beans.Import.US.InteractiveBrokers
+      Beans.Include
+      Beans.Infer
+      Beans.Ledger
+      Beans.LedgerStep
       Beans.Lib
+      Beans.Lot
+      Beans.MarketData.AlphaVantage
+      Beans.MarketData.Yahoo
       Beans.Megaparsec
-      Beans.Model
+      Beans.Open
+      Beans.Option
       Beans.Options
       Beans.Parser
-      Beans.Pretty
+      Beans.Position
+      Beans.Positions
+      Beans.Price
       Beans.Prices
+      Beans.Process
       Beans.Report
-      Beans.Report.Balance
-      Beans.Report.Journal
       Beans.Table
-      Beans.Valuation
-      Data.Fixed.Extended
+      Beans.Transaction
+      Beans.ValAmount
+      Control.Monad.State.Extended
+      Data.List.Extended
+      Data.Map.Strict.Extended
   other-modules:
       Paths_beans
   hs-source-dirs:
       src
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
-  ghc-options: -Wall -j -fwarn-incomplete-record-updates
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable DerivingVia DeriveGeneric ApplicativeDo LambdaCase FlexibleContexts GeneralizedNewtypeDeriving TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -fwarn-incomplete-record-updates
   build-depends:
-      base >=4.7 && <5
+      Cabal
+    , aeson
+    , base >=4.7 && <5
     , bifunctors
     , bytestring
     , containers
+    , dhall
+    , directory
+    , either
     , exceptions
     , filepath
+    , free
     , groups
-    , lens
-    , megaparsec ==7.*
+    , hashable
+    , http-conduit
+    , megaparsec
     , mtl
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , regex-pcre
+    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit
@@ -79,6 +111,7 @@ library
     , tasty-smallcheck
     , text
     , time
+    , unordered-containers
   default-language: Haskell2010
 
 executable beans
@@ -87,24 +120,32 @@ executable beans
       Paths_beans
   hs-source-dirs:
       app
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
-  ghc-options: -Wall -j -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable DerivingVia DeriveGeneric ApplicativeDo LambdaCase FlexibleContexts GeneralizedNewtypeDeriving TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -fwarn-incomplete-record-updates -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      Cabal
+    , aeson
+    , base >=4.7 && <5
     , beans
     , bifunctors
     , bytestring
     , containers
+    , dhall
+    , directory
+    , either
     , exceptions
     , filepath
+    , free
     , groups
-    , lens
-    , megaparsec ==7.*
+    , hashable
+    , http-conduit
+    , megaparsec
     , mtl
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , regex-pcre
+    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit
@@ -112,6 +153,7 @@ executable beans
     , tasty-smallcheck
     , text
     , time
+    , unordered-containers
   default-language: Haskell2010
 
 test-suite test
@@ -119,28 +161,35 @@ test-suite test
   main-is: test.hs
   other-modules:
       Beans.Import.CH.Postfinance.Tests
-      Beans.Import.DSL.Tests
       Paths_beans
   hs-source-dirs:
       tests
-  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable ApplicativeDo LambdaCase FlexibleContexts TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
-  ghc-options: -Wall -j -fwarn-incomplete-record-updates
+  default-extensions: DuplicateRecordFields NamedFieldPuns OverloadedStrings RecordWildCards ParallelListComp DeriveFunctor DeriveTraversable DerivingVia DeriveGeneric ApplicativeDo LambdaCase FlexibleContexts GeneralizedNewtypeDeriving TypeFamilies StandaloneDeriving MultiParamTypeClasses FunctionalDependencies TemplateHaskell TupleSections ScopedTypeVariables FlexibleInstances
+  ghc-options: -Wall -fwarn-incomplete-record-updates
   build-depends:
-      base >=4.7 && <5
+      Cabal
+    , aeson
+    , base >=4.7 && <5
     , beans
     , bifunctors
     , bytestring
     , containers
+    , dhall
+    , directory
+    , either
     , exceptions
     , filepath
+    , free
     , groups
-    , lens
-    , megaparsec ==7.*
+    , hashable
+    , http-conduit
+    , megaparsec
     , mtl
     , optparse-applicative
     , parser-combinators
     , prettyprinter
     , regex-pcre
+    , scientific
     , tasty
     , tasty-golden
     , tasty-hunit
@@ -148,4 +197,5 @@ test-suite test
     , tasty-smallcheck
     , text
     , time
+    , unordered-containers
   default-language: Haskell2010

@@ -1,0 +1,16 @@
+
+* Todo List for beans:
+** TODO Fix IB importer: account for forex fees in base currency
+** TODO Create Revolut importer
+** TODO Brick terminal UI
+** DONE Create Swissquote importer
+** DONE Income statement and balance sheet
+** DONE Create Yahoo! importer for Swiss prices
+** DONE Multi-period reporting
+** DONE Bayesian inference
+- make it edit the input file: extend parser to keep track of
+  whitespace and comments
+- idea: tag bookings with a type, which is used in inference,
+  e.g. with a line comment #likethis
+** DONE Create Beancount transcoder
+** DONE Store Forest instead of Tree in Report/Balance

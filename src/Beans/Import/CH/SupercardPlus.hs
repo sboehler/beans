@@ -1,127 +1,96 @@
 module Beans.Import.CH.SupercardPlus
-  ( parse
-  , name
+  ( parse,
   )
 where
 
-import qualified Beans.Data.Map                as M
-import           Beans.Import.Common            ( Config(..)
-                                                , Context(..)
-                                                , Parser
-                                                , ImporterException
-                                                , askAccount
-                                                , parseCommands
-                                                )
-import           Beans.Megaparsec               ( (<|>)
-                                                , between
-                                                , skipManyTill
-                                                , many
-                                                , takeWhile1P
-                                                , takeWhileP
-                                                , option
-                                                , eof
-                                                , sepEndBy
-                                                , parseMaybe
-                                                , parseAmount
-                                                , parseFormattedDate
-                                                , anySingle
-                                                , char
-                                                , upperChar
-                                                , digitChar
-                                                , eol
-                                                , string
-                                                )
-import           Beans.Model                    ( Amount
-                                                , Command(CmdTransaction)
-                                                , Transaction(..)
-                                                , Commodity(Commodity)
-                                                , Date
-                                                , Dated(Dated)
-                                                , Flag(Complete)
-                                                , Position(Position)
-                                                )
-import           Control.Monad                  ( void )
-import           Control.Monad.Reader           ( runReaderT
-                                                , asks
-                                                )
-import qualified Data.ByteString               as B
-import           Data.Char                      ( isDigit
-                                                , isUpper
-                                                )
-import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import           Data.Text.Encoding             ( decodeUtf8 )
-import qualified Text.Megaparsec.Char.Lexer    as L
+import qualified Beans.Account as Account
+import Beans.Command (Command (CmdTransaction))
+import Beans.Commodity (Commodity (..))
+import qualified Beans.Date as Date
+import qualified Beans.Import.Common as Common
+import qualified Beans.Megaparsec as M
+import Beans.Transaction (Posting (..), Transaction (..))
+import Beans.ValAmount (ValAmount)
+import Control.Monad (void)
+import qualified Control.Monad.Reader as Reader
+import qualified Data.ByteString as B
+import qualified Data.Char as Char
+import Data.Group (invert)
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Text
+import qualified Text.Megaparsec as M
+import qualified Text.Megaparsec.Char as M
+import qualified Text.Megaparsec.Char.Lexer as L
 
+type Parser = Common.Parser
 
-name :: T.Text
-name = "ch.supercardplus"
+parse :: Common.Config -> B.ByteString -> Either Common.ImporterException [Command]
+parse config input =
+  Common.parseCommands
+    config
+    (ignoreLine >> command `M.sepEndBy` M.eol <* M.eof)
+    (Text.decodeUtf8 input)
 
-parse :: Config -> B.ByteString -> Either ImporterException [Dated Command]
-parse config input = parseCommands
-  config
-  (ignoreLine >> command `sepEndBy` eol <* eof)
-  (decodeUtf8 input)
-
-command :: Parser (Dated Command)
+command :: Parser Command
 command = do
-  date                <- dateField <* dateField
-  card                <- field $ takeWhile1P (Just "Card Number") isDigit
+  date <- dateField <* dateField
+  card <- field $ M.takeWhile1P (Just "Card Number") Char.isDigit
   (commodity, amount) <- amountField
-  description         <- quotedField
-  location            <- quotedField
-  country             <- textField "Merchant Cuntry"
-  zipCode             <- textField "Merchant Zip Code"
-  transactionNumber   <- quotedField
-  transactionType     <- field upperChar <* many digitChar
-  account             <- asks _configAccount
-  let desc = T.unwords
-        [ card
-        , description
-        , location
-        , country
-        , zipCode
-        , transactionNumber
-        , T.singleton transactionType
+  description <- quotedField
+  location <- quotedField
+  country <- textField "Merchant Cuntry"
+  zipCode <- textField "Merchant Zip Code"
+  transactionNumber <- quotedField
+  transactionType <- field M.upperChar <* M.many M.digitChar
+  account <- Reader.asks Common.account
+  let desc =
+        Text.unwords
+          [ card,
+            description,
+            location,
+            country,
+            zipCode,
+            transactionNumber,
+            Text.singleton transactionType
+          ]
+  let bookings =
+        [ Posting account commodity Nothing (invert amount) Nothing,
+          Posting Account.unknown commodity Nothing amount Nothing
         ]
-  otherAccount <- askAccount $ Context date "expense" desc amount commodity name
-  let bookings = M.fromListM
-        [ (Position account commodity Nothing, M.singleton commodity (-amount))
-        , ( Position otherAccount commodity Nothing
-          , M.singleton commodity amount
-          )
-        ]
-  return $ Dated date $ CmdTransaction $ Transaction Complete desc [] bookings
+  return $ CmdTransaction $ Transaction date desc [] bookings
 
-dateField :: Parser Date
-dateField = parseFormattedDate "%-d.%-m.%Y" (T.unpack <$> textField "Date")
+dateField :: Parser Date.Date
+dateField = M.parseFormattedDate "%-d.%-m.%Y" (Text.unpack <$> textField "Date")
 
-amountField :: Parser (Commodity, Amount)
+amountField :: Parser (Commodity, ValAmount)
 amountField = do
-  sign      <- option mempty $ string "-"
-  commodity <- Commodity <$> takeWhile1P (Just "Currency") isUpper
-  number    <- T.filter (/= '\'') <$> textField "Amount"
-  p         <- asks $ runReaderT amountP
-  case parseMaybe p (sign <> number) of
+  sign <- M.option mempty $ M.string "-"
+  commodity <- Commodity <$> M.takeWhile1P (Just "Currency") Char.isUpper
+  number <- Text.filter (/= '\'') <$> textField "Amount"
+  p <- Reader.asks $ Reader.runReaderT amountP
+  case M.parseMaybe p (sign <> number) of
     Just amount -> return (commodity, amount)
-    Nothing     -> fail $ unwords ["Invalid amount:", show $ sign <> number]
+    Nothing -> fail $ unwords ["Invalid amount:", show $ sign <> number]
 
-amountP :: Parser Amount
-amountP = parseAmount (pure ())
+amountP :: Parser ValAmount
+amountP = M.parseValAmount (pure ())
 
 quotedField :: Parser Text
-quotedField = field
-  $ between quote quote (takeWhileP (Just "quoted string") (/= '"'))
-  where quote = char '"'
+quotedField =
+  field $
+    M.between quote quote (M.takeWhileP (Just "quoted string") (/= '"'))
+  where
+    quote = M.char '"'
 
 textField :: String -> Parser Text
-textField n = field $ takeWhileP (Just n) (/= ',')
+textField n = field $ M.takeWhileP (Just n) (/= ',')
 
 ignoreLine :: Parser ()
-ignoreLine = void $ skipManyTill anySingle (eof <|> void eol)
+ignoreLine = void $ M.skipManyTill M.anySingle (M.choice [M.eof, void M.eol])
 
 separator :: Parser ()
-separator = void (char ',' >> takeWhileP (Just "space") (== ' '))
+separator = void (M.char ',' >> M.takeWhileP (Just "space") (== ' '))
 
 field :: Parser a -> Parser a
 field = L.lexeme separator

@@ -1,59 +1,91 @@
 module Beans.Table
-  ( Cell(..)
-  , Table(..)
-  , showTable
+  ( Cell (..),
+    Table (..),
+    Row (..),
+    rowLength,
+    display,
+    emptyRow,
   )
 where
 
-import           Data.List                      ( transpose
-                                                , foldl'
-                                                )
-import           Data.Monoid                    ( (<>) )
-import           Prelude                 hiding ( lines )
-import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
+import Data.Coerce (coerce)
+import qualified Data.List as List
+import qualified Data.Map.Strict as Map
+import Data.Text (Text)
+import qualified Data.Text as Text
+import Prelude hiding (lines)
 
+data Table = Table [Int] [Row] deriving (Show)
 
-class Table a where
-  toTable :: a -> [[Cell]]
+newtype Row = Row [Cell] deriving (Show)
+
+instance Semigroup Row where
+  Row x <> Row y = Row $ x <> y
+
+instance Monoid Row where
+  mempty = Row []
 
 data Cell
   = AlignLeft Text
   | AlignRight Text
   | AlignCenter Text
   | Separator
-  | IndentBy Int
-             Text
+  | IndentBy Int Text
   | Empty
+  deriving (Show)
 
-showTable :: Table a => a -> Text
-showTable t =
-  let rows         = toTable t
-      columnWidths = [ maximum $ width <$> column | column <- transpose rows ]
-      l            = pad "|" . foldl' combine "" . zip columnWidths <$> rows
-  in  T.unlines l
+emptyRow :: Row
+emptyRow = Row [Empty]
 
-width :: Cell -> Int
-width Separator       = 0
-width Empty           = 0
-width (AlignLeft   t) = T.length t
-width (AlignRight  t) = T.length t
-width (AlignCenter t) = T.length t
-width (IndentBy n t ) = n + T.length t
+rowLength :: Row -> Int
+rowLength (Row l) = List.length l
+
+display :: Table -> Text
+display (Table colgroups rows) =
+  let cellWidths = [cellWidth <$> r | Row r <- rows]
+      columnWidths = maximum <$> List.transpose cellWidths
+      groupWidths = Map.fromListWith max (zip colgroups columnWidths)
+      cw = fmap (groupWidths Map.!) colgroups
+      l =
+        pad "|"
+          . List.foldl' combine mempty
+          . zip cw
+          . (<> repeat Empty)
+          . coerce
+          <$> rows
+   in Text.unlines l
+
+cellWidth :: Cell -> Int
+cellWidth Separator = 0
+cellWidth Empty = 0
+cellWidth (AlignLeft t) = Text.length t
+cellWidth (AlignRight t) = Text.length t
+cellWidth (AlignCenter t) = Text.length t
+cellWidth (IndentBy n t) = n + Text.length t
+
+combine :: Text -> (Int, Cell) -> Text
+combine "" (n, c) = format n c
+combine t (n, Separator) = t <> "+" <> format n Separator
+combine t (n, c) = t <> "|" <> format n c
+
+format :: Int -> Cell -> Text
+format n Separator = pad dash $ Text.replicate n dash
+format n (AlignLeft t) = pad space $ Text.justifyLeft n spaceChar t
+format n (AlignRight t) = pad space $ Text.justifyRight n spaceChar t
+format n (AlignCenter t) = pad space $ Text.center n spaceChar t
+format n Empty = pad space $ Text.replicate n space
+format n (IndentBy i t) = pad space (indent <> Text.justifyLeft (n - i) spaceChar t)
+  where
+    indent = Text.replicate i space
 
 pad :: Text -> Text -> Text
 pad padding content = padding <> content <> padding
 
-combine :: Text -> (Int, Cell) -> Text
-combine "" b                = format b
-combine t  b@(_, Separator) = t <> "+" <> format b
-combine t  b                = t <> "|" <> format b
+spaceChar :: Char
+spaceChar = ' '
 
-format :: (Int, Cell) -> Text
-format (n, Separator    ) = pad "-" $ T.replicate n "-"
-format (n, AlignLeft t  ) = pad " " $ T.justifyLeft n ' ' t
-format (n, AlignRight t ) = pad " " $ T.justifyRight n ' ' t
-format (n, AlignCenter t) = pad " " $ T.center n ' ' t
-format (n, Empty        ) = pad " " $ T.replicate n " "
-format (n, IndentBy i t) =
-  pad " " (T.replicate i " " <> T.justifyLeft (n - i) ' ' t)
+space :: Text
+space = " "
+
+dash :: Text
+dash = "-"

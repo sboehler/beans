@@ -12,64 +12,112 @@
 
 Print a formatted balance sheet in USD:
 
-    beans balanceSheet -j examples/example.bean
+    beans balance -j examples/example.bean
 
 Output:
 
-    |-------------+----------+-----------+--------------------+----------+-----------|
-    | Account     | Amount   | Commodity | Account            | Amount   | Commodity |
-    |-------------+----------+-----------+--------------------+----------+-----------|
-    | Assets      |    10.00 | AAPL      | Equity             | 19800.00 | USD       |
-    |             |     0.25 | BTC       |   OpeningBalance   | 15000.00 | USD       |
-    |             | 14600.00 | USD       |   RetainedEarnings |  4800.00 | USD       |
-    |   Checking  | 14600.00 | USD       |                    |          |           |
-    |   Portfolio |    10.00 | AAPL      |                    |          |           |
-    |   Wallet    |     0.25 | BTC       |                    |          |           |
-    |-------------+----------+-----------+--------------------+----------+-----------|
-    | Total       |    10.00 | AAPL      | Total              | 19800.00 | USD       |
-    |             |     0.25 | BTC       |                    |          |           |
-    |             | 14600.00 | USD       |                    |          |           |
-    |-------------+----------+-----------+--------------------+----------+-----------|
+    |------------------+------------+------------|
+    | Account          | 2018-01-01 | 2018-11-01 |
+    |------------------+------------+------------|
+    | Assets           |            |            |
+    |   Checking       |            |            |
+    |     USD          |   15000.00 |   14600.00 |
+    |   Portfolio      |            |            |
+    |     AAPL         |            |      10.00 |
+    |   Wallet         |            |            |
+    |     BTC          |            |       0.25 |
+    |------------------+------------+------------|
+    | Equity           |            |            |
+    |   Gains          |            |            |
+    |     AAPL         |            |     -10.00 |
+    |     BTC          |            |      -0.25 |
+    |     USD          |            |    5200.00 |
+    |   OpeningBalance |            |            |
+    |     USD          |  -15000.00 |  -15000.00 |
+    |------------------+------------+------------|
+    | Income           |            |            |
+    |   Salary         |            |            |
+    |     USD          |            |  -12000.00 |
+    |------------------+------------+------------|
+    | Expenses         |            |            |
+    |   Books          |            |            |
+    |     USD          |            |     100.00 |
+    |   Groceries      |            |            |
+    |     USD          |            |    1100.00 |
+    |   Rent           |            |            |
+    |     USD          |            |    6000.00 |
+    |------------------+------------+------------|
+    | Total            |            |            |
+    |   AAPL           |            |            |
+    |   BTC            |            |            |
+    |   USD            |            |            |
+    |------------------+------------+------------|
 
 
 ## Convert arbitrary commodities and currencies
 
 Convert all amounts to USD, using latest market prices:
 
-    beans balanceSheet -j examples/example.bean -m USD
+    beans balance -j examples/example.bean --val USD
 
 Output:
 
-    |-------------+----------+-----------+--------------------+----------+-----------|
-    | Account     | Amount   | Commodity | Account            | Amount   | Commodity |
-    |-------------+----------+-----------+--------------------+----------+-----------|
-    | Assets      | 18409.50 | USD       | Equity             | 18409.50 | USD       |
-    |   Checking  | 14600.00 | USD       |   OpeningBalance   | 15000.00 | USD       |
-    |   Portfolio |  2220.00 | USD       |   RetainedEarnings |  4800.00 | USD       |
-    |   Wallet    |  1589.50 | USD       |   Valuation        | -1390.50 | USD       |
-    |-------------+----------+-----------+--------------------+----------+-----------|
-    | Total       | 18409.50 | USD       | Total              | 18409.50 | USD       |
-    |-------------+----------+-----------+--------------------+----------+-----------|
+    |------------------+------------+------------|
+    | Account          | 2018-01-01 | 2018-11-01 |
+    |------------------+------------+------------|
+    | Assets           |            |            |
+    |   Checking       |   15000.00 |   14600.00 |
+    |   Portfolio      |            |    2220.00 |
+    |   Wallet         |            |    1589.50 |
+    |------------------+------------+------------|
+    | Equity           |            |            |
+    |   Equity         |            |    1233.50 |
+    |   Gains          |            |     157.00 |
+    |   OpeningBalance |  -15000.00 |  -15000.00 |
+    |------------------+------------+------------|
+    | Income           |            |            |
+    |   Salary         |            |  -12000.00 |
+    |------------------+------------+------------|
+    | Expenses         |            |            |
+    |   Books          |            |     100.00 |
+    |   Groceries      |            |    1100.00 |
+    |   Rent           |            |    6000.00 |
+    |------------------+------------+------------|
+    | Total            |            |            |
+    |------------------+------------+------------|
 
 Convert all amounts to bitcoin, using latest market prices:
 
-    beans balanceSheet -j examples/example.bean -m BTC
+    beans balance -j examples/example.bean --val BTC
 
 Output:
 
-    |-------------+--------+-----------+--------------------+--------+-----------|
-    | Account     | Amount | Commodity | Account            | Amount | Commodity |
-    |-------------+--------+-----------+--------------------+--------+-----------|
-    | Assets      |   2.90 | BTC       | Equity             |   2.90 | BTC       |
-    |   Checking  |   2.30 | BTC       |   OpeningBalance   |   1.12 | BTC       |
-    |   Portfolio |   0.35 | BTC       |   RetainedEarnings |   0.45 | BTC       |
-    |   Wallet    |   0.25 | BTC       |   Valuation        |   1.32 | BTC       |
-    |-------------+--------+-----------+--------------------+--------+-----------|
-    | Total       |   2.90 | BTC       | Total              |   2.90 | BTC       |
-    |-------------+--------+-----------+--------------------+--------+-----------|
+    |------------------+------------+------------|
+    | Account          | 2018-01-01 | 2018-11-01 |
+    |------------------+------------+------------|
+    | Assets           |            |            |
+    |   Checking       |       1.12 |       2.30 |
+    |   Portfolio      |            |       0.35 |
+    |   Wallet         |            |       0.25 |
+    |------------------+------------+------------|
+    | Equity           |            |            |
+    |   Equity         |            |      -1.34 |
+    |   Gains          |            |       0.01 |
+    |   OpeningBalance |      -1.12 |      -1.12 |
+    |------------------+------------+------------|
+    | Income           |            |            |
+    |   Salary         |            |      -1.11 |
+    |------------------+------------+------------|
+    | Expenses         |            |            |
+    |   Books          |            |       0.01 |
+    |   Groceries      |            |       0.09 |
+    |   Rent           |            |       0.55 |
+    |------------------+------------+------------|
+    | Total            |       0.00 |       0.00 |
+    |------------------+------------+------------|
 
 
-## Use flexible rules to assign accounts automatically
+## Importers and Bayesian Inference
 
 Take a sample bank statement:
 
@@ -83,29 +131,60 @@ Take a sample bank statement:
     Disclaimer:
     Dies ist kein durch PostFinance AG erstelltes Dokument. PostFinance AG ist nicht verantwortlich für den Inhalt.
 
-Create a set of rules:
-
-    description =~ "Acme" && abs amount == 135.00 -> Expenses:Groceries
-    True -> Expenses:ToBeEditedManually
-
 Import the statement and assign accounts to bookings:
 
-    beans import -i ch.postfinance -c examples/quick/example.rules -a Assets:Checking examples/quick/postfinance.csv
+    beans import -i ch.postfinance -a Assets:Checking examples/quick/postfinance.csv
 
 Output:
 
-    2017-06-01 * "Acme Corp"
-      Assets:Checking -135.00 CHF
-      Expenses:Groceries 135.00 CHF
+    2017-06-01 "Acme Corp"
+    Assets:Checking -135 CHF
+    TBD 135 CHF
+
+Use Bayesian inference (aka "machine learning") to automatically
+assign accounts to the TBD account. Use your journal both as training
+and target file, and `beans` will replace TBD accounts with its best
+guess, based on your existing data.
+
+    beans infer --help
+
+    Usage: beans infer (-t|--training-file TRAINING_FILE) TARGET_FILE
+      Infer accounts
+
+    Available options:
+      -t,--training-file TRAINING_FILE
+                               The file containing the training data
+      -h,--help                Show this help text
+
+    2017-06-01 "Acme Corp"
+    Assets:Checking -135 CHF
+    TBD 135 CHF
+
+
+## Import data from Yahoo! and AlphaVantage
+
+`beans` has built-in fetchers for prices from Yahoo! and
+AlphaVantage. Provide a configuration in `dhall` (see example) and
+`beans` will keep up-to-date price files on request.
+
+    beans fetch --help
+
+    Usage: beans fetch [-c|--commodities COMMODITY] CONFIG_FILE
+      Fetch latest prices
+
+    Available options:
+      -c,--commodities COMMODITY
+                               The commodity to fetch
+      CONFIG_FILE              The dhall config file to parse
+      -h,--help                Show this help text
 
 
 ## Other features
 
 -   flexible analysis and filtering
--   built-in set of importers (pull requests welcome)
 -   written in Haskell
 
-Check out the [manual](https://sboehler.github.io/beans)!
+Check out the [manual ](https://sboehler.github.io/beans)!
 
 
 ## License

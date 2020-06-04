@@ -1,49 +1,69 @@
 module Beans.Options where
 
-import           Beans.Model                    ( Account
-                                                , Commodity(..)
-                                                , Date
-                                                , Filter
-                                                )
-import           Data.Text                      ( Text )
-
+import Beans.Account (Account, AccountFilter)
+import Beans.Commodity (Commodity, CommodityFilter)
+import Beans.Date (Date, Interval)
+import Data.Text (Text)
 
 data Command
   = Balance BalanceOptions
-  | IncomeStatement BalanceOptions
-  | BalanceSheet BalanceOptions
+  | Fetch FetchOptions
   | Import ImportOptions
-  | Journal JournalOptions
+  | Infer InferOptions
+  | Transcode TranscodeOptions
   deriving (Show)
 
-data BalanceOptions = BalanceOptions
-  { balOptJournal    :: FilePath
-  , balOptMarket     :: Valuation
-  , balOptLots       :: Bool
-  , balOptFrom       :: Date
-  , balOptTo         :: Date
-  , balOptDepth      :: Maybe Int
-  , balOptFilter     :: Filter
-  , balOptReportType :: ReportType
-  } deriving (Show)
+data InferOptions
+  = InferOptions
+      { infTrainingFile :: FilePath,
+        infTargetFile :: FilePath
+      }
+  deriving (Show)
 
+data TranscodeOptions
+  = TranscodeOptions
+      { trnCommodity :: Commodity,
+        trnSourceFile :: FilePath,
+        trnTargetFile :: FilePath
+      }
+  deriving (Show)
 
-data JournalOptions = JournalOptions
-  { jrnOptJournal :: FilePath
-  , jrnOptMarket  :: Valuation
-  , jrnOptFrom    :: Date
-  , jrnOptTo      :: Date
-  , jrnOptRegex   :: Text
-  } deriving (Show)
+data Filter = Filter AccountFilter CommodityFilter
+  deriving (Show)
 
-data Valuation = NoValuation | AtMarket Commodity Account | AtCost Commodity deriving (Eq, Show)
+data Diffing = Diffing | NoDiffing deriving (Show)
 
-data ReportType = Hierarchical | Flat  deriving (Eq, Show)
+type Collapse = [(AccountFilter, Int)]
 
-data ImportOptions = ImportOptions
-  {
-    impOptImporter :: Text
-  , impOptConfig   :: FilePath
-  , impOptAccount  :: Account
-  , impOptData     :: FilePath
-  } deriving (Show)
+data BalanceOptions
+  = BalanceOptions
+      { journal :: FilePath,
+        valuation :: [Commodity],
+        filter :: Filter,
+        diffing :: Diffing,
+        showCommodities :: Bool,
+        balanceFormat :: BalanceFormat,
+        fromDate :: Maybe Date,
+        toDate :: Maybe Date,
+        period :: Maybe Interval,
+        percent :: Maybe AccountFilter,
+        collapse :: Collapse
+      }
+  deriving (Show)
+
+data BalanceFormat = Flat | Hierarchical deriving (Show)
+
+data FetchOptions
+  = FetchOptions
+      { commodities :: Maybe [Commodity],
+        configFile :: FilePath
+      }
+  deriving (Show)
+
+data ImportOptions
+  = ImportOptions
+      { importer :: Text,
+        account :: Account,
+        inputFile :: FilePath
+      }
+  deriving (Show)

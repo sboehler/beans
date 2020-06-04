@@ -1,37 +1,25 @@
 module Beans.Import.Common
-  ( ImporterException(..)
-  , Context(..)
-  , Config(..)
-  , Parser
-  , askAccount
-  , parseCommands
+  ( ImporterException (..),
+    Config (..),
+    Parser,
+    BookingType (..),
+    parseCommands,
+    tags,
   )
 where
 
-import           Beans.Model                    ( Account
-                                                , Dated
-                                                , Command
-                                                )
-import           Control.Exception              ( Exception )
-import           Beans.Import.DSL               ( Evaluator
-                                                , Context(..)
-                                                )
-import           Text.Megaparsec                ( Parsec
-                                                , parse
-                                                , errorBundlePretty
-                                                )
-import           Control.Monad.Reader           ( ReaderT
-                                                , asks
-                                                , runReaderT
-                                                , MonadReader
-                                                )
-import           Data.Text                      ( Text )
-import           Data.Void                      ( Void )
-import qualified Data.List                     as List
+import Beans.Account (Account)
+import Beans.Command (Command)
+import Beans.Transaction (Tag (..))
+import Control.Exception (Exception)
+import Control.Monad.Reader (ReaderT, runReaderT)
+import qualified Data.List as List
+import Data.Text (Text)
+import Data.Void (Void)
+import Text.Megaparsec (Parsec, errorBundlePretty, parse)
 
-
-newtype ImporterException =
-  ImporterException String
+newtype ImporterException
+  = ImporterException String
   deriving (Eq)
 
 instance Show ImporterException where
@@ -39,28 +27,44 @@ instance Show ImporterException where
 
 instance Exception ImporterException
 
-data Config = Config {
-  _configEvaluator :: Evaluator,
-  _configFile :: FilePath,
-  _configAccount :: Account
-  }
+data Config
+  = Config
+      { inputFile :: FilePath,
+        account :: Account
+      }
 
 type Parser = ReaderT Config (Parsec Void Text)
 
-askAccount :: (MonadReader Config m) => Context -> m Account
-askAccount entry = do
-  evaluator <- asks _configEvaluator
-  case evaluator entry of
-    Just account -> return account
-    Nothing      -> fail $ "Account not found: " <> show entry
-
-parseCommands
-  :: Config
-  -> Parser [Dated Command]
-  -> Text
-  -> Either ImporterException [Dated Command]
+parseCommands ::
+  Config ->
+  Parser [Command] ->
+  Text ->
+  Either ImporterException [Command]
 parseCommands config parser input = do
   let parser' = runReaderT parser config
-  case List.sort <$> parse parser' (_configFile config) input of
-    Left  e -> (Left . ImporterException . errorBundlePretty) e
-    Right d -> Right d
+  case parse parser' (inputFile config) input of
+    Left e -> (Left . ImporterException . errorBundlePretty) e
+    Right d -> Right . List.sort $ d
+
+data BookingType
+  = MoneyTransfer
+  | Interest
+  | Fee
+  | WithholdingTax
+  | Dividend
+  | Equity
+  | CapitalGain
+  | Deposit
+  | Withdrawal
+  deriving (Show, Read, Eq)
+
+tags :: BookingType -> Tag
+tags MoneyTransfer = Tag "#moneytransfer"
+tags Interest = Tag "#interest"
+tags Fee = Tag "#fee"
+tags WithholdingTax = Tag "#withholdingtax"
+tags Dividend = Tag "#dividend"
+tags Equity = Tag "#equity"
+tags CapitalGain = Tag "#capitalgain"
+tags Deposit = Tag "#deposit"
+tags Withdrawal = Tag "#withdrawal"

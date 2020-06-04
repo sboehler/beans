@@ -1,6 +1,6 @@
 
 * Todo List for beans:
-** TODO Fix IB importer: account for forex fees in base currency
+** DONE Fix IB importer: account for forex fees in base currency
 ** TODO Create Revolut importer
 ** TODO Brick terminal UI
 ** DONE Create Swissquote importer

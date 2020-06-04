@@ -14,7 +14,10 @@ import qualified Beans.Megaparsec as M
 import Beans.Transaction (Posting (..), Transaction (..))
 import Beans.ValAmount (ValAmount)
 import Control.Monad (void)
+import Control.Monad.Catch (throwM)
 import qualified Control.Monad.Reader as Reader
+import Control.Monad.State (StateT)
+import qualified Control.Monad.State as State
 import qualified Data.ByteString as B
 import qualified Data.Char as Char
 import Data.Group (invert)
@@ -25,10 +28,10 @@ import qualified Data.Text.Encoding as Text
 import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Char as M
 
-type Parser = Common.Parser
+type Parser = StateT (Maybe Commodity) Common.Parser
 
 parse :: Common.Config -> B.ByteString -> Either Common.ImporterException [Command]
-parse config = Common.parseCommands config parseIBData . Text.decodeLatin1
+parse config = Common.parseCommands config (State.evalStateT parseIBData Nothing) . Text.decodeLatin1
 
 parseIBData :: Parser [Command]
 parseIBData = catMaybes <$> M.many command
@@ -43,7 +46,12 @@ command = M.choice [transaction, other]
             M.try trade,
             M.try dividendOrWithholdingTax
           ]
-    other = Nothing <$ skipLine
+    other =
+      Nothing
+        <$ M.choice
+          [ M.try baseCurrency,
+            skipLine
+          ]
 
 depositWithdrawalOrFee :: Parser Command
 depositWithdrawalOrFee = do
@@ -82,13 +90,16 @@ trade = do
   purchaseAmount <- amountField
   feeAmount <- invert <$> amountField <* skipRestOfLine
   account <- Reader.asks Common.account
+  feeCurrency <- State.get >>= \case
+    Nothing -> fail "No base currency"
+    Just b -> pure $ if description == "Forex" then b else currency
   let lot = Lot price currency date Nothing
       bookings =
         [ Posting account symbol (Just lot) amount Nothing,
           Posting Account.unknown symbol (Just lot) (invert amount) (Just $ Common.tags Common.Equity),
           Posting account currency Nothing purchaseAmount Nothing,
-          Posting account currency Nothing (invert feeAmount) Nothing,
-          Posting Account.unknown currency Nothing feeAmount (Just $ Common.tags Common.Fee),
+          Posting account feeCurrency Nothing (invert feeAmount) Nothing,
+          Posting Account.unknown feeCurrency Nothing feeAmount (Just $ Common.tags Common.Fee),
           Posting Account.unknown currency Nothing (invert purchaseAmount) (Just $ Common.tags Common.Equity)
         ]
   return $ CmdTransaction $ Transaction date description [] bookings
@@ -112,6 +123,13 @@ dividendOrWithholdingTax = do
           Posting Account.unknown currency Nothing (invert amount) (Just $ Common.tags t)
         ]
   return $ CmdTransaction $ Transaction date desc [] bookings
+
+baseCurrency :: Parser ()
+baseCurrency = do
+  _ <- field $ M.string "Account Information"
+  _ <- field $ M.string "Data"
+  _ <- field $ M.string "Base Currency"
+  field $ Just <$> M.parseCommodity >>= State.put
 
 textField :: Parser Text
 textField = field $ M.takeWhile1P Nothing (/= ',')

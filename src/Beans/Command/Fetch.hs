@@ -1,6 +1,6 @@
 module Beans.Command.Fetch
   ( run,
-    Options,
+    Options (..),
   )
 where
 

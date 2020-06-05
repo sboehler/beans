@@ -1,8 +1,10 @@
 module Beans.Command.Import
   ( run,
+    Options (..),
   )
 where
 
+import Beans.Account (Account)
 import Beans.Command (Command (..))
 import qualified Beans.Import.CH.Cumulus
 import qualified Beans.Import.CH.Postfinance
@@ -10,7 +12,6 @@ import qualified Beans.Import.CH.SupercardPlus
 import qualified Beans.Import.CH.Swissquote
 import Beans.Import.Common (Config (..), ImporterException)
 import qualified Beans.Import.US.InteractiveBrokers
-import Beans.Options (ImportOptions (..))
 import Control.Exception (Exception)
 import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -23,9 +24,17 @@ newtype ImportException = InvalidImporter String deriving (Show)
 
 instance Exception ImportException
 
-run :: (MonadThrow m, MonadIO m, MonadReader ImportOptions m) => m ()
+data Options
+  = Options
+      { importer :: Text,
+        account :: Account,
+        inputFile :: FilePath
+      }
+  deriving (Show)
+
+run :: (MonadThrow m, MonadIO m, MonadReader Options m) => m ()
 run = do
-  ImportOptions {..} <- ask
+  Options {..} <- ask
   parse <- getParser importer
   bytes <- liftIO $ B.readFile inputFile
   let config = Config inputFile account

@@ -2,6 +2,9 @@ module Beans.Report
   ( fromBalances,
     toTable,
     Report,
+    Options (..),
+    Collapse,
+    Format (..),
   )
 where
 
@@ -12,8 +15,7 @@ import Beans.Amount (Amount)
 import Beans.Balance (Balance (Balance))
 import Beans.Commodity (Commodity)
 import Beans.Date (Date)
-import Beans.Options (BalanceFormat (..), BalanceOptions (..))
-import qualified Beans.Options as Options
+import Beans.Filter (AccountFilter)
 import Beans.Position (Position (Position))
 import qualified Beans.Positions as Positions
 import Beans.Positions (Positions)
@@ -32,14 +34,27 @@ import Data.Traversable (for)
 
 --------------------------------------------------------------------------------
 
+data Options
+  = Options
+      { valuation :: [Commodity],
+        showCommodities :: Bool,
+        balanceFormat :: Format,
+        collapse :: Collapse
+      }
+  deriving (Show)
+
+type Collapse = [(AccountFilter, Int)]
+
+data Format = Flat | Hierarchical deriving (Show)
+
 data Report
   = Report
       [Date]
       [ATree Text (Positions [Amount])]
 
-fromBalances :: MonadReader BalanceOptions m => [Balance ValAmount] -> m Report
+fromBalances :: MonadReader Options m => [Balance ValAmount] -> m Report
 fromBalances b = do
-  val <- asks Options.valuation
+  val <- asks valuation
   let positions = Positions.concatenate $ fmap (valueOrAmount val) . getPosition <$> b
   segments <- segment positions
   let tree = ATree.fromList segments
@@ -53,21 +68,21 @@ valueOrAmount :: [Commodity] -> ValAmount -> Amount
 valueOrAmount [] (ValAmount a _) = a
 valueOrAmount (c : _) (ValAmount _ v) = v ! c
 
-segment :: MonadReader BalanceOptions m => Positions v -> m [([Text], Positions v)]
+segment :: MonadReader Options m => Positions v -> m [([Text], Positions v)]
 segment m = for (Map.toList m) $ \(pos, v) -> do
   tag <- createTag pos
   pure (tag, Map.singleton pos v)
 
-createTag :: MonadReader BalanceOptions m => Position -> m [Text]
+createTag :: MonadReader Options m => Position -> m [Text]
 createTag pos@(Position a _ _) = do
-  f <- asks Options.balanceFormat
+  f <- asks balanceFormat
   segments <- shorten pos (Account.split a)
   pure $ case f of
     Flat -> [Text.intercalate ":" segments]
     Hierarchical -> segments
 
-shorten :: MonadReader BalanceOptions m => Position -> [a] -> m [a]
-shorten (Position a _ _) tag = asks (foldr g tag . Options.collapse)
+shorten :: MonadReader Options m => Position -> [a] -> m [a]
+shorten (Position a _ _) tag = asks (foldr g tag . collapse)
   where
     g (regex, depth) t
       | Account.match regex a = take depth t
@@ -75,7 +90,7 @@ shorten (Position a _ _) tag = asks (foldr g tag . Options.collapse)
 
 --------------------------------------------------------------------------------
 
-toTable :: MonadReader BalanceOptions m => Report -> m Table
+toTable :: MonadReader Options m => Report -> m Table
 toTable (Report dates segments) = do
   (childRows, childPos) <- unzip <$> for segments (treeToRows nbrColumns 0)
   footers <- positionToRows nbrColumns 0 "Total" (total nbrColumns childPos)
@@ -88,7 +103,7 @@ toTable (Report dates segments) = do
     nbrColumns = length dates
 
 treeToRows ::
-  (Monoid a, Eq a, Num a, Pretty a, MonadReader BalanceOptions m) =>
+  (Monoid a, Eq a, Num a, Pretty a, MonadReader Options m) =>
   Int ->
   Int ->
   ATree Text (Positions [a]) ->
@@ -102,14 +117,14 @@ treeToRows nbrColumns indent (ATree key positions ch) = do
 
 positionToRows ::
   (Monoid a, Eq a, Num a, Pretty a) =>
-  MonadReader BalanceOptions m =>
+  MonadReader Options m =>
   Int ->
   Int ->
   Text ->
   Positions [a] ->
   m [Row]
 positionToRows nbrColumns indent name positions = do
-  BalanceOptions {showCommodities, valuation} <- ask
+  Options {showCommodities, valuation} <- ask
   pure $ if showCommodities || length valuation == 0 then multiline else oneline
   where
     multiline = title : Map.elems posrows

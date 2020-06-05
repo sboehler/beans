@@ -1,22 +1,15 @@
 module Main where
 
-import Beans.Account (AccountFilter (AccountFilter))
-import Beans.Commodity (Commodity, CommodityFilter (CommodityFilter))
+import qualified Beans.Command.Balance as Balance
+import qualified Beans.Command.Fetch as Fetch
+import qualified Beans.Command.Import as Import
+import qualified Beans.Command.Infer as Infer
+import qualified Beans.Command.Transcode as Transcode
+import Beans.Commodity (Commodity)
 import Beans.Date (Date, Interval (..))
-import Beans.Lib (run)
+import Beans.Filter (AccountFilter (AccountFilter), CommodityFilter (CommodityFilter), Filter (..))
+import Beans.Lib (Command (..), run)
 import qualified Beans.Megaparsec as M
-import Beans.Options
-  ( BalanceFormat (..),
-    BalanceOptions (..),
-    Collapse,
-    Command (..),
-    Diffing (..),
-    FetchOptions (..),
-    Filter (..),
-    ImportOptions (..),
-    InferOptions (..),
-    TranscodeOptions (..),
-  )
 import Data.Bool (bool)
 import Data.Either.Combinators (rightToMaybe)
 import qualified Data.Text as Text
@@ -45,18 +38,18 @@ percentParser = optional $ AccountFilter <$> strOption options
   where
     options = long "percent" <> metavar "REGEX"
 
-diffingParser :: Parser Diffing
-diffingParser = bool Diffing NoDiffing <$> switch options
+diffingParser :: Parser Balance.Diffing
+diffingParser = bool Balance.Diffing Balance.NoDiffing <$> switch options
   where
     options = long "diff" <> short 'd' <> help "Diff balances"
 
-balanceFormatParser :: Parser BalanceFormat
+balanceFormatParser :: Parser Balance.Format
 balanceFormatParser = g <$> strOption options
   where
     options = long "format" <> short 'f' <> help "The format of th report" <> value "hierarchical"
-    g :: String -> BalanceFormat
-    g "flat" = Flat
-    g _ = Hierarchical
+    g :: String -> Balance.Format
+    g "flat" = Balance.Flat
+    g _ = Balance.Hierarchical
 
 valuationParser :: Parser [Commodity]
 valuationParser = option parse options <|> pure []
@@ -76,7 +69,7 @@ dateparser optionStr helpStr = optional $ option parse options
     parse = toReadM M.parseISODate
     options = long optionStr <> help helpStr <> metavar "YYYY-MM-DD"
 
-collapseParser :: Parser Collapse
+collapseParser :: Parser Balance.Collapse
 collapseParser = many $ option parse options
   where
     options = short 'p' <> long "collapse" <> metavar "REGEX,DEPTH"
@@ -90,9 +83,9 @@ fromParser, toParser :: Parser (Maybe Date)
 fromParser = dateparser "from" "Consider only transactions at or after this date"
 toParser = dateparser "to" "Consider only transactions before this date"
 
-balanceOptions :: Parser BalanceOptions
+balanceOptions :: Parser Balance.Options
 balanceOptions =
-  BalanceOptions
+  Balance.Options
     <$> journalParser
     <*> valuationParser
     <*> filterParser
@@ -127,20 +120,20 @@ configFileParser = argument str options
   where
     options = metavar "CONFIG_FILE" <> help "The dhall config file to parse"
 
-fetchOptions :: Parser FetchOptions
-fetchOptions = FetchOptions <$> commoditiesParser <*> configFileParser
+fetchOptions :: Parser Fetch.Options
+fetchOptions = Fetch.Options <$> commoditiesParser <*> configFileParser
 
-importOptions :: Parser ImportOptions
+importOptions :: Parser Import.Options
 importOptions =
-  ImportOptions <$> importer <*> account <*> inputFile
+  Import.Options <$> importer <*> account <*> inputFile
   where
     importer = strOption (metavar "IMPORTER" <> short 'i')
     account = option (toReadM M.parseAccount) (metavar "ACCOUNT" <> long "account" <> short 'a')
     inputFile = argument str (metavar "INPUT_FILE" <> help "The data file to parse")
 
-inferOptions :: Parser InferOptions
+inferOptions :: Parser Infer.Options
 inferOptions =
-  InferOptions <$> trainingFile <*> targetFile
+  Infer.Options <$> trainingFile <*> targetFile
   where
     trainingFile =
       strOption
@@ -150,9 +143,9 @@ inferOptions =
         )
     targetFile = argument str (metavar "TARGET_FILE")
 
-transcodeOptions :: Parser TranscodeOptions
+transcodeOptions :: Parser Transcode.Options
 transcodeOptions =
-  TranscodeOptions
+  Transcode.Options
     <$> option
       (toReadM M.parseCommodity)
       ( metavar "COMMODITY"

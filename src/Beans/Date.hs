@@ -1,6 +1,6 @@
 module Beans.Date
   ( Date (Date),
-    Interval,
+    Interval (..),
     addDays,
     fromGregorian,
     isBetween,

@@ -1,6 +1,6 @@
 module Beans.Command.Transcode
   ( run,
-    Options,
+    Options (..),
   )
 where
 

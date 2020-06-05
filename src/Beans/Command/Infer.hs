@@ -1,6 +1,6 @@
 module Beans.Command.Infer
   ( run,
-    Options,
+    Options (..),
   )
 where
 

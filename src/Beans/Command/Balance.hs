@@ -1,5 +1,9 @@
 module Beans.Command.Balance
   ( run,
+    Options (..),
+    Report.Format (..),
+    Report.Collapse,
+    Diffing (..),
   )
 where
 
@@ -7,11 +11,13 @@ import qualified Beans.Assertion as Assertion
 import qualified Beans.Balance as Balance
 import Beans.Balance (Balance (Balance))
 import Beans.Command (Command (..), Directive (..))
+import Beans.Commodity (Commodity)
 import qualified Beans.Date as Date
+import Beans.Date (Date, Interval)
 import Beans.Filter (Filter)
+import Beans.Filter (AccountFilter)
 import Beans.Ledger (Ledger)
 import qualified Beans.Ledger as Ledger
-import Beans.Options (BalanceOptions (..), Diffing (..))
 import qualified Beans.Parser as Parser
 import qualified Beans.Process as Process
 import qualified Beans.Report as Report
@@ -22,19 +28,40 @@ import Beans.ValAmount (ValAmount)
 import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader, ask)
+import qualified Control.Monad.Reader as Reader
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 import qualified Data.Text.IO as TextIO
 import Prelude hiding (filter, sum)
 
-run :: (MonadIO m, MonadThrow m, MonadReader BalanceOptions m) => m ()
+data Diffing = Diffing | NoDiffing deriving (Show)
+
+data Options
+  = Options
+      { journal :: FilePath,
+        valuation :: [Commodity],
+        filter :: Filter,
+        diffing :: Diffing,
+        showCommodities :: Bool,
+        balanceFormat :: Report.Format,
+        fromDate :: Maybe Date,
+        toDate :: Maybe Date,
+        period :: Maybe Interval,
+        percent :: Maybe AccountFilter,
+        collapse :: Report.Collapse
+      }
+  deriving (Show)
+
+data BalanceFormat = Flat | Hierarchical deriving (Show)
+
+run :: (MonadIO m, MonadThrow m, MonadReader Options m) => m ()
 run = do
-  BalanceOptions {filter, journal} <- ask
+  Options {..} <- ask
   directives <- List.filter (matchDirective filter) <$> Parser.parseFile journal
   let ledger = Ledger.fromDirectives directives
   balances <- ledgerToBalance ledger
-  report <- Report.fromBalances balances
-  table <- Report.toTable report
+  report <- Reader.runReaderT (Report.fromBalances balances) (Report.Options {..})
+  table <- Reader.runReaderT (Report.toTable report) (Report.Options {..})
   printTable table
 
 matchDirective :: Filter -> Directive -> Bool
@@ -45,9 +72,9 @@ matchDirective _ _ = True
 printTable :: (MonadIO m) => Table -> m ()
 printTable = liftIO . TextIO.putStrLn . Table.display
 
-ledgerToBalance :: (MonadReader BalanceOptions m, MonadThrow m) => Ledger -> m [Balance ValAmount]
+ledgerToBalance :: (MonadReader Options m, MonadThrow m) => Ledger -> m [Balance ValAmount]
 ledgerToBalance l = do
-  BalanceOptions {fromDate, diffing, period, percent, toDate, valuation} <- ask
+  Options {fromDate, diffing, period, percent, toDate, valuation} <- ask
   minDate <- Ledger.minDate l
   maxDate <- Ledger.maxDate l
   let t0 = Maybe.fromMaybe minDate fromDate

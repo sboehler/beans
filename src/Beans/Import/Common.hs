@@ -10,7 +10,7 @@ where
 
 import Beans.Account (Account)
 import Beans.Command (Command)
-import Beans.Transaction (Tag (..))
+import Beans.Transaction (Tag (Tag))
 import Control.Exception (Exception)
 import Control.Monad.Reader (ReaderT, runReaderT)
 import qualified Data.List as List

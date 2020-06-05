@@ -64,7 +64,7 @@ percentParser = optional $ AccountFilter <$> strOption options
     options = long "percent" <> metavar "REGEX"
 
 diffingParser :: Parser Balance.Diffing
-diffingParser = bool Balance.Diffing Balance.NoDiffing <$> switch options
+diffingParser = bool Balance.NoDiffing Balance.Diffing <$> switch options
   where
     options = long "diff" <> short 'd' <> help "Diff balances"
 

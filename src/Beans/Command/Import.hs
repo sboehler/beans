@@ -43,7 +43,10 @@ run = do
     Right d -> return d
   liftIO $ print . P.sep . P.punctuate P.hardline $ P.pretty <$> transactions
 
-getParser :: MonadThrow m => Text -> m (Config -> B.ByteString -> Either ImporterException [Command])
+getParser ::
+  MonadThrow m =>
+  Text ->
+  m (Config -> B.ByteString -> Either ImporterException [Command])
 getParser "ch.postfinance" = return Beans.Import.CH.Postfinance.parse
 getParser "us.interactivebrokers" = return Beans.Import.US.InteractiveBrokers.parse
 getParser "ch.supercardplus" = return Beans.Import.CH.SupercardPlus.parse

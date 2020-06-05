@@ -38,7 +38,7 @@ data Options
   = Options
       { valuation :: [Commodity],
         showCommodities :: Bool,
-        balanceFormat :: Format,
+        format :: Format,
         collapse :: Collapse
       }
   deriving (Show)
@@ -75,7 +75,7 @@ segment m = for (Map.toList m) $ \(pos, v) -> do
 
 createTag :: MonadReader Options m => Position -> m [Text]
 createTag pos@(Position a _ _) = do
-  f <- asks balanceFormat
+  f <- asks format
   segments <- shorten pos (Account.split a)
   pure $ case f of
     Flat -> [Text.intercalate ":" segments]

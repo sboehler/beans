@@ -43,7 +43,7 @@ data Options
         filter :: Filter,
         diffing :: Diffing,
         showCommodities :: Bool,
-        balanceFormat :: Report.Format,
+        format :: Report.Format,
         fromDate :: Maybe Date,
         toDate :: Maybe Date,
         period :: Maybe Interval,
@@ -56,12 +56,13 @@ data BalanceFormat = Flat | Hierarchical deriving (Show)
 
 run :: (MonadIO m, MonadThrow m, MonadReader Options m) => m ()
 run = do
-  Options {..} <- ask
+  Options {valuation, showCommodities, format, collapse, journal, filter} <- ask
   directives <- List.filter (matchDirective filter) <$> Parser.parseFile journal
   let ledger = Ledger.fromDirectives directives
   balances <- ledgerToBalance ledger
-  report <- Reader.runReaderT (Report.fromBalances balances) (Report.Options {..})
-  table <- Reader.runReaderT (Report.toTable report) (Report.Options {..})
+  let reportOptions = Report.Options {valuation, showCommodities, format, collapse}
+  report <- Reader.runReaderT (Report.fromBalances balances) reportOptions
+  table <- Reader.runReaderT (Report.toTable report) reportOptions
   printTable table
 
 matchDirective :: Filter -> Directive -> Bool

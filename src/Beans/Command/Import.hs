@@ -34,7 +34,7 @@ data Options
 
 run :: (MonadThrow m, MonadIO m, MonadReader Options m) => m ()
 run = do
-  Options {..} <- ask
+  Options {importer, account, inputFile} <- ask
   parse <- getParser importer
   bytes <- liftIO $ B.readFile inputFile
   let config = Config inputFile account

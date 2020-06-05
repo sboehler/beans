@@ -61,7 +61,7 @@ ledgerToBalance l = do
   let bs' = zipWith (\(Balance _ a p pr np) d' -> Balance d' a p pr np) bs interval
       bs'' = case diffing of
         Diffing -> zipWith Balance.diff (tail bs') bs'
-        NoDiffing -> bs'
+        NoDiffing -> tail bs'
   let bs''' = case percent of
         Nothing -> bs''
         Just a -> Balance.inPercent a <$> bs''

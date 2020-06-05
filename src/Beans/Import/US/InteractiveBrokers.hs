@@ -14,7 +14,6 @@ import qualified Beans.Megaparsec as M
 import Beans.Transaction (Posting (..), Transaction (..))
 import Beans.ValAmount (ValAmount)
 import Control.Monad (void)
-import Control.Monad.Catch (throwM)
 import qualified Control.Monad.Reader as Reader
 import Control.Monad.State (StateT)
 import qualified Control.Monad.State as State

@@ -1,9 +1,7 @@
 module Beans.Options
   ( Command (..),
-    Filter (Filter),
     BalanceFormat (..),
     BalanceOptions (..),
-    TranscodeOptions (..),
     FetchOptions (..),
     ImportOptions (..),
     InferOptions (..),
@@ -11,9 +9,11 @@ module Beans.Options
   )
 where
 
-import Beans.Account (Account, AccountFilter)
-import Beans.Commodity (Commodity, CommodityFilter)
+import Beans.Account (Account)
+import qualified Beans.Command.Transcode as Transcode
+import Beans.Commodity (Commodity)
 import Beans.Date (Date, Interval)
+import Beans.Filter (AccountFilter, Filter)
 import Data.Text (Text)
 
 data Command
@@ -21,7 +21,7 @@ data Command
   | Fetch FetchOptions
   | Import ImportOptions
   | Infer InferOptions
-  | Transcode TranscodeOptions
+  | Transcode Transcode.Options
   deriving (Show)
 
 data InferOptions
@@ -29,17 +29,6 @@ data InferOptions
       { infTrainingFile :: FilePath,
         infTargetFile :: FilePath
       }
-  deriving (Show)
-
-data TranscodeOptions
-  = TranscodeOptions
-      { trnCommodity :: Commodity,
-        trnSourceFile :: FilePath,
-        trnTargetFile :: FilePath
-      }
-  deriving (Show)
-
-data Filter = Filter AccountFilter CommodityFilter
   deriving (Show)
 
 data Diffing = Diffing | NoDiffing deriving (Show)

@@ -10,7 +10,7 @@ import Beans.Amount (Amount)
 import Beans.Commodity (Commodity)
 import qualified Beans.Commodity as Commodity
 import Beans.Date (Date)
-import Beans.Options (Filter (Filter))
+import Beans.Filter (Filter (Filter))
 import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty))
 
 data Assertion

@@ -6,10 +6,10 @@ module Beans.Account
     split,
     valuationAccount,
     unknown,
-    AccountFilter (AccountFilter),
   )
 where
 
+import Beans.Filter (AccountFilter (AccountFilter))
 import Data.Hashable (Hashable (..))
 import qualified Data.List as List
 import qualified Data.Text as Text
@@ -48,6 +48,3 @@ valuationAccount = Account Equity ["Equity"]
 
 unknown :: Account
 unknown = Account TBD []
-
-newtype AccountFilter = AccountFilter String
-  deriving (Show)

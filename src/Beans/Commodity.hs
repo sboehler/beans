@@ -1,10 +1,10 @@
 module Beans.Commodity
   ( Commodity (Commodity),
-    CommodityFilter,
     match,
   )
 where
 
+import Beans.Filter (CommodityFilter (CommodityFilter))
 import Data.Text (Text, unpack)
 import Data.Text.Prettyprint.Doc (Pretty (pretty))
 import qualified Dhall
@@ -21,9 +21,6 @@ instance Show Commodity where
 
 instance Pretty Commodity where
   pretty (Commodity c) = pretty c
-
-newtype CommodityFilter = CommodityFilter String
-  deriving (Show)
 
 match :: CommodityFilter -> Commodity -> Bool
 match (CommodityFilter regex) = (=~ regex) . show

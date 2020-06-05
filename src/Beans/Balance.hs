@@ -8,10 +8,11 @@ module Beans.Balance
   )
 where
 
-import Beans.Account (Account, AccountFilter)
+import Beans.Account (Account)
 import qualified Beans.Account as Account
 import Beans.Commodity (Commodity)
 import Beans.Date (Date)
+import Beans.Filter (AccountFilter)
 import Beans.Position (Position (..))
 import qualified Beans.Position as Position
 import qualified Beans.Positions as Positions

@@ -8,9 +8,10 @@ import qualified Beans.Balance as Balance
 import Beans.Balance (Balance (Balance))
 import Beans.Command (Command (..), Directive (..))
 import qualified Beans.Date as Date
+import Beans.Filter (Filter)
 import Beans.Ledger (Ledger)
 import qualified Beans.Ledger as Ledger
-import Beans.Options (BalanceOptions (..), Diffing (..), Filter (..))
+import Beans.Options (BalanceOptions (..), Diffing (..))
 import qualified Beans.Parser as Parser
 import qualified Beans.Process as Process
 import qualified Beans.Report as Report

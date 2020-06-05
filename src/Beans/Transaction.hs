@@ -16,8 +16,8 @@ import Beans.Amount (Amount)
 import qualified Beans.Commodity as Commodity
 import Beans.Commodity (Commodity)
 import Beans.Date (Date)
+import Beans.Filter (Filter (Filter))
 import Beans.Lot (Lot)
-import Beans.Options (Filter (..))
 import Beans.Position (Position (..))
 import qualified Beans.ValAmount as ValAmount
 import Beans.ValAmount (ValAmount)

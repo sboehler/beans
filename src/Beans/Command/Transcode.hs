@@ -1,5 +1,6 @@
 module Beans.Command.Transcode
   ( run,
+    Options,
   )
 where
 
@@ -9,7 +10,6 @@ import Beans.Commodity (Commodity)
 import qualified Beans.Ledger as Ledger
 import Beans.Ledger (Ledger (..))
 import Beans.LedgerStep (LedgerStep (..))
-import Beans.Options (TranscodeOptions (..))
 import Beans.Parser (parseFile)
 import qualified Beans.Process as Process
 import Beans.Transaction (Posting (..), Transaction (..))
@@ -25,9 +25,17 @@ import qualified Data.Text.Prettyprint.Doc as P
 import Data.Text.Prettyprint.Doc ((<+>), Doc, pretty)
 import qualified Data.Text.Prettyprint.Doc.Render.Text as P
 
-run :: (MonadThrow m, MonadReader TranscodeOptions m, MonadIO m) => m ()
+data Options
+  = Options
+      { trnCommodity :: Commodity,
+        trnSourceFile :: FilePath,
+        trnTargetFile :: FilePath
+      }
+  deriving (Show)
+
+run :: (MonadThrow m, MonadReader Options m, MonadIO m) => m ()
 run = do
-  TranscodeOptions commodity source target <- Reader.ask
+  Options commodity source target <- Reader.ask
   d <- parseFile source
   let l = Ledger.fromDirectives d
   minDate <- Ledger.minDate l

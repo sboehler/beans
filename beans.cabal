@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1974dd15f817f5e29a65294d46f989d1dead13fcc8c95353c242728918f58c3c
+-- hash: 9d09691f858566558b6fd8242fe964052765a919d73a787d4259b6721d9dec98
 
 name:           beans
-version:        0.0.4.0
+version:        0.1.0.0
 synopsis:       A plain text accounting tool
 description:    Please see the README on Github at <https://github.com/sboehler/beans#readme>
 category:       Finance
@@ -44,6 +44,7 @@ library
       Beans.Command.Transcode
       Beans.Commodity
       Beans.Date
+      Beans.Filter
       Beans.Import.CH.Cumulus
       Beans.Import.CH.Postfinance
       Beans.Import.CH.SupercardPlus

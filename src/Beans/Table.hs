@@ -10,6 +10,7 @@ where
 
 import Data.Coerce (coerce)
 import qualified Data.List as List
+import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -17,13 +18,8 @@ import Prelude hiding (lines)
 
 data Table = Table [Int] [Row] deriving (Show)
 
-newtype Row = Row [Cell] deriving (Show)
-
-instance Semigroup Row where
-  Row x <> Row y = Row $ x <> y
-
-instance Monoid Row where
-  mempty = Row []
+newtype Row = Row [Cell]
+  deriving (Show, Semigroup, Monoid)
 
 data Cell
   = AlignLeft Text
@@ -41,19 +37,18 @@ rowLength :: Row -> Int
 rowLength (Row l) = List.length l
 
 display :: Table -> Text
-display (Table colgroups rows) =
-  let cellWidths = [cellWidth <$> r | Row r <- rows]
-      columnWidths = maximum <$> List.transpose cellWidths
-      groupWidths = Map.fromListWith max (zip colgroups columnWidths)
-      cw = fmap (groupWidths Map.!) colgroups
-      l =
-        pad "|"
-          . List.foldl' combine mempty
-          . zip cw
-          . (<> repeat Empty)
-          . coerce
-          <$> rows
-   in Text.unlines l
+display (Table colgroups rows) = Text.unlines $ render <$> rows
+  where
+    cellWidths = [[cellWidth cell | cell <- r] | Row r <- rows]
+    columnWidths = [maximum col | col <- List.transpose cellWidths]
+    groupWidths = Map.fromListWith max $ colgroups `zip` columnWidths
+    cw = (groupWidths !) <$> colgroups
+    render =
+      pad "|"
+        . List.foldl' combine mempty
+        . zip cw
+        . (<> repeat Empty)
+        . coerce
 
 cellWidth :: Cell -> Int
 cellWidth Separator = 0

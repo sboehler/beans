@@ -1,4 +1,10 @@
-module Beans.Amounts where
+module Beans.Amounts
+  ( Amounts,
+    fromList,
+    size,
+    fromAmount,
+  )
+where
 
 import Beans.Commodity (Commodity)
 import Beans.ValAmount (ValAmount)
@@ -32,9 +38,3 @@ size (Amounts m) = Map.size m
 
 fromAmount :: Commodity -> ValAmount -> Amounts
 fromAmount c a = Amounts $ Map.singleton c a
-
-filter :: (Commodity -> ValAmount -> Bool) -> Amounts -> Amounts
-filter f = Amounts . Map.filterWithKey f . coerce
-
-toList :: Amounts -> [(Commodity, ValAmount)]
-toList = Map.toList . coerce

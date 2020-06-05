@@ -125,7 +125,7 @@ positionToRows ::
   m [Row]
 positionToRows nbrColumns indent name positions = do
   Options {showCommodities, valuation} <- ask
-  pure $ if showCommodities || length valuation == 0 then multiline else oneline
+  pure $ if showCommodities || null valuation then multiline else oneline
   where
     multiline = title : Map.elems posrows
       where

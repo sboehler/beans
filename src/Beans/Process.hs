@@ -156,7 +156,7 @@ processClose (Balance date positions accounts prices valuations) close@(Close _ 
   unless (all ValAmount.amountIsZero selected) $ throwM $ BalanceIsNotZero close
   pure $ Balance date others (Set.delete a accounts) prices valuations
 
-processTransaction :: (MonadThrow m) => (Balance ValAmount) -> Transaction -> m (Balance ValAmount)
+processTransaction :: (MonadThrow m) => Balance ValAmount -> Transaction -> m (Balance ValAmount)
 processTransaction bal@(Balance _ _ acc _ _) t@(Transaction _ _ _ p) = do
   for_ p canBook
   pure $ Balance.book bal p
@@ -166,7 +166,7 @@ processTransaction bal@(Balance _ _ acc _ _) t@(Transaction _ _ _ p) = do
         $ throwM
         $ BookingErrorAccountNotOpen t a
 
-processAssertion :: MonadThrow m => (Balance ValAmount) -> Assertion -> m ()
+processAssertion :: MonadThrow m => Balance ValAmount -> Assertion -> m ()
 processAssertion (Balance _ positions _ _ _) assertion@(Assertion _ a amt c) = do
   let s = (\(ValAmount a' _) -> a') $ Positions.sum a c positions
   unless (s == amt) $ throwM $ AssertionFailed assertion s
@@ -176,7 +176,7 @@ processOpen (Balance d positions acc pr np) open@(Open _ a) = do
   when (a `Set.member` acc) $ throwM $ AccountIsAlreadyOpen open
   pure $ Balance d positions (Set.insert a acc) pr np
 
-processPrice :: MonadThrow m => (Balance a) -> Price -> m (Balance a)
+processPrice :: MonadThrow m => Balance a -> Price -> m (Balance a)
 processPrice (Balance d p a pr np) price = do
   pr' <- Prices.updatePrices pr price
   pure $ Balance d p a pr' np

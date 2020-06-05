@@ -128,7 +128,7 @@ baseCurrency = do
   _ <- field $ M.string "Account Information"
   _ <- field $ M.string "Data"
   _ <- field $ M.string "Base Currency"
-  field $ Just <$> M.parseCommodity >>= State.put
+  field $ M.parseCommodity >>= State.put . Just
 
 textField :: Parser Text
 textField = field $ M.takeWhile1P Nothing (/= ',')

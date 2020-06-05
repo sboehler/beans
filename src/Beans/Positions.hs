@@ -61,7 +61,7 @@ concatenate positions = pos
     g v (n, vs) = (n + 1, merge n vs v)
 
 merge :: Monoid a => Int -> Map Position [a] -> Map Position a -> Map Position [a]
-merge n m1 m2 = Map.merge (Map.mapMissing g1) (Map.mapMissing g2) (Map.zipWithMatched m) m1 m2
+merge n = Map.merge (Map.mapMissing g1) (Map.mapMissing g2) (Map.zipWithMatched m)
   where
     g1 _ existing = mempty : existing
     g2 _ amt = amt : replicate n mempty

@@ -14,8 +14,7 @@ import Beans.Command (Command (..), Directive (..))
 import Beans.Commodity (Commodity)
 import qualified Beans.Date as Date
 import Beans.Date (Date, Interval)
-import Beans.Filter (Filter)
-import Beans.Filter (AccountFilter)
+import Beans.Filter (AccountFilter, Filter)
 import Beans.Ledger (Ledger)
 import qualified Beans.Ledger as Ledger
 import qualified Beans.Parser as Parser

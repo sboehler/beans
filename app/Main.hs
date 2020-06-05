@@ -17,6 +17,7 @@ import Beans.Options
     InferOptions (..),
     TranscodeOptions (..),
   )
+import Data.Bool (bool)
 import Data.Either.Combinators (rightToMaybe)
 import qualified Data.Text as Text
 import Data.Text (Text)
@@ -30,86 +31,64 @@ toReadM :: M.Parsec Void Text a -> ReadM a
 toReadM p = maybeReader $ rightToMaybe . M.parse p "" . Text.pack
 
 journalParser :: Parser FilePath
-journalParser =
-  strOption $
-    short 'j'
-      <> long "journal"
-      <> metavar "JOURNAL"
-      <> help
-        "The journal file to parse"
+journalParser = strOption options
+  where
+    options = short 'j' <> long "journal" <> metavar "JOURNAL" <> help "The journal file to parse"
 
 showCommoditiesParser :: Parser Bool
-showCommoditiesParser =
-  switch $
-    long "show-commodities"
-      <> short 'c'
-      <> help "Show commodities"
+showCommoditiesParser = switch options
+  where
+    options = long "show-commodities" <> short 'c' <> help "Show commodities"
 
 percentParser :: Parser (Maybe AccountFilter)
-percentParser =
-  Just . AccountFilter
-    <$> strOption
-      (long "percent" <> metavar "REGEX")
-    <|> pure Nothing
+percentParser = optional $ AccountFilter <$> strOption options
+  where
+    options = long "percent" <> metavar "REGEX"
 
 diffingParser :: Parser Diffing
-diffingParser = do
-  d <-
-    switch
-      (long "diff" <> short 'd' <> help "Diff balances")
-  pure $ if d then Diffing else NoDiffing
+diffingParser = bool Diffing NoDiffing <$> switch options
+  where
+    options = long "diff" <> short 'd' <> help "Diff balances"
 
 balanceFormatParser :: Parser BalanceFormat
-balanceFormatParser =
-  g
-    <$> strOption
-      (long "format" <> short 'f' <> help "The format of th report" <> value "hierarchical")
+balanceFormatParser = g <$> strOption options
   where
+    options = long "format" <> short 'f' <> help "The format of th report" <> value "hierarchical"
     g :: String -> BalanceFormat
     g "flat" = Flat
     g _ = Hierarchical
 
 valuationParser :: Parser [Commodity]
-valuationParser =
-  option
-    (toReadM (M.parseCommodity `M.sepBy` M.char ','))
-    (long "val" <> metavar "COMMODITY" <> short 'v' <> help "Valuation at market prices")
-    <|> pure []
+valuationParser = option parse options <|> pure []
+  where
+    parse = toReadM (M.parseCommodity `M.sepBy` M.char ',')
+    options = long "val" <> metavar "COMMODITY" <> short 'v' <> help "Valuation at market prices"
 
 filterParser :: Parser Filter
-filterParser = do
-  af <-
-    AccountFilter
-      <$> strOption
-        (long "account-filter" <> value "" <> metavar "REGEX")
-  cf <-
-    CommodityFilter
-      <$> strOption
-        (long "commodity-filter" <> value "" <> metavar "REGEX")
-  pure $ Filter af cf
+filterParser = Filter <$> af <*> cf
+  where
+    af = AccountFilter <$> strOption (long "account-filter" <> value "" <> metavar "REGEX")
+    cf = CommodityFilter <$> strOption (long "commodity-filter" <> value "" <> metavar "REGEX")
 
 dateparser :: String -> String -> Parser (Maybe Date)
-dateparser optionStr helpStr =
-  Just
-    <$> option
-      (toReadM M.parseISODate)
-      (long optionStr <> help helpStr <> metavar "YYYY-MM-DD")
-      <|> pure Nothing
+dateparser optionStr helpStr = optional $ option parse options
+  where
+    parse = toReadM M.parseISODate
+    options = long optionStr <> help helpStr <> metavar "YYYY-MM-DD"
 
 collapseParser :: Parser Collapse
-collapseParser = many $ option p (short 'p' <> long "collapse" <> metavar "REGEX,DEPTH")
+collapseParser = many $ option parse options
   where
-    p = toReadM $ do
-      s <- AccountFilter . Text.unpack <$> M.takeWhileP Nothing (/= ',')
+    options = short 'p' <> long "collapse" <> metavar "REGEX,DEPTH"
+    parse = toReadM $ do
+      s <- Text.unpack <$> M.takeWhileP Nothing (/= ',')
       _ <- M.char ','
       d <- L.decimal
-      pure (s, d)
+      pure (AccountFilter s, d)
 
 fromParser, toParser :: Parser (Maybe Date)
-fromParser =
-  dateparser "from" "Consider only transactions at or after this date"
-toParser =
-  dateparser "to" "Consider only transactions before this date"
+fromParser = dateparser "from" "Consider only transactions at or after this date"
+toParser = dateparser "to" "Consider only transactions before this date"
 
 balanceOptions :: Parser BalanceOptions
 balanceOptions =
@@ -127,56 +106,49 @@ balanceOptions =
     <*> collapseParser
 
 intervalParser :: Parser (Maybe Interval)
-intervalParser = g <$> strOption (metavar "INTERVAL" <> short 'i' <> long "interval") <|> pure Nothing
+intervalParser = parse <$> strOption (metavar "INTERVAL" <> short 'i' <> long "interval")
   where
-    g :: String -> Maybe Interval
-    g "daily" = Just Daily
-    g "weekly" = Just Weekly
-    g "monthly" = Just Monthly
-    g "quarterly" = Just Quarterly
-    g "yearly" = Just Yearly
-    g _ = Nothing
+    parse :: String -> Maybe Interval
+    parse "daily" = Just Daily
+    parse "weekly" = Just Weekly
+    parse "monthly" = Just Monthly
+    parse "quarterly" = Just Quarterly
+    parse "yearly" = Just Yearly
+    parse _ = Nothing
 
 commoditiesParser :: Parser (Maybe [Commodity])
-commoditiesParser =
-  Just
-    <$> option
-      (toReadM (M.parseCommodity `M.sepBy` M.char ','))
-      (long "commodities" <> metavar "COMMODITY" <> short 'c' <> help "The commodity to fetch")
-    <|> pure Nothing
+commoditiesParser = optional $ option parse options
+  where
+    options = long "commodities" <> metavar "COMMODITY" <> short 'c' <> help "The commodity to fetch"
+    parse = toReadM $ M.parseCommodity `M.sepBy` M.char ','
 
 configFileParser :: Parser FilePath
-configFileParser =
-  argument
-    str
-    ( metavar "CONFIG_FILE"
-        <> help
-          "The dhall config file to parse"
-    )
+configFileParser = argument str options
+  where
+    options = metavar "CONFIG_FILE" <> help "The dhall config file to parse"
 
 fetchOptions :: Parser FetchOptions
 fetchOptions = FetchOptions <$> commoditiesParser <*> configFileParser
 
 importOptions :: Parser ImportOptions
 importOptions =
-  ImportOptions
-    <$> strOption
-      ( metavar "IMPORTER" <> short 'i'
-      )
-    <*> option
-      (toReadM M.parseAccount)
-      (metavar "ACCOUNT" <> long "account" <> short 'a')
-    <*> argument str (metavar "INPUT_FILE" <> help "The data file to parse")
+  ImportOptions <$> importer <*> account <*> inputFile
+  where
+    importer = strOption (metavar "IMPORTER" <> short 'i')
+    account = option (toReadM M.parseAccount) (metavar "ACCOUNT" <> long "account" <> short 'a')
+    inputFile = argument str (metavar "INPUT_FILE" <> help "The data file to parse")
 
 inferOptions :: Parser InferOptions
 inferOptions =
-  InferOptions
-    <$> strOption
-      ( metavar "TRAINING_FILE" <> help "The file containing the training data"
-          <> short 't'
-          <> long "training-file"
-      )
-    <*> argument str (metavar "TARGET_FILE")
+  InferOptions <$> trainingFile <*> targetFile
+  where
+    trainingFile =
+      strOption
+        ( metavar "TRAINING_FILE" <> help "The file containing the training data"
+            <> short 't'
+            <> long "training-file"
+        )
+    targetFile = argument str (metavar "TARGET_FILE")
 
 transcodeOptions :: Parser TranscodeOptions
 transcodeOptions =
@@ -189,7 +161,7 @@ transcodeOptions =
           <> short 'c'
       )
     <*> strOption
-      ( metavar "SOURCE_FILE" <> help "The file containing the beans data"
+      ( metavar "SOURCE_FILE" <> help "The source file"
           <> short 's'
           <> long "source-file"
       )

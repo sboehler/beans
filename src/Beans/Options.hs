@@ -1,4 +1,15 @@
-module Beans.Options where
+module Beans.Options
+  ( Command (..),
+    Filter (Filter),
+    BalanceFormat (..),
+    BalanceOptions (..),
+    TranscodeOptions (..),
+    FetchOptions (..),
+    ImportOptions (..),
+    InferOptions (..),
+    Diffing (..),
+  )
+where
 
 import Beans.Account (Account, AccountFilter)
 import Beans.Commodity (Commodity, CommodityFilter)

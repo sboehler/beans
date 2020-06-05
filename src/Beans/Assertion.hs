@@ -1,4 +1,8 @@
-module Beans.Assertion where
+module Beans.Assertion
+  ( Assertion (Assertion),
+    match,
+  )
+where
 
 import Beans.Account (Account)
 import qualified Beans.Account as Account

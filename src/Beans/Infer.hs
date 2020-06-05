@@ -1,4 +1,10 @@
-module Beans.Infer where
+module Beans.Infer
+  ( Model,
+    train,
+    fixDirective,
+    updateDirectives,
+  )
+where
 
 import Beans.Account (Account)
 import qualified Beans.Account as Account

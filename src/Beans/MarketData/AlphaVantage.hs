@@ -1,8 +1,19 @@
-module Beans.MarketData.AlphaVantage where
+module Beans.MarketData.AlphaVantage
+  ( getDailySeries,
+    getFXSeries,
+    APIKey (APIKey),
+    FXEntry (..),
+    TimeSeriesEntry (..),
+    TimeSeriesResult (..),
+    TimeSeries (..),
+    FXResult (..),
+    FX (..),
+    Symbol (Symbol),
+  )
+where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson
-import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.HashMap.Strict as HM
 import Data.Map.Strict (Map)
@@ -30,9 +41,6 @@ getFXSeries k fromCurrency toCurrency = do
 --------------------------------------------------------------------------------
 -- API Implementation
 --------------------------------------------------------------------------------
-
-class Query a where
-  query :: a -> HTTP.QueryItem
 
 newtype Symbol = Symbol String
 
@@ -70,8 +78,6 @@ data Request
         dataType :: DataType,
         apiKey :: APIKey
       }
-
-type URL = ByteString
 
 baseURL :: String
 baseURL = "https://www.alphavantage.co/query"

@@ -1,4 +1,9 @@
-module Beans.Commodity where
+module Beans.Commodity
+  ( Commodity (Commodity),
+    CommodityFilter,
+    match,
+  )
+where
 
 import Data.Text (Text, unpack)
 import Data.Text.Prettyprint.Doc (Pretty (pretty))

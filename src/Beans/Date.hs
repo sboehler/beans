@@ -1,4 +1,12 @@
-module Beans.Date where
+module Beans.Date
+  ( Date (Date),
+    Interval,
+    addDays,
+    fromGregorian,
+    isBetween,
+    partition,
+  )
+where
 
 import Data.Coerce (coerce)
 import Data.Text.Prettyprint.Doc (Pretty (pretty))

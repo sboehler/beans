@@ -1,4 +1,10 @@
-module Beans.MarketData.Yahoo where
+module Beans.MarketData.Yahoo
+  ( TimeSeries (..),
+    TimeSeriesEntry (..),
+    Symbol (Symbol),
+    getDailySeries,
+  )
+where
 
 import Beans.Date (Date)
 import qualified Beans.Megaparsec as M
@@ -6,17 +12,14 @@ import Control.Exception (Exception)
 import Control.Monad (void)
 import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import Data.Fixed (div')
 import Data.Maybe (catMaybes)
 import Data.Scientific (toRealFloat)
 import Data.Text (Text)
 import qualified Data.Text.Encoding as Encoding
-import Data.Time.Calendar (Day)
 import qualified Data.Time.Clock as Clock
-import Data.Time.Clock (UTCTime (..), addUTCTime)
-import Data.Time.Clock.POSIX (POSIXTime)
+import Data.Time.Clock (addUTCTime)
 import qualified Data.Time.Clock.POSIX as POSIX
 import Data.Void (Void)
 import qualified Network.HTTP.Simple as HTTP
@@ -43,25 +46,13 @@ getDailySeries s = do
 -- API Implementation
 --------------------------------------------------------------------------------
 
-toTimestamp :: Day -> POSIXTime
-toTimestamp = POSIX.utcTimeToPOSIXSeconds . flip UTCTime 0
-
-class Query a where
-  query :: a -> HTTP.QueryItem
-
 newtype Symbol = Symbol String
 
 instance Show Symbol where
   show (Symbol s) = s
 
 data Request
-  = TimeSeriesRequest
-      { symbol :: Symbol,
-        period1 :: Int,
-        period2 :: Int
-      }
-
-type URL = ByteString
+  = TimeSeriesRequest Symbol Int Int
 
 baseURL :: String
 baseURL = "https://query1.finance.yahoo.com/v7/finance/download/"

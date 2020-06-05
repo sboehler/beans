@@ -1,4 +1,14 @@
-module Beans.Account where
+module Beans.Account
+  ( Account (Account),
+    AccountType (..),
+    shorten,
+    match,
+    split,
+    valuationAccount,
+    unknown,
+    AccountFilter (AccountFilter),
+  )
+where
 
 import Data.Hashable (Hashable (..))
 import qualified Data.List as List

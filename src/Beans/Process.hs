@@ -151,7 +151,7 @@ createValAdjustments = do
 
 processClose :: (MonadThrow m) => Balance ValAmount -> Close -> m (Balance ValAmount)
 processClose (Balance date positions accounts prices valuations) close@(Close _ a) = do
-  unless (Set.member a accounts) $ throwM $ AccountIsNotOpen close
+  unless (a `Set.member` accounts) $ throwM $ AccountIsNotOpen close
   let (selected, others) = Positions.partitionByAccount a positions
   unless (all ValAmount.amountIsZero selected) $ throwM $ BalanceIsNotZero close
   pure $ Balance date others (Set.delete a accounts) prices valuations
@@ -162,7 +162,7 @@ processTransaction bal@(Balance _ _ acc _ _) t@(Transaction _ _ _ p) = do
   pure $ Balance.book bal p
   where
     canBook (Posting a _ _ _ _) =
-      unless (Set.member a acc)
+      unless (a `Set.member` acc)
         $ throwM
         $ BookingErrorAccountNotOpen t a
 

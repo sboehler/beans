@@ -10,6 +10,9 @@ where
 import Beans.Amount (Amount)
 import qualified Beans.Amount as Amount
 import Beans.Commodity (Commodity)
+import Beans.Prices (NormalizedPrices (NormalizedPrices))
+import qualified Beans.Prices as Prices
+import Control.Monad.Catch (MonadThrow)
 import Data.Group (Group (..))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -42,10 +45,10 @@ new a = ValAmount a Map.empty
 showFixed :: ValAmount -> Text
 showFixed (ValAmount a _) = Amount.showFixed a
 
-valuate :: Monad m => Commodity -> (Amount -> m Amount) -> ValAmount -> m ValAmount
-valuate c f (ValAmount a v) = do
-  v' <- Map.insert c <$> f a <*> pure v
-  pure $ ValAmount a v'
+valuate :: MonadThrow m => Commodity -> NormalizedPrices -> ValAmount -> m ValAmount
+valuate c np@(NormalizedPrices tc _) (ValAmount a v) = do
+  val <- Prices.valuate np c a
+  pure $ ValAmount a (Map.insert tc val v)
 
 amountIsZero :: ValAmount -> Bool
 amountIsZero (ValAmount 0 _) = True

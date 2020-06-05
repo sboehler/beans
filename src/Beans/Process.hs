@@ -19,6 +19,7 @@ import Beans.Open (Open (..))
 import Beans.Position (Position (..))
 import qualified Beans.Positions as Positions
 import Beans.Price (Price)
+import Beans.Prices (NormalizedPrices (NormalizedPrices))
 import qualified Beans.Prices as Prices
 import qualified Beans.Transaction as Transaction
 import Beans.Transaction (Posting (..), Transaction (..))
@@ -87,7 +88,7 @@ process s = do
 --------------------------------------------------------------------------------
 data State
   = State (Balance ValAmount) LedgerStep
-  deriving (Eq, Show)
+  deriving (Show)
 
 --------------------------------------------------------------------------------
 
@@ -104,13 +105,13 @@ processPrices = do
 normalizePrices :: (MonadThrow m, MonadState State m) => m ()
 normalizePrices = do
   State (Balance d p a pr np) _ <- State.get
-  let balance' = Balance d p a pr (Map.mapWithKey (const . Prices.normalize pr) np)
+  let balance' = Balance d p a pr (fmap (\(NormalizedPrices c _) -> Prices.normalize pr c) np)
   State.modify $ \(State _ s) -> State balance' s
 
 valuateTransactions :: (MonadThrow m, MonadState State m) => m ()
 valuateTransactions = do
   State (Balance _ _ _ _ val) step <- State.get
-  step' <- Map.foldMWithKey (\ls tc np -> LedgerStep.valuate tc (Prices.valuate np) ls) step val
+  step' <- foldM LedgerStep.valuate step val
   State.modify $ \(State b _) -> State b step'
 
 processOpenings :: (MonadThrow m, MonadState State m) => m ()
@@ -140,7 +141,7 @@ createValAdjustments :: (MonadState State m, MonadThrow m) => m ()
 createValAdjustments = do
   State bal@(Balance date positions _ _ valuations) step <- State.get
   let pos = Positions.filterByAccountType [Assets, Liabilities] positions
-  pos' <- Map.foldMWithKey (\p tc np -> Positions.valuate tc (Prices.valuate np) p) pos valuations
+  pos' <- foldM Positions.valuate pos valuations
   let diffs = Map.filter (any (/= 0) . (\(ValAmount _ v) -> v)) (Map.unionWith (<>) pos' (invert <$> pos))
   transactions <- for (Map.toList diffs) $ Transaction.createAdjustment date
   balance' <- foldM processTransaction bal transactions

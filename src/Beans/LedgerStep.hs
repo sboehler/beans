@@ -7,14 +7,13 @@ module Beans.LedgerStep
   )
 where
 
-import Beans.Amount (Amount)
 import Beans.Assertion (Assertion)
 import Beans.Close (Close)
 import Beans.Command (Command (..))
-import Beans.Commodity (Commodity)
 import Beans.Date (Date)
 import Beans.Open (Open)
 import Beans.Price (Price)
+import Beans.Prices (NormalizedPrices)
 import Beans.Transaction (Transaction)
 import qualified Beans.Transaction as Transaction
 import Control.Monad.Catch (MonadThrow)
@@ -37,9 +36,9 @@ insert (CmdTransaction t') (LS d o p t b c) = LS d o p (t' : t) b c
 insert (CmdAssertion b') (LS d o p t b c) = LS d o p t (b' : b) c
 insert (CmdClose c') (LS d o p t b c) = LS d o p t b (c' : c)
 
-valuate :: MonadThrow m => Commodity -> (Commodity -> Amount -> m Amount) -> LedgerStep -> m LedgerStep
-valuate tc f (LS d o p t b c) = do
-  t' <- for t $ Transaction.valuate tc f
+valuate :: MonadThrow m => LedgerStep -> NormalizedPrices -> m LedgerStep
+valuate (LS d o p t b c) np = do
+  t' <- for t $ Transaction.valuate np
   pure $ LS d o p t' b c
 
 add :: [Transaction] -> LedgerStep -> LedgerStep

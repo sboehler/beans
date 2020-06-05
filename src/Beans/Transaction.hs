@@ -12,13 +12,13 @@ where
 
 import Beans.Account (Account)
 import qualified Beans.Account as Account
-import Beans.Amount (Amount)
 import qualified Beans.Commodity as Commodity
 import Beans.Commodity (Commodity)
 import Beans.Date (Date)
 import Beans.Filter (Filter (Filter))
 import Beans.Lot (Lot)
 import Beans.Position (Position (..))
+import Beans.Prices (NormalizedPrices)
 import qualified Beans.ValAmount as ValAmount
 import Beans.ValAmount (ValAmount)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
@@ -115,12 +115,12 @@ balanceImbalances account = fmap (\(c, a) -> Posting account c Nothing (invert a
 accounts :: Transaction -> [Account]
 accounts (Transaction _ _ _ postings) = fmap (\(Posting a _ _ _ _) -> a) postings
 
-valuate :: MonadThrow m => Commodity -> (Commodity -> Amount -> m Amount) -> Transaction -> m Transaction
-valuate tc f (Transaction d desc tags postings) = do
+valuate :: MonadThrow m => NormalizedPrices -> Transaction -> m Transaction
+valuate np (Transaction d desc tags postings) = do
   postings' <- for postings g
   pure $ Transaction d desc tags postings'
   where
-    g (Posting a c l amt t) = Posting a c l <$> ValAmount.valuate tc (f c) amt <*> pure t
+    g (Posting a c l amt t) = Posting a c l <$> ValAmount.valuate c np amt <*> pure t
 
 match :: Filter -> Transaction -> Bool
 match (Filter af cf) (Transaction _ _ _ p) = any isMatch p

@@ -18,11 +18,11 @@ import qualified Beans.Position as Position
 import qualified Beans.Positions as Positions
 import Beans.Positions (Positions)
 import Beans.Prices (NormalizedPrices, Prices)
+import qualified Beans.Prices as Prices
 import Beans.Transaction (Posting (..))
 import Beans.ValAmount (ValAmount (ValAmount))
 import Data.Foldable (fold)
 import Data.Group (Group, invert)
-import Data.Map.Strict.Extended (Map)
 import qualified Data.Map.Strict.Extended as Map
 import qualified Data.Set as Set
 import Data.Set (Set)
@@ -33,8 +33,8 @@ data Balance a
       (Positions a)
       (Set Account)
       Prices
-      (Map Commodity NormalizedPrices)
-  deriving (Show, Eq, Functor)
+      [NormalizedPrices]
+  deriving (Show, Functor)
 
 new :: Date -> [Commodity] -> Balance a
 new date commodities =
@@ -43,7 +43,7 @@ new date commodities =
     Map.empty
     (Set.singleton Account.valuationAccount)
     Map.empty
-    (Map.fromList (zip commodities $ repeat mempty))
+    (Prices.newN <$> commodities)
 
 diff :: (Monoid a, Group a) => Balance a -> Balance a -> Balance a
 diff (Balance d p1 a pr np) (Balance _ p0 _ _ _) = Balance d p' a pr np

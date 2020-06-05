@@ -12,13 +12,12 @@ module Beans.Positions
 where
 
 import Beans.Account (Account (Account), AccountType)
-import Beans.Amount (Amount)
 import Beans.Commodity (Commodity)
 import Beans.Position (Position (..))
+import Beans.Prices (NormalizedPrices)
 import Beans.ValAmount (ValAmount)
 import qualified Beans.ValAmount as ValAmount
 import Control.Monad.Catch (MonadThrow)
-import Data.Coerce (coerce)
 import Data.Foldable (fold)
 import qualified Data.Map.Merge.Strict as Map
 import Data.Map.Strict.Extended (Map)
@@ -49,10 +48,14 @@ filterByAccountType t = Map.filterWithKey g
 partitionByAccount :: Account -> Positions a -> (Positions a, Positions a)
 partitionByAccount a = Map.partitionWithKey (\(Position a' _ _) _ -> a' == a)
 
-valuate :: MonadThrow m => Commodity -> (Commodity -> Amount -> m Amount) -> Positions ValAmount -> m (Positions ValAmount)
-valuate tc f = Map.traverseWithKey valuate' . coerce
+valuate ::
+  MonadThrow m =>
+  Positions ValAmount ->
+  NormalizedPrices ->
+  m (Positions ValAmount)
+valuate p np = Map.traverseWithKey valuate' p
   where
-    valuate' (Position _ c _) = ValAmount.valuate tc (f c)
+    valuate' (Position _ c _) = ValAmount.valuate c np
 
 concatenate :: Monoid a => [Positions a] -> Map Position [a]
 concatenate positions = pos

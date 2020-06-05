@@ -123,9 +123,9 @@ configFileParser = argument str options
 fetchOptions :: Parser Fetch.Options
 fetchOptions = Fetch.Options <$> commoditiesParser <*> configFileParser
 
-importOptions :: Parser Import.Options
+importOptions :: Parser Import.Config
 importOptions =
-  Import.Options <$> importer <*> account <*> inputFile
+  Import.Config <$> importer <*> inputFile <*> account
   where
     importer = strOption (metavar "IMPORTER" <> short 'i')
     account = option (toReadM M.parseAccount) (metavar "ACCOUNT" <> long "account" <> short 'a')

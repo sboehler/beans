@@ -12,7 +12,7 @@ import qualified Beans.Command.Transcode as Transcode
 data Command
   = Balance Balance.Options
   | Fetch Fetch.Options
-  | Import Import.Options
+  | Import Import.Config
   | Infer Infer.Options
   | Transcode Transcode.Options
   deriving (Show)

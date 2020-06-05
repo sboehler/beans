@@ -18,8 +18,7 @@ import Data.Text (Text)
 import Data.Void (Void)
 import Text.Megaparsec (Parsec, errorBundlePretty, parse)
 
-newtype ImporterException
-  = ImporterException String
+newtype ImporterException = ImporterException String
   deriving (Eq)
 
 instance Show ImporterException where
@@ -29,9 +28,11 @@ instance Exception ImporterException
 
 data Config
   = Config
-      { inputFile :: FilePath,
+      { importer :: Text,
+        inputFile :: FilePath,
         account :: Account
       }
+  deriving (Show)
 
 type Parser = ReaderT Config (Parsec Void Text)
 

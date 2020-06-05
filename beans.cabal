@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9d09691f858566558b6fd8242fe964052765a919d73a787d4259b6721d9dec98
+-- hash: 912eb158dcd1452d44796342c7491c778a7b98dd5882128639d6917883c88437
 
 name:           beans
 version:        0.1.0.0
@@ -55,14 +55,12 @@ library
       Beans.Infer
       Beans.Ledger
       Beans.LedgerStep
-      Beans.Lib
       Beans.Lot
       Beans.MarketData.AlphaVantage
       Beans.MarketData.Yahoo
       Beans.Megaparsec
       Beans.Open
       Beans.Option
-      Beans.Options
       Beans.Parser
       Beans.Position
       Beans.Positions

@@ -8,8 +8,12 @@ import qualified Beans.Command.Transcode as Transcode
 import Beans.Commodity (Commodity)
 import Beans.Date (Date, Interval (..))
 import Beans.Filter (AccountFilter (AccountFilter), CommodityFilter (CommodityFilter), Filter (..))
-import Beans.Lib (Command (..), run)
 import qualified Beans.Megaparsec as M
+import Beans.Parser (ParserException)
+import Beans.Process (ProcessException)
+import Control.Monad.Catch (MonadThrow, catch)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Reader (runReaderT)
 import Data.Bool (bool)
 import Data.Either.Combinators (rightToMaybe)
 import qualified Data.Text as Text
@@ -19,6 +23,27 @@ import Options.Applicative
 import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Char as M
 import qualified Text.Megaparsec.Char.Lexer as L
+
+run :: Command -> IO ()
+run c =
+  run' c
+    `catch` (\(e :: ProcessException) -> print $ show e)
+    `catch` (\(e :: ParserException) -> print $ show e)
+
+run' :: (MonadIO m, MonadThrow m) => Command -> m ()
+run' (Balance options) = runReaderT Balance.run options
+run' (Fetch options) = runReaderT Fetch.run options
+run' (Import options) = runReaderT Import.run options
+run' (Infer options) = runReaderT Infer.run options
+run' (Transcode options) = runReaderT Transcode.run options
+
+data Command
+  = Balance Balance.Options
+  | Fetch Fetch.Options
+  | Import Import.Config
+  | Infer Infer.Options
+  | Transcode Transcode.Options
+  deriving (Show)
 
 toReadM :: M.Parsec Void Text a -> ReadM a
 toReadM p = maybeReader $ rightToMaybe . M.parse p "" . Text.pack

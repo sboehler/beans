@@ -2,14 +2,14 @@ module Beans.Options
   ( Command (..),
     BalanceFormat (..),
     BalanceOptions (..),
-    FetchOptions (..),
     ImportOptions (..),
-    InferOptions (..),
     Diffing (..),
   )
 where
 
 import Beans.Account (Account)
+import qualified Beans.Command.Fetch as Fetch
+import qualified Beans.Command.Infer as Infer
 import qualified Beans.Command.Transcode as Transcode
 import Beans.Commodity (Commodity)
 import Beans.Date (Date, Interval)
@@ -18,17 +18,10 @@ import Data.Text (Text)
 
 data Command
   = Balance BalanceOptions
-  | Fetch FetchOptions
+  | Fetch Fetch.Options
   | Import ImportOptions
-  | Infer InferOptions
+  | Infer Infer.Options
   | Transcode Transcode.Options
-  deriving (Show)
-
-data InferOptions
-  = InferOptions
-      { infTrainingFile :: FilePath,
-        infTargetFile :: FilePath
-      }
   deriving (Show)
 
 data Diffing = Diffing | NoDiffing deriving (Show)
@@ -52,13 +45,6 @@ data BalanceOptions
   deriving (Show)
 
 data BalanceFormat = Flat | Hierarchical deriving (Show)
-
-data FetchOptions
-  = FetchOptions
-      { commodities :: Maybe [Commodity],
-        configFile :: FilePath
-      }
-  deriving (Show)
 
 data ImportOptions
   = ImportOptions

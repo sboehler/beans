@@ -1,11 +1,14 @@
-module Beans.Command.Fetch (run) where
+module Beans.Command.Fetch
+  ( run,
+    Options,
+  )
+where
 
 import Beans.Commodity (Commodity)
 import Beans.Date (Date (Date))
 import qualified Beans.MarketData.AlphaVantage as AV
 import Beans.MarketData.AlphaVantage (APIKey (..), FXEntry (..), TimeSeriesEntry (..))
 import qualified Beans.MarketData.Yahoo as Y
-import Beans.Options (FetchOptions (..))
 import qualified Beans.Parser as Parser
 import Beans.Price (Price (..))
 import Control.Monad.Catch (MonadThrow)
@@ -31,6 +34,13 @@ newtype Entries = Entries [Entry] deriving (Show, Generic)
 
 instance Dhall.FromDhall Entries
 
+data Options
+  = Options
+      { commodities :: Maybe [Commodity],
+        configFile :: FilePath
+      }
+  deriving (Show)
+
 data Entry
   = Entry
       { commodity :: Commodity,
@@ -55,12 +65,12 @@ data Config
 
 instance Dhall.FromDhall Config
 
-readConfig :: (MonadReader FetchOptions m, MonadIO m) => FilePath -> m Entries
+readConfig :: (MonadReader Options m, MonadIO m) => FilePath -> m Entries
 readConfig = liftIO . Dhall.inputFile Dhall.auto
 
-run :: (MonadIO m, MonadReader FetchOptions m, MonadThrow m) => m ()
+run :: (MonadIO m, MonadReader Options m, MonadThrow m) => m ()
 run = do
-  FetchOptions {configFile, commodities} <- ask
+  Options {configFile, commodities} <- ask
   Entries entries <- readConfig configFile
   let baseDir = FilePath.takeDirectory configFile
       filtered = filterEntries commodities entries
@@ -70,7 +80,7 @@ filterEntries :: Maybe [Commodity] -> [Entry] -> [Entry]
 filterEntries Nothing = id
 filterEntries (Just cs) = List.filter (\Entry {commodity} -> commodity `elem` cs)
 
-updateEntry :: (MonadIO m, MonadReader FetchOptions m, MonadThrow m) => FilePath -> Entry -> m ()
+updateEntry :: (MonadIO m, MonadReader Options m, MonadThrow m) => FilePath -> Entry -> m ()
 updateEntry baseDir entry = liftIO $ do
   let path = FilePath.combine baseDir (file entry)
   exists <- doesFileExist path

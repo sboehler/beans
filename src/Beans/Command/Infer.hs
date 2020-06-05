@@ -1,12 +1,12 @@
 module Beans.Command.Infer
   ( run,
+    Options,
   )
 where
 
 import qualified Beans.Account as Account
 import Beans.Command (Command (..), Directive (..))
 import qualified Beans.Infer as Infer
-import Beans.Options (InferOptions (..))
 import Beans.Parser (directives, parseFile, parseSource)
 import qualified Beans.Transaction as Transaction
 import Control.Monad.Catch (MonadThrow)
@@ -15,9 +15,16 @@ import Control.Monad.Reader (MonadReader)
 import qualified Control.Monad.Reader as Reader
 import Data.Text.IO as TextIO
 
-run :: (MonadThrow m, MonadReader InferOptions m, MonadIO m) => m ()
+data Options
+  = Options
+      { infTrainingFile :: FilePath,
+        infTargetFile :: FilePath
+      }
+  deriving (Show)
+
+run :: (MonadThrow m, MonadReader Options m, MonadIO m) => m ()
 run = do
-  InferOptions {infTrainingFile, infTargetFile} <- Reader.ask
+  Options {infTrainingFile, infTargetFile} <- Reader.ask
   trainingSet <- parseFile infTrainingFile
   oldText <- liftIO $ TextIO.readFile infTargetFile
   candidates <- parseSource directives infTargetFile oldText

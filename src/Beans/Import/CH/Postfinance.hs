@@ -8,7 +8,6 @@ import Beans.Command (Command (CmdTransaction))
 import Beans.Commodity (Commodity (..))
 import qualified Beans.Date as Date
 import qualified Beans.Import.Common as Common
-import qualified Beans.Import.Common as Import
 import qualified Beans.Megaparsec as M
 import Beans.Transaction (Posting (..), Transaction (..))
 import Beans.ValAmount (ValAmount)
@@ -26,7 +25,7 @@ import qualified Text.Megaparsec.Char.Lexer as L
 type Parser = Common.Parser
 
 parse :: Common.Config -> B.ByteString -> Either Common.ImporterException [Command]
-parse config bytes = Import.parseCommands config postfinanceData (Text.decodeLatin1 bytes)
+parse config bytes = Common.parseCommands config postfinanceData (Text.decodeLatin1 bytes)
 
 postfinanceData :: Parser [Command]
 postfinanceData = do

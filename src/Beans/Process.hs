@@ -105,8 +105,10 @@ processPrices = do
 normalizePrices :: (MonadThrow m, MonadState State m) => m ()
 normalizePrices = do
   State (Balance d p a pr np) _ <- State.get
-  let balance' = Balance d p a pr (fmap (\(NormalizedPrices c _) -> Prices.normalize pr c) np)
+  let balance' = Balance d p a pr (Prices.normalize pr . getCommodity <$> np)
   State.modify $ \(State _ s) -> State balance' s
+  where
+    getCommodity (NormalizedPrices c _) = c
 
 valuateTransactions :: (MonadThrow m, MonadState State m) => m ()
 valuateTransactions = do

@@ -30,10 +30,6 @@ import qualified System.Environment
 import qualified System.FilePath as FilePath
 import System.IO (stderr)
 
-newtype Entries = Entries [Entry] deriving (Show, Generic)
-
-instance Dhall.FromDhall Entries
-
 data Options
   = Options
       { commodities :: Maybe [Commodity],
@@ -65,13 +61,13 @@ data Config
 
 instance Dhall.FromDhall Config
 
-readConfig :: (MonadReader Options m, MonadIO m) => FilePath -> m Entries
+readConfig :: (MonadReader Options m, MonadIO m) => FilePath -> m [Entry]
 readConfig = liftIO . Dhall.inputFile Dhall.auto
 
 run :: (MonadIO m, MonadReader Options m, MonadThrow m) => m ()
 run = do
   Options {configFile, commodities} <- ask
-  Entries entries <- readConfig configFile
+  entries <- readConfig configFile
   let baseDir = FilePath.takeDirectory configFile
       filtered = filterEntries commodities entries
   sequence_ $ updateEntry baseDir <$> filtered
@@ -96,14 +92,6 @@ updateEntry baseDir entry = liftIO $ do
       content = Pretty.renderStrict . Pretty.layoutCompact . vsep . fmap pretty $ merged
   Text.hPutStrLn stderr $ "Writing file " <> Text.pack path
   Text.writeFile path content
-
--- wait :: MonadIO m => Int -> m ()
--- wait n
---   | n > 0 = liftIO $ do
---     Text.hPutStrLn stderr $ "Waiting " <> (Text.pack . show $ n) <> " seconds until next call"
---     threadDelay 100000
---     wait (n -1)
---   | otherwise = pure ()
 
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m (Map Date Price)
 parseFile e = Map.fromList . fmap (\p@(Price d _ _ _) -> (d, p)) <$> Parser.parsePrices e

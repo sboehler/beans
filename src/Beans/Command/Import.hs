@@ -9,6 +9,7 @@ import qualified Beans.Import.CH.Cumulus
 import qualified Beans.Import.CH.Postfinance
 import qualified Beans.Import.CH.SupercardPlus
 import qualified Beans.Import.CH.Swissquote
+import qualified Beans.Import.CH.VIAC
 import Beans.Import.Common (Config (..), ImporterException)
 import qualified Beans.Import.US.InteractiveBrokers
 import Control.Exception (Exception)
@@ -38,6 +39,7 @@ getParser ::
   Text ->
   m (Config -> B.ByteString -> Either ImporterException [Command])
 getParser "ch.postfinance" = return Beans.Import.CH.Postfinance.parse
+getParser "ch.viac" = return Beans.Import.CH.VIAC.parse
 getParser "us.interactivebrokers" = return Beans.Import.US.InteractiveBrokers.parse
 getParser "ch.supercardplus" = return Beans.Import.CH.SupercardPlus.parse
 getParser "ch.swissquote" = return Beans.Import.CH.Swissquote.parse

@@ -8,13 +8,14 @@ module Beans.Date
   )
 where
 
+import Data.Aeson (FromJSON)
 import Data.Coerce (coerce)
 import Data.Text.Prettyprint.Doc (Pretty (pretty))
 import Data.Time.Calendar (Day)
 import qualified Data.Time.Calendar as Calendar
 import Data.Time.Format.ISO8601 (iso8601Show)
 
-newtype Date = Date Day deriving (Eq, Ord)
+newtype Date = Date Day deriving (Eq, Ord, FromJSON)
 
 instance Show Date where
   show (Date d) = iso8601Show d

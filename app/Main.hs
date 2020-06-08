@@ -124,15 +124,16 @@ balanceOptions =
     <*> collapseParser
 
 intervalParser :: Parser (Maybe Interval)
-intervalParser = optional $ parse <$> strOption (metavar "INTERVAL" <> short 'i' <> long "interval")
+intervalParser = optional $ option parse (metavar "INTERVAL" <> short 'i' <> long "interval")
   where
-    parse :: String -> Interval
-    parse "daily" = Daily
-    parse "weekly" = Weekly
-    parse "monthly" = Monthly
-    parse "quarterly" = Quarterly
-    parse "yearly" = Yearly
-    parse c = error $ "Unrecognized option: " <> c
+    parse :: ReadM Interval
+    parse = eitherReader $ \case
+      "daily" -> pure Daily
+      "weekly" -> pure Weekly
+      "monthly" -> pure Monthly
+      "quarterly" -> pure Quarterly
+      "yearly" -> pure Yearly
+      c -> Left $ "Unrecognized option: " <> c
 
 commoditiesParser :: Parser (Maybe [Commodity])
 commoditiesParser = optional $ option parse options

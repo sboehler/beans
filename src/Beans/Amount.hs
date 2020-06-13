@@ -36,8 +36,9 @@ showRounded d (Amount nbr)
     precision = intLog10 (F.resolution nbr)
 
 intLog10 :: Integer -> Int
-intLog10 n | n < 10 = 0
-intLog10 n = 1 + intLog10 (n `div` 10)
+intLog10 n
+ | n < 10 = 0
+ | otherwise = 1 + intLog10 (n `div` 10)
 
 toFloat :: Fractional a => Amount -> a
 toFloat = fromRational . toRational

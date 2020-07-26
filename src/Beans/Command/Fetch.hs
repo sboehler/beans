@@ -17,7 +17,6 @@ import Control.Monad.Reader (MonadReader, ask)
 import qualified Data.List as List
 import Data.Map.Strict.Extended (Map)
 import qualified Data.Map.Strict.Extended as Map
-import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Data.Text.Prettyprint.Doc (pretty, vsep)
 import qualified Data.Text.Prettyprint.Doc as Pretty
@@ -28,7 +27,6 @@ import GHC.Generics (Generic)
 import System.Directory (doesFileExist)
 import qualified System.Environment
 import qualified System.FilePath as FilePath
-import System.IO (stderr)
 
 data Options
   = Options
@@ -82,15 +80,11 @@ updateEntry baseDir entry = liftIO $ do
   exists <- doesFileExist path
   existing <-
     if exists
-      then do
-        Text.hPutStrLn stderr $ "Parsing file " <> Text.pack path
-        parseFile path
+      then parseFile path
       else mempty
-  Text.hPutStrLn stderr "Fetching new prices..."
   new <- fetchPrices entry
   let merged = Map.elems $ Map.union new existing
       content = Pretty.renderStrict . Pretty.layoutCompact . vsep . fmap pretty $ merged
-  Text.hPutStrLn stderr $ "Writing file " <> Text.pack path
   Text.writeFile path content
 
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m (Map Date Price)

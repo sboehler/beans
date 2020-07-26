@@ -36,8 +36,8 @@ command = do
   account <- Reader.asks Common.account
   let commodity = Commodity "CHF"
       bookings =
-        [ Posting account commodity Nothing (invert amount) Nothing,
-          Posting Account.unknown commodity Nothing amount Nothing
+        [ Posting account commodity Nothing amount Nothing,
+          Posting Account.unknown commodity Nothing (invert amount) Nothing
         ]
   return $ CmdTransaction $
     Transaction
@@ -53,7 +53,7 @@ entryAmount :: Parser ValAmount
 entryAmount = M.choice [credit, debit]
   where
     debit = amountField <* separator
-    credit = invert <$> separator *> amountField
+    credit = invert <$> (separator *> amountField)
 
 amountField :: Parser ValAmount
 amountField = field $ M.parseValAmount (pure ())

@@ -55,11 +55,13 @@ command = M.choice [transaction, other]
 depositWithdrawalOrFee :: Parser Command
 depositWithdrawalOrFee = do
   t <-
-    M.choice
-      [ Common.MoneyTransfer <$ constField "Deposits & Withdrawals" <* constField "Data",
-        Common.Interest <$ constField "Interest" <* constField "Data",
-        Common.Fee <$ constField "Fees" <* constField "Data" <* constField "Other Fees"
-      ]
+    M.choice $
+      M.try
+        <$> [ Common.Interest <$ (constField "Broker Interest Paid" <* constField "Data"),
+              Common.MoneyTransfer <$ (constField "Deposits & Withdrawals" <* constField "Data"),
+              Common.Interest <$ constField "Interest" <* constField "Data",
+              Common.Fee <$ constField "Fees" <* constField "Data" <* constField "Other Fees"
+            ]
   currency <- commodityField
   date <- dateField
   description <- textField

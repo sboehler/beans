@@ -12,22 +12,22 @@ where
 
 import Beans.Account (Account)
 import qualified Beans.Account as Account
-import qualified Beans.Commodity as Commodity
 import Beans.Commodity (Commodity)
+import qualified Beans.Commodity as Commodity
 import Beans.Date (Date)
 import Beans.Filter (Filter (Filter))
 import Beans.Lot (Lot)
 import Beans.Position (Position (..))
 import Beans.Prices (NormalizedPrices)
-import qualified Beans.ValAmount as ValAmount
 import Beans.ValAmount (ValAmount)
+import qualified Beans.ValAmount as ValAmount
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Data.Group (invert)
 import qualified Data.Map.Strict as Map
 import qualified Data.Maybe as Maybe
 import Data.Text (Text)
 import qualified Data.Text as Text
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty), dquotes, hardline, hsep, pretty, vsep)
+import Data.Text.Prettyprint.Doc (Pretty (pretty), dquotes, hardline, hsep, pretty, vsep, (<+>))
 import qualified Data.Text.Prettyprint.Doc as Pretty
 import Data.Traversable (for)
 

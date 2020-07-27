@@ -19,8 +19,8 @@ import Beans.ValAmount (ValAmount)
 import qualified Beans.ValAmount as ValAmount
 import qualified Data.Char as Char
 import Data.Functor (($>))
-import qualified Data.Text as Text
 import Data.Text (Text)
+import qualified Data.Text as Text
 import qualified Data.Time.Format as F
 import qualified Text.Megaparsec as M
 import qualified Text.Megaparsec.Char as M

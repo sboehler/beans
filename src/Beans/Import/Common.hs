@@ -26,12 +26,11 @@ instance Show ImporterException where
 
 instance Exception ImporterException
 
-data Config
-  = Config
-      { importer :: Text,
-        inputFile :: FilePath,
-        account :: Account
-      }
+data Config = Config
+  { importer :: Text,
+    inputFile :: FilePath,
+    account :: Account
+  }
   deriving (Show)
 
 type Parser = ReaderT Config (Parsec Void Text)

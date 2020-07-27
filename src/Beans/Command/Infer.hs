@@ -15,11 +15,10 @@ import Control.Monad.Reader (MonadReader)
 import qualified Control.Monad.Reader as Reader
 import Data.Text.IO as TextIO
 
-data Options
-  = Options
-      { infTrainingFile :: FilePath,
-        infTargetFile :: FilePath
-      }
+data Options = Options
+  { infTrainingFile :: FilePath,
+    infTargetFile :: FilePath
+  }
   deriving (Show)
 
 run :: (MonadThrow m, MonadReader Options m, MonadIO m) => m ()

@@ -12,7 +12,7 @@ import Beans.Command (Command (..), Directive (..))
 import Beans.Transaction (Posting (..), Transaction (..))
 import Data.Bifunctor (second)
 import Data.Function (on)
-import Data.HashMap.Strict ((!), HashMap)
+import Data.HashMap.Strict (HashMap, (!))
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.List as List
 import Data.Text (Text)
@@ -20,12 +20,11 @@ import qualified Data.Text as Text
 import qualified Data.Text.Prettyprint.Doc as Pretty
 import qualified Data.Text.Prettyprint.Doc.Render.Text as Pretty
 
-data Model
-  = Model
-      { def :: Double,
-        priors :: HashMap Account Double,
-        posteriors :: HashMap (Account, Token) Double
-      }
+data Model = Model
+  { def :: Double,
+    priors :: HashMap Account Double,
+    posteriors :: HashMap (Account, Token) Double
+  }
 
 type Token = Text
 

@@ -17,10 +17,10 @@ import Beans.LedgerStep (LedgerStep (LS))
 import qualified Beans.LedgerStep as LedgerStep
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import qualified Data.Foldable as Foldable
-import qualified Data.Map.Strict.Extended as Map
 import Data.Map.Strict.Extended (Map)
+import qualified Data.Map.Strict.Extended as Map
 import Data.Maybe (fromMaybe)
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty), hardline, vsep)
+import Data.Text.Prettyprint.Doc (Pretty (pretty), hardline, vsep, (<+>))
 import Data.Traversable (for)
 import Prelude hiding (filter)
 
@@ -30,10 +30,9 @@ data LedgerException = EmptyLedgerException deriving (Eq, Show)
 
 instance Exception LedgerException
 
-newtype Ledger
-  = Ledger
-      { ledger :: Map Date LedgerStep
-      }
+newtype Ledger = Ledger
+  { ledger :: Map Date LedgerStep
+  }
   deriving (Show, Eq)
 
 instance Pretty Ledger where

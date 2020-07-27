@@ -11,7 +11,7 @@ import Beans.Commodity (Commodity)
 import qualified Beans.Commodity as Commodity
 import Beans.Date (Date)
 import Beans.Filter (Filter (Filter))
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty))
+import Data.Text.Prettyprint.Doc (Pretty (pretty), (<+>))
 
 data Assertion
   = Assertion Date Account Amount Commodity

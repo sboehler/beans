@@ -8,8 +8,8 @@ module Beans.Report
   )
 where
 
-import qualified Beans.ATree as ATree
 import Beans.ATree (ATree (..))
+import qualified Beans.ATree as ATree
 import qualified Beans.Account as Account
 import Beans.Amount (Amount)
 import Beans.Balance (Balance (Balance))
@@ -17,30 +17,29 @@ import Beans.Commodity (Commodity)
 import Beans.Date (Date)
 import Beans.Filter (AccountFilter)
 import Beans.Position (Position (Position))
-import qualified Beans.Positions as Positions
 import Beans.Positions (Positions)
+import qualified Beans.Positions as Positions
 import Beans.Table (Cell (..), Row (Row), Table (Table))
 import Beans.ValAmount (ValAmount (ValAmount))
 import Control.Monad.Reader (MonadReader, ask, asks)
 import qualified Data.List as List
-import qualified Data.Map.Strict.Extended as Map
 import Data.Map.Strict.Extended ((!))
-import qualified Data.Text as Text
+import qualified Data.Map.Strict.Extended as Map
 import Data.Text (Text)
-import qualified Data.Text.Prettyprint.Doc as Pretty
+import qualified Data.Text as Text
 import Data.Text.Prettyprint.Doc (Pretty)
+import qualified Data.Text.Prettyprint.Doc as Pretty
 import qualified Data.Text.Prettyprint.Doc.Render.Text as Pretty
 import Data.Traversable (for)
 
 --------------------------------------------------------------------------------
 
-data Options
-  = Options
-      { valuation :: [Commodity],
-        showCommodities :: Bool,
-        format :: Format,
-        collapse :: Collapse
-      }
+data Options = Options
+  { valuation :: [Commodity],
+    showCommodities :: Bool,
+    format :: Format,
+    collapse :: Collapse
+  }
   deriving (Show)
 
 type Collapse = [(AccountFilter, Int)]

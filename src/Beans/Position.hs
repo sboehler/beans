@@ -7,7 +7,7 @@ where
 import Beans.Account (Account)
 import Beans.Commodity (Commodity)
 import Beans.Lot (Lot)
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty))
+import Data.Text.Prettyprint.Doc (Pretty (pretty), (<+>))
 
 data Position
   = Position Account Commodity (Maybe Lot)

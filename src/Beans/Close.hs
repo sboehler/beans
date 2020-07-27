@@ -2,7 +2,7 @@ module Beans.Close (Close (Close)) where
 
 import Beans.Account (Account)
 import Beans.Date (Date)
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty))
+import Data.Text.Prettyprint.Doc (Pretty (pretty), (<+>))
 
 data Close
   = Close

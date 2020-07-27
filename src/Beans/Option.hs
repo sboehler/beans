@@ -1,7 +1,7 @@
 module Beans.Option (Option (Option)) where
 
 import Data.Text (Text)
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty))
+import Data.Text.Prettyprint.Doc (Pretty (pretty), (<+>))
 import qualified Text.Megaparsec.Pos as P
 
 data Option = Option P.SourcePos Text Text

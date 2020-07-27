@@ -2,7 +2,7 @@ module Beans.Price (Price (Price)) where
 
 import Beans.Commodity (Commodity)
 import Beans.Date (Date)
-import Data.Text.Prettyprint.Doc ((<+>), Pretty (pretty))
+import Data.Text.Prettyprint.Doc (Pretty (pretty), (<+>))
 
 data Price
   = Price

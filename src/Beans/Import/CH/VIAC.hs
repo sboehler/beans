@@ -23,11 +23,10 @@ parse config bytes = do
 convert :: Commodity -> TimeSeriesEntry -> Price
 convert c (TimeSeriesEntry date value) = Price date c value (Commodity "CHF")
 
-data TimeSeriesEntry
-  = TimeSeriesEntry
-      { date :: Date,
-        value :: Double
-      }
+data TimeSeriesEntry = TimeSeriesEntry
+  { date :: Date,
+    value :: Double
+  }
   deriving (Generic)
 
 instance A.FromJSON TimeSeriesEntry

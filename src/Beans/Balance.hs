@@ -15,8 +15,8 @@ import Beans.Date (Date)
 import Beans.Filter (AccountFilter)
 import Beans.Position (Position (..))
 import qualified Beans.Position as Position
-import qualified Beans.Positions as Positions
 import Beans.Positions (Positions)
+import qualified Beans.Positions as Positions
 import Beans.Prices (NormalizedPrices, Prices)
 import qualified Beans.Prices as Prices
 import Beans.Transaction (Posting (..))
@@ -24,8 +24,8 @@ import Beans.ValAmount (ValAmount (ValAmount))
 import Data.Foldable (fold)
 import Data.Group (Group, invert)
 import qualified Data.Map.Strict.Extended as Map
-import qualified Data.Set as Set
 import Data.Set (Set)
+import qualified Data.Set as Set
 
 data Balance a
   = Balance

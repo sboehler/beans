@@ -39,12 +39,13 @@ command = do
         [ Posting account commodity Nothing amount Nothing,
           Posting Account.unknown commodity Nothing (invert amount) Nothing
         ]
-  return $ CmdTransaction $
-    Transaction
-      date
-      description
-      []
-      bookings
+  return $
+    CmdTransaction $
+      Transaction
+        date
+        description
+        []
+        bookings
 
 dateField :: Parser Date.Date
 dateField = M.parseFormattedDate "%-d.%-m.%Y" (Text.unpack <$> quotedField)

@@ -115,31 +115,28 @@ request r = HTTP.httpJSON (createURL r)
 -- Daily Series
 --------------------------------------------------------------------------------
 
-data TimeSeriesResult
-  = TimeSeriesResult
-      { metaData :: TimeSeriesMetaData,
-        timeSeries :: TimeSeries
-      }
+data TimeSeriesResult = TimeSeriesResult
+  { metaData :: TimeSeriesMetaData,
+    timeSeries :: TimeSeries
+  }
   deriving (Show)
 
 instance FromJSON TimeSeriesResult where
   parseJSON = withObject "DailySeriesResult" $ \o ->
     TimeSeriesResult <$> o .: "Meta Data" <*> o .: "Time Series (Daily)"
 
-newtype TimeSeriesMetaData
-  = TimeSeriesMetaData
-      { symbol :: String
-      }
+newtype TimeSeriesMetaData = TimeSeriesMetaData
+  { symbol :: String
+  }
   deriving (Show)
 
 instance FromJSON TimeSeriesMetaData where
   parseJSON = withObject "MetaData" $ \o ->
     TimeSeriesMetaData <$> o .: "2. Symbol"
 
-newtype TimeSeries
-  = TimeSeries
-      { entries :: Map Day TimeSeriesEntry
-      }
+newtype TimeSeries = TimeSeries
+  { entries :: Map Day TimeSeriesEntry
+  }
   deriving (Show)
 
 instance FromJSON TimeSeries where
@@ -150,14 +147,13 @@ instance FromJSON TimeSeries where
       pure (day, value)
     pure . TimeSeries . Map.fromList $ entries
 
-data TimeSeriesEntry
-  = TimeSeriesEntry
-      { open :: Double,
-        high :: Double,
-        low :: Double,
-        close :: Double,
-        volume :: Integer
-      }
+data TimeSeriesEntry = TimeSeriesEntry
+  { open :: Double,
+    high :: Double,
+    low :: Double,
+    close :: Double,
+    volume :: Integer
+  }
   deriving (Show)
 
 instance FromJSON TimeSeriesEntry where
@@ -173,22 +169,20 @@ instance FromJSON TimeSeriesEntry where
 -- FX Series
 --------------------------------------------------------------------------------
 
-data FXResult
-  = FXResult
-      { metaData :: FXMetaData,
-        timeSeries :: FX
-      }
+data FXResult = FXResult
+  { metaData :: FXMetaData,
+    timeSeries :: FX
+  }
   deriving (Show)
 
 instance FromJSON FXResult where
   parseJSON = withObject "FXResult" $ \o ->
     FXResult <$> o .: "Meta Data" <*> o .: "Time Series FX (Daily)"
 
-data FXMetaData
-  = FXMetaData
-      { fromCurrency :: String,
-        toCurrency :: String
-      }
+data FXMetaData = FXMetaData
+  { fromCurrency :: String,
+    toCurrency :: String
+  }
   deriving (Show)
 
 instance FromJSON FXMetaData where
@@ -197,10 +191,9 @@ instance FromJSON FXMetaData where
     toCurrency <- o .: "3. To Symbol"
     pure FXMetaData {..}
 
-newtype FX
-  = FX
-      { entries :: Map Day FXEntry
-      }
+newtype FX = FX
+  { entries :: Map Day FXEntry
+  }
   deriving (Show)
 
 instance FromJSON FX where
@@ -211,13 +204,12 @@ instance FromJSON FX where
       pure (day, value)
     pure . FX . Map.fromList $ entries
 
-data FXEntry
-  = FXEntry
-      { open :: Double,
-        high :: Double,
-        low :: Double,
-        close :: Double
-      }
+data FXEntry = FXEntry
+  { open :: Double,
+    high :: Double,
+    low :: Double,
+    close :: Double
+  }
   deriving (Show)
 
 instance FromJSON FXEntry where

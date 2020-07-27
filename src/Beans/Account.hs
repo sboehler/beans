@@ -12,8 +12,8 @@ where
 import Beans.Filter (AccountFilter (AccountFilter))
 import Data.Hashable (Hashable (..))
 import qualified Data.List as List
-import qualified Data.Text as Text
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Text.Prettyprint.Doc (Pretty (pretty))
 import Text.Regex.PCRE ((=~))
 

@@ -5,8 +5,8 @@ module Beans.Amount
   )
 where
 
-import qualified Data.Fixed as F
 import Data.Fixed (Fixed, Micro)
+import qualified Data.Fixed as F
 import Data.Monoid (Sum (Sum))
 import Data.Text (Text, pack)
 import Data.Text.Prettyprint.Doc (Pretty (pretty))
@@ -37,8 +37,8 @@ showRounded d (Amount nbr)
 
 intLog10 :: Integer -> Int
 intLog10 n
- | n < 10 = 0
- | otherwise = 1 + intLog10 (n `div` 10)
+  | n < 10 = 0
+  | otherwise = 1 + intLog10 (n `div` 10)
 
 toFloat :: Fractional a => Amount -> a
 toFloat = fromRational . toRational

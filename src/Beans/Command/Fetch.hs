@@ -6,8 +6,8 @@ where
 
 import Beans.Commodity (Commodity)
 import Beans.Date (Date (Date))
-import qualified Beans.MarketData.AlphaVantage as AV
 import Beans.MarketData.AlphaVantage (APIKey (..), FXEntry (..), TimeSeriesEntry (..))
+import qualified Beans.MarketData.AlphaVantage as AV
 import qualified Beans.MarketData.Yahoo as Y
 import qualified Beans.Parser as Parser
 import Beans.Price (Price (..))
@@ -28,20 +28,18 @@ import System.Directory (doesFileExist)
 import qualified System.Environment
 import qualified System.FilePath as FilePath
 
-data Options
-  = Options
-      { commodities :: Maybe [Commodity],
-        configFile :: FilePath
-      }
+data Options = Options
+  { commodities :: Maybe [Commodity],
+    configFile :: FilePath
+  }
   deriving (Show)
 
-data Entry
-  = Entry
-      { commodity :: Commodity,
-        targetCommodity :: Commodity,
-        file :: FilePath,
-        config :: Config
-      }
+data Entry = Entry
+  { commodity :: Commodity,
+    targetCommodity :: Commodity,
+    file :: FilePath,
+    config :: Config
+  }
   deriving (Show, Generic)
 
 instance Dhall.FromDhall Entry

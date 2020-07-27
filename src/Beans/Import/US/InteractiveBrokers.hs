@@ -71,12 +71,13 @@ depositWithdrawalOrFee = do
         [ Posting account currency Nothing amount Nothing,
           Posting Account.unknown currency Nothing (invert amount) (Just $ Common.tags t)
         ]
-  return $ CmdTransaction $
-    Transaction
-      date
-      (Text.unwords [Text.pack . show $ t, "-", description])
-      []
-      bookings
+  return $
+    CmdTransaction $
+      Transaction
+        date
+        (Text.unwords [Text.pack . show $ t, "-", description])
+        []
+        bookings
 
 trade :: Parser Command
 trade = do
@@ -91,9 +92,10 @@ trade = do
   purchaseAmount <- amountField
   feeAmount <- invert <$> amountField <* skipRestOfLine
   account <- Reader.asks Common.account
-  feeCurrency <- State.get >>= \case
-    Nothing -> fail "No base currency"
-    Just b -> pure $ if description == "Forex" then b else currency
+  feeCurrency <-
+    State.get >>= \case
+      Nothing -> fail "No base currency"
+      Just b -> pure $ if description == "Forex" then b else currency
   let lot = Lot price currency date Nothing
       bookings =
         [ Posting account symbol (Just lot) amount Nothing,

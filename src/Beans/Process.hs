@@ -11,8 +11,8 @@ import Beans.Assertion (Assertion (..))
 import Beans.Balance (Balance (Balance))
 import qualified Beans.Balance as Balance
 import Beans.Close (Close (..))
-import qualified Beans.Ledger as Ledger
 import Beans.Ledger (Ledger)
+import qualified Beans.Ledger as Ledger
 import Beans.LedgerStep (LedgerStep (LS))
 import qualified Beans.LedgerStep as LedgerStep
 import Beans.Open (Open (..))
@@ -21,10 +21,10 @@ import qualified Beans.Positions as Positions
 import Beans.Price (Price)
 import Beans.Prices (NormalizedPrices (NormalizedPrices))
 import qualified Beans.Prices as Prices
-import qualified Beans.Transaction as Transaction
 import Beans.Transaction (Posting (..), Transaction (..))
-import qualified Beans.ValAmount as ValAmount
+import qualified Beans.Transaction as Transaction
 import Beans.ValAmount (ValAmount (ValAmount))
+import qualified Beans.ValAmount as ValAmount
 import Control.Monad (foldM, unless, when)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Control.Monad.State (MonadState)
@@ -165,9 +165,9 @@ processTransaction bal@(Balance _ _ acc _ _) t@(Transaction _ _ _ p) = do
   pure $ Balance.book bal p
   where
     canBook (Posting a _ _ _ _) =
-      unless (a `Set.member` acc)
-        $ throwM
-        $ BookingErrorAccountNotOpen t a
+      unless (a `Set.member` acc) $
+        throwM $
+          BookingErrorAccountNotOpen t a
 
 processAssertion :: MonadThrow m => Balance ValAmount -> Assertion -> m ()
 processAssertion (Balance _ positions _ _ _) assertion@(Assertion _ a amt c) = do

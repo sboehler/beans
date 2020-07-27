@@ -7,8 +7,8 @@ where
 import qualified Beans.Amount as Amount
 import qualified Beans.Balance as Balance
 import Beans.Commodity (Commodity)
-import qualified Beans.Ledger as Ledger
 import Beans.Ledger (Ledger (..))
+import qualified Beans.Ledger as Ledger
 import Beans.LedgerStep (LedgerStep (..))
 import Beans.Parser (parseFile)
 import qualified Beans.Process as Process
@@ -21,16 +21,15 @@ import qualified Control.Monad.Reader as Reader
 import qualified Data.Map.Strict.Extended as Map
 import Data.Text (Text)
 import Data.Text.IO as TextIO
+import Data.Text.Prettyprint.Doc (Doc, pretty, (<+>))
 import qualified Data.Text.Prettyprint.Doc as P
-import Data.Text.Prettyprint.Doc ((<+>), Doc, pretty)
 import qualified Data.Text.Prettyprint.Doc.Render.Text as P
 
-data Options
-  = Options
-      { trnCommodity :: Commodity,
-        trnSourceFile :: FilePath,
-        trnTargetFile :: FilePath
-      }
+data Options = Options
+  { trnCommodity :: Commodity,
+    trnSourceFile :: FilePath,
+    trnTargetFile :: FilePath
+  }
   deriving (Show)
 
 run :: (MonadThrow m, MonadReader Options m, MonadIO m) => m ()

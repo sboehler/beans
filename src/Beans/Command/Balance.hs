@@ -8,20 +8,20 @@ module Beans.Command.Balance
 where
 
 import qualified Beans.Assertion as Assertion
-import qualified Beans.Balance as Balance
 import Beans.Balance (Balance (Balance))
+import qualified Beans.Balance as Balance
 import Beans.Command (Command (..), Directive (..))
 import Beans.Commodity (Commodity)
-import qualified Beans.Date as Date
 import Beans.Date (Date, Interval)
+import qualified Beans.Date as Date
 import Beans.Filter (AccountFilter, Filter)
 import Beans.Ledger (Ledger)
 import qualified Beans.Ledger as Ledger
 import qualified Beans.Parser as Parser
 import qualified Beans.Process as Process
 import qualified Beans.Report as Report
-import qualified Beans.Table as Table
 import Beans.Table (Table)
+import qualified Beans.Table as Table
 import qualified Beans.Transaction as Transaction
 import Beans.ValAmount (ValAmount)
 import Control.Monad.Catch (MonadThrow)
@@ -35,20 +35,19 @@ import Prelude hiding (filter, sum)
 
 data Diffing = Diffing | NoDiffing deriving (Show)
 
-data Options
-  = Options
-      { journal :: FilePath,
-        valuation :: [Commodity],
-        filter :: Filter,
-        diffing :: Diffing,
-        showCommodities :: Bool,
-        format :: Report.Format,
-        fromDate :: Maybe Date,
-        toDate :: Maybe Date,
-        period :: Maybe Interval,
-        percent :: Maybe AccountFilter,
-        collapse :: Report.Collapse
-      }
+data Options = Options
+  { journal :: FilePath,
+    valuation :: [Commodity],
+    filter :: Filter,
+    diffing :: Diffing,
+    showCommodities :: Bool,
+    format :: Report.Format,
+    fromDate :: Maybe Date,
+    toDate :: Maybe Date,
+    period :: Maybe Interval,
+    percent :: Maybe AccountFilter,
+    collapse :: Report.Collapse
+  }
   deriving (Show)
 
 data BalanceFormat = Flat | Hierarchical deriving (Show)

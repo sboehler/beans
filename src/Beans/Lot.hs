@@ -8,13 +8,12 @@ import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty (pretty), hsep)
 
-data Lot
-  = Lot
-      { price :: Amount,
-        targetCommodity :: Commodity,
-        date :: Date,
-        label :: Maybe Text
-      }
+data Lot = Lot
+  { price :: Amount,
+    targetCommodity :: Commodity,
+    date :: Date,
+    label :: Maybe Text
+  }
   deriving (Eq, Ord)
 
 instance Show Lot where

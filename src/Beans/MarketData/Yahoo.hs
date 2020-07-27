@@ -18,8 +18,8 @@ import Data.Maybe (catMaybes)
 import Data.Scientific (toRealFloat)
 import Data.Text (Text)
 import qualified Data.Text.Encoding as Encoding
-import qualified Data.Time.Clock as Clock
 import Data.Time.Clock (addUTCTime)
+import qualified Data.Time.Clock as Clock
 import qualified Data.Time.Clock.POSIX as POSIX
 import Data.Void (Void)
 import qualified Network.HTTP.Simple as HTTP
@@ -80,22 +80,20 @@ request r = fmap Encoding.decodeUtf8 <$> HTTP.httpBS (createURL r)
 -- Daily Series
 --------------------------------------------------------------------------------
 
-newtype TimeSeries
-  = TimeSeries
-      { entries :: [TimeSeriesEntry]
-      }
+newtype TimeSeries = TimeSeries
+  { entries :: [TimeSeriesEntry]
+  }
   deriving (Show)
 
-data TimeSeriesEntry
-  = TimeSeriesEntry
-      { date :: Date,
-        open :: Double,
-        high :: Double,
-        low :: Double,
-        close :: Double,
-        adjClose :: Double,
-        volume :: Integer
-      }
+data TimeSeriesEntry = TimeSeriesEntry
+  { date :: Date,
+    open :: Double,
+    high :: Double,
+    low :: Double,
+    close :: Double,
+    adjClose :: Double,
+    volume :: Integer
+  }
   deriving (Show)
 
 --------------------------------------------------------------------------------

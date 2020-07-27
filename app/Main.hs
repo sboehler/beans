@@ -16,8 +16,8 @@ import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (runReaderT)
 import Data.Bool (bool)
 import Data.Either.Combinators (rightToMaybe)
-import qualified Data.Text as Text
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Void (Void)
 import Options.Applicative
 import qualified Text.Megaparsec as M

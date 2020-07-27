@@ -15,8 +15,8 @@ import qualified Beans.Amount as Amount
 import Beans.Commodity (Commodity)
 import Beans.Price (Price (..))
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
-import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 
 data NormalizedPrices = NormalizedPrices Commodity (Map Commodity Double)
   deriving (Show)

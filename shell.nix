@@ -22,7 +22,6 @@ let
     cabal2nix
     dhall
     ghcid
-    ghcide
     hlint
     hoogle
     ormolu

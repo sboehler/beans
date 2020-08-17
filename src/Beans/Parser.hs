@@ -88,15 +88,11 @@ directive :: Parser Directive
 directive =
   L.nonIndented sc $ M.choice [include, option, command]
 
-lineComment :: Parser ()
-lineComment =
-  L.skipLineComment "*"
-
 scn :: Parser ()
 scn = M.skipSome $ M.choice [M.space1, L.skipLineComment "*", L.skipLineComment "#", L.skipLineComment ";"]
 
 sc :: Parser ()
-sc = L.space (void $ M.takeWhile1P Nothing f) lineComment M.empty
+sc = L.space (void $ M.takeWhile1P Nothing f) M.empty M.empty
   where
     f x = x == ' ' || x == '\t'
 
@@ -149,10 +145,13 @@ tag = Tag <$> lexeme (Text.cons <$> M.char '#' <*> M.takeWhile1P (Just "alphanum
 transaction :: Parser Transaction
 transaction = do
   d <- date
+  -- support legacy stars
+  _ <- M.optional (symbol "*")
   desc <- quotedString
   t <- M.many tag
-  p <- M.some (M.try (M.eol *> posting d))
-  w <- M.optional $ M.try (M.eol *> account)
+  -- tolerate indented postings
+  p <- M.some (M.try (lexeme M.eol *> posting d))
+  w <- M.optional $ M.try (lexeme M.eol *> account)
   case Transaction.createBalanced d desc t p w of
     Just t' -> pure t'
     Nothing -> fail "Unbalanced transaction"

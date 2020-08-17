@@ -27,8 +27,8 @@ import qualified Text.Megaparsec.Char.Lexer as L
 run :: Command -> IO ()
 run c =
   run' c
-    `catch` (\(e :: ProcessException) -> print $ show e)
-    `catch` (\(e :: ParserException) -> print $ show e)
+    `catch` (\(e :: ProcessException) -> print e)
+    `catch` (\(e :: ParserException) -> print e)
 
 run' :: (MonadIO m, MonadThrow m) => Command -> m ()
 run' (Balance options) = runReaderT Balance.run options

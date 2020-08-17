@@ -24,7 +24,7 @@ test1 =
   let path = "tests/Beans/Import/CH/Postfinance/"
       sourceFile = path </> "postfinance1.csv"
       goldenFile = path </> "postfinance1.golden"
-      config = Config sourceFile (Account Assets ["Checking"])
+      config = Config "ch.postfinance" sourceFile (Account Assets ["Checking"])
    in goldenVsString "Postfinance" goldenFile $ do
         res <- parse config <$> B.readFile sourceFile
         case res of

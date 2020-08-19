@@ -29,11 +29,12 @@ import Control.Monad (void)
 import Control.Monad.Catch (Exception, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans (liftIO)
+import qualified Data.ByteString as BS
 import qualified Data.Char as Char
 import qualified Data.Scientific as Scientific
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Text.IO as TextIO
+import qualified Data.Text.Encoding as Text
 import Data.Traversable (for)
 import Data.Void (Void)
 import qualified System.FilePath.Posix as Posix
@@ -64,14 +65,14 @@ getIncludedFiles fp ast =
 
 parseFile :: (MonadIO m, MonadThrow m) => FilePath -> m [Directive]
 parseFile filePath = do
-  text <- liftIO $ TextIO.readFile filePath
+  text <- Text.decodeUtf8 <$> (liftIO $ BS.readFile filePath)
   ast <- parseSource directives filePath text
   asts <- for (getIncludedFiles filePath ast) parseFile
   pure $ concat $ ast : asts
 
 parsePrices :: (MonadIO m, MonadThrow m) => FilePath -> m [Price]
 parsePrices filePath = do
-  text <- liftIO $ TextIO.readFile filePath
+  text <- Text.decodeUtf8 <$> (liftIO $ BS.readFile filePath)
   parseSource (M.optional scn *> M.some (price <* M.choice [scn, M.eof])) filePath text
 
 -- parsers

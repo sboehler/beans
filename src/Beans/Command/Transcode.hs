@@ -18,9 +18,10 @@ import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader)
 import qualified Control.Monad.Reader as Reader
+import qualified Data.ByteString as BS
 import qualified Data.Map.Strict.Extended as Map
 import Data.Text (Text)
-import Data.Text.IO as TextIO
+import Data.Text.Encoding as Text
 import Data.Text.Prettyprint.Doc (Doc, pretty, (<+>))
 import qualified Data.Text.Prettyprint.Doc as P
 import qualified Data.Text.Prettyprint.Doc.Render.Text as P
@@ -40,7 +41,7 @@ run = do
   minDate <- Ledger.minDate l
   (l', _) <- Process.runLedger (Balance.new minDate [commodity]) l
   let text = transcode commodity l'
-  liftIO $ TextIO.writeFile target text
+  liftIO $ BS.writeFile target $ Text.encodeUtf8 text
 
 transcode :: Commodity -> Ledger -> Text
 transcode c (Ledger l) = render $ P.vsep $ fmap (<+> P.hardline) (options : docs)

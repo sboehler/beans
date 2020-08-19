@@ -13,7 +13,8 @@ import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader)
 import qualified Control.Monad.Reader as Reader
-import Data.Text.IO as TextIO
+import qualified Data.ByteString as BS
+import qualified Data.Text.Encoding as Text
 
 data Options = Options
   { infTrainingFile :: FilePath,
@@ -25,7 +26,7 @@ run :: (MonadThrow m, MonadReader Options m, MonadIO m) => m ()
 run = do
   Options {infTrainingFile, infTargetFile} <- Reader.ask
   trainingSet <- parseFile infTrainingFile
-  oldText <- liftIO $ TextIO.readFile infTargetFile
+  oldText <- Text.decodeUtf8 <$> (liftIO $ BS.readFile infTargetFile)
   candidates <- parseSource directives infTargetFile oldText
   let transactions = do
         CmdDirective _ (CmdTransaction t) <- trainingSet
@@ -34,4 +35,4 @@ run = do
       model = Infer.train transactions
       fixed = fmap (Infer.fixDirective model) candidates
       newText = Infer.updateDirectives fixed oldText
-  liftIO $ TextIO.writeFile infTargetFile newText
+  liftIO $ BS.writeFile infTargetFile $ Text.encodeUtf8 newText

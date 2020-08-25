@@ -41,9 +41,9 @@ command = M.choice [transaction, other]
     transaction =
       Just
         <$> M.choice
-          [ M.try depositWithdrawalOrFee,
-            M.try trade,
-            M.try dividendOrWithholdingTax
+          [ depositWithdrawalOrFee,
+            trade,
+            dividendOrWithholdingTax
           ]
     other =
       Nothing
@@ -65,7 +65,7 @@ depositWithdrawalOrFee = do
   currency <- commodityField
   date <- dateField
   description <- textField
-  amount <- amountField
+  amount <- amountField <* skipRestOfLine
   account <- Reader.asks Common.account
   let bookings =
         [ Posting account currency Nothing amount Nothing,
@@ -81,16 +81,17 @@ depositWithdrawalOrFee = do
 
 trade :: Parser Command
 trade = do
-  _ <- constField "Trades" >> constField "Data" >> constField "Order"
+  _ <- M.try (constField "Trades" >> constField "Data" >> constField "Order")
   description <- textField
   currency <- commodityField
   symbol <- commodityField
   date <- dateField
+  _ <- skipField
   amount <- amountField
   price <- priceField
-  _ <- skipField
   purchaseAmount <- amountField
-  feeAmount <- invert <$> amountField <* skipRestOfLine
+  feeAmount <- invert <$> amountField
+  _ <- M.count 4 skipField
   account <- Reader.asks Common.account
   feeCurrency <-
     State.get >>= \case
@@ -109,15 +110,23 @@ trade = do
 
 dividendOrWithholdingTax :: Parser Command
 dividendOrWithholdingTax = do
-  t <- field $ M.choice [Common.WithholdingTax <$ M.string "Withholding Tax", Common.Dividend <$ M.string "Dividends"]
-  currency <- constField "Data" >> commodityField
-  date <- dateField
+  (t, currency, date) <- M.try $ do
+    t' <-
+      field $
+        M.choice
+          [ Common.WithholdingTax <$ M.string "Withholding Tax",
+            Common.Dividend <$ M.string "Dividends"
+          ]
+    _ <- constField "Data"
+    currency' <- commodityField
+    date' <- dateField
+    pure (t', currency', date')
   (symbol, isin, rest) <- field $ do
     symbol <- M.parseCommodity <* M.space
     isin <- M.char '(' >> M.takeWhile1P (Just "ISIN") Char.isAlphaNum <* M.char ')' <* M.space
     rest <- M.takeWhile1P Nothing (const True)
     pure (symbol, isin, rest)
-  amount <- amountField
+  amount <- amountField <* M.eol
   account <- Reader.asks Common.account
   let desc = Text.unwords [Text.pack . show $ t, Text.pack . show $ symbol, isin, rest]
       bookings =

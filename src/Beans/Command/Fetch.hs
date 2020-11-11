@@ -106,7 +106,7 @@ fetchPrices e@Entry {config} =
 yEntriesToPrices :: Entry -> [Y.TimeSeriesEntry] -> Map Date Price
 yEntriesToPrices Entry {commodity, targetCommodity} = Map.fromList . fmap g
   where
-    g (Y.TimeSeriesEntry date _ _ _ _ price _) = (date, Price date commodity price targetCommodity)
+    g (Y.TimeSeriesEntry date _ _ _ price _ _) = (date, Price date commodity price targetCommodity)
 
 entriesToPrices :: Entry -> Map Day TimeSeriesEntry -> Map Date Price
 entriesToPrices Entry {commodity, targetCommodity} = Map.fromList . fmap g . Map.toList

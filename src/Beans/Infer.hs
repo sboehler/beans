@@ -35,11 +35,14 @@ train trx = Model {priors, posteriors, def}
     sets = [(a, tokenize t p) | t@(Transaction _ _ _ postings) <- trx, p@(Posting a _ _ _ _) <- postings]
     def :: Double
     def = 1.0 / sum accountCount
+    -- how many times does an account appear? #accounts
     accountCount = HashMap.fromListWith (+) . fmap (second (const 1.0)) $ sets
+    -- p(token | account)
     posteriors = HashMap.fromListWith (+) $ do
       (account, tokens) <- sets
       token <- tokens
       pure ((account, token), 1.0 / accountCount ! account)
+    -- chance for one account: p (account)
     priors = (* def) <$> accountCount
 
 infer :: Model -> [Text] -> Account
